@@ -1,0 +1,12 @@
+[
+  {
+    "id": "service1",
+    "name": "Cleaning",
+    "price": 1.5
+  },
+  {
+    "id": "service2",
+    "name": "Internet",
+    "price": 5.0
+  }
+]

@@ -1,0 +1,146 @@
+[
+  {
+    "id": "receipt0",
+    "date": "2024-11-15T10:00:00Z",
+    "dueDate": "2024-11-23T10:00:00Z",
+    "lastWaterUsed": 30,
+    "lastElectricUsed": 80,
+    "thisWaterUsed": 50,
+    "thisElectricUsed": 100,
+    "paymentStatus": "paid",
+    "services": [
+      {
+        "id": "service1",
+        "name": "Cleaning",
+        "price": 1.5
+      }
+    ],
+    "room": {
+      "id": "room1",
+      "roomNumber": "101",
+      "roomStatus": "occupied",
+      "price": 120,
+      "building": {
+        "id": "building1",
+        "name": "Sunset Apartments",
+        "rentPrice": 120.0,
+        "electricPrice": 0.3,
+        "waterPrice": 0.5
+      },
+      "client": {
+        "id": "client1",
+        "name": "John Doe",
+        "phoneNumber": "123456789",
+        "room": {
+          "id": "room1",
+          "roomNumber": "101",
+          "roomStatus": "occupied",
+          "price": 120,
+          "building": {
+            "id": "building1",
+            "name": "Sunset Apartments",
+            "rentPrice": 120.0,
+            "electricPrice": 0.3,
+            "waterPrice": 0.5
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "receipt3",
+    "date": "2024-12-15T10:00:00Z",
+    "dueDate": "2024-12-23T10:00:00Z",
+    "lastWaterUsed": 50,
+    "lastElectricUsed": 100,
+    "thisWaterUsed": 60,
+    "thisElectricUsed": 120,
+    "paymentStatus": "pending",
+    "services": [
+      {
+        "id": "service1",
+        "name": "Cleaning",
+        "price": 1.5
+      }
+    ],
+    "room": {
+      "id": "room3",
+      "roomNumber": "103",
+      "roomStatus": "occupied",
+      "price": 120,
+      "building": {
+        "id": "building1",
+        "name": "Sunset Apartments",
+        "rentPrice": 120.0,
+        "electricPrice": 0.3,
+        "waterPrice": 0.5
+      },
+      "client": {
+        "id": "client1",
+        "name": "John Doe",
+        "phoneNumber": "123456789",
+        "room": {
+          "id": "room1",
+          "roomNumber": "101",
+          "roomStatus": "occupied",
+          "price": 120,
+          "building": {
+            "id": "building1",
+            "name": "Sunset Apartments",
+            "rentPrice": 120.0,
+            "electricPrice": 0.3,
+            "waterPrice": 0.5
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "receipt2",
+    "date": "2024-12-15T10:00:00Z",
+    "dueDate": "2024-12-10T10:00:00Z",
+    "lastWaterUsed": 40,
+    "lastElectricUsed": 80,
+    "thisWaterUsed": 50,
+    "thisElectricUsed": 100,
+    "paymentStatus": "pending",
+    "services": [
+      {
+        "id": "service2",
+        "name": "Internet",
+        "price": 5.0
+      }
+    ],
+    "room": {
+      "id": "room2",
+      "roomNumber": "102",
+      "roomStatus": "occupied",
+      "price": 120,
+      "building": {
+        "id": "building1",
+        "name": "Sunset Apartments",
+        "rentPrice": 120.0,
+        "electricPrice": 0.3,
+        "waterPrice": 0.5
+      },
+      "client": {
+        "id": "client2",
+        "name": "Jane Smith",
+        "phoneNumber": "987654321",
+        "room": {
+          "id": "room2",
+          "roomNumber": "102",
+          "roomStatus": "occupied",
+          "price": 120,
+          "building": {
+            "id": "building1",
+            "name": "Sunset Apartments",
+            "rentPrice": 120.0,
+            "electricPrice": 0.3,
+            "waterPrice": 0.5
+          }
+        }
+      }
+    }
+  }
+]
