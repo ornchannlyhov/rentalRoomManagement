@@ -76,7 +76,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
       selectedRoom = receipt.room;
       selectedServices = receipt.services.toList();
     } else {
-      id=  const Uuid().v4();
+      id = const Uuid().v4();
       date = DateTime.now();
       dueDate = DateTime.now().add(const Duration(days: 7));
       lastWaterUsed = 0;
@@ -87,6 +87,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
       thisElectricUsed = 0;
       paymentStatus = PaymentStatus.pending;
       selectedRoom = null;
+      selectedServices = [];
     }
   }
 
@@ -110,7 +111,6 @@ class _ReceiptFormState extends State<ReceiptForm> {
 
   Future<void> _loadLastMonthData() async {
     if (selectedRoom == null) return;
-
     final now = DateTime.now();
     final startOfPreviousMonth = DateTime(now.year, now.month - 1, 1);
     final endOfPreviousMonth = DateTime(now.year, now.month, 0);
@@ -129,7 +129,9 @@ class _ReceiptFormState extends State<ReceiptForm> {
           lastElectricUsed: lastElectricUsed,
           thisWaterUsed: thisWaterUsed,
           thisElectricUsed: thisElectricUsed,
-          paymentStatus: paymentStatus),
+          paymentStatus: paymentStatus,
+          room: selectedRoom,
+          services: selectedServices),
     );
     if (previousReceipt != null) {
       setState(() {
@@ -146,7 +148,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       final newReceipt = Receipt(
-        id: isEditing ? widget.receipt!.id :id,
+        id: isEditing ? widget.receipt!.id : id,
         date: isEditing ? widget.receipt!.date : DateTime.now(),
         dueDate: dueDate,
         lastWaterUsed: lastWaterUsed,
@@ -210,7 +212,13 @@ class _ReceiptFormState extends State<ReceiptForm> {
                 items: availableRooms.map((room) {
                   return DropdownMenuItem(
                     value: room,
-                    child: Text('Room: ${room.roomNumber}'),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Room: ${room.roomNumber}'),
+                        Text('- ${room.building!.name}')
+                      ],
+                    ),
                   );
                 }).toList(),
                 onChanged: (value) async {

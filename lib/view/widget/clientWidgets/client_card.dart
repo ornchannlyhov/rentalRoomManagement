@@ -27,7 +27,7 @@ class ClientCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network(
-                    client.gender==Gender.male? maleAvatar: femaleAvatar,
+                    client.gender == Gender.male ? maleAvatar : femaleAvatar,
                     height: 70,
                     width: 70,
                     fit: BoxFit.cover,
@@ -46,19 +46,27 @@ class ClientCard extends StatelessWidget {
                           color: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Text(
-                        'Room number: ${client.room!.roomNumber}',
+                        'Building: ${client.room!.building!.name}',
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 10,
                           color: Colors.white70,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Room number: ${client.room!.roomNumber}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
                       Text(
                         'Phone number: ${client.phoneNumber}',
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 10,
                           color: Colors.white70,
                         ),
                       ),

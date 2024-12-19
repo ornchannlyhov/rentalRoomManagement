@@ -22,6 +22,7 @@ class ReceiptDetailScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildSectionHeader('Receipt Information'),
+              _buildInfoRow('Building', receipt.room!.building!.name),
               _buildInfoRow('Room number', receipt.room!.roomNumber),
               _buildInfoRow('Room Owner', receipt.room!.client!.name),
               _buildInfoRow('Date', DateFormat.yMd().format(receipt.date)),

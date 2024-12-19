@@ -32,7 +32,7 @@ class _BuildingCardState extends State<BuildingCard> {
   Future<void> _loadRoom() async {
     await roomRepository.load();
     setState(() {
-      rooms = roomRepository.getAllRooms();
+      rooms = roomRepository.getThisBuildingRooms(widget.building!.id);
     });
   }
 

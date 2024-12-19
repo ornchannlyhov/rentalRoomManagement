@@ -101,6 +101,14 @@ class _ReceiptCardState extends State<ReceiptCard> {
                       fontSize: 12,
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Building: ${widget.receipt.room!.building!.name}',
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
                 ],
               ),
             ),

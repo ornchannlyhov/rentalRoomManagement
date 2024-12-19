@@ -139,7 +139,13 @@ class _ClientFormState extends State<ClientForm> {
                 items: availableRooms.map((room) {
                   return DropdownMenuItem(
                     value: room,
-                    child: Text('Room: ${room.roomNumber}'),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Room: ${room.roomNumber}'),
+                        Text('-${room.building!.name}')
+                      ],
+                    ),
                   );
                 }).toList(),
                 onChanged: (value) async {

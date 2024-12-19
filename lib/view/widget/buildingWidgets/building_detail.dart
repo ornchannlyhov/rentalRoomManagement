@@ -30,7 +30,6 @@ class _BuildingDetailState extends State<BuildingDetail> {
   List<Building> buildings = [];
   List<Service> services = [];
   List<Room> rooms = [];
-
   final buildingRepository = BuildingRepository();
   final roomRepository = RoomRepository();
   final serviceRepository = ServiceRepository();
@@ -50,7 +49,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
     setState(() {
       buildings = buildingRepository.getAllBuildings();
       services = serviceRepository.getAllServices();
-      rooms = roomRepository.getAllRooms();
+      rooms = roomRepository.getThisBuildingRooms(widget.building.id);
     });
   }
 
@@ -147,7 +146,6 @@ class _BuildingDetailState extends State<BuildingDetail> {
         action: SnackBarAction(
           label: 'Undo',
           onPressed: () {
-            
             setState(() {
               roomRepository.restoreRoom(index, removedRoom);
               widget.building.rooms.insert(index, removedRoom);

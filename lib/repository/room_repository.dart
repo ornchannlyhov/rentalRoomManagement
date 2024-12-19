@@ -150,8 +150,14 @@ class RoomRepository {
     return List.from(_roomCache);
   }
 
-  List <Room> getAvailableRooms (){
-    final availableRooms = _roomCache.where((room)=> room.roomStatus == RoomStatus.available);
+  List<Room> getAvailableRooms() {
+    final availableRooms =
+        _roomCache.where((room) => room.roomStatus == RoomStatus.available);
     return List.from(availableRooms);
+  }
+
+  List<Room> getThisBuildingRooms(String buildingId) {
+    final rooms = _roomCache.where((room) => room.building!.id == buildingId);
+    return List.from(rooms);
   }
 }
