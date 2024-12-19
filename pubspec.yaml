@@ -65,6 +65,7 @@ flutter:
   # avatar
     - assets\avatar\female_avatar.png
     - assets\avatar\male_avatar.png
+    - assets\avatar\lgbtq+_avatar.png
   # data
     - assets\data\buildings.json
     - assets\data\clients.json

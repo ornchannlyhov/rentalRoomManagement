@@ -8,10 +8,19 @@ class ClientCard extends StatelessWidget {
 
   const ClientCard({super.key, required this.client, required this.onTap});
 
+  String getAvatar() {
+    switch (client.gender) {
+      case Gender.female:
+        return 'assets/avatar/female_avatar.png';
+      case Gender.male:
+        return 'assets/avatar/male_avatar.png';
+      case Gender.other:
+        return 'assets/avatar/lgbtq+_avatar.png';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    const maleAvatar = 'assets/avatar/male_avatar.png';
-    const femaleAvatar = 'assets/avatar/female_avatar.png';
     return GestureDetector(
         onTap: onTap,
         child: Card(
@@ -27,7 +36,7 @@ class ClientCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network(
-                    client.gender == Gender.male ? maleAvatar : femaleAvatar,
+                    getAvatar(),
                     height: 70,
                     width: 70,
                     fit: BoxFit.cover,
