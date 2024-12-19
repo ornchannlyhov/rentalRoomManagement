@@ -94,7 +94,7 @@ class _BuildingScreenState extends State<BuildingScreen> {
         action: SnackBarAction(
           label: 'Undo',
           onPressed: () {
-            buildingRepository.restorebuilding(index, removedBuilding);
+            buildingRepository.restoreBuilding(index, removedBuilding);
             setState(() {
               buildings.insert(index, removedBuilding);
             });

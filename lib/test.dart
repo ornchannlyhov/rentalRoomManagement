@@ -1,5 +1,6 @@
 import 'package:receipts_v2/model/building.dart';
 import 'package:receipts_v2/model/client.dart';
+import 'package:receipts_v2/model/enum/gender.dart';
 import 'package:receipts_v2/model/enum/payment_status.dart';
 import 'package:receipts_v2/model/enum/room_status.dart';
 import 'package:receipts_v2/model/receipt.dart';
@@ -20,8 +21,8 @@ void main() {
       roomStatus: RoomStatus.available, price: 120);
   room1.building = building;
   Client client = Client(
-      id: const Uuid().v4(), name: 'ly hov', phoneNumber: '096 414 1037');
-  client.assignRoom(room1);
+      id: const Uuid().v4(), name: 'ly hov', phoneNumber: '096 414 1037',gender: Gender.male);
+  client.room=room1;
   Service service1 =
       Service(id: const Uuid().v4(), name: 'Internet', price: 5.0);
   Service service2 =

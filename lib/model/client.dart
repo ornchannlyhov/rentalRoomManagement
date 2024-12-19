@@ -1,3 +1,4 @@
+import 'package:receipts_v2/model/enum/gender.dart';
 import 'package:receipts_v2/model/room.dart';
 import 'package:json_annotation/json_annotation.dart';
 
@@ -9,16 +10,14 @@ class Client {
   final String name;
   final String phoneNumber;
   Room? room;
+  Gender gender;
 
   Client(
       {required this.id,
       required this.name,
       required this.phoneNumber,
+      required this.gender,
       this.room});
-
-  void assignRoom(Room room) {
-    this.room = room;
-  }
 
   factory Client.fromJson(Map<String, dynamic> json) => _$ClientFromJson(json);
 

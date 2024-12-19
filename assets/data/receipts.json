@@ -30,6 +30,7 @@
       "client": {
         "id": "client1",
         "name": "John Doe",
+        "gender": "male",
         "phoneNumber": "123456789",
         "room": {
           "id": "room1",
@@ -78,6 +79,7 @@
       "client": {
         "id": "client1",
         "name": "John Doe",
+        "gender": "male",
         "phoneNumber": "123456789",
         "room": {
           "id": "room1",
@@ -126,6 +128,7 @@
       "client": {
         "id": "client2",
         "name": "Jane Smith",
+        "gender": "female",
         "phoneNumber": "987654321",
         "room": {
           "id": "room2",

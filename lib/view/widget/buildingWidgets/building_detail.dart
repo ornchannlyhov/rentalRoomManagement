@@ -5,6 +5,7 @@ import 'package:receipts_v2/model/enum/room_status.dart';
 import 'package:receipts_v2/model/room.dart';
 import 'package:receipts_v2/model/service.dart';
 import 'package:receipts_v2/repository/buidling_repository.dart';
+import 'package:receipts_v2/repository/client_repository.dart';
 import 'package:receipts_v2/repository/room_repository.dart';
 import 'package:receipts_v2/repository/service_repository.dart';
 import 'package:receipts_v2/view/widget/buildingWidgets/building_card.dart';
@@ -33,6 +34,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
   final buildingRepository = BuildingRepository();
   final roomRepository = RoomRepository();
   final serviceRepository = ServiceRepository();
+  final clientRepository = ClientRepository();
 
   @override
   void initState() {
@@ -44,12 +46,12 @@ class _BuildingDetailState extends State<BuildingDetail> {
     await buildingRepository.load();
     await serviceRepository.load();
     await roomRepository.load();
+    await clientRepository.load();
     setState(() {
       buildings = buildingRepository.getAllBuildings();
       services = serviceRepository.getAllServices();
       rooms = roomRepository.getAllRooms();
     });
-    print(rooms.length);
   }
 
   Future<void> _addRoom(BuildContext context) async {
@@ -64,9 +66,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
     if (newRoom != null) {
       setState(() {
         roomRepository.createRoom(newRoom);
-        buildingRepository.addRoom(widget.building.id, newRoom);
         rooms.add(newRoom);
-        _loadServiceAndRoom();
       });
     }
   }
@@ -88,7 +88,6 @@ class _BuildingDetailState extends State<BuildingDetail> {
         final index = rooms.indexWhere((r) => r.id == updatedRoom.id);
         if (index != -1) {
           rooms[index] = updatedRoom;
-          _loadServiceAndRoom();
         }
       });
     }
@@ -107,7 +106,6 @@ class _BuildingDetailState extends State<BuildingDetail> {
       setState(() {
         serviceRepository.createService(newService);
         services.add(newService);
-        _loadServiceAndRoom();
       });
     }
   }
@@ -129,16 +127,16 @@ class _BuildingDetailState extends State<BuildingDetail> {
         final index = services.indexWhere((s) => s.id == updatedService.id);
         if (index != -1) {
           services[index] = updatedService;
-          _loadServiceAndRoom();
         }
       });
     }
   }
 
   void _deleteRoom(BuildContext context, int index, Room room) {
-    roomRepository.deleteRoom(room.id);
     setState(() {
       rooms.removeAt(index);
+      roomRepository.deleteRoom(room.id);
+      clientRepository.deleteClient(room.client!.id);
     });
     final removedRoom = room;
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -149,22 +147,21 @@ class _BuildingDetailState extends State<BuildingDetail> {
         action: SnackBarAction(
           label: 'Undo',
           onPressed: () {
-            roomRepository.restoreRoom(index, removedRoom);
+            
             setState(() {
+              roomRepository.restoreRoom(index, removedRoom);
+              widget.building.rooms.insert(index, removedRoom);
               rooms.insert(index, removedRoom);
             });
           },
         ),
       ),
     );
-    print(rooms.length);
-    print(rooms.where((room) => room.roomStatus == RoomStatus.occupied).length);
-    _loadServiceAndRoom();
   }
 
   void _deleteService(BuildContext context, int index, Service service) {
-    serviceRepository.deleteService(service.id);
     setState(() {
+      serviceRepository.deleteService(service.id);
       services.removeAt(index);
     });
     final removedService = service;
@@ -176,15 +173,14 @@ class _BuildingDetailState extends State<BuildingDetail> {
         action: SnackBarAction(
           label: 'Undo',
           onPressed: () {
-            serviceRepository.restoreService(index, removedService);
             setState(() {
+              serviceRepository.restoreService(index, removedService);
               services.insert(index, removedService);
             });
           },
         ),
       ),
     );
-    _loadServiceAndRoom();
   }
 
   Widget _buildRoomContent() {
@@ -326,7 +322,6 @@ class _BuildingDetailState extends State<BuildingDetail> {
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
             child: BuildingCard(
               building: widget.building,
-              onTap: () {},
             ),
           ),
           Padding(

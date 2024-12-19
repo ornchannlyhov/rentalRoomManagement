@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:receipts_v2/model/client.dart';
+import 'package:receipts_v2/model/enum/room_status.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:receipts_v2/model/room.dart';
 
@@ -120,7 +122,36 @@ class RoomRepository {
     await save();
   }
 
+  Future<void> updateToOccupied(String roomId) async {
+    final room = _roomCache.firstWhere((room) => room.id == roomId);
+    room.roomStatus = RoomStatus.occupied;
+    updateRoom(room);
+  }
+
+  Future<void> updateToAvailable(String roomId) async {
+    final room = _roomCache.firstWhere((room) => room.id == roomId);
+    room.roomStatus = RoomStatus.available;
+    updateRoom(room);
+  }
+
+  Future<void> addClient(String roomId, Client client) async {
+    final room = _roomCache.firstWhere((room) => room.id == roomId);
+    room.client = client;
+    updateRoom(room);
+  }
+
+  Future<void> removeClient(String roomId) async {
+    final room = _roomCache.firstWhere((room) => room.id == roomId);
+    room.client = null;
+    updateRoom(room);
+  }
+
   List<Room> getAllRooms() {
     return List.from(_roomCache);
+  }
+
+  List <Room> getAvailableRooms (){
+    final availableRooms = _roomCache.where((room)=> room.roomStatus == RoomStatus.available);
+    return List.from(availableRooms);
   }
 }

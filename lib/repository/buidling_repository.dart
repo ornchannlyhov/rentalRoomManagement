@@ -122,7 +122,7 @@ class BuildingRepository {
     }
   }
 
-  Future<void> restorebuilding(int restoreIndex, Building building) async {
+  Future<void> restoreBuilding(int restoreIndex, Building building) async {
     _buildingCache.insert(restoreIndex, building);
     await save();
   }
@@ -132,12 +132,6 @@ class BuildingRepository {
     await save();
   }
 
-  Future<void> addRoom(String buildingId, Room room) async {
-    Building? building =
-        _buildingCache.firstWhere((building) => building.id == buildingId);
-    building.rooms.add(room);
-    await save();
-  }
 
   Future<void> updateRoom(String buildingId, Room room) async {
     Building? building = _buildingCache.firstWhere(

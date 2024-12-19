@@ -45,9 +45,8 @@ class ClientRepository {
       if (file.existsSync()) {
         final jsonString = await file.readAsString();
         final List<dynamic> jsonData = jsonDecode(jsonString);
-        _clientCache = jsonData
-            .map((clientJson) => Client.fromJson(clientJson))
-            .toList();
+        _clientCache =
+            jsonData.map((clientJson) => Client.fromJson(clientJson)).toList();
       } else {
         await _loadFromAsset();
         await save();
@@ -116,6 +115,17 @@ class ClientRepository {
     }
   }
 
+  Future<void> restoreClient(int restoreIndex, Client client) async {
+    _clientCache.insert(restoreIndex, client);
+    await save();
+  }
+
+  Future<void> removeRoom(String clientId) async{
+    final client = _clientCache.firstWhere((client)=> client.id == clientId);
+    client.room = null;
+    await updateClient(client);
+  }
+  
   Future<void> deleteClient(String clientId) async {
     _clientCache.removeWhere((client) => client.id == clientId);
     await save();

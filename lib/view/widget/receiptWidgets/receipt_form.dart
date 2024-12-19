@@ -76,6 +76,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
       selectedRoom = receipt.room;
       selectedServices = receipt.services.toList();
     } else {
+      id=  const Uuid().v4();
       date = DateTime.now();
       dueDate = DateTime.now().add(const Duration(days: 7));
       lastWaterUsed = 0;
@@ -113,32 +114,31 @@ class _ReceiptFormState extends State<ReceiptForm> {
     final now = DateTime.now();
     final startOfPreviousMonth = DateTime(now.year, now.month - 1, 1);
     final endOfPreviousMonth = DateTime(now.year, now.month, 0);
-
-    try {
-      previousReceipt = widget.receipts.firstWhere(
-        (receipt) =>
-            receipt.room!.roomNumber == selectedRoom!.roomNumber &&
-            receipt.date.isAfter(startOfPreviousMonth.subtract(const Duration(days: 1))) &&
-            receipt.date.isBefore(endOfPreviousMonth.add(const Duration(days: 1))),
-      );
-
+    previousReceipt = widget.receipts.firstWhere(
+      (receipt) =>
+          receipt.room!.roomNumber == selectedRoom!.roomNumber &&
+          receipt.date.isAfter(
+              startOfPreviousMonth.subtract(const Duration(days: 1))) &&
+          receipt.date
+              .isBefore(endOfPreviousMonth.add(const Duration(days: 1))),
+      orElse: () => Receipt(
+          id: id,
+          date: date,
+          dueDate: dueDate,
+          lastWaterUsed: lastWaterUsed,
+          lastElectricUsed: lastElectricUsed,
+          thisWaterUsed: thisWaterUsed,
+          thisElectricUsed: thisElectricUsed,
+          paymentStatus: paymentStatus),
+    );
+    if (previousReceipt != null) {
       setState(() {
-        if (previousReceipt != null) {
-          lastWaterUsed = previousReceipt!.thisWaterUsed;
-          lastElectricUsed = previousReceipt!.thisElectricUsed;
-          lastWaterUsedController.text = lastWaterUsed.toString();
-          lastElectricUsedController.text = lastElectricUsed.toString();
-          selectedServices = previousReceipt!.services;
-        } else {
-          lastWaterUsed = 0;
-          lastElectricUsed = 0;
-          selectedServices = [];
-          lastWaterUsedController.clear();
-          lastElectricUsedController.clear();
-        }
+        lastWaterUsed = previousReceipt!.thisWaterUsed;
+        lastElectricUsed = previousReceipt!.thisElectricUsed;
+        lastWaterUsedController.text = lastWaterUsed.toString();
+        lastElectricUsedController.text = lastElectricUsed.toString();
+        selectedServices = previousReceipt!.services;
       });
-    } catch (e) {
-      throw Exception('Error loading last month data: $e');
     }
   }
 
@@ -146,7 +146,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       final newReceipt = Receipt(
-        id: isEditing ? widget.receipt!.id : const Uuid().v4(),
+        id: isEditing ? widget.receipt!.id :id,
         date: isEditing ? widget.receipt!.date : DateTime.now(),
         dueDate: dueDate,
         lastWaterUsed: lastWaterUsed,
@@ -232,10 +232,9 @@ class _ReceiptFormState extends State<ReceiptForm> {
                 onSaved: (value) => lastElectricUsed = int.parse(value!),
               ),
               NumberTextFormField(
-                initialValue: thisWaterUsed.toString(),
-                label: 'This Month Water',
-                onSaved: (value) => thisWaterUsed = int.parse(value!)
-              ),
+                  initialValue: thisWaterUsed.toString(),
+                  label: 'This Month Water',
+                  onSaved: (value) => thisWaterUsed = int.parse(value!)),
               NumberTextFormField(
                 initialValue: thisElectricUsed.toString(),
                 label: 'This Month Electric',
@@ -244,8 +243,8 @@ class _ReceiptFormState extends State<ReceiptForm> {
               const Text('Services'),
               Wrap(
                 children: availableServices.map((service) {
-                  final isSelected = selectedServices.any(
-                      (selected) => selected.id == service.id);
+                  final isSelected = selectedServices
+                      .any((selected) => selected.id == service.id);
                   return CheckboxListTile(
                     title: Text(service.name),
                     value: isSelected,
@@ -277,4 +276,5 @@ class _ReceiptFormState extends State<ReceiptForm> {
         ),
       ),
     );
-  }}
+  }
+}

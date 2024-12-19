@@ -1,0 +1,40 @@
+[
+  {
+    "id": "client1",
+    "name": "John Doe",
+    "phoneNumber": "123456789",
+    "gender": "male",
+    "room": {
+      "id": "room1",
+      "roomNumber": "101",
+      "roomStatus": "occupied",
+      "price": 120,
+      "building": {
+        "id": "building1",
+        "name": "Sunset Apartments",
+        "rentPrice": 120.0,
+        "electricPrice": 0.3,
+        "waterPrice": 0.5
+      }
+    }
+  },
+  {
+    "id": "client2",
+    "name": "Jane Smith",
+    "phoneNumber": "987654321",
+    "gender": "female",
+    "room": {
+      "id": "room2",
+      "roomNumber": "102",
+      "roomStatus": "occupied",
+      "price": 120,
+      "building": {
+        "id": "building1",
+        "name": "Sunset Apartments",
+        "rentPrice": 120.0,
+        "electricPrice": 0.3,
+        "waterPrice": 0.5
+      }
+    }
+  }
+]

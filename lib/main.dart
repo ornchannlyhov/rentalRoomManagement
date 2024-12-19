@@ -3,6 +3,7 @@ import 'package:receipts_v2/view/appComponent/app_menu.dart';
 import 'package:receipts_v2/view/screen/building_screen.dart';
 import 'package:receipts_v2/view/screen/history_screen.dart';
 import 'package:receipts_v2/view/screen/receipt_screen.dart';
+import 'package:receipts_v2/view/screen/client_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -38,7 +39,7 @@ class _MainScreenState extends State<MainScreen> {
     const ReceiptScreen(),
     const HistoryScreen(),
     const BuildingScreen(),
-    const ReceiptScreen(),
+    const ClientScreen(),
   ];
 
   void _onTabSelected(int index) {

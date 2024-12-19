@@ -14,7 +14,8 @@
         "client": {
           "id": "client1",
           "name": "John Doe",
-          "phoneNumber": "123456789"
+          "phoneNumber": "123456789",
+          "gender": "male"
         }
       },
       {
@@ -25,7 +26,8 @@
         "client": {
           "id": "client2",
           "name": "Jane Smith",
-          "phoneNumber": "987654321"
+          "phoneNumber": "987654321",
+          "gender": "female"
         }
       }
     ]
