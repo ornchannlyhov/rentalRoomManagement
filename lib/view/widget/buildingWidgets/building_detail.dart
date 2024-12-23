@@ -148,6 +148,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
           onPressed: () {
             setState(() {
               roomRepository.restoreRoom(index, removedRoom);
+              clientRepository.restoreClient(index, removedRoom.client);
               widget.building.rooms.insert(index, removedRoom);
               rooms.insert(index, removedRoom);
             });

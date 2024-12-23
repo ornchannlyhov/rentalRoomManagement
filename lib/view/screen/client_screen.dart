@@ -73,28 +73,28 @@ class _ClientScreenState extends State<ClientScreen> {
   void _deleteClient(BuildContext context, int index, Client client) {
     clientRepository.deleteClient(client.id);
     roomRepository.updateToAvailable(client.room!.id);
-    roomRepository.removeClient (client.room!.id);
+    roomRepository.removeClient(client.room!.id);
     setState(() {
       clients.removeAt(index);
     });
-    final removedBuilding = client;
+    final removedClient = client;
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 3),
-        content: Text('Building "${client.name}" deleted'),
+        content: Text(' "${client.name}" deleted'),
         action: SnackBarAction(
           label: 'Undo',
           onPressed: () {
-            clientRepository.restoreClient(index, removedBuilding);
+            roomRepository.updateToOccupied(removedClient.room!.id);
+            clientRepository.restoreClient(index, removedClient);
             setState(() {
-              clients.insert(index, removedBuilding);
+              clients.insert(index, removedClient);
             });
           },
         ),
       ),
     );
-    _loadClients();
   }
 
   @override

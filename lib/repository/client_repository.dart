@@ -115,8 +115,8 @@ class ClientRepository {
     }
   }
 
-  Future<void> restoreClient(int restoreIndex, Client client) async {
-    _clientCache.insert(restoreIndex, client);
+  Future<void> restoreClient(int restoreIndex, Client? client) async {
+    _clientCache.insert(restoreIndex, client!);
     await save();
   }
 
