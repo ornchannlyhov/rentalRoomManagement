@@ -59,8 +59,4 @@ class Receipt {
       _$ReceiptFromJson(json);
 
   Map<String, dynamic> toJson() => _$ReceiptToJson(this);
-
-  @override
-  String toString() =>
-      'lastwater: $lastWaterUsed, lastElectric: $lastElectricUsed, thisWater: $thisWaterUsed, thisElectric: $thisElectricUsed service: ${services.toString()}';
 }

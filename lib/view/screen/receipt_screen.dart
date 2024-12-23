@@ -31,14 +31,14 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
     _loadReceipt();
 
     Timer.periodic(const Duration(hours: 1), (timer) async {
-      await receiptRepository.updateReceiptStatusToOverdue();
+      await receiptRepository.updateStatusToOverdue();
       setState(() {
         allReceipts = receiptRepository.getAllReceipts();
         receipts = receiptRepository.getReceiptsForCurrentMonth();
       });
     });
-  }
 
+  }
   Future<void> _loadReceipt() async {
     await receiptRepository.load();
     setState(() {
@@ -132,7 +132,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
   @override
   Widget build(BuildContext context) {
     final thisMonth = DateFormat.MMMM().format(DateTime.now());
-    const Color cardColor = Color.fromARGB(255, 18, 13, 29);
+    const Color cardColor = Color(0xFF120D1D);
     final filteredReceipts = _filterReceiptsByStatus(selectedStatus);
 
     return Scaffold(

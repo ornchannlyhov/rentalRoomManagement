@@ -100,7 +100,7 @@ class ReceiptRepository {
       await _loadFromAsset();
       await save();
     }
-    updateReceiptStatusToOverdue();
+    updateStatusToOverdue();
   }
   Future<void> createReceipt(Receipt newReceipt) async {
     final now = DateTime.now();
@@ -157,7 +157,7 @@ class ReceiptRepository {
     }).toList();
   }
 
-  Future<void> updateReceiptStatusToOverdue() async {
+  Future<void> updateStatusToOverdue() async {
     final now = DateTime.now();
     bool isModified = false;
     for (var receipt in _receiptCache) {

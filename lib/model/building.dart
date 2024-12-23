@@ -24,7 +24,4 @@ class Building {
       _$BuildingFromJson(json);
 
   Map<String, dynamic> toJson() => _$BuildingToJson(this);
-
-  @override
-  String toString() => 'name: $name , rooms: ${rooms.length}';
 }
