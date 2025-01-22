@@ -8,12 +8,12 @@ import 'package:receipts_v2/repository/buidling_repository.dart';
 import 'package:receipts_v2/repository/client_repository.dart';
 import 'package:receipts_v2/repository/room_repository.dart';
 import 'package:receipts_v2/repository/service_repository.dart';
-import 'package:receipts_v2/view/widget/buildingWidgets/building_card.dart';
-import 'package:receipts_v2/view/widget/buildingWidgets/switch_button.dart';
-import 'package:receipts_v2/view/widget/roomWidget/room_card.dart';
-import 'package:receipts_v2/view/widget/roomWidget/room_form.dart';
-import 'package:receipts_v2/view/widget/serviceWidget/service_card.dart';
-import 'package:receipts_v2/view/widget/serviceWidget/service_form.dart';
+import 'package:receipts_v2/view/screen/widget/building/building_card.dart';
+import 'package:receipts_v2/view/screen/widget/building/switch_button.dart';
+import 'package:receipts_v2/view/screen/widget/room/room_card.dart';
+import 'package:receipts_v2/view/screen/widget/room/room_form.dart';
+import 'package:receipts_v2/view/screen/widget/service/service_card.dart';
+import 'package:receipts_v2/view/screen/widget/service/service_form.dart';
 
 class BuildingDetail extends StatefulWidget {
   final Building building;

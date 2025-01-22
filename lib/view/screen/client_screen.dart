@@ -5,8 +5,8 @@ import 'package:receipts_v2/model/room.dart';
 import 'package:receipts_v2/repository/client_repository.dart';
 import 'package:receipts_v2/repository/room_repository.dart';
 import 'package:receipts_v2/view/appComponent/app_bar.dart';
-import 'package:receipts_v2/view/widget/clientWidgets/client_card.dart';
-import 'package:receipts_v2/view/widget/clientWidgets/client_form.dart';
+import 'package:receipts_v2/view/screen/widget/client/client_card.dart';
+import 'package:receipts_v2/view/screen/widget/client/client_form.dart';
 
 class ClientScreen extends StatefulWidget {
   const ClientScreen({super.key});

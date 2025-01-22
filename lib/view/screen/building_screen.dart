@@ -5,9 +5,9 @@ import 'package:receipts_v2/model/service.dart';
 import 'package:receipts_v2/repository/buidling_repository.dart';
 import 'package:receipts_v2/repository/service_repository.dart';
 import 'package:receipts_v2/view/appComponent/app_bar.dart';
-import 'package:receipts_v2/view/widget/buildingWidgets/building_card.dart';
-import 'package:receipts_v2/view/widget/buildingWidgets/building_detail.dart';
-import 'package:receipts_v2/view/widget/buildingWidgets/building_form.dart';
+import 'package:receipts_v2/view/screen/widget/building/building_card.dart';
+import 'package:receipts_v2/view/screen/widget/building/building_detail.dart';
+import 'package:receipts_v2/view/screen/widget/building/building_form.dart';
 
 class BuildingScreen extends StatefulWidget {
   const BuildingScreen({super.key});

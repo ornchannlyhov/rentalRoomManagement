@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:receipts_v2/model/receipt.dart';
 import 'package:receipts_v2/repository/receipt_repository.dart';
-import 'package:receipts_v2/view/widget/HistoryWidgets/filter_button.dart';
-import 'package:receipts_v2/view/widget/receiptWidgets/receipt_detail.dart';
-import 'package:receipts_v2/view/widget/receiptWidgets/receipt_card.dart';
+import 'package:receipts_v2/view/screen/widget/history/filter_button.dart';
+import 'package:receipts_v2/view/screen/widget/receipt/receipt_detail.dart';
+import 'package:receipts_v2/view/screen/widget/receipt/receipt_card.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
