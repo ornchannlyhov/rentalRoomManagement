@@ -117,7 +117,7 @@ class _AnimatedCardContent extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            "${building.rentPrice}฿",
+                            "${building.rentPrice}\$",
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: theme.colorScheme.primary,
                               fontWeight: FontWeight.bold,
@@ -126,7 +126,7 @@ class _AnimatedCardContent extends StatelessWidget {
                           const SizedBox(width: 4),
                           Text(
                             "/ខែ",
-                            style: theme.textTheme.bodySmall?.copyWith(
+                            style: theme.textTheme.bodyMedium?.copyWith(
                               color:
                                   theme.colorScheme.onSurface.withOpacity(0.7),
                             ),
@@ -206,7 +206,7 @@ class _AnimatedCardContent extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: theme.textTheme.labelSmall?.copyWith(
+                style: theme.textTheme.labelMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(0.7),
                 ),
               ),

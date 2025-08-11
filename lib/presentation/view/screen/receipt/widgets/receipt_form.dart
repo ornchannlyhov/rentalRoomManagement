@@ -185,7 +185,8 @@ class _ReceiptFormState extends State<ReceiptForm> {
       success: (rooms) {
         if (selectedRoom != null) {
           try {
-            correctedSelectedRoom = rooms.firstWhere((r) => r.id == selectedRoom!.id);
+            correctedSelectedRoom =
+                rooms.firstWhere((r) => r.id == selectedRoom!.id);
           } catch (e) {
             correctedSelectedRoom = null;
           }
