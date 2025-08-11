@@ -1,12 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:receipts_v2/view/appComponent/app_menu.dart';
-import 'package:receipts_v2/view/screen/building_screen.dart';
-import 'package:receipts_v2/view/screen/history_screen.dart';
-import 'package:receipts_v2/view/screen/receipt_screen.dart';
-import 'package:receipts_v2/view/screen/client_screen.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:provider/provider.dart';
+import 'package:receipts_v2/presentation/providers/building_provider.dart';
+import 'package:receipts_v2/presentation/providers/receipt_provider.dart';
+import 'package:receipts_v2/presentation/providers/room_provider.dart';
+import 'package:receipts_v2/presentation/providers/service_provider.dart';
+import 'package:receipts_v2/presentation/providers/tenant_provider.dart';
+import 'package:receipts_v2/presentation/view/app_widgets/app_menu.dart';
+import 'package:receipts_v2/presentation/view/screen/building/building_screen.dart';
+import 'package:receipts_v2/presentation/view/screen/history/history_screen.dart';
+import 'package:receipts_v2/presentation/view/screen/receipt/receipt_screen.dart';
+import 'package:receipts_v2/presentation/view/screen/tenant/tenant_screen.dart';
+import 'core/app_theme.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() {
+Future<void> main() async {
+  // clearSecureStorage();
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting();
   runApp(const MyApp());
+}
+
+Future<void> clearSecureStorage() async {
+  const storage = FlutterSecureStorage();
+  await storage.deleteAll();
 }
 
 class MyApp extends StatelessWidget {
@@ -14,13 +31,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Receipts',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF1A0C2D),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => BuildingProvider()..load()),
+        ChangeNotifierProvider(create: (_) => TenantProvider()..load()),
+        ChangeNotifierProvider(create: (_) => ServiceProvider()..load()),
+        ChangeNotifierProvider(create: (_) => RoomProvider()..load()),
+        ChangeNotifierProvider(create: (_) => ReceiptProvider()..load()),
+      ],
+      child: MaterialApp(
+        title: 'Receipts',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.dark,
+        home: const MainScreen(),
       ),
-      home: const MainScreen(),
     );
   }
 }
@@ -39,7 +65,7 @@ class _MainScreenState extends State<MainScreen> {
     const ReceiptScreen(),
     const HistoryScreen(),
     const BuildingScreen(),
-    const ClientScreen(),
+    const TenantScreen(),
   ];
 
   void _onTabSelected(int index) {
@@ -50,16 +76,18 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: _screens[_currentIndex],
-        ),
-        AppMenu(
-          selectedIndex: _currentIndex,
-          onTap: _onTabSelected,
-        ),
-      ],
+    return Scaffold(
+      body: Column(
+        children: [
+          Expanded(
+            child: _screens[_currentIndex],
+          ),
+          AppMenu(
+            selectedIndex: _currentIndex,
+            onTap: _onTabSelected,
+          ),
+        ],
+      ),
     );
   }
 }
