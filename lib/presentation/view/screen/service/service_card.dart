@@ -37,7 +37,7 @@ class ServiceCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'តម្លៃសេវា: ฿${service.price}',
+              'តម្លៃសេវា: ${service.price}\$',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

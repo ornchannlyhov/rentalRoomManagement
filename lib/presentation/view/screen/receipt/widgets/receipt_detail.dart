@@ -93,7 +93,8 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
         child: DropdownButton<String>(
           value: _selectedCurrency,
           isDense: true,
-          onChanged: !_isServiceAvailable || _isLoading
+          // Disable dropdown when service unavailable or loading
+          onChanged: (!_isServiceAvailable || _isLoading)
               ? null
               : (String? newValue) {
                   if (newValue != null) {
@@ -131,8 +132,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-            'វិក្កយបត្របន្ទប់ ${widget.receipt.room?.roomNumber ?? "N/A"}'),
+        title: Text('វិក្កយបត្របន្ទប់ជួល'),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -145,7 +145,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
               child: Column(
                 children: [
                   Text(
-                    'វិក្កយបត្រជួលបន្ទប់',
+                    'វិក្កយបត្របន្ទប់ ${widget.receipt.room?.roomNumber ?? "N/A"}',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.primary,
@@ -154,7 +154,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                   const SizedBox(height: 4),
                   Text(
                     DateFormat.yMMMMd('km').format(widget.receipt.date),
-                    style: theme.textTheme.bodySmall,
+                    style: theme.textTheme.titleSmall,
                   ),
                 ],
               ),
@@ -260,7 +260,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
 
             // Service availability warning
             if (!_isServiceAvailable) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -277,7 +277,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Currency service unavailable - showing USD only',
+                        'សេវាប្រាក់ប្តូរមានបញ្ហា - កំពុងបង្ហាញអត្រាមូលដ្ឋាន USD ជំនួសវិញ',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.orange.shade800,
@@ -289,22 +289,8 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
               ),
             ],
 
-            // Currency note
-            if (_selectedCurrency != 'USD' && _convertedTotalPrice != null) ...[
-              const SizedBox(height: 8),
-              Center(
-                child: Text(
-                  'Converted from USD at current exchange rate',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
-            ],
-
             // Footer note
-            const SizedBox(height: 16),
+            const SizedBox(height: 48),
             Center(
               child: Text(
                 'សូមអរគុណសម្រាប់ការប្រើប្រាស់សេវាកម្មរបស់យើងខ្ញុំ!',

@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
 class CurrencyService {
@@ -9,15 +10,19 @@ class CurrencyService {
   static Map<String, double>? _cachedRates;
   static DateTime? _lastFetch;
 
-  // Supported currencies with their symbols
   static const Map<String, String> supportedCurrencies = {
     'USD': '\$',
-    'KHR': '៛', // Cambodian Riel
-    'THB': '฿', // Thai Baht
+    'KHR': '៛', 
+    'THB': '฿', 
   };
 
-  /// Get current exchange rates from USD to other currencies
-  static Future<Map<String, double>?> _fetchExchangeRates() async {
+  static const Map<String, double> _defaultRates = {
+    'USD': 1.0,
+    'KHR': 4100.0, 
+    'THB': 40.0,   
+  };
+
+  static Future<Map<String, double>> _fetchExchangeRates() async {
     try {
       final response = await http.get(
         Uri.parse(_baseUrl),
@@ -28,62 +33,53 @@ class CurrencyService {
         final data = json.decode(response.body);
         final ratesData = data['rates'] as Map<String, dynamic>;
 
-        // Convert all values to double to handle both int and double responses
         final rates = <String, double>{};
         ratesData.forEach((key, value) {
           rates[key] = (value as num).toDouble();
         });
 
-        // Cache the results
         _cachedRates = rates;
         _lastFetch = DateTime.now();
 
         return rates;
       } else {
         print('Failed to fetch exchange rates: ${response.statusCode}');
-        return null;
+        return _defaultRates;
       }
     } catch (e) {
       print('Error fetching exchange rates: $e');
-      return null;
+      return _defaultRates;
     }
   }
 
-  /// Get exchange rates with caching
-  static Future<Map<String, double>?> getExchangeRates() async {
-    // Check if we have cached data and it's still valid
+  static Future<Map<String, double>> getExchangeRates() async {
     if (_cachedRates != null &&
         _lastFetch != null &&
         DateTime.now().difference(_lastFetch!) < _cacheTimeout) {
-      return _cachedRates;
+      return _cachedRates!;
     }
 
-    // Fetch new rates
     return await _fetchExchangeRates();
   }
 
-  /// Convert amount from USD to target currency
   static Future<double?> convertFromUSD(
       double usdAmount, String targetCurrency) async {
     if (targetCurrency == 'USD') return usdAmount;
 
     final rates = await getExchangeRates();
-    if (rates == null || !rates.containsKey(targetCurrency)) {
+    if (!rates.containsKey(targetCurrency)) {
       return null;
     }
 
     return usdAmount * rates[targetCurrency]!;
   }
 
-  /// Convert amount between any two currencies
   static Future<double?> convertCurrency(
       double amount, String fromCurrency, String toCurrency) async {
     if (fromCurrency == toCurrency) return amount;
 
     final rates = await getExchangeRates();
-    if (rates == null) return null;
 
-    // Convert to USD first, then to target currency
     double usdAmount;
     if (fromCurrency == 'USD') {
       usdAmount = amount;
@@ -93,7 +89,6 @@ class CurrencyService {
       return null;
     }
 
-    // Convert from USD to target currency
     if (toCurrency == 'USD') {
       return usdAmount;
     } else if (rates.containsKey(toCurrency)) {
@@ -103,24 +98,19 @@ class CurrencyService {
     }
   }
 
-  /// Format currency amount with proper symbol and decimal places
   static String formatCurrency(double amount, String currencyCode) {
     final symbol = supportedCurrencies[currencyCode] ?? currencyCode;
 
-    // Special formatting for different currencies
     switch (currencyCode) {
       case 'KHR':
-        return '$symbol${amount.toStringAsFixed(0)}'; // No decimals for Riel
       case 'JPY':
-        return '$symbol${amount.toStringAsFixed(0)}'; // No decimals for Yen
       case 'VND':
-        return '$symbol${amount.toStringAsFixed(0)}'; // No decimals for Dong
+        return '$symbol${amount.toStringAsFixed(0)}';
       default:
         return '$symbol${amount.toStringAsFixed(2)}';
     }
   }
 
-  /// Get currency name for display
   static String getCurrencyName(String currencyCode) {
     const currencyNames = {
       'USD': 'US Dollar',
@@ -131,7 +121,6 @@ class CurrencyService {
     return currencyNames[currencyCode] ?? currencyCode;
   }
 
-  /// Check if service is available (for offline handling)
   static Future<bool> isServiceAvailable() async {
     try {
       final response = await http.get(

@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -44,15 +46,18 @@ class _ReceiptFormState extends State<ReceiptForm> {
 
   late TextEditingController lastWaterUsedController;
   late TextEditingController lastElectricUsedController;
+  late TextEditingController thisWaterUsedController;
+  late TextEditingController thisElectricUsedController;
 
   bool get isEditing => widget.mode == Mode.editing;
-  Receipt? previousReceipt;
 
   @override
   void initState() {
     super.initState();
     lastWaterUsedController = TextEditingController();
     lastElectricUsedController = TextEditingController();
+    thisWaterUsedController = TextEditingController();
+    thisElectricUsedController = TextEditingController();
 
     if (isEditing && widget.receipt != null) {
       final receipt = widget.receipt!;
@@ -61,26 +66,32 @@ class _ReceiptFormState extends State<ReceiptForm> {
       dueDate = receipt.dueDate;
       lastWaterUsed = receipt.lastWaterUsed;
       lastElectricUsed = receipt.lastElectricUsed;
-      lastWaterUsedController.text = lastWaterUsed.toString();
-      lastElectricUsedController.text = lastElectricUsed.toString();
       thisWaterUsed = receipt.thisWaterUsed;
       thisElectricUsed = receipt.thisElectricUsed;
       paymentStatus = receipt.paymentStatus;
       selectedRoom = receipt.room;
       selectedServices = receipt.services.toList();
+
+      lastWaterUsedController.text = lastWaterUsed.toString();
+      lastElectricUsedController.text = lastElectricUsed.toString();
+      thisWaterUsedController.text = thisWaterUsed.toString();
+      thisElectricUsedController.text = thisElectricUsed.toString();
     } else {
       id = const Uuid().v4();
       date = DateTime.now();
       dueDate = DateTime.now().add(const Duration(days: 7));
       lastWaterUsed = 0;
       lastElectricUsed = 0;
-      lastWaterUsedController.text = lastWaterUsed.toString();
-      lastElectricUsedController.text = lastElectricUsed.toString();
       thisWaterUsed = 0;
       thisElectricUsed = 0;
       paymentStatus = PaymentStatus.pending;
       selectedRoom = null;
       selectedServices = [];
+
+      lastWaterUsedController.text = lastWaterUsed.toString();
+      lastElectricUsedController.text = lastElectricUsed.toString();
+      thisWaterUsedController.text = thisWaterUsed.toString();
+      thisElectricUsedController.text = thisElectricUsed.toString();
     }
   }
 
@@ -88,54 +99,50 @@ class _ReceiptFormState extends State<ReceiptForm> {
   void dispose() {
     lastWaterUsedController.dispose();
     lastElectricUsedController.dispose();
+    thisWaterUsedController.dispose();
+    thisElectricUsedController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadLastMonthData(BuildContext context) async {
+  Future<void> _loadLastMonthData() async {
     if (selectedRoom == null) return;
 
-    final now = DateTime.now();
-    final startOfPreviousMonth = DateTime(now.year, now.month - 1, 1);
-    final endOfPreviousMonth = DateTime(now.year, now.month, 0);
+    final currentReceiptDate = date;
+    final previousReceiptsForRoom = widget.receipts
+        .where((r) =>
+            r.room?.id == selectedRoom!.id &&
+            r.date.isBefore(currentReceiptDate))
+        .toList();
 
-    previousReceipt = widget.receipts.firstWhere(
-      (receipt) =>
-          receipt.room!.roomNumber == selectedRoom!.roomNumber &&
-          receipt.date.isAfter(
-              startOfPreviousMonth.subtract(const Duration(days: 1))) &&
-          receipt.date
-              .isBefore(endOfPreviousMonth.add(const Duration(days: 1))),
-      orElse: () => Receipt(
-        id: id,
-        date: date,
-        dueDate: dueDate,
-        lastWaterUsed: lastWaterUsed,
-        lastElectricUsed: lastElectricUsed,
-        thisWaterUsed: thisWaterUsed,
-        thisElectricUsed: thisElectricUsed,
-        paymentStatus: paymentStatus,
-        room: selectedRoom,
-        services: selectedServices,
-      ),
-    );
+    previousReceiptsForRoom.sort((a, b) => b.date.compareTo(a.date));
 
-    if (previousReceipt != null) {
-      setState(() {
-        lastWaterUsed = previousReceipt!.thisWaterUsed;
-        lastElectricUsed = previousReceipt!.thisElectricUsed;
-        lastWaterUsedController.text = lastWaterUsed.toString();
-        lastElectricUsedController.text = lastElectricUsed.toString();
-        selectedServices = previousReceipt!.services;
-      });
+    Receipt? mostRecentPreviousReceipt;
+    if (previousReceiptsForRoom.isNotEmpty) {
+      mostRecentPreviousReceipt = previousReceiptsForRoom.first;
     }
+
+    setState(() {
+      if (mostRecentPreviousReceipt != null) {
+        lastWaterUsed = mostRecentPreviousReceipt.thisWaterUsed;
+        lastElectricUsed = mostRecentPreviousReceipt.thisElectricUsed;
+        selectedServices = List.from(mostRecentPreviousReceipt.services);
+      } else {
+        lastWaterUsed = 0;
+        lastElectricUsed = 0;
+        selectedServices = [];
+      }
+      lastWaterUsedController.text = lastWaterUsed.toString();
+      lastElectricUsedController.text = lastElectricUsed.toString();
+    });
   }
 
   void _save(BuildContext context) {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+
       final newReceipt = Receipt(
-        id: isEditing ? widget.receipt!.id : id,
-        date: isEditing ? widget.receipt!.date : DateTime.now(),
+        id: id,
+        date: date,
         dueDate: dueDate,
         lastWaterUsed: lastWaterUsed,
         lastElectricUsed: lastElectricUsed,
@@ -173,6 +180,21 @@ class _ReceiptFormState extends State<ReceiptForm> {
     final roomProvider = context.watch<RoomProvider>();
     final serviceProvider = context.watch<ServiceProvider>();
 
+    Room? correctedSelectedRoom;
+    roomProvider.rooms.when(
+      success: (rooms) {
+        if (selectedRoom != null) {
+          try {
+            correctedSelectedRoom = rooms.firstWhere((r) => r.id == selectedRoom!.id);
+          } catch (e) {
+            correctedSelectedRoom = null;
+          }
+        }
+      },
+      loading: () {},
+      error: (_) {},
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: Text(isEditing ? 'កែប្រែវិក្កយបត្រ' : 'បង្កើតវិក្កយបត្រថ្មី'),
@@ -204,7 +226,8 @@ class _ReceiptFormState extends State<ReceiptForm> {
 
               // Room Selection
               DropdownButtonFormField<Room>(
-                value: selectedRoom,
+                // --- FIX: Use the corrected instance ---
+                value: correctedSelectedRoom,
                 items: roomProvider.rooms.when(
                   success: (rooms) => rooms.map((room) {
                     return DropdownMenuItem(
@@ -220,7 +243,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
                 ),
                 onChanged: (value) async {
                   setState(() => selectedRoom = value);
-                  await _loadLastMonthData(context);
+                  await _loadLastMonthData();
                 },
                 decoration: const InputDecoration(
                   labelText: 'ជ្រើសរើសបន្ទប់',
@@ -239,7 +262,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
                 onSaved: (value) => lastWaterUsed = int.parse(value!),
               ),
               NumberTextFormField(
-                initialValue: thisWaterUsed.toString(),
+                controller: thisWaterUsedController,
                 label: 'ខែនេះ (m³)',
                 onSaved: (value) => thisWaterUsed = int.parse(value!),
               ),
@@ -248,11 +271,11 @@ class _ReceiptFormState extends State<ReceiptForm> {
               Text('ការប្រើប្រាស់ភ្លើង', style: theme.textTheme.titleMedium),
               NumberTextFormField(
                 controller: lastElectricUsedController,
-                label: 'ខែមុន (kWh)',
+                label: 'ខែមុน (kWh)',
                 onSaved: (value) => lastElectricUsed = int.parse(value!),
               ),
               NumberTextFormField(
-                initialValue: thisElectricUsed.toString(),
+                controller: thisElectricUsedController,
                 label: 'ខែនេះ (kWh)',
                 onSaved: (value) => thisElectricUsed = int.parse(value!),
               ),

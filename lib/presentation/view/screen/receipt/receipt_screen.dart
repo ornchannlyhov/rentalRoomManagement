@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:receipts_v2/data/models/enum/mode.dart';
 import 'package:receipts_v2/data/models/enum/payment_status.dart';
 import 'package:receipts_v2/data/models/receipt.dart';
 import 'package:receipts_v2/presentation/providers/receipt_provider.dart';
@@ -30,29 +31,35 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
     });
   }
 
-  Future<void> _addReceipt(BuildContext context) async {
-    final newReceipt = await Navigator.of(context).push<Receipt>(
-      MaterialPageRoute(
-        builder: (ctx) => const ReceiptForm(),
-      ),
-    );
-
-    if (newReceipt != null) {
-      await context.read<ReceiptProvider>().createReceipt(newReceipt);
-    }
-  }
-
-  Future<void> _editReceipt(BuildContext context, Receipt receipt) async {
-    final updatedReceipt = await Navigator.of(context).push<Receipt>(
+  // --- FIX: Pass the full list of receipts to the form ---
+  Future<void> _addReceipt(BuildContext context, List<Receipt> allReceipts) async {
+    // No need to await here, the form handles its own state and saving.
+    Navigator.of(context).push<void>(
       MaterialPageRoute(
         builder: (ctx) => ReceiptForm(
-          receipt: receipt,
+          // Pass the list of receipts for the "last month" logic to work.
+          receipts: allReceipts,
         ),
       ),
     );
-    if (updatedReceipt != null) {
-      await context.read<ReceiptProvider>().updateReceipt(updatedReceipt);
-    }
+  }
+
+  // --- FIX: Pass the mode, receipt, and the full list of receipts ---
+  Future<void> _editReceipt(
+      BuildContext context, Receipt receipt, List<Receipt> allReceipts) async {
+    // No need to await here.
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (ctx) => ReceiptForm(
+          // Explicitly set the mode to editing. This is the main fix.
+          mode: Mode.editing,
+          // Pass the receipt to be edited.
+          receipt: receipt,
+          // Pass the full list for the "last month" logic.
+          receipts: allReceipts,
+        ),
+      ),
+    );
   }
 
   Future<void> _viewDetail(BuildContext context, Receipt receipt) async {
@@ -125,7 +132,14 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
     return Scaffold(
       appBar: AppbarCustom(
         header: 'វិក្កយបត្រ',
-        onAddPressed: () => _addReceipt(context),
+        // --- FIX: Pass the `allReceipts` list when adding a new one ---
+        onAddPressed: () {
+          receiptProvider.receipts.when(
+            success: (allReceipts) => _addReceipt(context, allReceipts),
+            loading: () {}, // Optional: can show a brief toast/indicator
+            error: (_) {},   // Optional: can show an error
+          );
+        },
       ),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
@@ -360,7 +374,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                                   receipt: receipt,
                                   ontap: () => _viewDetail(context, receipt),
                                   onLongPress: () =>
-                                      _editReceipt(context, receipt),
+                                      _editReceipt(context, receipt, allReceipts),
                                 ),
                               );
                             },
