@@ -12,7 +12,6 @@ class AppMenu extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return SizedBox(
-      height: 65, // Reduced height from 85
       child: BottomNavigationBar(
         currentIndex: selectedIndex,
         onTap: onTap,
@@ -50,7 +49,7 @@ class AppMenu extends StatelessWidget {
         children: [
           Icon(
             icon,
-            size: 20, // Smaller icon
+            size: 20, 
             color: isSelected
                 ? colorScheme.primary
                 : colorScheme.onSurface.withOpacity(0.6),

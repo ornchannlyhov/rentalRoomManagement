@@ -186,7 +186,13 @@ class _TenantFormState extends State<TenantForm> {
                     .map(
                       (g) => DropdownMenuItem(
                         value: g,
-                        child: Text(g.name),
+                        child: Text(
+                          {
+                            Gender.male: 'បុរស',
+                            Gender.female: 'នារី',
+                            Gender.other: 'ផ្សេងៗ',
+                          }[g]!,
+                        ),
                       ),
                     )
                     .toList(),

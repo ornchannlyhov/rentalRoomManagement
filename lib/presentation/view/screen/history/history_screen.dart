@@ -133,9 +133,10 @@ class _HistoryScreenState extends State<HistoryScreen>
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'ស្វែងរកបង្កាន់ដៃ...', // "Search receipts..."
+                  hintText: 'ស្វែងរកបង្កាន់ដៃ...', 
                   hintStyle: TextStyle(
                     color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                    height: 0.5
                   ),
                   prefixIcon: Icon(
                     Icons.search,
