@@ -6,6 +6,7 @@ class NumberTextFormField extends StatelessWidget {
   final String label;
   final String? initialValue;
   final void Function(String?) onSaved;
+  final String? Function(String?)? validator;
 
   const NumberTextFormField({
     super.key,
@@ -13,6 +14,7 @@ class NumberTextFormField extends StatelessWidget {
     required this.label,
     this.initialValue,
     required this.onSaved,
+    this.validator,
   });
 
   @override
@@ -33,16 +35,20 @@ class NumberTextFormField extends StatelessWidget {
         ),
       ),
       style: TextStyle(color: theme.colorScheme.onSurface),
-      keyboardType: TextInputType.number,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
       ],
-      validator: (value) {
-        if (value == null || double.tryParse(value) == null) {
-          return 'សូមបញ្ចូលលេខត្រឹមត្រូវ។'; 
-        }
-        return null;
-      },
+      validator: validator ??
+          (value) {
+            if (value == null || value.isEmpty) {
+              return 'សូមបញ្ចូលតម្លៃ។';
+            }
+            if (double.tryParse(value) == null) {
+              return 'សូមបញ្ចូលលេខត្រឹមត្រូវ។';
+            }
+            return null;
+          },
       onSaved: onSaved,
     );
   }

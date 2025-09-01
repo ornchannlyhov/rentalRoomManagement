@@ -5,7 +5,9 @@ import 'package:receipts_v2/data/models/room.dart';
 import 'package:receipts_v2/data/repositories/buidling_repository.dart';
 
 class BuildingProvider extends ChangeNotifier {
-  final BuildingRepository _repository = BuildingRepository();
+  final BuildingRepository _repository; // Modified to accept in constructor
+
+  BuildingProvider(this._repository); // Constructor
 
   AsyncValue<List<Building>> _buildings = const AsyncValue.loading();
   AsyncValue<List<Building>> get buildings => _buildings;
@@ -13,7 +15,6 @@ class BuildingProvider extends ChangeNotifier {
   Future<void> load() async {
     _buildings = const AsyncValue.loading();
     notifyListeners();
-
     try {
       await _repository.load();
       final data = _repository.getAllBuildings();

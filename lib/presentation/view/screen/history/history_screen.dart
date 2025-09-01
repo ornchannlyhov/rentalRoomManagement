@@ -96,8 +96,7 @@ class _HistoryScreenState extends State<HistoryScreen>
   }
 
   List<Receipt> _filterReceipts(List<Receipt> receipts) {
-    var filtered =
-        receipts.where((receipt) => receipt.date.month == selectedMonth);
+    Iterable<Receipt> filtered = receipts;
 
     if (_searchQuery.isNotEmpty) {
       filtered = filtered.where((receipt) =>
@@ -107,6 +106,8 @@ class _HistoryScreenState extends State<HistoryScreen>
           receipt.room!.roomNumber
               .toLowerCase()
               .contains(_searchQuery.toLowerCase()));
+    } else {
+      filtered = filtered.where((receipt) => receipt.date.month == selectedMonth);
     }
 
     return filtered.toList()..sort((a, b) => b.date.compareTo(a.date));
@@ -133,7 +134,7 @@ class _HistoryScreenState extends State<HistoryScreen>
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'ស្វែងរកបង្កាន់ដៃ...', 
+                  hintText: 'ស្វែងរកបង្កាន់ដៃ...',
                   hintStyle: TextStyle(
                     color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
                     height: 0.5
@@ -241,7 +242,7 @@ class _HistoryScreenState extends State<HistoryScreen>
               ),
               const SizedBox(height: 24),
               Text(
-                'មិនមានបង្កាន់ដៃ', // "No receipts"
+                'មិនមានបង្កាន់ដៃ',
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
@@ -250,8 +251,8 @@ class _HistoryScreenState extends State<HistoryScreen>
               const SizedBox(height: 8),
               Text(
                 _searchQuery.isNotEmpty
-                    ? 'មិនមានលទ្ធផលស្វែងរក "$_searchQuery"' // "No search results"
-                    : 'មិនមានបង្កាន់ដៃសម្រាប់ខែ ${_khmerMonths[selectedMonth - 1]}', // "No receipts for this month"
+                    ? 'មិនមានលទ្ធផលស្វែងរក "$_searchQuery"'
+                    : 'មិនមានបង្កាន់ដៃសម្រាប់ខែ ${_khmerMonths[selectedMonth - 1]}',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
                 ),
@@ -276,7 +277,7 @@ class _HistoryScreenState extends State<HistoryScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            'កំពុងផ្ទុក...', // "Loading..."
+            'កំពុងផ្ទុក...',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -305,7 +306,7 @@ class _HistoryScreenState extends State<HistoryScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            'មានបញ្ហាក្នុងការផ្ទុកទិន្នន័យ', // "Error loading data"
+            'មានបញ្ហាក្នុងការផ្ទុកទិន្នន័យ',
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.onErrorContainer,
               fontWeight: FontWeight.w600,
@@ -315,7 +316,7 @@ class _HistoryScreenState extends State<HistoryScreen>
           ElevatedButton.icon(
             onPressed: _loadData,
             icon: const Icon(Icons.refresh),
-            label: const Text('ព្យាយាមម្តងទៀត'), // "Try again"
+            label: const Text('ព្យាយាមម្តងទៀត'),
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: theme.colorScheme.onPrimary,

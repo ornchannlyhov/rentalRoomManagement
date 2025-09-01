@@ -6,9 +6,12 @@ import 'package:receipts_v2/data/models/tenant.dart';
 import 'package:receipts_v2/data/repositories/room_repository.dart';
 
 class RoomProvider extends ChangeNotifier {
-  final RoomRepository _repository = RoomRepository();
+  final RoomRepository _repository;
+
+  RoomProvider(this._repository);
 
   AsyncValue<List<Room>> _rooms = const AsyncValue.loading();
+
   AsyncValue<List<Room>> get rooms => _rooms;
 
   Future<void> load() async {

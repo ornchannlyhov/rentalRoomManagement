@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:receipts_v2/data/models/building.dart';
 import 'package:receipts_v2/data/models/enum/mode.dart';
+import 'package:receipts_v2/data/models/room.dart'; // Import Room model
+import 'package:receipts_v2/data/models/enum/room_status.dart'; // Import RoomStatus
 import 'package:receipts_v2/presentation/view/app_widgets/number_field.dart';
+import 'package:uuid/uuid.dart'; // Import Uuid for unique room IDs
 
 class BuildingForm extends StatefulWidget {
   final Mode mode;
@@ -21,19 +24,18 @@ class BuildingForm extends StatefulWidget {
 
 class _BuildingFormState extends State<BuildingForm> {
   final _formKey = GlobalKey<FormState>();
-
   late String id;
   late String name;
   late double rentPrice;
   late double electricPrice;
   late double waterPrice;
+  late int roomQuantity; // New field for room quantity
 
   bool get isEditing => widget.mode == Mode.editing;
 
   @override
   void initState() {
     super.initState();
-
     if (isEditing && widget.building != null) {
       final building = widget.building!;
       id = building.id;
@@ -41,12 +43,14 @@ class _BuildingFormState extends State<BuildingForm> {
       rentPrice = building.rentPrice;
       electricPrice = building.electricPrice;
       waterPrice = building.waterPrice;
+      roomQuantity = building.rooms.length; // Set initial quantity from existing rooms
     } else {
       id = '';
       name = '';
       rentPrice = 0.0;
       electricPrice = 0.0;
       waterPrice = 0.0;
+      roomQuantity = 0; // Default to 0 for new buildings
     }
   }
 
@@ -54,12 +58,35 @@ class _BuildingFormState extends State<BuildingForm> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
+      // Generate rooms if creating a new building
+      List<Room> generatedRooms = [];
+      if (!isEditing && roomQuantity > 0) {
+        for (int i = 1; i <= roomQuantity; i++) {
+          generatedRooms.add(
+            Room(
+              id: const Uuid().v4(),
+              roomNumber: i.toString(), // Simple sequential room numbering
+              roomStatus: RoomStatus.available,
+              price: rentPrice, // Use building's rent price as default
+              building: Building( // Create a dummy building reference for the room
+                id: isEditing ? widget.building!.id : DateTime.now().toString(), // Will be updated by repository
+                name: name,
+                rentPrice: rentPrice,
+                electricPrice: electricPrice,
+                waterPrice: waterPrice,
+              ),
+            ),
+          );
+        }
+      }
+
       final newBuilding = Building(
         id: isEditing ? widget.building!.id : DateTime.now().toString(),
         name: name,
         rentPrice: rentPrice,
         electricPrice: electricPrice,
         waterPrice: waterPrice,
+        rooms: generatedRooms, // Pass the generated rooms
       );
 
       Navigator.pop(context, newBuilding);
@@ -69,7 +96,6 @@ class _BuildingFormState extends State<BuildingForm> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor:
@@ -118,6 +144,27 @@ class _BuildingFormState extends State<BuildingForm> {
                 onSaved: (value) => rentPrice = double.parse(value!),
               ),
               const SizedBox(height: 12),
+              // New Room Quantity field
+              if (!isEditing) // Only show when creating a new building
+                Column(
+                  children: [
+                    NumberTextFormField(
+                      initialValue: roomQuantity.toString(),
+                      label: 'ចំនួនបន្ទប់',
+                      onSaved: (value) => roomQuantity = int.parse(value!),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'សូមបញ្ចូលចំនួនបន្ទប់។';
+                        }
+                        if (int.tryParse(value) == null || int.parse(value) < 0) {
+                          return 'សូមបញ្ចូលចំនួនបន្ទប់ត្រឹមត្រូវ។';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                ),
               NumberTextFormField(
                 initialValue: electricPrice.toString(),
                 label: 'តម្លៃអគ្គិសនី (1kWh)',
@@ -139,8 +186,10 @@ class _BuildingFormState extends State<BuildingForm> {
                       foregroundColor: theme.colorScheme.onPrimary,
                     ),
                     onPressed: _save,
-                    child: Text('រក្សាទុកអគារ',
-                        style: theme.textTheme.labelMedium),
+                    child: Text(
+                      isEditing ? 'រក្សាទុកការកែប្រែ' : 'រក្សាទុកអគារ',
+                      style: theme.textTheme.labelMedium,
+                    ),
                   ),
                 ],
               ),

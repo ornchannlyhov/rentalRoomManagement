@@ -31,31 +31,23 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
     });
   }
 
-  // --- FIX: Pass the full list of receipts to the form ---
   Future<void> _addReceipt(BuildContext context, List<Receipt> allReceipts) async {
-    // No need to await here, the form handles its own state and saving.
     Navigator.of(context).push<void>(
       MaterialPageRoute(
         builder: (ctx) => ReceiptForm(
-          // Pass the list of receipts for the "last month" logic to work.
           receipts: allReceipts,
         ),
       ),
     );
   }
 
-  // --- FIX: Pass the mode, receipt, and the full list of receipts ---
   Future<void> _editReceipt(
       BuildContext context, Receipt receipt, List<Receipt> allReceipts) async {
-    // No need to await here.
     Navigator.of(context).push<void>(
       MaterialPageRoute(
         builder: (ctx) => ReceiptForm(
-          // Explicitly set the mode to editing. This is the main fix.
           mode: Mode.editing,
-          // Pass the receipt to be edited.
           receipt: receipt,
-          // Pass the full list for the "last month" logic.
           receipts: allReceipts,
         ),
       ),
@@ -132,12 +124,11 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
     return Scaffold(
       appBar: AppbarCustom(
         header: 'វិក្កយបត្រ',
-        // --- FIX: Pass the `allReceipts` list when adding a new one ---
         onAddPressed: () {
           receiptProvider.receipts.when(
             success: (allReceipts) => _addReceipt(context, allReceipts),
-            loading: () {}, // Optional: can show a brief toast/indicator
-            error: (_) {},   // Optional: can show an error
+            loading: () {}, 
+            error: (_) {},   
           );
         },
       ),

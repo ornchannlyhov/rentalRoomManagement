@@ -19,7 +19,8 @@ class ReceiptRepository {
         _receiptCache = [];
       }
     } catch (e) {
-      throw Exception('Failed to load receipts from secure storage: $e');
+      print('Error loading receipts from secure storage: $e');
+      _receiptCache = []; 
     }
 
     await updateStatusToOverdue();
@@ -32,20 +33,16 @@ class ReceiptRepository {
       );
       await _secureStorage.write(key: storageKey, value: jsonString);
     } catch (e) {
-      throw Exception('Failed to save receipts to secure storage: $e');
+      print('Failed to save receipts to secure storage: $e');
+        throw Exception('Failed to save receipts to secure storage: $e');
     }
   }
 
   Future<void> createReceipt(Receipt newReceipt) async {
-    final now = DateTime.now();
-    final startOfMonth = DateTime(now.year, now.month, 1);
-    final endOfMonth = DateTime(now.year, now.month + 1, 0);
-
     final existingIndex = _receiptCache.indexWhere((receipt) {
       return receipt.room?.roomNumber == newReceipt.room?.roomNumber &&
-          receipt.date
-              .isAfter(startOfMonth.subtract(const Duration(days: 1))) &&
-          receipt.date.isBefore(endOfMonth.add(const Duration(days: 1)));
+          receipt.date.year == newReceipt.date.year &&
+          receipt.date.month == newReceipt.date.month;
     });
 
     if (existingIndex != -1) {
@@ -75,14 +72,20 @@ class ReceiptRepository {
   Future<void> deleteLastYearReceipts() async {
     final now = DateTime.now();
     final startOfCurrentYear = DateTime(now.year, 1, 1);
-    _receiptCache
-        .removeWhere((receipt) => receipt.date.isBefore(startOfCurrentYear));
-    await save();
+    final initialLength = _receiptCache.length;
+    _receiptCache.removeWhere((receipt) => receipt.date.isBefore(startOfCurrentYear));
+    if (_receiptCache.length != initialLength) { 
+      await save();
+    }
   }
 
   Future<void> restoreReceipt(int restoreIndex, Receipt receipt) async {
-    _receiptCache.insert(restoreIndex, receipt);
-    await save();
+    if (restoreIndex >= 0 && restoreIndex <= _receiptCache.length) {
+      _receiptCache.insert(restoreIndex, receipt);
+      await save();
+    } else {
+      throw Exception('Invalid index for restoring receipt.');
+    }
   }
 
   List<Receipt> getAllReceipts() {
@@ -91,12 +94,9 @@ class ReceiptRepository {
 
   List<Receipt> getReceiptsForCurrentMonth() {
     final now = DateTime.now();
-    final start = DateTime(now.year, now.month, 1);
-    final end = DateTime(now.year, now.month + 1, 0);
 
     return _receiptCache.where((receipt) {
-      return receipt.date.isAfter(start.subtract(const Duration(days: 1))) &&
-          receipt.date.isBefore(end.add(const Duration(days: 1)));
+      return receipt.date.year == now.year && receipt.date.month == now.month;
     }).toList();
   }
 
@@ -104,10 +104,11 @@ class ReceiptRepository {
     final now = DateTime.now();
     bool updated = false;
 
-    for (var receipt in _receiptCache) {
+    for (var i = 0; i < _receiptCache.length; i++) {
+      var receipt = _receiptCache[i];
       if (receipt.paymentStatus != PaymentStatus.paid &&
           receipt.dueDate.isBefore(now)) {
-        receipt.paymentStatus = PaymentStatus.overdue;
+        _receiptCache[i] = receipt.copyWith(paymentStatus: PaymentStatus.overdue);
         updated = true;
       }
     }
