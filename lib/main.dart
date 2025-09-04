@@ -18,7 +18,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // clearSecureStorage(); // Uncomment if you need to clear storage for testing
+  // clearSecureStorage();
   await initializeDateFormatting();
   runApp(const MyApp());
 }
@@ -33,17 +33,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Instantiate repositories first
     final roomRepository = RoomRepository();
-    final buildingRepository = BuildingRepository(roomRepository); // Inject roomRepository here
+    final buildingRepository = BuildingRepository(roomRepository); 
 
     return MultiProvider(
       providers: [
-        // 2. Pass the instantiated repositories to your providers
         ChangeNotifierProvider(create: (_) => BuildingProvider(buildingRepository)..load()),
         ChangeNotifierProvider(create: (_) => TenantProvider()..load()),
         ChangeNotifierProvider(create: (_) => ServiceProvider()..load()),
-        ChangeNotifierProvider(create: (_) => RoomProvider(roomRepository)..load()), // Pass roomRepository
+        ChangeNotifierProvider(create: (_) => RoomProvider(roomRepository)..load()), 
         ChangeNotifierProvider(create: (_) => ReceiptProvider()..load()),
       ],
       child: MaterialApp(
