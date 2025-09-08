@@ -5,7 +5,7 @@ import 'package:receipts_v2/data/repositories/receipt_repository.dart';
 class ReceiptProvider extends ChangeNotifier {
   final ReceiptRepository _repository = ReceiptRepository();
 
-  AsyncValue<List<Receipt>> _receipts = const AsyncValue.success([]); // Start with empty list
+  AsyncValue<List<Receipt>> _receipts = const AsyncValue.success([]);
   AsyncValue<List<Receipt>> get receipts => _receipts;
 
   Future<void> load() async {
@@ -13,15 +13,12 @@ class ReceiptProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Attempt to load data, handle any initial secure storage issues
       await _repository.load();
       await _repository.deleteLastYearReceipts();
       final data = _repository.getAllReceipts();
-      _receipts = AsyncValue.success(data.isNotEmpty ? data : []); // Ensure non-empty list
+      _receipts = AsyncValue.success(data.isNotEmpty ? data : []); 
     } catch (e) {
-      // Log the error for debugging (optional)
-      print('Error loading receipts: $e');
-      _receipts = const AsyncValue.success([]); // Fall back to empty list on error
+      _receipts = const AsyncValue.success([]); 
     }
     notifyListeners();
   }

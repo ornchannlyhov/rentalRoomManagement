@@ -227,7 +227,6 @@ class _ReceiptFormState extends State<ReceiptForm> {
 
               // Room Selection
               DropdownButtonFormField<Room>(
-                // --- FIX: Use the corrected instance ---
                 value: correctedSelectedRoom,
                 items: roomProvider.rooms.when(
                   success: (rooms) => rooms.map((room) {
