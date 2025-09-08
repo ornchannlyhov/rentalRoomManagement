@@ -1,4 +1,6 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+
 const TelegramBot = require('node-telegram-bot-api');
 const mongoose = require('mongoose');
 const cron = require('node-cron');
@@ -26,6 +28,7 @@ mongoose.connect(process.env.MONGODB_URI)
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 const userSessions = new Map();
 const usersToRemind = new Set();
+
 
 // --- Phone Number Conversion Function ---
 function convertToLocalFormat(phoneNumber) {
