@@ -1,63 +1,30 @@
+const TelegramBot = require('node-telegram-bot-api');
+const cron = require('node-cron');
+const connectDB = require('./db');
+
+// Import Mongoose Models
+const Usage = require('./models/Usage');
+const Receipt = require('./models/Receipt');
+const User = require('./models/User');
+
+// Load environment variables
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
-const TelegramBot = require('node-telegram-bot-api');
-const mongoose = require('mongoose');
-const cron = require('node-cron');
-const express = require('express');
-const cors = require('cors');
-
-// --- Mongoose Model ---
-const usageSchema = new mongoose.Schema({
-    chatId: { type: Number, required: true },
-    phoneNumber: { type: String, required: true },
-    language: { type: String, required: true },
-    electricityUsage: { type: Number, required: true },
-    waterUsage: { type: Number, required: true },
-    date: { type: Date, default: Date.now }
-});
-
-const Usage = mongoose.model('Usage', usageSchema);
-
-// --- Connect to MongoDB ---
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('Connected to MongoDB'))
-    .catch(err => console.error('MongoDB connection error:', err));
+// Connect to MongoDB
+connectDB();
 
 // --- Telegram Bot ---
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 const userSessions = new Map();
-const usersToRemind = new Set();
+const pendingReceipts = new Map();
 
+// --- Define Bot Commands ---
+const botCommands = [
+    { command: 'start', description: 'Start or restart the bot' },
+    { command: 'clear', description: 'Clear all your data and stop reminders' },
+];
 
-// --- Phone Number Conversion Function ---
-function convertToLocalFormat(phoneNumber) {
-    // Remove any spaces, dashes, or other formatting
-    let cleaned = phoneNumber.replace(/[\s\-\(\)]/g, '');
-
-    // Convert Cambodia international format (+855) to local format (0)
-    if (cleaned.startsWith('+855')) {
-        return '0' + cleaned.substring(4);
-    }
-
-    // Convert other common formats
-    if (cleaned.startsWith('855')) {
-        return '0' + cleaned.substring(3);
-    }
-
-    // If it already starts with 0, return as is
-    if (cleaned.startsWith('0')) {
-        return cleaned;
-    }
-
-    // For other formats, assume it needs 0 prefix if it's 8-9 digits
-    if (/^\d{8,9}$/.test(cleaned)) {
-        return '0' + cleaned;
-    }
-
-    // Return original if no conversion needed
-    return cleaned;
-}
 
 // --- Texts ---
 const texts = {
@@ -65,33 +32,43 @@ const texts = {
         welcome: 'Welcome! Please send /start to begin.',
         start: 'Hello! Welcome to Utility Tracker Bot. I will remind you monthly to submit your utility usage.',
         language: 'Please choose your preferred language:',
-        phone: 'Please share your phone number by clicking the button below:',
-        phoneManual: 'Or you can type your phone number manually:',
+        roomNumber: 'Please enter your room number. Example: A101',
         electricity: 'Please enter this month\'s electricity usage (numbers only). Example: 150',
         water: 'Please enter this month\'s water usage (numbers only). Example: 25',
         invalidNumber: 'Please enter a valid number.',
-        invalidPhone: 'Please enter a valid phone number.',
+        invalidRoom: 'Please enter a valid room number.',
         success: 'Thank you! Your usage data has been saved successfully.',
         error: 'An error occurred. Please try again.',
         reminder: '🔔 Reminder: Rent is due! Please submit your utility usage for this month.',
-        phoneReceived: 'Great! I received your phone number. Now let\'s set your language preference.',
-        skipPhone: 'Skip phone sharing'
+        noReceiptYet: 'No receipt image found for your room number yet. Please wait a moment, and I will send it once it\'s available.',
+        receiptSent: 'Here is your receipt for this month:',
+        dataSaved: 'Your utility data has been saved.',
+        thankYou: 'Thank you for submitting your utility usage!',
+        selectLang: 'Please select a language from the options below.',
+        clearDataConfirmation: 'Are you sure you want to clear all your data and stop using the bot? This will remove your language preference, room number, and stop reminders. You can always /start again.',
+        dataCleared: 'All your session data has been cleared. You will no longer receive reminders. You can type /start anytime to begin again.',
+        cancel: 'Operation cancelled. Your data has not been cleared.'
     },
     khmer: {
         welcome: 'សូមស្វាគមន៍! សូមផ្ញើ /start ដើម្បីចាប់ផ្តើម។',
         start: 'សួស្តី! សូមស្វាគមន៍មកកាន់ប្រព័ន្ធតាមដានការប្រើប្រាស់ឧបករណ៍។ ខ្ញុំនឹងរំលឹកអ្នករាល់ខែដើម្បីបញ្ជូនការប្រើប្រាស់របស់អ្នក។',
         language: 'សូមជ្រើសរើសភាសាដែលអ្នកចូលចិត្ត:',
-        phone: 'សូមចែករំលែកលេខទូរស័ព្ទរបស់អ្នកដោយចុចលើប៊ូតុងខាងក្រោម:',
-        phoneManual: 'ឬអ្នកអាចវាយលេខទូរស័ព្ទរបស់អ្នកដោយផ្ទាល់:',
-        electricity: 'សូមបញ្ចូលការប្រើប្រាស់ភ្លើងរបស់ខែនេះ (តួលេខតែប៉ុណ្ណោះ)។ ឧទាហរណ៍: 150',
-        water: 'សូមបញ្ចូលការប្រើប្រាស់ទឹករបស់ខែនេះ (តួលេខតែប៉ុណ្ណោះ)។ ឧទាហរណ៍: 25',
+        roomNumber: 'សូមបញ្ចូលលេខបន្ទប់របស់អ្នក។ ឧទាហរណ៍: A101',
+        electricity: 'សូមបញ្ចូលការប្រើប្រាស់ភ្លើងរបស់ខែនេះ (តួលេខតែប៉ុណ្ណោះ)។ ឧទុហរណ៍: 150',
+        water: 'សូមបញ្ចូលការប្រើប្រាស់ទឹករបស់ខែនេះ (តួលេខតែប៉ុណ្ណោះ)។ ឧទុហរណ៍: 25',
         invalidNumber: 'សូមបញ្ចូលលេខដែលត្រឹមត្រូវ។',
-        invalidPhone: 'សូមបញ្ចូលលេខទូរស័ព្ទដែលត្រឹមត្រូវ។',
+        invalidRoom: 'សូមបញ្ចូលលេខបន្ទប់ដែលត្រឹមត្រូវ។',
         success: 'សូមអរគុណ! ទិន្នន័យការប្រើប្រាស់របស់អ្នកត្រូវបានរក្សាទុកដោយជោគជ័យ។',
         error: 'មានកំហុសកើតឡើង។ សូមព្យាយាមម្តងទៀត។',
-        reminder: '🔔 ការរំលឹក: ថ្ងៃបង់ថ្លៃខ្ចីដល់ហើយ! សូមបញ្ជូនការប្រើប្រាស់ឧបករណ៍របស់អ្នកសម្រាប់ខែនេះ។',
-        phoneReceived: 'ល្អណាស់! ខ្ញុំបានទទួលលេខទូរស័ព្ទរបស់អ្នក។ ឥឡូវសូមកំណត់ការចូលចិត្តភាសារបស់អ្នក។',
-        skipPhone: 'រំលងការចែករំលែកទូរស័ព្ទ'
+        reminder: '🔔 ការរំលឹក: ថ្ងៃបង់ថ្លៃជួលបន្ទប់ដល់ហើយ! សូមបញ្ជូនការប្រើប្រាស់ឧបករណ៍របស់អ្នកសម្រាប់ខែនេះ។',
+        noReceiptYet: 'រកមិនទាន់ឃើញបង្កាន់ដៃសម្រាប់លេខបន្ទប់របស់អ្នកទេ។ សូមរង់ចាំបន្តិច ខ្ញុំនឹងផ្ញើវាពេលវាមាន។',
+        receiptSent: 'នេះជាបង្កាន់ដៃសម្រាប់ខែនេៈ:',
+        dataSaved: 'ទិន្នន័យប្រើប្រាស់របស់អ្នកត្រូវបានរក្សាទុក។',
+        thankYou: 'សូមអរគុណសម្រាប់ការដាក់បញ្ចូលការប្រើប្រាស់ឧបករណ៍របស់អ្នក!',
+        selectLang: 'សូមជ្រើសរើសភាសាមួយពីជម្រើសខាងក្រោម។',
+        clearDataConfirmation: 'តើអ្នកប្រាកដជាចង់លុបទិន្នន័យរបស់អ្នកទាំងអស់ ហើយឈប់ប្រើបូតនេះមែនទេ? វានឹងលុបចំណូលចិត្តភាសារបស់អ្នក លេខបន្ទប់ និងបញ្ឈប់ការរំលឹក។ អ្នកអាច /start ឡើងវិញបានគ្រប់ពេល។',
+        dataCleared: 'ទិន្នន័យវគ្គរបស់អ្នកទាំងអស់ត្រូវបានលុប។ អ្នកនឹងលែងទទួលបានការរំលឹកទៀតហើយ។ អ្នកអាចវាយ /start គ្រប់ពេលដើម្បីចាប់ផ្តើមម្តងទៀត។',
+        cancel: 'ប្រតិបត្តិការត្រូវបានលុបចោល។ ទិន្នន័យរបស់អ្នកមិនត្រូវបានលុបទេ។'
     }
 };
 
@@ -104,139 +81,182 @@ const languageKeyboard = {
     }
 };
 
-// Phone sharing keyboard
-const phoneKeyboard = {
-    reply_markup: {
-        keyboard: [
-            [{ text: '📱 Share Phone Number', request_contact: true }],
-            [{ text: 'Skip phone sharing' }]
-        ],
-        resize_keyboard: true,
-        one_time_keyboard: true
-    }
+const clearConfirmationKeyboard = (language) => {
+    const t = texts[language];
+    return {
+        reply_markup: {
+            keyboard: [[{ text: 'Yes, clear my data' }, { text: 'No, keep my data' }]],
+            resize_keyboard: true,
+            one_time_keyboard: true
+        }
+    };
 };
 
-// --- Cron job for monthly reminder ---
-cron.schedule('0 0 1 * *', () => {
-    console.log('Sending monthly reminders...');
-    usersToRemind.forEach(chatId => {
-        const session = userSessions.get(chatId);
-        if (session) {
-            const t = texts[session.language];
-            bot.sendMessage(chatId, t.reminder);
-            session.state = 'electricity';
-            bot.sendMessage(chatId, t.electricity);
-        }
+function getNextReminderDate(startDate) {
+    const nextDate = new Date(startDate);
+    nextDate.setMonth(nextDate.getMonth() + 1);
+    nextDate.setHours(9, 0, 0, 0);
+    return nextDate;
+}
+
+cron.schedule('0 * * * *', async () => {
+    console.log('Checking for personalized reminders...');
+    const now = new Date();
+    const usersToRemind = await User.find({
+        nextReminderDate: { $lte: now },
+        isActive: true
     });
+
+    for (const user of usersToRemind) {
+        try {
+            const t = texts[user.language || 'english'];
+            await bot.sendMessage(user.chatId, t.reminder);
+
+            user.nextReminderDate = getNextReminderDate(user.nextReminderDate || user.lastInteractionDate);
+            await user.save();
+            console.log(`Reminder sent to chat ${user.chatId}. Next reminder: ${user.nextReminderDate}`);
+        } catch (error) {
+            console.error(`Error sending reminder to ${user.chatId}:`, error);
+        }
+    }
+});
+
+cron.schedule('* * * * *', async () => {
+    if (pendingReceipts.size > 0) {
+        console.log(`Checking for ${pendingReceipts.size} pending receipts...`);
+        for (let [chatId, { roomNumber, language }] of pendingReceipts) {
+            try {
+                const receipt = await Receipt.findOne({ roomNumber });
+                if (receipt && receipt.receiptImage) {
+                    const t = texts[language];
+                    bot.sendMessage(chatId, t.receiptSent);
+                    bot.sendPhoto(chatId, receipt.receiptImage, { caption: `Receipt for Room: ${roomNumber}` });
+                    pendingReceipts.delete(chatId);
+                    console.log(`Receipt sent to chat ${chatId} for room ${roomNumber}.`);
+                }
+            } catch (error) {
+                console.error(`Error sending delayed receipt to ${chatId} for room ${roomNumber}:`, error);
+                const t = texts[language];
+                bot.sendMessage(chatId, `${t.error} (Receipt sending failed). Please contact support.`);
+                pendingReceipts.delete(chatId);
+            }
+        }
+    }
 });
 
 // --- Telegram Handlers ---
-bot.onText(/\/start/, (msg) => {
+bot.onText(/\/start/, async (msg) => {
     const chatId = msg.chat.id;
-    const session = { state: 'phone', language: 'english', data: {} };
+    const now = new Date();
+
+    let user = await User.findOne({ chatId });
+    if (!user) {
+        user = new User({
+            chatId,
+            lastInteractionDate: now,
+            nextReminderDate: getNextReminderDate(now),
+            language: 'english',
+            isActive: true
+        });
+        await user.save();
+        console.log(`New user ${chatId} registered. First reminder: ${user.nextReminderDate}`);
+    } else {
+        user.lastInteractionDate = now;
+        user.isActive = true;
+        await user.save();
+    }
+
+    const session = { state: 'language', language: user.language, data: {} };
     userSessions.set(chatId, session);
-    usersToRemind.add(chatId);
 
     const t = texts[session.language];
     bot.sendMessage(chatId, t.start);
-
-    // Always start by asking for phone number
-    bot.sendMessage(chatId, t.phone, phoneKeyboard);
+    bot.sendMessage(chatId, t.language, languageKeyboard);
 });
 
-// Handle contact sharing
-bot.on('contact', async (msg) => {
+bot.onText(/\/clear/, async (msg) => {
     const chatId = msg.chat.id;
+    let user = await User.findOne({ chatId });
     const session = userSessions.get(chatId);
 
-    if (!session) {
-        bot.sendMessage(chatId, texts.english.welcome);
-        return;
+    let language = 'english';
+    if (user && user.language) {
+        language = user.language;
+    } else if (session && session.language) {
+        language = session.language;
     }
+    const t = texts[language];
 
-    if (session.state === 'phone') {
-        const phoneNumber = msg.contact.phone_number;
-        // Convert to local format (e.g., +855 -> 0)
-        const localPhoneNumber = convertToLocalFormat(phoneNumber);
-        session.data.phoneNumber = localPhoneNumber;
+    userSessions.set(chatId, { state: 'confirm_clear', language: language, data: {} });
 
-        const t = texts[session.language];
-        bot.sendMessage(chatId, `${t.phoneReceived}`, { reply_markup: { remove_keyboard: true } });
-
-        // After getting phone, always ask for language
-        session.state = 'language';
-        bot.sendMessage(chatId, t.language, languageKeyboard);
-    }
+    bot.sendMessage(chatId, t.clearDataConfirmation, clearConfirmationKeyboard(language));
 });
+
 
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text;
 
-    // Skip if it's a contact message (handled separately)
-    if (msg.contact) return;
-
     const session = userSessions.get(chatId);
     if (!session) {
-        if (text !== '/start') bot.sendMessage(chatId, texts.english.welcome);
+        if (!text.startsWith('/start') && !text.startsWith('/clear')) {
+            bot.sendMessage(chatId, texts.english.welcome);
+        }
         return;
     }
 
     const t = texts[session.language];
 
     switch (session.state) {
-        case 'phone': return handlePhoneInput(chatId, text, session, t);
         case 'language': return handleLanguageSelection(chatId, text, session, t);
+        case 'roomNumber': return handleRoomNumberInput(chatId, text, session, t);
         case 'electricity': return handleElectricityInput(chatId, text, session, t);
         case 'water': return handleWaterInput(chatId, text, session, t);
+        case 'confirm_clear': return handleClearConfirmation(chatId, text, session, t);
+        default:
+            if (!text.startsWith('/start') && !text.startsWith('/clear')) {
+                bot.sendMessage(chatId, `I'm not sure how to respond to "${text}".`);
+                session.state = 'completed';
+                userSessions.set(chatId, session);
+                bot.sendMessage(chatId, t.start);
+                bot.sendMessage(chatId, t.language, languageKeyboard);
+            }
+            break;
     }
 });
 
 // --- Helper Functions ---
-function handlePhoneInput(chatId, text, session, t) {
-    // Handle skip phone sharing
-    if (text === 'Skip phone sharing' || text === 'រំលងការចែករំលែកទូរស័ព្ទ') {
-        session.data.phoneNumber = 'Not provided';
-        session.state = 'language';
-        bot.sendMessage(chatId, t.language, languageKeyboard);
-        return;
+async function handleLanguageSelection(chatId, text, session, t) {
+    let selectedLanguage = 'english';
+    if (text.includes('English')) {
+        selectedLanguage = 'english';
+    } else if (text.includes('ខ្មែរ') || text.includes('Khmer')) {
+        selectedLanguage = 'khmer';
+    } else {
+        return bot.sendMessage(chatId, t.selectLang, languageKeyboard);
     }
 
-    // Convert to local format and validate
-    const localPhoneNumber = convertToLocalFormat(text);
+    session.language = selectedLanguage;
+    const tNew = texts[session.language];
 
-    // Updated regex for Cambodian phone numbers (starting with 0)
-    const phoneRegex = /^0\d{8,9}$/;
-    if (!phoneRegex.test(localPhoneNumber)) {
-        bot.sendMessage(chatId, t.invalidPhone);
-        bot.sendMessage(chatId, t.phoneManual);
-        return;
+    try {
+        await User.findOneAndUpdate({ chatId }, { language: selectedLanguage, isActive: true });
+    } catch (error) {
+        console.error(`Error updating user language for ${chatId}:`, error);
     }
 
-    session.data.phoneNumber = localPhoneNumber;
-    session.state = 'language';
-    bot.sendMessage(chatId, t.phoneReceived, { reply_markup: { remove_keyboard: true } });
-    bot.sendMessage(chatId, t.language, languageKeyboard);
+    session.state = 'roomNumber';
+    bot.sendMessage(chatId, tNew.roomNumber, { reply_markup: { remove_keyboard: true } });
 }
 
-function handleLanguageSelection(chatId, text, session, t) {
-    let languageChanged = false;
-
-    if (text.includes('English')) {
-        session.language = 'english';
-        languageChanged = true;
-    } else if (text.includes('ខ្មែរ') || text.includes('Khmer')) {
-        session.language = 'khmer';
-        languageChanged = true;
-    } else {
-        // Invalid selection, ask again
-        return bot.sendMessage(chatId, t.language, languageKeyboard);
+function handleRoomNumberInput(chatId, text, session, t) {
+    const roomNumber = text.trim();
+    if (!roomNumber || !/^[a-zA-Z0-9\-\s]+$/.test(roomNumber)) {
+        return bot.sendMessage(chatId, t.invalidRoom);
     }
-
-    // Use the new language for subsequent messages
-    const tNew = texts[session.language];
+    session.data.roomNumber = roomNumber;
     session.state = 'electricity';
-    bot.sendMessage(chatId, tNew.electricity, { reply_markup: { remove_keyboard: true } });
+    bot.sendMessage(chatId, t.electricity);
 }
 
 function handleElectricityInput(chatId, text, session, t) {
@@ -259,19 +279,32 @@ async function handleWaterInput(chatId, text, session, t) {
     try {
         const usage = new Usage({
             chatId,
-            phoneNumber: session.data.phoneNumber,
+            roomNumber: session.data.roomNumber,
             language: session.language,
             electricityUsage: session.data.electricityUsage,
             waterUsage: session.data.waterUsage,
             date: new Date()
         });
         await usage.save();
-        bot.sendMessage(chatId, t.success);
+        bot.sendMessage(chatId, t.dataSaved);
 
-        // Reset session for next month
-        session.state = 'completed';
-        session.data.electricityUsage = null;
-        session.data.waterUsage = null;
+        const user = await User.findOne({ chatId });
+        if (user) {
+            user.lastInteractionDate = new Date();
+            user.nextReminderDate = getNextReminderDate(user.lastInteractionDate);
+            user.isActive = true;
+            await user.save();
+            console.log(`User ${chatId} submitted data. Next reminder: ${user.nextReminderDate}`);
+        }
+
+        bot.sendMessage(chatId, t.noReceiptYet);
+
+        pendingReceipts.set(chatId, { roomNumber: session.data.roomNumber, language: session.language });
+
+        bot.sendMessage(chatId, t.thankYou, { reply_markup: { remove_keyboard: true } });
+
+        userSessions.delete(chatId);
+        console.log(`Session cleared for ${chatId} after submission.`);
 
     } catch (error) {
         console.error('Error saving data:', error);
@@ -279,102 +312,50 @@ async function handleWaterInput(chatId, text, session, t) {
     }
 }
 
+async function handleClearConfirmation(chatId, text, session, t) {
+    if (text.toLowerCase().includes('yes')) {
+        userSessions.delete(chatId);
+        pendingReceipts.delete(chatId);
+
+        try {
+            await User.findOneAndUpdate(
+                { chatId },
+                {
+                    language: 'english',
+                    roomNumber: null,
+                    nextReminderDate: null,
+                    isActive: false
+                }
+            );
+            console.log(`User ${chatId} data cleared and marked inactive.`);
+            bot.sendMessage(chatId, t.dataCleared, { reply_markup: { remove_keyboard: true } });
+        } catch (error) {
+            console.error(`Error clearing user data for ${chatId}:`, error);
+            bot.sendMessage(chatId, t.error);
+        }
+    } else if (text.toLowerCase().includes('no')) {
+        userSessions.delete(chatId);
+        bot.sendMessage(chatId, t.cancel, { reply_markup: { remove_keyboard: true } });
+    } else {
+        bot.sendMessage(chatId, t.clearDataConfirmation, clearConfirmationKeyboard(session.language));
+    }
+}
+
+
 // --- Polling error handling ---
 bot.on('polling_error', console.error);
 
-/// --- Express Server ---
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.use(cors());
-app.use(express.json());
-
-// API Key Middleware
-const apiKeyAuth = (req, res, next) => {
-    const apiKey = req.headers['x-api-key'] || req.query.apiKey;
-
-    if (!apiKey) {
-        return res.status(401).json({
-            success: false,
-            message: 'API key is required'
-        });
-    }
-
-    if (apiKey !== process.env.API_KEY) {
-        return res.status(403).json({
-            success: false,
-            message: 'Invalid API key'
-        });
-    }
-
-    next();
-};
-
-// Apply API key authentication to all usage routes
-app.use('/api/usage', apiKeyAuth);
-
-// Get usage for current month
-app.get('/api/usage/current-month', async (req, res) => {
+// --- Set bot commands on startup ---
+async function setBotCommands() {
     try {
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-        const usageData = await Usage.find({ date: { $gte: startOfMonth, $lte: endOfMonth } }).sort({ date: -1 });
-        res.json({
-            success: true,
-            data: usageData,
-            period: {
-                start: startOfMonth,
-                end: endOfMonth,
-                month: now.toLocaleString('default', { month: 'long' }),
-                year: now.getFullYear()
-            },
-            count: usageData.length
-        });
+        await bot.setMyCommands(botCommands);
+        console.log('Bot commands set successfully!');
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: 'Failed to fetch usage data', error: error.message });
+        console.error('Error setting bot commands:', error);
     }
-});
+}
 
-// Get usage for a specific month
-app.get('/api/usage/:year/:month', async (req, res) => {
-    try {
-        const year = parseInt(req.params.year);
-        const month = parseInt(req.params.month) - 1;
-        if (isNaN(year) || isNaN(month) || month < 0 || month > 11) {
-            return res.status(400).json({ success: false, message: 'Invalid year or month parameter' });
-        }
+// Call this function when your bot starts
+setBotCommands();
 
-        const startOfMonth = new Date(year, month, 1);
-        const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
-        const usageData = await Usage.find({ date: { $gte: startOfMonth, $lte: endOfMonth } }).sort({ date: -1 });
-
-        res.json({
-            success: true,
-            data: usageData,
-            period: {
-                start: startOfMonth,
-                end: endOfMonth,
-                month: startOfMonth.toLocaleString('default', { month: 'long' }),
-                year
-            },
-            count: usageData.length
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: 'Failed to fetch usage data', error: error.message });
-    }
-});
-
-// Health check endpoint (no API key required)
-app.get('/health', (req, res) => {
-    res.json({
-        success: true,
-        message: 'Server is running',
-        timestamp: new Date().toISOString()
-    });
-});
-
-app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
 console.log('Bot is running...');

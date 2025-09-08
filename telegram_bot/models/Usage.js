@@ -5,7 +5,7 @@ const usageSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
-  phoneNumber: {
+  roomNumber: {
     type: String,
     required: true
   },
