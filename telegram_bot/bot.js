@@ -1,32 +1,29 @@
 const TelegramBot = require('node-telegram-bot-api');
 const cron = require('node-cron');
 const connectDB = require('./db');
+const path = require('path');
+
+// Load environment variables as early as possible
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 // Import Mongoose Models
 const Usage = require('./models/Usage');
 const Receipt = require('./models/Receipt');
 const User = require('./models/User');
 
-// Load environment variables
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
-
-// Connect to MongoDB
+// Connect to MongoDB once
 connectDB();
 
-// --- Telegram Bot ---
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
+
 const userSessions = new Map();
 const pendingReceipts = new Map();
 
-// --- Define Bot Commands ---
 const botCommands = [
     { command: 'start', description: 'Start or restart the bot' },
     { command: 'clear', description: 'Clear all your data and stop reminders' },
 ];
 
-
-// --- Texts ---
 const texts = {
     english: {
         welcome: 'Welcome! Please send /start to begin.',
@@ -46,6 +43,8 @@ const texts = {
         thankYou: 'Thank you for submitting your utility usage!',
         selectLang: 'Please select a language from the options below.',
         clearDataConfirmation: 'Are you sure you want to clear all your data and stop using the bot? This will remove your language preference, room number, and stop reminders. You can always /start again.',
+        clearYes: 'Yes, clear my data', 
+        clearNo: 'No, cancel',         
         dataCleared: 'All your session data has been cleared. You will no longer receive reminders. You can type /start anytime to begin again.',
         cancel: 'Operation cancelled. Your data has not been cleared.'
     },
@@ -67,12 +66,13 @@ const texts = {
         thankYou: 'សូមអរគុណសម្រាប់ការដាក់បញ្ចូលការប្រើប្រាស់ឧបករណ៍របស់អ្នក!',
         selectLang: 'សូមជ្រើសរើសភាសាមួយពីជម្រើសខាងក្រោម។',
         clearDataConfirmation: 'តើអ្នកប្រាកដជាចង់លុបទិន្នន័យរបស់អ្នកទាំងអស់ ហើយឈប់ប្រើបូតនេះមែនទេ? វានឹងលុបចំណូលចិត្តភាសារបស់អ្នក លេខបន្ទប់ និងបញ្ឈប់ការរំលឹក។ អ្នកអាច /start ឡើងវិញបានគ្រប់ពេល។',
+        clearYes: 'បាទ/ចាស លុបទិន្នន័យរបស់ខ្ញុំ', 
+        clearNo: 'ទេ កុំលុបចោល',            
         dataCleared: 'ទិន្នន័យវគ្គរបស់អ្នកទាំងអស់ត្រូវបានលុប។ អ្នកនឹងលែងទទួលបានការរំលឹកទៀតហើយ។ អ្នកអាចវាយ /start គ្រប់ពេលដើម្បីចាប់ផ្តើមម្តងទៀត។',
         cancel: 'ប្រតិបត្តិការត្រូវបានលុបចោល។ ទិន្នន័យរបស់អ្នកមិនត្រូវបានលុបទេ។'
     }
 };
 
-// --- Keyboards ---
 const languageKeyboard = {
     reply_markup: {
         keyboard: [[{ text: '🇰🇭 ខ្មែរ (Khmer)' }, { text: '🇺🇸 English' }]],
@@ -81,17 +81,28 @@ const languageKeyboard = {
     }
 };
 
-const clearConfirmationKeyboard = (language) => {
+const removeKeyboard = {
+    reply_markup: {
+        remove_keyboard: true
+    }
+};
+
+const getClearConfirmationKeyboard = (language) => {
     const t = texts[language];
     return {
         reply_markup: {
-            keyboard: [[{ text: 'Yes, clear my data' }, { text: 'No, keep my data' }]],
+            keyboard: [[{ text: t.clearYes }, { text: t.clearNo }]],
             resize_keyboard: true,
             one_time_keyboard: true
         }
     };
 };
 
+/**
+ * Calculates the next reminder date for a user.
+ * @param {Date} startDate The date from which to calculate the next reminder.
+ * @returns {Date} The calculated next reminder date.
+ */
 function getNextReminderDate(startDate) {
     const nextDate = new Date(startDate);
     nextDate.setMonth(nextDate.getMonth() + 1);
@@ -99,24 +110,61 @@ function getNextReminderDate(startDate) {
     return nextDate;
 }
 
-cron.schedule('0 * * * *', async () => {
-    console.log('Checking for personalized reminders...');
+/**
+ * Sends a message to a chat, handling potential errors.
+ * @param {number} chatId The chat ID.
+ * @param {string} message The message to send.
+ * @param {object} [options={}] Additional message options.
+ */
+async function sendBotMessage(chatId, message, options = {}) {
+    try {
+        await bot.sendMessage(chatId, message, options);
+    } catch (error) {
+        console.error(`Error sending message to ${chatId}:`, error.message);
+        if (error.response && error.response.error_code === 403) {
+            console.log(`User ${chatId} blocked the bot. Deactivating user.`);
+            await User.findOneAndUpdate({ chatId }, { isActive: false });
+        }
+    }
+}
+
+/**
+ * Sends a photo to a chat, handling potential errors.
+ * @param {number} chatId The chat ID.
+ * @param {string} photo The photo to send.
+ * @param {object} [options={}] Additional photo options.
+ */
+async function sendBotPhoto(chatId, photo, options = {}) {
+    try {
+        await bot.sendPhoto(chatId, photo, options);
+    } catch (error) {
+        console.error(`Error sending photo to ${chatId}:`, error.message);
+        if (error.response && error.response.error_code === 403) {
+            console.log(`User ${chatId} blocked the bot. Deactivating user.`);
+            await User.findOneAndUpdate({ chatId }, { isActive: false });
+        }
+    }
+}
+
+cron.schedule('0 9 * * *', async () => {
+    console.log('Running daily reminder check...');
     const now = new Date();
     const usersToRemind = await User.find({
         nextReminderDate: { $lte: now },
         isActive: true
-    });
+    }).lean();
 
     for (const user of usersToRemind) {
         try {
             const t = texts[user.language || 'english'];
-            await bot.sendMessage(user.chatId, t.reminder);
+            await sendBotMessage(user.chatId, t.reminder);
 
-            user.nextReminderDate = getNextReminderDate(user.nextReminderDate || user.lastInteractionDate);
-            await user.save();
+            await User.findByIdAndUpdate(user._id, {
+                nextReminderDate: getNextReminderDate(user.nextReminderDate || user.lastInteractionDate)
+            });
             console.log(`Reminder sent to chat ${user.chatId}. Next reminder: ${user.nextReminderDate}`);
         } catch (error) {
-            console.error(`Error sending reminder to ${user.chatId}:`, error);
+            console.error(`Error processing reminder for ${user.chatId}:`, error);
         }
     }
 });
@@ -124,27 +172,31 @@ cron.schedule('0 * * * *', async () => {
 cron.schedule('* * * * *', async () => {
     if (pendingReceipts.size > 0) {
         console.log(`Checking for ${pendingReceipts.size} pending receipts...`);
-        for (let [chatId, { roomNumber, language }] of pendingReceipts) {
+        for (let [chatId, { roomNumber, language }] of Array.from(pendingReceipts.entries())) {
             try {
-                const receipt = await Receipt.findOne({ roomNumber });
+                const receipt = await Receipt.findOne({ roomNumber }).select('receiptImage').lean();
                 if (receipt && receipt.receiptImage) {
                     const t = texts[language];
-                    bot.sendMessage(chatId, t.receiptSent);
-                    bot.sendPhoto(chatId, receipt.receiptImage, { caption: `Receipt for Room: ${roomNumber}` });
+                    await sendBotMessage(chatId, t.receiptSent);
+                    await sendBotPhoto(chatId, receipt.receiptImage, { caption: `Receipt for Room: ${roomNumber}` });
                     pendingReceipts.delete(chatId);
                     console.log(`Receipt sent to chat ${chatId} for room ${roomNumber}.`);
                 }
             } catch (error) {
                 console.error(`Error sending delayed receipt to ${chatId} for room ${roomNumber}:`, error);
                 const t = texts[language];
-                bot.sendMessage(chatId, `${t.error} (Receipt sending failed). Please contact support.`);
+                await sendBotMessage(chatId, `${t.error} (Receipt sending failed). Please contact support.`);
                 pendingReceipts.delete(chatId);
             }
         }
     }
 });
 
-// --- Telegram Handlers ---
+
+/**
+ * Handles the /start command.
+ * @param {object} msg The Telegram message object.
+ */
 bot.onText(/\/start/, async (msg) => {
     const chatId = msg.chat.id;
     const now = new Date();
@@ -161,35 +213,35 @@ bot.onText(/\/start/, async (msg) => {
         await user.save();
         console.log(`New user ${chatId} registered. First reminder: ${user.nextReminderDate}`);
     } else {
-        user.lastInteractionDate = now;
-        user.isActive = true;
-        await user.save();
+        if (!user.isActive || user.language === undefined || user.lastInteractionDate.getTime() !== now.getTime()) {
+            user.lastInteractionDate = now;
+            user.isActive = true;
+            await user.save();
+        }
     }
 
-    const session = { state: 'language', language: user.language, data: {} };
-    userSessions.set(chatId, session);
+    userSessions.set(chatId, { state: 'language', language: user.language, data: {} });
 
-    const t = texts[session.language];
-    bot.sendMessage(chatId, t.start);
-    bot.sendMessage(chatId, t.language, languageKeyboard);
+    const t = texts[user.language];
+    await sendBotMessage(chatId, t.start);
+    await sendBotMessage(chatId, t.language, languageKeyboard);
 });
 
+/**
+ * Handles the /clear command.
+ * @param {object} msg The Telegram message object.
+ */
 bot.onText(/\/clear/, async (msg) => {
     const chatId = msg.chat.id;
-    let user = await User.findOne({ chatId });
+    let user = await User.findOne({ chatId }).select('language');
     const session = userSessions.get(chatId);
 
-    let language = 'english';
-    if (user && user.language) {
-        language = user.language;
-    } else if (session && session.language) {
-        language = session.language;
-    }
+    const language = (user && user.language) || (session && session.language) || 'english';
     const t = texts[language];
 
     userSessions.set(chatId, { state: 'confirm_clear', language: language, data: {} });
 
-    bot.sendMessage(chatId, t.clearDataConfirmation, clearConfirmationKeyboard(language));
+    await sendBotMessage(chatId, t.clearDataConfirmation, getClearConfirmationKeyboard(language));
 });
 
 
@@ -197,35 +249,49 @@ bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text;
 
+    if (text && text.startsWith('/')) return;
+
     const session = userSessions.get(chatId);
+
     if (!session) {
-        if (!text.startsWith('/start') && !text.startsWith('/clear')) {
-            bot.sendMessage(chatId, texts.english.welcome);
-        }
+        await sendBotMessage(chatId, texts.english.welcome);
         return;
     }
 
     const t = texts[session.language];
 
-    switch (session.state) {
-        case 'language': return handleLanguageSelection(chatId, text, session, t);
-        case 'roomNumber': return handleRoomNumberInput(chatId, text, session, t);
-        case 'electricity': return handleElectricityInput(chatId, text, session, t);
-        case 'water': return handleWaterInput(chatId, text, session, t);
-        case 'confirm_clear': return handleClearConfirmation(chatId, text, session, t);
-        default:
-            if (!text.startsWith('/start') && !text.startsWith('/clear')) {
-                bot.sendMessage(chatId, `I'm not sure how to respond to "${text}".`);
-                session.state = 'completed';
+    try {
+        switch (session.state) {
+            case 'language':
+                await handleLanguageSelection(chatId, text, session, t);
+                break;
+            case 'roomNumber':
+                await handleRoomNumberInput(chatId, text, session, t);
+                break;
+            case 'electricity':
+                await handleElectricityInput(chatId, text, session, t);
+                break;
+            case 'water':
+                await handleWaterInput(chatId, text, session, t);
+                break;
+            case 'confirm_clear':
+                await handleClearConfirmation(chatId, text, session, t);
+                break;
+            default:
+                await sendBotMessage(chatId, `I'm not sure how to respond to "${text}".`);
+                session.state = 'language';
                 userSessions.set(chatId, session);
-                bot.sendMessage(chatId, t.start);
-                bot.sendMessage(chatId, t.language, languageKeyboard);
-            }
-            break;
+                await sendBotMessage(chatId, t.start);
+                await sendBotMessage(chatId, t.language, languageKeyboard);
+                break;
+        }
+    } catch (error) {
+        console.error(`Error in message handler for chat ${chatId}, state ${session.state}:`, error);
+        await sendBotMessage(chatId, t.error);
+        userSessions.delete(chatId);
     }
 });
 
-// --- Helper Functions ---
 async function handleLanguageSelection(chatId, text, session, t) {
     let selectedLanguage = 'english';
     if (text.includes('English')) {
@@ -233,119 +299,123 @@ async function handleLanguageSelection(chatId, text, session, t) {
     } else if (text.includes('ខ្មែរ') || text.includes('Khmer')) {
         selectedLanguage = 'khmer';
     } else {
-        return bot.sendMessage(chatId, t.selectLang, languageKeyboard);
+        return sendBotMessage(chatId, t.selectLang, languageKeyboard);
     }
 
     session.language = selectedLanguage;
-    const tNew = texts[session.language];
+    const tNew = texts[session.language]; 
 
     try {
-        await User.findOneAndUpdate({ chatId }, { language: selectedLanguage, isActive: true });
+        await User.findOneAndUpdate({ chatId }, { language: selectedLanguage, isActive: true }, { upsert: true });
     } catch (error) {
         console.error(`Error updating user language for ${chatId}:`, error);
     }
 
     session.state = 'roomNumber';
-    bot.sendMessage(chatId, tNew.roomNumber, { reply_markup: { remove_keyboard: true } });
+    await sendBotMessage(chatId, tNew.roomNumber, removeKeyboard);
 }
 
-function handleRoomNumberInput(chatId, text, session, t) {
+async function handleRoomNumberInput(chatId, text, session, t) {
     const roomNumber = text.trim();
     if (!roomNumber || !/^[a-zA-Z0-9\-\s]+$/.test(roomNumber)) {
-        return bot.sendMessage(chatId, t.invalidRoom);
+        return sendBotMessage(chatId, t.invalidRoom);
     }
     session.data.roomNumber = roomNumber;
     session.state = 'electricity';
-    bot.sendMessage(chatId, t.electricity);
+    await sendBotMessage(chatId, t.electricity);
 }
 
-function handleElectricityInput(chatId, text, session, t) {
+async function handleElectricityInput(chatId, text, session, t) {
     const electricity = parseFloat(text);
-    if (isNaN(electricity) || electricity < 0) {
-        return bot.sendMessage(chatId, t.invalidNumber);
+    if (isNaN(electricity) || electricity < 0) { 
+        return sendBotMessage(chatId, t.invalidNumber);
     }
     session.data.electricityUsage = electricity;
     session.state = 'water';
-    bot.sendMessage(chatId, t.water);
+    await sendBotMessage(chatId, t.water);
 }
 
 async function handleWaterInput(chatId, text, session, t) {
     const water = parseFloat(text);
-    if (isNaN(water) || water < 0) {
-        return bot.sendMessage(chatId, t.invalidNumber);
+    if (isNaN(water) || water < 0) { 
+        return sendBotMessage(chatId, t.invalidNumber);
     }
     session.data.waterUsage = water;
 
     try {
+        const now = new Date();
         const usage = new Usage({
             chatId,
             roomNumber: session.data.roomNumber,
             language: session.language,
             electricityUsage: session.data.electricityUsage,
             waterUsage: session.data.waterUsage,
-            date: new Date()
+            date: now
         });
         await usage.save();
-        bot.sendMessage(chatId, t.dataSaved);
+        await sendBotMessage(chatId, t.dataSaved);
 
-        const user = await User.findOne({ chatId });
-        if (user) {
-            user.lastInteractionDate = new Date();
-            user.nextReminderDate = getNextReminderDate(user.lastInteractionDate);
-            user.isActive = true;
-            await user.save();
-            console.log(`User ${chatId} submitted data. Next reminder: ${user.nextReminderDate}`);
-        }
+        await User.findOneAndUpdate(
+            { chatId },
+            {
+                lastInteractionDate: now,
+                nextReminderDate: getNextReminderDate(now),
+                isActive: true 
+            },
+            { new: true, upsert: true }
+        );
+        console.log(`User ${chatId} submitted data. Next reminder: ${getNextReminderDate(now)}`);
 
-        bot.sendMessage(chatId, t.noReceiptYet);
 
+        await sendBotMessage(chatId, t.noReceiptYet);
         pendingReceipts.set(chatId, { roomNumber: session.data.roomNumber, language: session.language });
+        await sendBotMessage(chatId, t.thankYou, removeKeyboard);
 
-        bot.sendMessage(chatId, t.thankYou, { reply_markup: { remove_keyboard: true } });
-
-        userSessions.delete(chatId);
+        userSessions.delete(chatId); 
         console.log(`Session cleared for ${chatId} after submission.`);
 
     } catch (error) {
         console.error('Error saving data:', error);
-        bot.sendMessage(chatId, t.error);
+        await sendBotMessage(chatId, t.error);
+        userSessions.delete(chatId); 
     }
 }
 
 async function handleClearConfirmation(chatId, text, session, t) {
-    if (text.toLowerCase().includes('yes')) {
+    if (text === t.clearYes) {
         userSessions.delete(chatId);
-        pendingReceipts.delete(chatId);
+        pendingReceipts.delete(chatId); 
 
         try {
             await User.findOneAndUpdate(
                 { chatId },
                 {
-                    language: 'english',
-                    roomNumber: null,
-                    nextReminderDate: null,
-                    isActive: false
-                }
+                    language: 'english', 
+                    roomNumber: null,    
+                    nextReminderDate: null, 
+                    isActive: false      
+                },
+                { new: true } 
             );
             console.log(`User ${chatId} data cleared and marked inactive.`);
-            bot.sendMessage(chatId, t.dataCleared, { reply_markup: { remove_keyboard: true } });
+            await sendBotMessage(chatId, t.dataCleared, removeKeyboard);
         } catch (error) {
             console.error(`Error clearing user data for ${chatId}:`, error);
-            bot.sendMessage(chatId, t.error);
+            await sendBotMessage(chatId, t.error);
         }
-    } else if (text.toLowerCase().includes('no')) {
-        userSessions.delete(chatId);
-        bot.sendMessage(chatId, t.cancel, { reply_markup: { remove_keyboard: true } });
+    } else if (text === t.clearNo) {
+        userSessions.delete(chatId); 
+        await sendBotMessage(chatId, t.cancel, removeKeyboard);
     } else {
-        bot.sendMessage(chatId, t.clearDataConfirmation, clearConfirmationKeyboard(session.language));
+        await sendBotMessage(chatId, t.clearDataConfirmation, getClearConfirmationKeyboard(session.language));
     }
 }
 
 
-// --- Polling error handling ---
-bot.on('polling_error', console.error);
+bot.on('polling_error', (error) => {
+    console.error('Polling Error:', error.code, error.message);
+});
 
-// --- Set bot commands on startup ---
 async function setBotCommands() {
     try {
         await bot.setMyCommands(botCommands);
@@ -355,7 +425,6 @@ async function setBotCommands() {
     }
 }
 
-// Call this function when your bot starts
 setBotCommands();
 
 console.log('Bot is running...');
