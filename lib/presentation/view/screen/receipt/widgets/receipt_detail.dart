@@ -131,7 +131,9 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
     final hasElectricUsage = widget.receipt.thisElectricUsed > 0;
 
     return Scaffold(
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
+        backgroundColor: theme.colorScheme.background,
         title: Text('វិក្កយបត្របន្ទប់ជួល'),
         centerTitle: true,
       ),

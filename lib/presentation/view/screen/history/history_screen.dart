@@ -202,14 +202,14 @@ class _HistoryScreenState extends State<HistoryScreen>
                 _khmerMonths[index],
                 style: TextStyle(
                   color: isSelected
-                      ? theme.colorScheme.onSurfaceVariant
+                      ? Colors.white
                       : theme.colorScheme.onSurfaceVariant,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
               backgroundColor: theme.colorScheme.surfaceVariant,
               selectedColor: theme.colorScheme.primary,
-              checkmarkColor: theme.colorScheme.onSurface,
+              checkmarkColor: Colors.white,
               elevation: isSelected ? 4 : 0,
               shadowColor: theme.colorScheme.primary.withOpacity(0.3),
             ),

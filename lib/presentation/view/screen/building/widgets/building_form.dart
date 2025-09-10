@@ -110,10 +110,7 @@ class _BuildingFormState extends State<BuildingForm> {
         ),
         title: Text(
           isEditing ? 'កែប្រែអគារ' : 'បញ្ចូលអគារថ្មី',
-          style: theme.appBarTheme.titleTextStyle ??
-              theme.textTheme.titleLarge?.copyWith(
-                color: theme.colorScheme.onSurface,
-              ),
+          style: TextStyle(color: Colors.white)
         ),
         actions: [
           IconButton(
