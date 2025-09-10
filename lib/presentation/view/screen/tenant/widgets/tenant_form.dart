@@ -210,7 +210,7 @@ class _TenantFormState extends State<TenantForm> {
                       foregroundColor: theme.colorScheme.onPrimary,
                     ),
                     child: Text(isEditing ? 'កែប្រអ្នកជួល' : 'បង្កើតអ្នកជួល',
-                        style: theme.textTheme.labelSmall),
+                        style: TextStyle(color: Colors.white)),
                   ),
                 ],
               ),

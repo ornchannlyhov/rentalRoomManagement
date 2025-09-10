@@ -88,7 +88,7 @@ class _ReceiptCardState extends State<ReceiptCard> {
                   Text(
                     'បន្ទប់ ${room?.roomNumber ?? "N/A"}',
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: Colors.white,
+                      color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -96,14 +96,14 @@ class _ReceiptCardState extends State<ReceiptCard> {
                   Text(
                     'កាលបរិច្ឆេទផុតកំណត់: ${DateFormat.yMd().format(receipt.dueDate)}',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.grey,
+                      color: theme.colorScheme.onSurface.withOpacity(0.8),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'អាគារ: ${building?.name ?? "N/A"}',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.grey,
+                      color: theme.colorScheme.onSurface.withOpacity(0.8),
                     ),
                   ),
                 ],
@@ -112,7 +112,7 @@ class _ReceiptCardState extends State<ReceiptCard> {
             Text(
               '\$${receipt.totalPrice.toStringAsFixed(2)}',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.white,
+                color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.bold,
               ),
             ),

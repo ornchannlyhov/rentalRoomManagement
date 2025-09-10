@@ -67,9 +67,11 @@ class _RoomFormState extends State<RoomForm> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor:
+            theme.colorScheme.background,
       appBar: AppBar(
         backgroundColor:
-            theme.appBarTheme.backgroundColor ?? theme.colorScheme.background,
+            theme.colorScheme.background,
         iconTheme: theme.iconTheme.copyWith(
           color: theme.iconTheme.color ?? theme.colorScheme.onPrimary,
         ),
@@ -130,12 +132,12 @@ class _RoomFormState extends State<RoomForm> {
                     onPressed: _save,
                     icon: Icon(
                       Icons.save,
-                      color: theme.colorScheme.onSurface,
+                      color: Colors.white,
                     ),
                     label: Text(
                       'រក្សាទុក',
                       style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onSurface,
+                        color: Colors.white,
                       ),
                     ),
                     style: ElevatedButton.styleFrom(

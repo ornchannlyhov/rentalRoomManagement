@@ -22,7 +22,7 @@ class AppbarCustom extends StatelessWidget implements PreferredSizeWidget {
           icon: Icon(Icons.add, color: theme.iconTheme.color),
         ),
       ],
-      backgroundColor: theme.appBarTheme.backgroundColor,
+      backgroundColor: theme.colorScheme.background,
       elevation: theme.appBarTheme.elevation ?? 0,
       shadowColor: theme.appBarTheme.shadowColor,
       centerTitle: false,

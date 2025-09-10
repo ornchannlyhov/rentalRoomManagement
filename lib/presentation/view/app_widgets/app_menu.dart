@@ -15,7 +15,7 @@ class AppMenu extends StatelessWidget {
       child: BottomNavigationBar(
         currentIndex: selectedIndex,
         onTap: onTap,
-        backgroundColor: colorScheme.surface,
+        backgroundColor: colorScheme.background,
         type: BottomNavigationBarType.fixed,
         selectedItemColor: colorScheme.primary,
         unselectedItemColor: colorScheme.onSurface.withOpacity(0.6),

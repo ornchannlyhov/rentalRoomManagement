@@ -197,6 +197,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
     );
 
     return Scaffold(
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
         title: Text(isEditing ? 'កែប្រែវិក្កយបត្រ' : 'បង្កើតវិក្កយបត្រថ្មី'),
         backgroundColor: theme.colorScheme.background,

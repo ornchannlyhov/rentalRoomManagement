@@ -391,7 +391,7 @@ class _HistoryScreenState extends State<HistoryScreen>
             fontWeight: FontWeight.w600,
           ),
         ),
-        backgroundColor: theme.appBarTheme.backgroundColor,
+        backgroundColor: theme.colorScheme.background,
         elevation: 0,
         actions: [
           IconButton(

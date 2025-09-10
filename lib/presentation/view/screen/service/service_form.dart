@@ -63,7 +63,11 @@ class _ServiceFormState extends State<ServiceForm> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor:
+            theme.colorScheme.background,
       appBar: AppBar(
+        backgroundColor:
+            theme.colorScheme.background,
         title: Text(
           isEditing ? 'កែប្រែសេវា' : 'បង្កើតសេវាថ្មី',
           style: theme.appBarTheme.titleTextStyle ??
@@ -71,8 +75,6 @@ class _ServiceFormState extends State<ServiceForm> {
                 color: theme.colorScheme.onSurface,
               ),
         ),
-        backgroundColor:
-            theme.appBarTheme.backgroundColor ?? theme.colorScheme.background,
         iconTheme: theme.iconTheme.copyWith(
           color: theme.iconTheme.color ?? theme.colorScheme.onPrimary,
         ),
@@ -114,7 +116,7 @@ class _ServiceFormState extends State<ServiceForm> {
                       backgroundColor: theme.colorScheme.primary,
                       foregroundColor: theme.colorScheme.onPrimary,
                     ),
-                    child: Text(isEditing ? 'រក្សាទុក' : 'បញ្ចូលសេវា',style: theme.textTheme.labelMedium,),
+                    child: Text(isEditing ? 'រក្សាទុក' : 'បញ្ចូលសេវា',style: TextStyle(color: Colors.white),),
                   ),
                 ],
               ),

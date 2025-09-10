@@ -43,7 +43,8 @@ class _BuildingFormState extends State<BuildingForm> {
       rentPrice = building.rentPrice;
       electricPrice = building.electricPrice;
       waterPrice = building.waterPrice;
-      roomQuantity = building.rooms.length; // Set initial quantity from existing rooms
+      roomQuantity =
+          building.rooms.length; // Set initial quantity from existing rooms
     } else {
       id = '';
       name = '';
@@ -68,8 +69,12 @@ class _BuildingFormState extends State<BuildingForm> {
               roomNumber: i.toString(), // Simple sequential room numbering
               roomStatus: RoomStatus.available,
               price: rentPrice, // Use building's rent price as default
-              building: Building( // Create a dummy building reference for the room
-                id: isEditing ? widget.building!.id : DateTime.now().toString(), // Will be updated by repository
+              building: Building(
+                // Create a dummy building reference for the room
+                id: isEditing
+                    ? widget.building!.id
+                    : DateTime.now()
+                        .toString(), // Will be updated by repository
                 name: name,
                 rentPrice: rentPrice,
                 electricPrice: electricPrice,
@@ -97,9 +102,9 @@ class _BuildingFormState extends State<BuildingForm> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        backgroundColor:
-            theme.appBarTheme.backgroundColor ?? theme.colorScheme.background,
+        backgroundColor: theme.colorScheme.background,
         iconTheme: theme.iconTheme.copyWith(
           color: theme.iconTheme.color ?? theme.colorScheme.onPrimary,
         ),
@@ -156,7 +161,8 @@ class _BuildingFormState extends State<BuildingForm> {
                         if (value == null || value.isEmpty) {
                           return 'សូមបញ្ចូលចំនួនបន្ទប់។';
                         }
-                        if (int.tryParse(value) == null || int.parse(value) < 0) {
+                        if (int.tryParse(value) == null ||
+                            int.parse(value) < 0) {
                           return 'សូមបញ្ចូលចំនួនបន្ទប់ត្រឹមត្រូវ។';
                         }
                         return null;

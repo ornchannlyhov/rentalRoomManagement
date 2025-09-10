@@ -6,7 +6,6 @@ import 'package:receipts_v2/data/models/enum/mode.dart';
 import 'package:receipts_v2/data/models/enum/payment_status.dart';
 import 'package:receipts_v2/data/models/receipt.dart';
 import 'package:receipts_v2/presentation/providers/receipt_provider.dart';
-import 'package:receipts_v2/presentation/view/app_widgets/app_bar.dart';
 import 'package:receipts_v2/presentation/view/screen/receipt/widgets/filler_by_payment_button.dart';
 import 'package:receipts_v2/presentation/view/app_widgets/grid_item.dart';
 import 'package:receipts_v2/presentation/view/screen/receipt/widgets/receipt_card.dart';
@@ -23,7 +22,7 @@ class ReceiptScreen extends StatefulWidget {
 class _ReceiptScreenState extends State<ReceiptScreen>
     with SingleTickerProviderStateMixin {
   PaymentStatus selectedStatus = PaymentStatus.paid;
-  int selectedMonth = DateTime.now().month; 
+  int selectedMonth = DateTime.now().month;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -424,164 +423,230 @@ class _ReceiptScreenState extends State<ReceiptScreen>
     final thisMonth = getKhmerMonth(selectedMonth);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
-      appBar: AppbarCustom(
-        header: 'វិក្កយបត្រ', // "Receipts"
-        onAddPressed: () {
-          receiptProvider.receipts.when(
-            success: (allReceipts) => _addReceipt(context, allReceipts),
-            loading: () {},
-            error: (_) {},
-          );
-        },
+      backgroundColor: theme.colorScheme.background, // Default background
+      appBar: AppBar(
+        title: Text(
+          'វិក្កយបត្រ', // "Receipts"
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.light
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).appBarTheme.backgroundColor,
+        elevation: 0,
+        iconTheme: IconThemeData(
+          color: Theme.of(context).brightness == Brightness.light
+              ? Colors.white
+              : Theme.of(context).colorScheme.onSurface,
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.add,
+              color: Theme.of(context).brightness == Brightness.light
+                  ? Colors.white
+                  : Theme.of(context).colorScheme.onSurface,
+            ),
+            onPressed: () {
+              receiptProvider.receipts.when(
+                success: (allReceipts) => _addReceipt(context, allReceipts),
+                loading: () {},
+                error: (_) {},
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-        child: receiptProvider.receipts.when(
-          loading: () => _buildLoadingState(theme),
-          error: (error) => _buildErrorState(theme, error),
-          success: (allReceipts) {
-            final receipts =
-                receiptProvider.getReceiptsByMonth(currentYear, selectedMonth);
-            final filteredReceipts =
-                _filterReceiptsByStatus(receipts, selectedStatus);
-
-            return Column(
-              children: [
-                Card(
-                  margin: EdgeInsets.zero,
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+      body: Stack(
+        children: [
+          // Background color for the top portion in light theme
+          if (theme.brightness == Brightness.light)
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return Container(
+                  height: _calculateBackgroundHeight(context),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary,
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                );
+              },
+            ),
+          // Main content
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            child: receiptProvider.receipts.when(
+              loading: () => _buildLoadingState(theme),
+              error: (error) => _buildErrorState(theme, error),
+              success: (allReceipts) {
+                final receipts = receiptProvider.getReceiptsByMonth(
+                    currentYear, selectedMonth);
+                final filteredReceipts =
+                    _filterReceiptsByStatus(receipts, selectedStatus);
+
+                return Column(
+                  children: [
+                    Card(
+                      margin: EdgeInsets.zero,
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Icon(Icons.calendar_month,
-                                    size: 20, color: colorScheme.primary),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'ខែ $thisMonth',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                Row(
+                                  children: [
+                                    Icon(Icons.calendar_month,
+                                        size: 20, color: colorScheme.primary),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'ខែ $thisMonth',
+                                      style:
+                                          theme.textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                PopupMenuButton<int>(
+                                  icon: Icon(Icons.filter_list,
+                                      color: colorScheme.primary),
+                                  tooltip: 'ជ្រើសរើសខែ',
+                                  onSelected: (int newValue) {
+                                    setState(() {
+                                      selectedMonth = newValue;
+                                    });
+                                  },
+                                  itemBuilder: (BuildContext context) =>
+                                      _buildMonthItems().map((item) {
+                                    return PopupMenuItem<int>(
+                                      value: item.value,
+                                      child: item.child,
+                                    );
+                                  }).toList(),
                                 ),
                               ],
                             ),
-                            PopupMenuButton<int>(
-                              icon: Icon(Icons.filter_list,
-                                  color: colorScheme.primary),
-                              tooltip: 'ជ្រើសរើសខែ',
-                              onSelected: (int newValue) {
-                                setState(() {
-                                  selectedMonth = newValue;
-                                });
-                              },
-                              itemBuilder: (BuildContext context) =>
-                                  _buildMonthItems().map((item) {
-                                return PopupMenuItem<int>(
-                                  value: item.value,
-                                  child: item.child,
+                            const SizedBox(height: 4),
+                            LayoutBuilder(
+                              builder: (context, constraints) {
+                                final availableWidth = constraints.maxWidth;
+                                final itemWidth = (availableWidth - 32) / 3;
+
+                                return SizedBox(
+                                  height: itemWidth * 0.8,
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      SizedBox(
+                                        width: itemWidth,
+                                        child: GridItem(
+                                          label: "កំពុងរង់ចាំ",
+                                          icon: Icons.hourglass_empty_sharp,
+                                          amount: _countReceiptsByStatus(
+                                              receipts, PaymentStatus.pending),
+                                          iconColor: Colors.amber,
+                                          border: true,
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: itemWidth,
+                                        child: GridItem(
+                                          label: "បានបង់",
+                                          icon: Icons.check_circle,
+                                          amount: _countReceiptsByStatus(
+                                              receipts, PaymentStatus.paid),
+                                          iconColor: Colors.green,
+                                          border: true,
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: itemWidth,
+                                        child: GridItem(
+                                          label: "ហួសកំណត់",
+                                          icon: Icons.error,
+                                          amount: _countReceiptsByStatus(
+                                              receipts, PaymentStatus.overdue),
+                                          iconColor: Colors.red,
+                                          border: true,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 );
-                              }).toList(),
+                              },
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            final availableWidth = constraints.maxWidth;
-                            final itemWidth = (availableWidth - 32) / 3;
-
-                            return SizedBox(
-                              height: itemWidth * 0.8,
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  SizedBox(
-                                    width: itemWidth,
-                                    child: GridItem(
-                                      label: "កំពុងរង់ចាំ",
-                                      icon: Icons.hourglass_empty_sharp,
-                                      amount: _countReceiptsByStatus(
-                                          receipts, PaymentStatus.pending),
-                                      iconColor: Colors.amber,
-                                      border: true,
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: itemWidth,
-                                    child: GridItem(
-                                      label: "បានបង់",
-                                      icon: Icons.check_circle,
-                                      amount: _countReceiptsByStatus(
-                                          receipts, PaymentStatus.paid),
-                                      iconColor: Colors.green,
-                                      border: true,
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: itemWidth,
-                                    child: GridItem(
-                                      label: "ហួសកំណត់",
-                                      icon: Icons.error,
-                                      amount: _countReceiptsByStatus(
-                                          receipts, PaymentStatus.overdue),
-                                      iconColor: Colors.red,
-                                      border: true,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
                       ),
-                    ],
-                  ),
-                  child: FilterByPaymentButton(
-                    onStatusSelected: (status) {
-                      setState(() {
-                        selectedStatus = status;
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: filteredReceipts.isEmpty
-                      ? _buildEmptyState(theme)
-                      : _buildReceiptsList(theme, filteredReceipts),
-                ),
-              ],
-            );
-          },
-        ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: FilterByPaymentButton(
+                        onStatusSelected: (status) {
+                          setState(() {
+                            selectedStatus = status;
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: filteredReceipts.isEmpty
+                          ? _buildEmptyState(theme)
+                          : _buildReceiptsList(theme, filteredReceipts),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  double _calculateBackgroundHeight(BuildContext context) {
+    final appBarHeight = Scaffold.of(context).appBarMaxHeight ?? 56.0;
+    final paddingTop = 16.0;
+    const cardTopMargin = 0.0;
+    const cardPaddingTop = 8.0;
+    const rowHeight = 36.0;
+    const spacing = 4.0;
+    final gridItemHeight =
+        (MediaQuery.of(context).size.width - 32 - 32) / 3 * 0.8 / 2;
+
+    return appBarHeight +
+        paddingTop +
+        cardTopMargin +
+        cardPaddingTop +
+        rowHeight +
+        spacing +
+        gridItemHeight -
+        150; // Subtract 40 pixels
   }
 
   String translatePaymentStatus(PaymentStatus status) {
