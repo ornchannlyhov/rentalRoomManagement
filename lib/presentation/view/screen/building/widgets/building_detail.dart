@@ -118,7 +118,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('លុបបន្ទប់'),
-            content: Text('តើ​អ្នកចង់លុប​បន្ទប់ "${room.roomNumber}"?'),
+            content: Text('តើអ្នកចង់លុបបន្ទប់ "${room.roomNumber}"?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
@@ -134,6 +134,17 @@ class _BuildingDetailState extends State<BuildingDetail> {
         false;
 
     if (confirmed && mounted) {
+      // Get tenants associated with the room's building
+      final tenantProvider = context.read<TenantProvider>();
+      final tenants = tenantProvider.getTenantByBuilding(widget.building.id);
+
+      for (final tenant in tenants) {
+        if (tenant.room!.id == room.id) {
+          await tenantProvider.removeRoom(tenant.id);
+        }
+      }
+
+      // Delete the room from RoomProvider
       await context.read<RoomProvider>().deleteRoom(room.id);
       _showSuccessMessage('បានលុបបន្ទប់ "${room.roomNumber}" ជោគជ័យ');
     }

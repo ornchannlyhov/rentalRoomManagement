@@ -132,19 +132,19 @@ class _TenantScreenState extends State<TenantScreen> {
                   children: [
                     Icon(Icons.people_alt_outlined,
                         size: 48,
-                        color: colorScheme.onSurface.withOpacity(0.3)),
+                        color: colorScheme.onSurface),
                     const SizedBox(height: 16),
                     Text(
                       'មិនមានអ្នកជួល',
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: colorScheme.onSurface.withOpacity(0.5),
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'ចុច + ដើម្បីបន្ថែមអ្នកជួលថ្មី',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurface.withOpacity(0.5),
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ],

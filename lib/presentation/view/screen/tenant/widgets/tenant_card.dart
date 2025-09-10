@@ -74,7 +74,7 @@ class TenantCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'លេខបន្ទប់: ${tenant.room!.roomNumber}',
+                    'លេខបន្ទប់: ${tenant.room?.roomNumber ?? "មិនមានបន្ទប់"}',
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurface.withOpacity(0.7),
                       fontSize: 12,

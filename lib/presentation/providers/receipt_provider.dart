@@ -69,4 +69,11 @@ class ReceiptProvider extends ChangeNotifier {
     }
     return [];
   }
+
+  List<Receipt> getReceiptsByMonth(int year, int month) {
+    if (_receipts.hasData) {
+      return _repository.getReceiptsByMonth(year, month);
+    }
+    return [];
+  }
 }

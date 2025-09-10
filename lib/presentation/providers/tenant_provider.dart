@@ -23,6 +23,13 @@ class TenantProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  List<Tenant> getTenantByBuilding(String buildingId) {
+    if (_tenants.hasData) {
+      return _repository.getTenantsByBuilding(buildingId);
+    }
+    return [];
+  }
+
   Future<void> createTenant(Tenant tenant) async {
     try {
       await _repository.createTenant(tenant);

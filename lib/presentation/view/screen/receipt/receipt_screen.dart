@@ -22,6 +22,7 @@ class ReceiptScreen extends StatefulWidget {
 
 class _ReceiptScreenState extends State<ReceiptScreen> {
   PaymentStatus selectedStatus = PaymentStatus.paid;
+  int selectedMonth = DateTime.now().month; // Initialize with current month
 
   @override
   void initState() {
@@ -31,7 +32,8 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
     });
   }
 
-  Future<void> _addReceipt(BuildContext context, List<Receipt> allReceipts) async {
+  Future<void> _addReceipt(
+      BuildContext context, List<Receipt> allReceipts) async {
     Navigator.of(context).push<void>(
       MaterialPageRoute(
         builder: (ctx) => ReceiptForm(
@@ -97,7 +99,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
     );
   }
 
-  String getKhmerMonth(DateTime date) {
+  String getKhmerMonth(int month) {
     final months = [
       'មករា',
       'កុម្ភៈ',
@@ -112,7 +114,25 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
       'វិច្ឆិកា',
       'ធ្នូ'
     ];
-    return months[date.month - 1];
+    return months[month - 1];
+  }
+
+  List<DropdownMenuItem<int>> _buildMonthItems() {
+    final currentMonth = DateTime.now().month;
+    final List<DropdownMenuItem<int>> items = [];
+
+    for (int month = 1; month <= currentMonth; month++) {
+      items.add(
+        DropdownMenuItem<int>(
+          value: month,
+          child: Text(
+            getKhmerMonth(month),
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
+      );
+    }
+    return items;
   }
 
   @override
@@ -120,15 +140,17 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final receiptProvider = context.watch<ReceiptProvider>();
-    final thisMonth = getKhmerMonth(DateTime.now());
+    final currentYear = DateTime.now().year;
+    final thisMonth = getKhmerMonth(selectedMonth);
+
     return Scaffold(
       appBar: AppbarCustom(
         header: 'វិក្កយបត្រ',
         onAddPressed: () {
           receiptProvider.receipts.when(
             success: (allReceipts) => _addReceipt(context, allReceipts),
-            loading: () {}, 
-            error: (_) {},   
+            loading: () {},
+            error: (_) {},
           );
         },
       ),
@@ -151,7 +173,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
           ),
           success: (allReceipts) {
             final receipts =
-                context.read<ReceiptProvider>().getReceiptsForCurrentMonth();
+                receiptProvider.getReceiptsByMonth(currentYear, selectedMonth);
             final filteredReceipts =
                 _filterReceiptsByStatus(receipts, selectedStatus);
 
@@ -164,35 +186,56 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Month header row
+                        // Month header row with filter button
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(Icons.calendar_month,
-                                size: 20, color: colorScheme.primary),
-                            const SizedBox(width: 8),
-                            Text(
-                              'ខែ $thisMonth',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                            Row(
+                              children: [
+                                Icon(Icons.calendar_month,
+                                    size: 20, color: colorScheme.primary),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'ខែ $thisMonth',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            PopupMenuButton<int>(
+                              icon: Icon(Icons.filter_list,
+                                  color: colorScheme.primary),
+                              tooltip: 'ជ្រើសរើសខែ',
+                              onSelected: (int newValue) {
+                                setState(() {
+                                  selectedMonth = newValue;
+                                });
+                              },
+                              itemBuilder: (BuildContext context) =>
+                                  _buildMonthItems().map((item) {
+                                return PopupMenuItem<int>(
+                                  value: item.value,
+                                  child: item.child,
+                                );
+                              }).toList(),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 4),
 
                         // GridItems row with equal sizing
                         LayoutBuilder(
                           builder: (context, constraints) {
                             final availableWidth = constraints.maxWidth;
-                            final itemWidth = (availableWidth - 32) /
-                                3; // Subtract total padding
+                            final itemWidth = (availableWidth - 32) / 3;
 
                             return SizedBox(
-                              height: itemWidth * 0.8, // Maintain aspect ratio
+                              height: itemWidth * 0.8,
                               child: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -239,7 +282,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
                 // Filter Button
                 Container(
                   padding: const EdgeInsets.all(2),
@@ -272,14 +315,12 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.receipt_long,
-                                  size: 48,
-                                  color:
-                                      colorScheme.onSurface.withOpacity(0.3)),
+                                  size: 48, color: colorScheme.onSurface),
                               const SizedBox(height: 16),
                               Text(
                                 'មិនមានវិក្កយបត្រ',
                                 style: theme.textTheme.bodyLarge?.copyWith(
-                                  color: colorScheme.onSurface.withOpacity(0.5),
+                                  color: colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -364,8 +405,8 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                                 child: ReceiptCard(
                                   receipt: receipt,
                                   ontap: () => _viewDetail(context, receipt),
-                                  onLongPress: () =>
-                                      _editReceipt(context, receipt, allReceipts),
+                                  onLongPress: () => _editReceipt(
+                                      context, receipt, allReceipts),
                                 ),
                               );
                             },

@@ -70,4 +70,15 @@ class TenantRepository {
   List<Tenant> getAllTenant() {
     return List.unmodifiable(_tenantCache);
   }
+
+  List<Tenant> getTenantsByBuilding(String buildingId) {
+    try {
+      return _tenantCache.where((tenant) {
+        return tenant.room != null && tenant.room!.building?.id == buildingId;
+      }).toList();
+    } catch (e) {
+      throw Exception(
+          'Failed to retrieve tenants for building $buildingId: $e');
+    }
+  }
 }

@@ -34,7 +34,7 @@ class ReceiptRepository {
       await _secureStorage.write(key: storageKey, value: jsonString);
     } catch (e) {
       print('Failed to save receipts to secure storage: $e');
-        throw Exception('Failed to save receipts to secure storage: $e');
+      throw Exception('Failed to save receipts to secure storage: $e');
     }
   }
 
@@ -94,9 +94,14 @@ class ReceiptRepository {
 
   List<Receipt> getReceiptsForCurrentMonth() {
     final now = DateTime.now();
-
     return _receiptCache.where((receipt) {
       return receipt.date.year == now.year && receipt.date.month == now.month;
+    }).toList();
+  }
+
+  List<Receipt> getReceiptsByMonth(int year, int month) {
+    return _receiptCache.where((receipt) {
+      return receipt.date.year == year && receipt.date.month == month;
     }).toList();
   }
 
