@@ -277,7 +277,7 @@ class _HistoryScreenState extends State<HistoryScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            'កំពុងផ្ទុក...',
+            'កំពុងដំណើការ...',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),

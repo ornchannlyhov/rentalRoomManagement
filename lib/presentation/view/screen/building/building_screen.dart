@@ -20,6 +20,7 @@ class _BuildingScreenState extends State<BuildingScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
@@ -32,6 +33,13 @@ class _BuildingScreenState extends State<BuildingScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
+    );
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
@@ -141,7 +149,7 @@ class _BuildingScreenState extends State<BuildingScreen>
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'អគារ "${building.name}" ត្រូវបានលុប', // "Building deleted"
+                'អាគារ "${building.name}" ត្រូវបានលុប', // "Building deleted"
                 style: TextStyle(
                   color: theme.colorScheme.onError,
                   fontWeight: FontWeight.w500,
@@ -162,41 +170,44 @@ class _BuildingScreenState extends State<BuildingScreen>
   }
 
   Widget _buildEmptyState(ThemeData theme) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                shape: BoxShape.circle,
+    return SlideTransition(
+      position: _slideAnimation,
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.apartment_outlined,
+                  size: 80,
+                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                ),
               ),
-              child: Icon(
-                Icons.apartment_outlined,
-                size: 64,
-                color: theme.colorScheme.onSurfaceVariant,
+              const SizedBox(height: 24),
+              Text(
+                'មិនមានអាគារ', // "No buildings available"
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'មិនមានអគារ', // "No buildings available"
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
+              const SizedBox(height: 8),
+              Text(
+                'សូមចុចប៊ូតុង + ដើម្បីបន្ថែមអាគារថ្មី', // "Tap + to add a new building"
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
+                ),
+                textAlign: TextAlign.center,
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'សូមចុចប៊ូតុង + ដើម្បីបន្ថែមអគារថ្មី', // "Tap + to add a new building"
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -214,7 +225,7 @@ class _BuildingScreenState extends State<BuildingScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            'កំពុងផ្ទុក...', // "Loading..."
+            'កំពុងដំណើការ...', // "Loading..."
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -280,9 +291,9 @@ class _BuildingScreenState extends State<BuildingScreen>
         backgroundColor: theme.colorScheme.surfaceVariant,
         color: theme.colorScheme.primary,
         child: ListView.separated(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           itemCount: buildings.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 8),
+          separatorBuilder: (context, index) => const SizedBox(height: 2),
           itemBuilder: (ctx, index) {
             final building = buildings[index];
             return SlideTransition(
@@ -304,7 +315,7 @@ class _BuildingScreenState extends State<BuildingScreen>
                 background: Container(
                   decoration: BoxDecoration(
                     color: theme.colorScheme.error,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -346,7 +357,7 @@ class _BuildingScreenState extends State<BuildingScreen>
                           ),
                         ),
                         content: Text(
-                          'តើអ្នកពិតជាចង់លុបអគារ "${building.name}" មែនទេ?', // "Are you sure you want to delete building?"
+                          'តើអ្នកពិតជាចង់លុបអាគារ "${building.name}" មែនទេ?', // "Are you sure you want to delete building?"
                           style: TextStyle(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -397,10 +408,9 @@ class _BuildingScreenState extends State<BuildingScreen>
     final theme = Theme.of(context);
 
     return Scaffold(
-            backgroundColor: theme.colorScheme.background,
-
+      backgroundColor: theme.colorScheme.background,
       appBar: AppbarCustom(
-        header: 'អគារ', // "Buildings"
+        header: 'អាគារ', // "Buildings"
         onAddPressed: () => _addBuilding(context),
       ),
       body: Consumer<BuildingProvider>(
