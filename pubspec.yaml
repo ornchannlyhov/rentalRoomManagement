@@ -44,6 +44,8 @@ dependencies:
     sdk: flutter
   http: ^1.5.0
   flutter_launcher_icons: ^0.14.4
+  screenshot: ^3.0.0
+  share_plus: ^12.0.0
 
 dev_dependencies:
   flutter_test:

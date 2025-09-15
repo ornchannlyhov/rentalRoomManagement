@@ -20,7 +20,7 @@ class ReceiptRepository {
       }
     } catch (e) {
       print('Error loading receipts from secure storage: $e');
-      _receiptCache = []; 
+      _receiptCache = [];
     }
 
     await updateStatusToOverdue();
@@ -73,8 +73,9 @@ class ReceiptRepository {
     final now = DateTime.now();
     final startOfCurrentYear = DateTime(now.year, 1, 1);
     final initialLength = _receiptCache.length;
-    _receiptCache.removeWhere((receipt) => receipt.date.isBefore(startOfCurrentYear));
-    if (_receiptCache.length != initialLength) { 
+    _receiptCache
+        .removeWhere((receipt) => receipt.date.isBefore(startOfCurrentYear));
+    if (_receiptCache.length != initialLength) {
       await save();
     }
   }
@@ -113,11 +114,17 @@ class ReceiptRepository {
       var receipt = _receiptCache[i];
       if (receipt.paymentStatus != PaymentStatus.paid &&
           receipt.dueDate.isBefore(now)) {
-        _receiptCache[i] = receipt.copyWith(paymentStatus: PaymentStatus.overdue);
+        _receiptCache[i] =
+            receipt.copyWith(paymentStatus: PaymentStatus.overdue);
         updated = true;
       }
     }
-
     if (updated) await save();
+  }
+
+  List<Receipt> getReceiptsByBuilding(String buildingId) {
+    return _receiptCache.where((receipt) {
+      return receipt.room!.building!.id == buildingId;
+    }).toList();
   }
 }

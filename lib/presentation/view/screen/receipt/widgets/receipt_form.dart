@@ -3,15 +3,18 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:receipts_v2/data/models/building.dart';
 import 'package:receipts_v2/data/models/enum/mode.dart';
 import 'package:receipts_v2/data/models/enum/payment_status.dart';
 import 'package:receipts_v2/data/models/receipt.dart';
 import 'package:receipts_v2/data/models/room.dart';
 import 'package:receipts_v2/data/models/service.dart';
+import 'package:receipts_v2/presentation/providers/building_provider.dart';
 import 'package:receipts_v2/presentation/providers/receipt_provider.dart';
 import 'package:receipts_v2/presentation/providers/room_provider.dart';
 import 'package:receipts_v2/presentation/providers/service_provider.dart';
 import 'package:receipts_v2/presentation/view/app_widgets/number_field.dart';
+import 'package:receipts_v2/presentation/view/screen/building/widgets/building_form.dart';
 import 'package:uuid/uuid.dart';
 
 class ReceiptForm extends StatefulWidget {
@@ -174,11 +177,41 @@ class _ReceiptFormState extends State<ReceiptForm> {
     }
   }
 
+  Future<void> _addBuilding(BuildContext context) async {
+    final buildingProvider = context.read<BuildingProvider>();
+    final roomProvider = context.read<RoomProvider>();
+    List<Building> buildings = buildingProvider.buildings.when(
+      success: (data) => data,
+      loading: () => [],
+      error: (Object error) => [],
+    );
+
+    final newBuilding = await Navigator.of(context).push<Building>(
+      MaterialPageRoute(
+        builder: (ctx) => BuildingForm(
+          buildings: buildings,
+        ),
+      ),
+    );
+
+    if (newBuilding != null) {
+      await buildingProvider.createBuilding(newBuilding);
+      // Reload both BuildingProvider and RoomProvider to ensure rooms are updated
+      await Future.wait([
+        buildingProvider.load(),
+        roomProvider.load(),
+      ]);
+      // Trigger UI refresh to update the room dropdown
+      setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final roomProvider = context.watch<RoomProvider>();
     final serviceProvider = context.watch<ServiceProvider>();
+    final buildingProvider = context.watch<BuildingProvider>();
 
     Room? correctedSelectedRoom;
     roomProvider.rooms.when(
@@ -201,131 +234,193 @@ class _ReceiptFormState extends State<ReceiptForm> {
       appBar: AppBar(
         title: Text(isEditing ? 'កែប្រែវិក្កយបត្រ' : 'បង្កើតវិក្កយបត្រថ្មី'),
         backgroundColor: theme.colorScheme.background,
+        actions: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(Icons.cancel, color: theme.colorScheme.onSurface),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              // Due Date Section
-              Text('កាលបរិច្ឆេទផុតកំណត់', style: theme.textTheme.titleMedium),
-              const SizedBox(height: 8),
-              InkWell(
-                onTap: () => _selectDueDate(context),
-                child: Row(
+        child: buildingProvider.buildings.when(
+          success: (buildings) {
+            if (buildings.isEmpty) {
+              return Center(
+                heightFactor: 4.5,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.calendar_today, color: theme.primaryColor),
-                    const SizedBox(width: 8),
-                    Text(
-                      DateFormat('dd/MM/yyyy').format(dueDate),
-                      style: theme.textTheme.bodyLarge,
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.info_outline,
+                          size: 48,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'មិនមានអាគារទេ។ សូមបង្កើតអគារមុននឹងបង្កើតវិក្កយបត្រ។',
+                          style: theme.textTheme.titleMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => _addBuilding(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.primaryColor,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 16, horizontal: 24),
+                      ),
+                      child: Text(
+                        'បង្កើតអគារថ្មី',
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(color: Colors.white),
+                      ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 16),
+              );
+            }
 
-              // Room Selection
-              DropdownButtonFormField<Room>(
-                value: correctedSelectedRoom,
-                items: roomProvider.rooms.when(
-                  success: (rooms) => rooms.map((room) {
-                    return DropdownMenuItem(
-                      value: room,
-                      child: Text(
-                        'បន្ទប់ ${room.roomNumber} - ${room.building!.name}',
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    );
-                  }).toList(),
-                  loading: () => [],
-                  error: (_) => [],
-                ),
-                onChanged: (value) async {
-                  setState(() => selectedRoom = value);
-                  await _loadLastMonthData();
-                },
-                decoration: const InputDecoration(
-                  labelText: 'ជ្រើសរើសបន្ទប់',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) =>
-                    value == null ? 'សូមជ្រើសរើសបន្ទប់' : null,
-              ),
-              const SizedBox(height: 16),
+            return Form(
+              key: _formKey,
+              child: ListView(
+                children: [
+                  // Due Date Section
+                  Text('កាលបរិច្ឆេទផុតកំណត់',
+                      style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () => _selectDueDate(context),
+                    child: Row(
+                      children: [
+                        Icon(Icons.calendar_today, color: theme.primaryColor),
+                        const SizedBox(width: 8),
+                        Text(
+                          DateFormat('dd/MM/yyyy').format(dueDate),
+                          style: theme.textTheme.bodyLarge,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
-              // Water and Electricity Usage
-              Text('ការប្រើប្រាស់ទឹក', style: theme.textTheme.titleMedium),
-              NumberTextFormField(
-                controller: lastWaterUsedController,
-                label: 'ខែមុន (m³)',
-                onSaved: (value) => lastWaterUsed = int.parse(value!),
-              ),
-              NumberTextFormField(
-                controller: thisWaterUsedController,
-                label: 'ខែនេះ (m³)',
-                onSaved: (value) => thisWaterUsed = int.parse(value!),
-              ),
-              const SizedBox(height: 8),
+                  // Room Selection
+                  DropdownButtonFormField<Room>(
+                    value: correctedSelectedRoom,
+                    items: roomProvider.rooms.when(
+                      success: (rooms) => rooms.map((room) {
+                        return DropdownMenuItem(
+                          value: room,
+                          child: Text(
+                            'បន្ទប់ ${room.roomNumber} - ${room.building!.name}',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        );
+                      }).toList(),
+                      loading: () => [],
+                      error: (_) => [],
+                    ),
+                    onChanged: (value) async {
+                      setState(() => selectedRoom = value);
+                      await _loadLastMonthData();
+                    },
+                    decoration: const InputDecoration(
+                      labelText: 'ជ្រើសរើសបន្ទប់',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) =>
+                        value == null ? 'សូមជ្រើសរើសបន្ទប់' : null,
+                  ),
+                  const SizedBox(height: 16),
 
-              Text('ការប្រើប្រាស់ភ្លើង', style: theme.textTheme.titleMedium),
-              NumberTextFormField(
-                controller: lastElectricUsedController,
-                label: 'ខែមុน (kWh)',
-                onSaved: (value) => lastElectricUsed = int.parse(value!),
-              ),
-              NumberTextFormField(
-                controller: thisElectricUsedController,
-                label: 'ខែនេះ (kWh)',
-                onSaved: (value) => thisElectricUsed = int.parse(value!),
-              ),
-              const SizedBox(height: 16),
+                  // Water and Electricity Usage
+                  Text('ការប្រើប្រាស់ខែមុន',
+                      style: theme.textTheme.titleMedium),
+                  NumberTextFormField(
+                    controller: lastWaterUsedController,
+                    label: 'ទឹក (m³)',
+                    onSaved: (value) => lastWaterUsed = int.parse(value!),
+                  ),
+                  NumberTextFormField(
+                    controller: lastElectricUsedController,
+                    label: 'ភ្លើង (kWh)',
+                    onSaved: (value) => lastElectricUsed = int.parse(value!),
+                  ),
 
-              // Services Selection
-              Text('សេវាកម្ម', style: theme.textTheme.titleMedium),
-              const SizedBox(height: 8),
-              serviceProvider.services.when(
-                success: (services) => Column(
-                  children: services.map((service) {
-                    final isSelected =
-                        selectedServices.any((s) => s.id == service.id);
-                    return CheckboxListTile(
-                      title: Text(service.name),
-                      value: isSelected,
-                      onChanged: (value) {
-                        setState(() {
-                          if (value == true) {
-                            selectedServices.add(service);
-                          } else {
-                            selectedServices
-                                .removeWhere((s) => s.id == service.id);
-                          }
-                        });
-                      },
-                      contentPadding: EdgeInsets.zero,
-                    );
-                  }).toList(),
-                ),
-                loading: () => const CircularProgressIndicator(),
-                error: (_) => const Text('មានបញ្ហាក្នុងការផ្ទុកសេវាកម្ម'),
-              ),
-              const SizedBox(height: 24),
+                  const SizedBox(height: 8),
 
-              // Save Button
-              ElevatedButton(
-                onPressed: () => _save(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.primaryColor,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: Text(
-                  'រក្សាទុក',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(color: Colors.white),
-                ),
+                  Text('ការប្រើប្រាស់ខែនេះ',
+                      style: theme.textTheme.titleMedium),
+                  NumberTextFormField(
+                    controller: thisWaterUsedController,
+                    label: 'ទឹក (m³)',
+                    onSaved: (value) => thisWaterUsed = int.parse(value!),
+                  ),
+                  NumberTextFormField(
+                    controller: thisElectricUsedController,
+                    label: 'ភ្លើង (kWh)',
+                    onSaved: (value) => thisElectricUsed = int.parse(value!),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Services Selection
+                  Text('សេវាកម្ម', style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  serviceProvider.services.when(
+                    success: (services) => Column(
+                      children: services.map((service) {
+                        final isSelected =
+                            selectedServices.any((s) => s.id == service.id);
+                        return CheckboxListTile(
+                          title: Text(service.name),
+                          value: isSelected,
+                          onChanged: (value) {
+                            setState(() {
+                              if (value == true) {
+                                selectedServices.add(service);
+                              } else {
+                                selectedServices
+                                    .removeWhere((s) => s.id == service.id);
+                              }
+                            });
+                          },
+                          contentPadding: EdgeInsets.zero,
+                        );
+                      }).toList(),
+                    ),
+                    loading: () => const CircularProgressIndicator(),
+                    error: (_) => const Text('មានបញ្ហាក្នុងការផ្ទុកសេវាកម្ម'),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Save Button
+                  ElevatedButton(
+                    onPressed: () => _save(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.primaryColor,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: Text(
+                      'រក្សាទុក',
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error) => Center(
+            child: Text(
+              'មានបញ្ហាក្នុងការផ្ទុកអគារ: $error',
+              style: theme.textTheme.titleMedium,
+            ),
           ),
         ),
       ),

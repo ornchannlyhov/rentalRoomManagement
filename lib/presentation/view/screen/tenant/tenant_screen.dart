@@ -467,6 +467,7 @@ class _TenantScreenState extends State<TenantScreen>
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                height: 48,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),

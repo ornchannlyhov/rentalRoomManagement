@@ -5,9 +5,9 @@ import 'package:receipts_v2/data/models/room.dart';
 import 'package:receipts_v2/data/repositories/buidling_repository.dart';
 
 class BuildingProvider extends ChangeNotifier {
-  final BuildingRepository _repository; // Modified to accept in constructor
+  final BuildingRepository _repository;
 
-  BuildingProvider(this._repository); // Constructor
+  BuildingProvider(this._repository);
 
   AsyncValue<List<Building>> _buildings = const AsyncValue.loading();
   AsyncValue<List<Building>> get buildings => _buildings;
@@ -72,6 +72,14 @@ class BuildingProvider extends ChangeNotifier {
     } catch (e) {
       _buildings = AsyncValue.error(e);
       notifyListeners();
+    }
+  }
+
+  bool isBuildingEmpty(String buildingId) {
+    try {
+      return _repository.isBuildingEmpty(buildingId);
+    } catch (e) {
+      return true;
     }
   }
 }

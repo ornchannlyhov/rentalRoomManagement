@@ -1,11 +1,17 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:receipts_v2/data/models/receipt.dart';
+import 'package:receipts_v2/data/models/enum/mode.dart';
+import 'package:receipts_v2/data/models/enum/payment_status.dart';
 import 'package:receipts_v2/presentation/providers/receipt_provider.dart';
+import 'package:receipts_v2/presentation/providers/building_provider.dart'; // Add BuildingProvider
 import 'package:receipts_v2/presentation/view/screen/receipt/widgets/receipt_detail.dart';
 import 'package:receipts_v2/presentation/view/screen/receipt/widgets/receipt_card.dart';
+import 'package:receipts_v2/presentation/view/screen/receipt/widgets/receipt_form.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -24,6 +30,7 @@ class _HistoryScreenState extends State<HistoryScreen>
   String _searchQuery = '';
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
+  String? _selectedBuildingId;
 
   static const List<String> _khmerMonths = [
     'មករា',
@@ -73,7 +80,12 @@ class _HistoryScreenState extends State<HistoryScreen>
 
   Future<void> _loadData() async {
     final receiptProvider = context.read<ReceiptProvider>();
-    await receiptProvider.load();
+    final buildingProvider =
+        context.read<BuildingProvider>(); // Add BuildingProvider
+    await Future.wait([
+      receiptProvider.load(),
+      buildingProvider.load(), // Load buildings
+    ]);
     _animationController.forward();
   }
 
@@ -95,6 +107,168 @@ class _HistoryScreenState extends State<HistoryScreen>
     );
   }
 
+  Future<void> _editReceipt(
+      BuildContext context, Receipt receipt, List<Receipt> allReceipts) async {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (ctx) => ReceiptForm(
+          mode: Mode.editing,
+          receipt: receipt,
+          receipts: allReceipts,
+        ),
+      ),
+    );
+  }
+
+  void _showMenuOptions(
+      BuildContext context, Receipt receipt, List<Receipt> allReceipts) {
+    final theme = Theme.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: theme.dividerColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                ListTile(
+                  leading:
+                      Icon(Icons.visibility, color: theme.colorScheme.primary),
+                  title: Text(
+                    'មើលលម្អិត',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _viewDetail(context, receipt);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.share, color: theme.colorScheme.primary),
+                  title: Text(
+                    'ចែករំលែក',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.of(context)
+                        .push(
+                          MaterialPageRoute(
+                            builder: (ctx) => ReceiptDetailScreen(
+                              receipt: receipt,
+                              onShareRequested: () {},
+                            ),
+                          ),
+                        )
+                        .then((_) {});
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.edit, color: theme.colorScheme.primary),
+                  title: Text(
+                    'កែប្រែ',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _editReceipt(context, receipt, allReceipts);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.delete_outline,
+                      color: theme.colorScheme.error),
+                  title: Text(
+                    'លុប',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.error,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    final provider = context.read<ReceiptProvider>();
+                    final roomNumber = receipt.room?.roomNumber ?? 'ទរទេ';
+                    provider.deleteReceipt(receipt.id);
+                    _showUndoSnackbar(
+                      context,
+                      'បានលុបវិក្កយបត្របន្ទប់ $roomNumber',
+                      () => provider.restoreReceipt(
+                          allReceipts.indexOf(receipt), receipt),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showUndoSnackbar(
+    BuildContext context,
+    String content,
+    VoidCallback onUndo,
+  ) {
+    final theme = Theme.of(context);
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 4),
+        backgroundColor: theme.colorScheme.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        content: Row(
+          children: [
+            Icon(
+              Icons.delete_outline,
+              color: theme.colorScheme.onError,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                content,
+                style: TextStyle(
+                  color: theme.colorScheme.onError,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        action: SnackBarAction(
+          label: 'មិនធ្វើវិញ',
+          textColor: theme.colorScheme.onError,
+          onPressed: onUndo,
+        ),
+      ),
+    );
+  }
+
   List<Receipt> _filterReceipts(List<Receipt> receipts) {
     Iterable<Receipt> filtered = receipts;
 
@@ -106,11 +280,27 @@ class _HistoryScreenState extends State<HistoryScreen>
           receipt.room!.roomNumber
               .toLowerCase()
               .contains(_searchQuery.toLowerCase()));
+    } else if (_selectedBuildingId != null) {
+      filtered = context
+          .read<ReceiptProvider>()
+          .getReceiptByBuilding(_selectedBuildingId!);
     } else {
-      filtered = filtered.where((receipt) => receipt.date.month == selectedMonth);
+      filtered =
+          filtered.where((receipt) => receipt.date.month == selectedMonth);
     }
 
     return filtered.toList()..sort((a, b) => b.date.compareTo(a.date));
+  }
+
+  String _translatePaymentStatus(PaymentStatus status) {
+    switch (status) {
+      case PaymentStatus.paid:
+        return 'បានបង់ប្រាក់';
+      case PaymentStatus.pending:
+        return 'មិនទាន់បង់ប្រាក់';
+      default:
+        return status.name;
+    }
   }
 
   Widget _buildSearchBar(ThemeData theme) {
@@ -137,7 +327,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                   hintText: 'ស្វែងរកបង្កាន់ដៃ...',
                   hintStyle: TextStyle(
                     color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
-                    height: 0.5
+                    height: 0.5,
                   ),
                   prefixIcon: Icon(
                     Icons.search,
@@ -153,6 +343,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                             _searchController.clear();
                             setState(() {
                               _searchQuery = '';
+                              _selectedBuildingId = null;
                             });
                           },
                         )
@@ -169,6 +360,9 @@ class _HistoryScreenState extends State<HistoryScreen>
                 onChanged: (value) {
                   setState(() {
                     _searchQuery = value;
+                    if (value.isNotEmpty) {
+                      _selectedBuildingId = null;
+                    }
                   });
                 },
               ),
@@ -196,6 +390,7 @@ class _HistoryScreenState extends State<HistoryScreen>
               onSelected: (selected) {
                 setState(() {
                   selectedMonth = month;
+                  _selectedBuildingId = null;
                 });
               },
               label: Text(
@@ -216,6 +411,92 @@ class _HistoryScreenState extends State<HistoryScreen>
           );
         },
       ),
+    );
+  }
+
+  Widget _buildBuildingFilter(ThemeData theme) {
+    return Consumer<BuildingProvider>(
+      builder: (context, buildingProvider, child) {
+        return buildingProvider.buildings.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: LinearProgressIndicator(),
+          ),
+          error: (error) => Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'មានបញ្ហាក្នុងការផ្ទុកអគារ: $error', // "Error loading buildings"
+              style: TextStyle(color: theme.colorScheme.error),
+            ),
+          ),
+          success: (buildings) {
+            final List<DropdownMenuItem<String?>> dropdownItems = [
+              DropdownMenuItem(
+                value: null,
+                child: Text(
+                  'ទាំងអស់', // "All"
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              ...buildings.map((building) => DropdownMenuItem(
+                    value: building.id,
+                    child: Text(
+                      building.name,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  )),
+            ];
+
+            return Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16), 
+              height: 48, 
+              width: double.infinity, 
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.shadow.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String?>(
+                  isExpanded: true,
+                  value: _selectedBuildingId,
+                  icon: Icon(
+                    Icons.filter_list,
+                    color: theme.colorScheme.primary,
+                    size: 24,
+                  ),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  dropdownColor: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedBuildingId = newValue;
+                      _searchQuery = '';
+                      _searchController.clear();
+                      _isSearching = false;
+                    });
+                  },
+                  items: dropdownItems,
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -252,7 +533,9 @@ class _HistoryScreenState extends State<HistoryScreen>
               Text(
                 _searchQuery.isNotEmpty
                     ? 'មិនមានលទ្ធផលស្វែងរក "$_searchQuery"'
-                    : 'មិនមានបង្កាន់ដៃសម្រាប់ខែ ${_khmerMonths[selectedMonth - 1]}',
+                    : _selectedBuildingId != null
+                        ? 'មិនមានបង្កាន់ដៃសម្រាប់អគារ'
+                        : 'មិនមានបង្កាន់ដៃសម្រាប់ខែ ${_khmerMonths[selectedMonth - 1]}',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
                 ),
@@ -327,6 +610,17 @@ class _HistoryScreenState extends State<HistoryScreen>
     );
   }
 
+  Color _getStatusColor(PaymentStatus status) {
+    switch (status) {
+      case PaymentStatus.paid:
+        return const Color(0xFF10B981);
+      case PaymentStatus.pending:
+        return const Color(0xFFF59E0B);
+      case PaymentStatus.overdue:
+        return const Color(0xFFEF4444);
+    }
+  }
+
   Widget _buildReceiptsList(ThemeData theme, List<Receipt> receipts) {
     final filteredReceipts = _filterReceipts(receipts);
 
@@ -362,12 +656,93 @@ class _HistoryScreenState extends State<HistoryScreen>
               ),
               child: Hero(
                 tag: 'receipt_${receipt.id}',
-                child: ReceiptCard(
-                  receipt: receipt,
-                  ontap: () => _viewDetail(context, receipt),
-                  onLongPress: () {
-                    HapticFeedback.mediumImpact();
+                child: Dismissible(
+                  key: Key(receipt.id),
+                  background: Container(
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(
+                          receipt.paymentStatus == PaymentStatus.paid
+                              ? PaymentStatus.pending
+                              : PaymentStatus.paid),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Icon(
+                      receipt.paymentStatus == PaymentStatus.paid
+                          ? Icons.pending_actions
+                          : Icons.check,
+                      color: Colors.white,
+                    ),
+                  ),
+                  secondaryBackground: Container(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.error,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.delete_outline,
+                          color: theme.colorScheme.onError,
+                          size: 24,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'លុប',
+                          style: TextStyle(
+                            color: theme.colorScheme.onError,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  direction: DismissDirection.horizontal,
+                  onDismissed: (direction) {
+                    final originStatus = receipt.paymentStatus;
+                    final provider = context.read<ReceiptProvider>();
+                    final roomNumber = receipt.room?.roomNumber ?? 'ទរទេ';
+
+                    if (direction == DismissDirection.startToEnd) {
+                      final newStatus =
+                          receipt.paymentStatus == PaymentStatus.paid
+                              ? PaymentStatus.pending
+                              : PaymentStatus.paid;
+
+                      provider.updateReceipt(
+                          receipt.copyWith(paymentStatus: newStatus));
+
+                      _showUndoSnackbar(
+                        context,
+                        "បន្ទប់ $roomNumber បានផ្លាស់ប្តូរទៅជា ${_translatePaymentStatus(newStatus)}",
+                        () {
+                          provider.updateReceipt(
+                              receipt.copyWith(paymentStatus: originStatus));
+                        },
+                      );
+                    } else if (direction == DismissDirection.endToStart) {
+                      provider.deleteReceipt(receipt.id);
+                      _showUndoSnackbar(
+                        context,
+                        'បានលុបវិក្កយបត្របន្ទប់ $roomNumber',
+                        () => provider.restoreReceipt(index, receipt),
+                      );
+                    }
                   },
+                  child: ReceiptCard(
+                    receipt: receipt,
+                    ontap: () => _viewDetail(context, receipt),
+                    onLongPress: () {
+                      HapticFeedback.mediumImpact();
+                    },
+                    onMenuPressed: () =>
+                        _showMenuOptions(context, receipt, receipts),
+                  ),
                 ),
               ),
             );
@@ -405,6 +780,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                 if (!_isSearching) {
                   _searchController.clear();
                   _searchQuery = '';
+                  _selectedBuildingId = null;
                 }
               });
             },
@@ -418,6 +794,7 @@ class _HistoryScreenState extends State<HistoryScreen>
           children: [
             _buildSearchBar(theme),
             _buildMonthFilter(theme),
+            _buildBuildingFilter(theme),
             Expanded(
               child: Consumer<ReceiptProvider>(
                 builder: (context, receiptProvider, child) {

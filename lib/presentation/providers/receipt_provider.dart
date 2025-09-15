@@ -76,4 +76,10 @@ class ReceiptProvider extends ChangeNotifier {
     }
     return [];
   }
+  List<Receipt> getReceiptByBuilding(String buildingId) {
+    if (_receipts.hasData) {
+      return _repository.getReceiptsByBuilding(buildingId);
+    }
+    return [];
+  }
 }

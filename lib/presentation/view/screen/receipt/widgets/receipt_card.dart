@@ -7,11 +7,13 @@ class ReceiptCard extends StatefulWidget {
   final Receipt receipt;
   final VoidCallback ontap;
   final VoidCallback onLongPress;
+  final VoidCallback onMenuPressed;
 
   const ReceiptCard({
     required this.receipt,
     required this.ontap,
     required this.onLongPress,
+    required this.onMenuPressed,
     super.key,
   });
 
@@ -23,11 +25,11 @@ class _ReceiptCardState extends State<ReceiptCard> {
   Color _getStatusColor(PaymentStatus status) {
     switch (status) {
       case PaymentStatus.paid:
-        return Colors.green;
+        return const Color(0xFF10B981); // Green
       case PaymentStatus.pending:
-        return Colors.yellow;
+        return const Color(0xFFF59E0B); // Amber
       case PaymentStatus.overdue:
-        return Colors.red;
+        return const Color(0xFFEF4444); // Red
     }
   }
 
@@ -67,7 +69,9 @@ class _ReceiptCardState extends State<ReceiptCard> {
           ],
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // Status Icon
             Container(
               width: 40,
               height: 40,
@@ -78,9 +82,11 @@ class _ReceiptCardState extends State<ReceiptCard> {
               child: Icon(
                 _getStatusIcon(receipt.paymentStatus),
                 color: _getStatusColor(receipt.paymentStatus),
+                size: 24,
               ),
             ),
             const SizedBox(width: 12),
+            // Receipt Details
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,12 +115,30 @@ class _ReceiptCardState extends State<ReceiptCard> {
                 ],
               ),
             ),
-            Text(
-              '\$${receipt.totalPrice.toStringAsFixed(2)}',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface,
-                fontWeight: FontWeight.bold,
-              ),
+            // Price and Menu Button
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end, 
+              children: [
+                Text(
+                  '\$${receipt.totalPrice.toStringAsFixed(2)}',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontSize: 20, // Bigger
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.more_horiz,
+                    color: theme.colorScheme.onSurface,
+                    size: 24,
+                  ),
+                  onPressed: widget.onMenuPressed,
+                  tooltip: 'Menu',
+                  constraints: const BoxConstraints(),
+                  padding: const EdgeInsets.all(8),
+                ),
+              ],
             ),
           ],
         ),

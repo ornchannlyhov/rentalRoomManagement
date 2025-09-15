@@ -44,12 +44,12 @@ class _FilterButtonState extends State<FilterByPaymentButton> {
 
   Color _statusColor(PaymentStatus status, ThemeData theme) {
     switch (status) {
-      case PaymentStatus.pending:
-        return Colors.amber;
       case PaymentStatus.paid:
-        return Colors.green;
+        return const Color(0xFF10B981);
+      case PaymentStatus.pending:
+        return const Color(0xFFF59E0B);
       case PaymentStatus.overdue:
-        return Colors.red;
+        return const Color(0xFFEF4444);
     }
   }
 

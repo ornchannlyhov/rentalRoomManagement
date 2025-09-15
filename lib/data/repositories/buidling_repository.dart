@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:receipts_v2/data/models/building.dart';
 import 'package:receipts_v2/data/models/room.dart';
-import 'package:receipts_v2/data/repositories/room_repository.dart'; // Import RoomRepository
+import 'package:receipts_v2/data/repositories/room_repository.dart';
 
 class BuildingRepository {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
@@ -12,14 +12,15 @@ class BuildingRepository {
   // Add a dependency on RoomRepository
   final RoomRepository _roomRepository;
 
-  BuildingRepository(this._roomRepository); // Constructor to inject RoomRepository
+  BuildingRepository(this._roomRepository);
 
   Future<void> load() async {
     try {
       final jsonString = await _secureStorage.read(key: storageKey);
       if (jsonString != null && jsonString.isNotEmpty) {
         final List<dynamic> jsonData = jsonDecode(jsonString);
-        _buildingCache = jsonData.map((json) => Building.fromJson(json)).toList();
+        _buildingCache =
+            jsonData.map((json) => Building.fromJson(json)).toList();
       } else {
         _buildingCache = [];
       }
@@ -30,7 +31,8 @@ class BuildingRepository {
 
   Future<void> save() async {
     try {
-      final jsonString = jsonEncode(_buildingCache.map((b) => b.toJson()).toList());
+      final jsonString =
+          jsonEncode(_buildingCache.map((b) => b.toJson()).toList());
       await _secureStorage.write(key: storageKey, value: jsonString);
     } catch (e) {
       throw Exception('Failed to save building data to secure storage: $e');
@@ -49,7 +51,8 @@ class BuildingRepository {
           roomNumber: room.roomNumber,
           roomStatus: room.roomStatus,
           price: room.price,
-          building: Building( // Create a new Building object with just the necessary info
+          building: Building(
+            // Create a new Building object with just the necessary info
             id: newBuilding.id,
             name: newBuilding.name,
             rentPrice: newBuilding.rentPrice,
@@ -81,7 +84,8 @@ class BuildingRepository {
 
   Future<void> deleteBuilding(String buildingId) async {
     // Optionally, also delete associated rooms from RoomRepository
-    final buildingToDelete = _buildingCache.firstWhere((b) => b.id == buildingId);
+    final buildingToDelete =
+        _buildingCache.firstWhere((b) => b.id == buildingId);
     if (buildingToDelete.rooms.isNotEmpty) {
       for (Room room in buildingToDelete.rooms) {
         await _roomRepository.deleteRoom(room.id);
@@ -110,5 +114,13 @@ class BuildingRepository {
 
   List<Building> getAllBuildings() {
     return List.unmodifiable(_buildingCache);
+  }
+
+  bool isBuildingEmpty(String buildingId) {
+    final building = _buildingCache.firstWhere(
+      (b) => b.id == buildingId,
+      orElse: () => throw Exception('Building not found'),
+    );
+    return building.rooms.isEmpty;
   }
 }

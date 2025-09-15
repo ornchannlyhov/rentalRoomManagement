@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:receipts_v2/data/models/building.dart';
 import 'package:receipts_v2/data/models/enum/mode.dart';
-import 'package:receipts_v2/data/models/room.dart'; // Import Room model
-import 'package:receipts_v2/data/models/enum/room_status.dart'; // Import RoomStatus
+import 'package:receipts_v2/data/models/room.dart'; 
+import 'package:receipts_v2/data/models/enum/room_status.dart'; 
 import 'package:receipts_v2/presentation/view/app_widgets/number_field.dart';
-import 'package:uuid/uuid.dart'; // Import Uuid for unique room IDs
+import 'package:uuid/uuid.dart'; 
 
 class BuildingForm extends StatefulWidget {
   final Mode mode;
@@ -29,7 +29,7 @@ class _BuildingFormState extends State<BuildingForm> {
   late double rentPrice;
   late double electricPrice;
   late double waterPrice;
-  late int roomQuantity; // New field for room quantity
+  late int roomQuantity; 
 
   bool get isEditing => widget.mode == Mode.editing;
 
@@ -44,14 +44,14 @@ class _BuildingFormState extends State<BuildingForm> {
       electricPrice = building.electricPrice;
       waterPrice = building.waterPrice;
       roomQuantity =
-          building.rooms.length; // Set initial quantity from existing rooms
+          building.rooms.length; 
     } else {
       id = '';
       name = '';
       rentPrice = 0.0;
       electricPrice = 0.0;
       waterPrice = 0.0;
-      roomQuantity = 0; // Default to 0 for new buildings
+      roomQuantity = 0; 
     }
   }
 
@@ -59,22 +59,20 @@ class _BuildingFormState extends State<BuildingForm> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      // Generate rooms if creating a new building
       List<Room> generatedRooms = [];
       if (!isEditing && roomQuantity > 0) {
         for (int i = 1; i <= roomQuantity; i++) {
           generatedRooms.add(
             Room(
               id: const Uuid().v4(),
-              roomNumber: i.toString(), // Simple sequential room numbering
+              roomNumber: i.toString(), 
               roomStatus: RoomStatus.available,
-              price: rentPrice, // Use building's rent price as default
+              price: rentPrice, 
               building: Building(
-                // Create a dummy building reference for the room
                 id: isEditing
                     ? widget.building!.id
                     : DateTime.now()
-                        .toString(), // Will be updated by repository
+                        .toString(), 
                 name: name,
                 rentPrice: rentPrice,
                 electricPrice: electricPrice,
@@ -91,7 +89,7 @@ class _BuildingFormState extends State<BuildingForm> {
         rentPrice: rentPrice,
         electricPrice: electricPrice,
         waterPrice: waterPrice,
-        rooms: generatedRooms, // Pass the generated rooms
+        rooms: generatedRooms,
       );
 
       Navigator.pop(context, newBuilding);
@@ -110,7 +108,7 @@ class _BuildingFormState extends State<BuildingForm> {
         ),
         title: Text(
           isEditing ? 'កែប្រែអគារ' : 'បញ្ចូលអគារថ្មី',
-          style: TextStyle(color: Colors.white)
+          style: TextStyle(color: theme.colorScheme.onSurface)
         ),
         actions: [
           IconButton(
@@ -146,8 +144,7 @@ class _BuildingFormState extends State<BuildingForm> {
                 onSaved: (value) => rentPrice = double.parse(value!),
               ),
               const SizedBox(height: 12),
-              // New Room Quantity field
-              if (!isEditing) // Only show when creating a new building
+              if (!isEditing) 
                 Column(
                   children: [
                     NumberTextFormField(
@@ -191,7 +188,7 @@ class _BuildingFormState extends State<BuildingForm> {
                     onPressed: _save,
                     child: Text(
                       isEditing ? 'រក្សាទុកការកែប្រែ' : 'រក្សាទុកអគារ',
-                      style: theme.textTheme.labelMedium,
+                      style: TextStyle(color: Colors.white),
                     ),
                   ),
                 ],
