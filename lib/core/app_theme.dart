@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color primaryColor = Color(0xFF6A1B9A); // Deep purple
-  static const Color secondaryColor = Color(0xFF9C27B0); // Purple
+  static const Color primaryColor = Color(0xFF10B981);
+  static const Color secondaryColor = Color.fromARGB(255, 66, 255, 192);
   static const Color backgroundColor = Color.fromARGB(255, 255, 255, 255);
   static const Color surface = Color.fromARGB(255, 250, 250, 250);
-  static const Color surfaceDark =
-      Color.fromARGB(255, 30, 20, 35); 
-  static const Color backgroundColorDark =
-      Color.fromARGB(255, 25, 15, 30); 
+  static const Color surfaceDark = Color.fromARGB(255, 40, 40, 40);
+  static const Color backgroundColorDark = Color.fromARGB(255, 34, 34, 34);
   static const Color success = Color(0xFF37B954);
   static const Color dangerColor = Color(0xFFFF0606);
   static const Color secondaryDanger = Color(0xFFF4E1E1);
@@ -58,7 +56,6 @@ class AppTheme {
         ),
         iconTheme: IconThemeData(color: Colors.black),
       ),
-     
     );
   }
 
