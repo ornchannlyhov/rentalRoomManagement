@@ -72,6 +72,8 @@ class _ReceiptScreenState extends State<ReceiptScreen>
       MaterialPageRoute(
         builder: (ctx) => ReceiptForm(
           receipts: allReceipts,
+          selectedBuildingId:
+              _selectedBuildingId, 
         ),
       ),
     );
@@ -227,7 +229,8 @@ class _ReceiptScreenState extends State<ReceiptScreen>
       SnackBar(
         margin: EdgeInsets.only(
           bottom: kBottomNavigationBarHeight +
-              MediaQuery.of(context).padding.bottom - 12,
+              MediaQuery.of(context).padding.bottom -
+              12,
           left: 12,
           right: 12,
         ),

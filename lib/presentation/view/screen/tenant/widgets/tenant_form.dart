@@ -1,9 +1,13 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:receipts_v2/data/models/enum/gender.dart';
 import 'package:receipts_v2/data/models/room.dart';
 import 'package:receipts_v2/data/models/tenant.dart';
 import 'package:receipts_v2/data/models/enum/mode.dart';
 import 'package:receipts_v2/data/repositories/room_repository.dart';
+import 'package:receipts_v2/presentation/providers/building_provider.dart';
 
 class TenantForm extends StatefulWidget {
   final Mode mode;
@@ -33,12 +37,14 @@ class _TenantFormState extends State<TenantForm> {
   late String phoneNumber;
   Room? selectedRoom;
   late Gender gender;
+  String? selectedBuildingId;
 
   bool get isEditing => widget.mode == Mode.editing;
 
   @override
   void initState() {
     super.initState();
+    selectedBuildingId = widget.selectedBuildingId;
     _loadRoom();
     if (isEditing && widget.tenant != null) {
       final tenant = widget.tenant!;
@@ -47,6 +53,9 @@ class _TenantFormState extends State<TenantForm> {
       phoneNumber = tenant.phoneNumber;
       selectedRoom = tenant.room;
       gender = tenant.gender;
+      if (selectedRoom?.building != null) {
+        selectedBuildingId = selectedRoom!.building!.id;
+      }
     } else {
       id = '';
       name = '';
@@ -60,25 +69,32 @@ class _TenantFormState extends State<TenantForm> {
     try {
       await roomRepository.load();
       setState(() {
-        availableRooms = roomRepository.getAvailableRooms();
         rooms = roomRepository.getAllRooms();
+        availableRooms = roomRepository.getAvailableRooms();
+
+        // Include the current room in availableRooms if editing
+        if (isEditing && widget.tenant?.room != null) {
+          final currentRoom = rooms.firstWhere(
+            (room) => room.id == widget.tenant!.room!.id,
+            orElse: () => widget.tenant!.room!,
+          );
+          if (!availableRooms.any((room) => room.id == currentRoom.id)) {
+            availableRooms.add(currentRoom);
+          }
+        }
 
         // Filter rooms by selected building if provided
-        if (widget.selectedBuildingId != null) {
+        if (selectedBuildingId != null) {
           availableRooms = availableRooms
-              .where((room) => room.building?.id == widget.selectedBuildingId)
+              .where((room) => room.building?.id == selectedBuildingId)
               .toList();
         }
 
-        selectedRoom = isEditing && widget.tenant?.room != null
-            ? rooms.firstWhere(
-                (room) => room.id == widget.tenant!.room!.id,
-                orElse: () => rooms.first,
-              )
-            : null;
+        // Ensure selectedRoom is valid for the current building filter
         if (selectedRoom != null &&
-            !availableRooms.any((room) => room.id == selectedRoom!.id)) {
-          availableRooms.add(selectedRoom!);
+            selectedBuildingId != null &&
+            selectedRoom!.building?.id != selectedBuildingId) {
+          selectedRoom = null;
         }
       });
     } catch (e) {
@@ -109,6 +125,7 @@ class _TenantFormState extends State<TenantForm> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     const fieldSpacing = SizedBox(height: 12);
+    final buildingProvider = context.watch<BuildingProvider>();
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
@@ -124,109 +141,193 @@ class _TenantFormState extends State<TenantForm> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              TextFormField(
-                initialValue: name,
-                decoration: InputDecoration(
-                  labelText: 'ឈ្មោះអ្នកជួល',
-                  labelStyle: theme.textTheme.bodyMedium,
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'សូមបញ្ចូលឈ្មោះអ្នកជួល';
-                  }
-                  return null;
-                },
-                onSaved: (value) => name = value!,
-              ),
-              fieldSpacing,
-              TextFormField(
-                initialValue: phoneNumber,
-                decoration: InputDecoration(
-                  labelText: 'លេខទូរស័ព្ទ',
-                  labelStyle: theme.textTheme.bodyMedium,
-                ),
-                keyboardType: TextInputType.phone,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'សូមបញ្ចូលលេខទូរស័ព្ទ';
-                  }
-                  return null;
-                },
-                onSaved: (value) => phoneNumber = value!,
-              ),
-              fieldSpacing,
-              DropdownButtonFormField<Room>(
-                value: selectedRoom,
-                items: availableRooms.map((room) {
-                  return DropdownMenuItem(
-                    value: room,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('បន្ទប់: ${room.roomNumber}'),
-                        Text('- ${room.building!.name}'),
-                      ],
-                    ),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      selectedRoom = value;
-                    });
-                  }
-                },
-                decoration: InputDecoration(
-                  labelText: 'បន្ទប់',
-                  labelStyle: theme.textTheme.bodyMedium,
-                ),
-                validator: (value) =>
-                    value == null ? 'សូមជ្រើសរើសបន្ទប់' : null,
-              ),
-              fieldSpacing,
-              DropdownButtonFormField<Gender>(
-                value: gender,
-                decoration: InputDecoration(
-                  labelText: 'ភេទ',
-                  labelStyle: theme.textTheme.bodyMedium,
-                ),
-                items: Gender.values
-                    .map(
-                      (g) => DropdownMenuItem(
-                        value: g,
+        child: buildingProvider.buildings.when(
+          success: (buildings) {
+            return Form(
+              key: _formKey,
+              child: ListView(
+                children: [
+                  // Building Filter
+                  DropdownButtonFormField<String?>(
+                    value: selectedBuildingId,
+                    items: [
+                      DropdownMenuItem(
+                        value: null,
                         child: Text(
-                          {
-                            Gender.male: 'បុរស',
-                            Gender.female: 'នារី',
-                            Gender.other: 'ផ្សេងៗ',
-                          }[g]!,
+                          'ទាំងអស់',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                    )
-                    .toList(),
-                onChanged: (value) => setState(() => gender = value!),
-                onSaved: (value) => gender = value!,
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  ElevatedButton(
-                    onPressed: _save,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
+                      ...buildings.map((building) => DropdownMenuItem(
+                            value: building.id,
+                            child: Text(
+                              building.name,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          )),
+                    ],
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        selectedBuildingId = newValue;
+                        // Filter rooms based on selected building
+                        availableRooms = rooms
+                            .where((room) =>
+                                room.building?.id == newValue ||
+                                newValue == null)
+                            .toList();
+                        // Clear room selection if it doesn't match the new building
+                        if (selectedRoom != null &&
+                            selectedRoom!.building?.id != newValue) {
+                          selectedRoom = null;
+                        }
+                      });
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'ជ្រើសរើសអគារ',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.onSurface.withOpacity(0.4),
+                          width: 0.1,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
                     ),
-                    child: Text(isEditing ? 'កែប្រអ្នកជួល' : 'បង្កើតអ្នកជួល',
-                        style: TextStyle(color: Colors.white)),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    dropdownColor: theme.colorScheme.surface,
+                    icon: Icon(
+                      Icons.filter_list,
+                      color: theme.colorScheme.primary,
+                      size: 24,
+                    ),
+                    validator: (value) => null,
+                  ),
+                  fieldSpacing,
+                  // Name Field
+                  TextFormField(
+                    initialValue: name,
+                    decoration: InputDecoration(
+                      labelText: 'ឈ្មោះអ្នកជួល',
+                      labelStyle: theme.textTheme.bodyMedium,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'សូមបញ្ចូលឈ្មោះអ្នកជួល';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) => name = value!,
+                  ),
+                  fieldSpacing,
+                  // Phone Number Field
+                  TextFormField(
+                    initialValue: phoneNumber,
+                    decoration: InputDecoration(
+                      labelText: 'លេខទូរស័ព្ទ',
+                      labelStyle: theme.textTheme.bodyMedium,
+                    ),
+                    keyboardType: TextInputType.phone,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'សូមបញ្ចូលលេខទូរស័ព្ទ';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) => phoneNumber = value!,
+                  ),
+                  fieldSpacing,
+                  DropdownButtonFormField<Room>(
+                    value: selectedRoom,
+                    items: availableRooms.map((room) {
+                      return DropdownMenuItem(
+                        value: room,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('បន្ទប់: ${room.roomNumber}'),
+                            Text('- ${room.building!.name}'),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          selectedRoom = value;
+                        });
+                      }
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'បន្ទប់',
+                      labelStyle: theme.textTheme.bodyMedium,
+                    ),
+                    validator: (value) =>
+                        value == null ? 'សូមជ្រើសរើសបន្ទប់' : null,
+                  ),
+                  // Gender Selection
+                  DropdownButtonFormField<Gender>(
+                    value: gender,
+                    decoration: InputDecoration(
+                      labelText: 'ភេទ',
+                      labelStyle: theme.textTheme.bodyMedium,
+                    ),
+                    items: Gender.values
+                        .map(
+                          (g) => DropdownMenuItem(
+                            value: g,
+                            child: Text(
+                              {
+                                Gender.male: 'បុរស',
+                                Gender.female: 'នារី',
+                                Gender.other: 'ផ្សេងៗ',
+                              }[g]!,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) => setState(() => gender = value!),
+                    onSaved: (value) => gender = value!,
+                  ),
+                  const SizedBox(height: 24),
+                  // Save Button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      ElevatedButton(
+                        onPressed: _save,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: theme.colorScheme.onPrimary,
+                        ),
+                        child: Text(
+                          isEditing ? 'កែប្រអ្នកជួល' : 'បង្កើតអ្នកជួល',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error) => Center(
+            child: Text(
+              'មានបញ្ហាក្នុងការផ្ទុកអគារ: $error',
+              style: theme.textTheme.titleMedium,
+            ),
           ),
         ),
       ),

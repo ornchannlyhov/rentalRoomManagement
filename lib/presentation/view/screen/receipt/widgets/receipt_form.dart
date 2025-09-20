@@ -21,12 +21,14 @@ class ReceiptForm extends StatefulWidget {
   final Mode mode;
   final Receipt? receipt;
   final List<Receipt> receipts;
+  final String? selectedBuildingId;
 
   const ReceiptForm({
     super.key,
     this.mode = Mode.creating,
     this.receipt,
     this.receipts = const [],
+    this.selectedBuildingId,
   });
 
   @override
@@ -45,6 +47,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
   late int thisElectricUsed;
   late PaymentStatus paymentStatus;
   Room? selectedRoom;
+  String? selectedBuildingId;
   List<Service> selectedServices = [];
 
   late TextEditingController lastWaterUsedController;
@@ -62,6 +65,8 @@ class _ReceiptFormState extends State<ReceiptForm> {
     thisWaterUsedController = TextEditingController();
     thisElectricUsedController = TextEditingController();
 
+    selectedBuildingId = widget.selectedBuildingId;
+
     if (isEditing && widget.receipt != null) {
       final receipt = widget.receipt!;
       id = receipt.id;
@@ -74,6 +79,10 @@ class _ReceiptFormState extends State<ReceiptForm> {
       paymentStatus = receipt.paymentStatus;
       selectedRoom = receipt.room;
       selectedServices = receipt.services.toList();
+
+      if (selectedRoom?.building != null) {
+        selectedBuildingId = selectedRoom!.building!.id;
+      }
 
       lastWaterUsedController.text = lastWaterUsed.toString();
       lastElectricUsedController.text = lastElectricUsed.toString();
@@ -196,13 +205,13 @@ class _ReceiptFormState extends State<ReceiptForm> {
 
     if (newBuilding != null) {
       await buildingProvider.createBuilding(newBuilding);
-      // Reload both BuildingProvider and RoomProvider to ensure rooms are updated
       await Future.wait([
         buildingProvider.load(),
         roomProvider.load(),
       ]);
-      // Trigger UI refresh to update the room dropdown
-      setState(() {});
+      setState(() {
+        selectedBuildingId = newBuilding.id;
+      });
     }
   }
 
@@ -214,14 +223,30 @@ class _ReceiptFormState extends State<ReceiptForm> {
     final buildingProvider = context.watch<BuildingProvider>();
 
     Room? correctedSelectedRoom;
+    List<Room> filteredRooms = [];
+
     roomProvider.rooms.when(
       success: (rooms) {
+        if (selectedBuildingId != null) {
+          filteredRooms = rooms
+              .where((room) => room.building?.id == selectedBuildingId)
+              .toList();
+        } else {
+          filteredRooms = rooms;
+        }
+
         if (selectedRoom != null) {
           try {
             correctedSelectedRoom =
                 rooms.firstWhere((r) => r.id == selectedRoom!.id);
+            if (selectedBuildingId != null &&
+                correctedSelectedRoom?.building?.id != selectedBuildingId) {
+              correctedSelectedRoom = null;
+              selectedRoom = null;
+            }
           } catch (e) {
             correctedSelectedRoom = null;
+            selectedRoom = null;
           }
         }
       },
@@ -309,29 +334,112 @@ class _ReceiptFormState extends State<ReceiptForm> {
                   ),
                   const SizedBox(height: 16),
 
+                  // Building Filter Bar
+                  DropdownButtonFormField<String?>(
+                    value: selectedBuildingId,
+                    items: [
+                      DropdownMenuItem(
+                        value: null,
+                        child: Text(
+                          'ទាំងអស់',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      ...buildings.map((building) => DropdownMenuItem(
+                            value: building.id,
+                            child: Text(
+                              building.name,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          )),
+                    ],
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        selectedBuildingId = newValue;
+                        if (selectedRoom?.building?.id != newValue) {
+                          selectedRoom = null;
+                        }
+                      });
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'ជ្រើសរើសអគារ',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.onSurface.withOpacity(0.3),
+                          width: 0.1,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surfaceVariant,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                    ),
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    dropdownColor: theme.colorScheme.surface,
+                    icon: Icon(
+                      Icons.filter_list,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                    validator: (value) => null,
+                  ),
+                  const SizedBox(height: 16),
+
                   // Room Selection
                   DropdownButtonFormField<Room>(
                     value: correctedSelectedRoom,
-                    items: roomProvider.rooms.when(
-                      success: (rooms) => rooms.map((room) {
-                        return DropdownMenuItem(
-                          value: room,
-                          child: Text(
-                            'បន្ទប់ ${room.roomNumber} - ${room.building!.name}',
-                            style: theme.textTheme.bodyMedium,
+                    items: filteredRooms.map((room) {
+                      return DropdownMenuItem(
+                        value: room,
+                        child: Text(
+                          selectedBuildingId != null
+                              ? 'បន្ទប់ ${room.roomNumber}'
+                              : 'បន្ទប់ ${room.roomNumber} - ${room.building!.name}',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w500,
                           ),
-                        );
-                      }).toList(),
-                      loading: () => [],
-                      error: (_) => [],
-                    ),
+                        ),
+                      );
+                    }).toList(),
                     onChanged: (value) async {
                       setState(() => selectedRoom = value);
                       await _loadLastMonthData();
                     },
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'ជ្រើសរើសបន្ទប់',
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.onSurface.withOpacity(0.3),
+                          width: 0.1,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surfaceVariant,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                    ),
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    dropdownColor: theme.colorScheme.surface,
+                    icon: Icon(
+                      Icons.arrow_drop_down,
+                      color: theme.colorScheme.primary,
+                      size: 20,
                     ),
                     validator: (value) =>
                         value == null ? 'សូមជ្រើសរើសបន្ទប់' : null,
