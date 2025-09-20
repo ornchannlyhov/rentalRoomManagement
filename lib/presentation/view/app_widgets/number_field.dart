@@ -7,7 +7,7 @@ class NumberTextFormField extends StatelessWidget {
   final String? initialValue;
   final void Function(String?) onSaved;
   final String? Function(String?)? validator;
-  final bool enabled; 
+  final bool enabled;
 
   const NumberTextFormField({
     super.key,
@@ -16,28 +16,41 @@ class NumberTextFormField extends StatelessWidget {
     this.initialValue,
     required this.onSaved,
     this.validator,
-    this.enabled = true, 
+    this.enabled = true,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final baseColor = theme.colorScheme.onSurface;
 
     return TextFormField(
       controller: controller,
       initialValue: initialValue,
-      enabled: enabled, 
+      enabled: enabled,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: theme.colorScheme.onSurface),
+        labelStyle: TextStyle(
+          color: enabled
+              ? baseColor
+              : baseColor.withOpacity(0.5), // faded label when disabled
+        ),
         enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: theme.colorScheme.outline),
+          borderSide: BorderSide(
+            color: enabled
+                ? theme.colorScheme.outline
+                : theme.colorScheme.outline.withOpacity(0.5), // faded border
+          ),
         ),
         focusedBorder: UnderlineInputBorder(
           borderSide: BorderSide(color: theme.colorScheme.primary),
         ),
       ),
-      style: TextStyle(color: theme.colorScheme.onSurface),
+      style: TextStyle(
+        color: enabled
+            ? baseColor
+            : baseColor.withOpacity(0.5), // faded text when disabled
+      ),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
         FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),

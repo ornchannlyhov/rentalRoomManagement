@@ -276,6 +276,8 @@ class _TenantFormState extends State<TenantForm> {
                     validator: (value) =>
                         value == null ? 'សូមជ្រើសរើសបន្ទប់' : null,
                   ),
+                  fieldSpacing,
+
                   // Gender Selection
                   DropdownButtonFormField<Gender>(
                     value: gender,

@@ -5,10 +5,12 @@ import 'package:receipts_v2/data/models/enum/mode.dart';
 import 'package:receipts_v2/data/models/enum/room_status.dart';
 import 'package:receipts_v2/data/models/room.dart';
 import 'package:receipts_v2/data/models/service.dart';
+import 'package:receipts_v2/presentation/providers/building_provider.dart';
 import 'package:receipts_v2/presentation/providers/room_provider.dart';
 import 'package:receipts_v2/presentation/providers/service_provider.dart';
 import 'package:receipts_v2/presentation/providers/tenant_provider.dart';
 import 'package:receipts_v2/presentation/view/screen/building/widgets/building_card.dart';
+import 'package:receipts_v2/presentation/view/screen/building/widgets/building_form.dart';
 import 'package:receipts_v2/presentation/view/screen/building/widgets/switch_button.dart';
 import 'package:receipts_v2/presentation/view/screen/room/room_card.dart';
 import 'package:receipts_v2/presentation/view/screen/room/room_form.dart';
@@ -43,7 +45,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
     await _loadData();
     if (mounted) {
       _showSnackBar(
-        message: 'ទិន្នន័យ​ត្រូវបានកែប្រែ',
+        message: 'ទិន្នន័យត្រូវបានកែប្រែ',
         backgroundColor: Theme.of(context).colorScheme.primary,
         icon: Icons.refresh,
       );
@@ -79,39 +81,6 @@ class _BuildingDetailState extends State<BuildingDetail> {
     }
   }
 
-  Future<void> _addService() async {
-    final newService = await Navigator.push<Service>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ServiceForm(building: widget.building),
-      ),
-    );
-
-    if (newService != null && mounted) {
-      assert(newService.buildingId == widget.building.id);
-
-      await context.read<ServiceProvider>().createService(newService);
-      _showSuccessMessage('បន្ថែមសេវា "${newService.name}" ដោយជោគជ័យ');
-    }
-  }
-
-  Future<void> _editService(Service service) async {
-    final updatedService = await Navigator.push<Service>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ServiceForm(
-          building: widget.building,
-          mode: Mode.editing,
-          service: service,
-        ),
-      ),
-    );
-    if (updatedService != null && mounted) {
-      await context.read<ServiceProvider>().updateService(updatedService);
-      _showSuccessMessage('កែប្រែសេវា "${updatedService.name}" ដោយជោគជ័យ');
-    }
-  }
-
   Future<void> _deleteRoom(Room room) async {
     final confirmed = await showDialog<bool>(
           context: context,
@@ -136,7 +105,6 @@ class _BuildingDetailState extends State<BuildingDetail> {
         false;
 
     if (confirmed && mounted) {
-      // Get tenants associated with the room's building
       final tenantProvider = context.read<TenantProvider>();
       final tenants = tenantProvider.getTenantByBuilding(widget.building.id);
 
@@ -146,13 +114,44 @@ class _BuildingDetailState extends State<BuildingDetail> {
         }
       }
 
-      // Delete the room from RoomProvider
       await context.read<RoomProvider>().deleteRoom(room.id);
       _showSnackBar(
         message: 'បានលុបបន្ទប់ "${room.roomNumber}" ជោគជ័យ',
-        backgroundColor: Theme.of(context).colorScheme.error,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         icon: Icons.delete,
       );
+    }
+  }
+
+  Future<void> _addService() async {
+    final newService = await Navigator.push<Service>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ServiceForm(building: widget.building),
+      ),
+    );
+
+    if (newService != null && mounted) {
+      assert(newService.buildingId == widget.building.id);
+      await context.read<ServiceProvider>().createService(newService);
+      _showSuccessMessage('បន្ថែមសេវា "${newService.name}" ដោយជោគជ័យ');
+    }
+  }
+
+  Future<void> _editService(Service service) async {
+    final updatedService = await Navigator.push<Service>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ServiceForm(
+          building: widget.building,
+          mode: Mode.editing,
+          service: service,
+        ),
+      ),
+    );
+    if (updatedService != null && mounted) {
+      await context.read<ServiceProvider>().updateService(updatedService);
+      _showSuccessMessage('កែប្រែសេវា "${updatedService.name}" ដោយជោគជ័យ');
     }
   }
 
@@ -161,7 +160,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('លុបសេវា'),
-            content: Text('តើ​អ្នកចង់លុបសេវា "${service.name}"?'),
+            content: Text('តើអ្នកចង់លុបសេវា "${service.name}"?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
@@ -183,16 +182,93 @@ class _BuildingDetailState extends State<BuildingDetail> {
       await context.read<ServiceProvider>().deleteService(service.id);
       _showSnackBar(
         message: 'បានលុបសេវា "${service.name}" ជោគជ័យ',
-        backgroundColor: Theme.of(context).colorScheme.error,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         icon: Icons.delete,
       );
+    }
+  }
+
+  Future<void> _editBuilding() async {
+    // Assuming a BuildingForm widget exists for editing buildings
+    final updatedBuilding = await Navigator.push<Building>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BuildingForm(
+          building: widget.building,
+          mode: Mode.editing,
+        ),
+      ),
+    );
+    if (updatedBuilding != null && mounted) {
+      await context.read<BuildingProvider>().updateBuilding(updatedBuilding);
+      _showSuccessMessage('កែប្រែអគារ "${updatedBuilding.name}" ដោយជោគជ័យ');
+    }
+  }
+
+  Future<void> _deleteBuilding() async {
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('លុបអគារ'),
+            content: Text('តើអ្នកចង់លុបអគារ "${widget.building.name}"?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('បោះបង់'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(
+                  'លុប',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (confirmed && mounted) {
+      final tenantProvider = context.read<TenantProvider>();
+      final roomProvider = context.read<RoomProvider>();
+      final serviceProvider = context.read<ServiceProvider>();
+
+      // Remove associated tenants
+      final tenants = tenantProvider.getTenantByBuilding(widget.building.id);
+      for (final tenant in tenants) {
+        await tenantProvider.removeRoom(tenant.id);
+      }
+
+      // Remove associated rooms
+      final rooms = roomProvider.getRoomsByBuilding(widget.building.id);
+      for (final room in rooms) {
+        await roomProvider.deleteRoom(room.id);
+      }
+
+      // Remove associated services
+      final services = serviceProvider.services.data
+              ?.where((s) => s.buildingId == widget.building.id)
+              .toList() ??
+          [];
+      for (final service in services) {
+        await serviceProvider.deleteService(service.id);
+      }
+
+      // Delete the building
+      await context.read<BuildingProvider>().deleteBuilding(widget.building.id);
+      _showSnackBar(
+        message: 'បានលុបអគារ "${widget.building.name}" ជោគជ័យ',
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        icon: Icons.delete,
+      );
+      Navigator.pop(context); // Return to previous screen
     }
   }
 
   void _showSuccessMessage(String message) {
     _showSnackBar(
       message: message,
-      backgroundColor: Colors.green.shade600,
+      backgroundColor: Theme.of(context).colorScheme.primary,
       icon: Icons.check_circle,
     );
   }
@@ -307,6 +383,13 @@ class _BuildingDetailState extends State<BuildingDetail> {
                               room: room,
                               onTap: () => _editRoom(room),
                               status: room.roomStatus == RoomStatus.occupied,
+                              onMenuSelected: (option) {
+                                if (option == RoomMenuOption.edit) {
+                                  _editRoom(room);
+                                } else if (option == RoomMenuOption.delete) {
+                                  _deleteRoom(room);
+                                }
+                              },
                             ),
                           ),
                         );
@@ -380,6 +463,13 @@ class _BuildingDetailState extends State<BuildingDetail> {
                             child: ServiceCard(
                               service: service,
                               onTap: () => _editService(service),
+                              onMenuSelected: (option) {
+                                if (option == ServiceMenuOption.edit) {
+                                  _editService(service);
+                                } else if (option == ServiceMenuOption.delete) {
+                                  _deleteService(service);
+                                }
+                              },
                             ),
                           ),
                         );
@@ -458,7 +548,11 @@ class _BuildingDetailState extends State<BuildingDetail> {
         children: [
           Padding(
             padding: const EdgeInsets.all(12),
-            child: BuildingCard(building: widget.building),
+            child: BuildingCard(
+              building: widget.building,
+              onEdit: _editBuilding,
+              onDelete: _deleteBuilding,
+            ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
