@@ -7,6 +7,7 @@ class NumberTextFormField extends StatelessWidget {
   final String? initialValue;
   final void Function(String?) onSaved;
   final String? Function(String?)? validator;
+  final bool enabled; 
 
   const NumberTextFormField({
     super.key,
@@ -15,6 +16,7 @@ class NumberTextFormField extends StatelessWidget {
     this.initialValue,
     required this.onSaved,
     this.validator,
+    this.enabled = true, 
   });
 
   @override
@@ -24,6 +26,7 @@ class NumberTextFormField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       initialValue: initialValue,
+      enabled: enabled, 
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: theme.colorScheme.onSurface),

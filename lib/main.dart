@@ -12,13 +12,14 @@ import 'package:receipts_v2/presentation/view/app_widgets/app_menu.dart';
 import 'package:receipts_v2/presentation/view/screen/building/building_screen.dart';
 import 'package:receipts_v2/presentation/view/screen/history/history_screen.dart';
 import 'package:receipts_v2/presentation/view/screen/receipt/receipt_screen.dart';
+// import 'package:receipts_v2/presentation/view/screen/setting/profile_screen.dart';
 import 'package:receipts_v2/presentation/view/screen/tenant/tenant_screen.dart';
 import 'core/app_theme.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  clearSecureStorage();
+  // clearSecureStorage();
   await initializeDateFormatting();
   runApp(const MyApp());
 }
@@ -71,6 +72,7 @@ class _MainScreenState extends State<MainScreen> {
     const HistoryScreen(),
     const BuildingScreen(),
     const TenantScreen(),
+    // const ProfileScreen(), 
   ];
 
   void _onTabSelected(int index) {

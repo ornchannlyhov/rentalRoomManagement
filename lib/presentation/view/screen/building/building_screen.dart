@@ -39,7 +39,7 @@ class _BuildingScreenState extends State<BuildingScreen>
     ).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
     );
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
@@ -124,49 +124,108 @@ class _BuildingScreenState extends State<BuildingScreen>
     );
   }
 
-  void _deleteBuilding(BuildContext context, int index, Building building) {
+  Future<void> _deleteBuilding(BuildContext context, Building building) async {
     final buildingProvider = context.read<BuildingProvider>();
-    final theme = Theme.of(context);
 
-    buildingProvider.deleteBuilding(building.id);
-
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        duration: const Duration(seconds: 4),
-        backgroundColor: theme.colorScheme.error,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        content: Row(
-          children: [
-            Icon(
-              Icons.delete_outline,
-              color: theme.colorScheme.onError,
-              size: 20,
+    // Show confirmation dialog
+    final bool? shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          backgroundColor: theme.colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'បញ្ជាក់ការលុប', // "Confirm Delete"
+            style: TextStyle(
+              color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w600,
             ),
-            const SizedBox(width: 8),
-            Expanded(
+          ),
+          content: Text(
+            'តើអ្នកពិតជាចង់លុបអគារ "${building.name}" មែនទេ?', // "Are you sure you want to delete building?"
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
               child: Text(
-                'អាគារ "${building.name}" ត្រូវបានលុប', // "Building deleted"
+                'បោះបង់', // "Cancel"
+                style: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: theme.colorScheme.error,
+              ),
+              child: Text(
+                'លុប', // "Delete"
                 style: TextStyle(
                   color: theme.colorScheme.onError,
-                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
           ],
-        ),
-        action: SnackBarAction(
-          label: 'មិនលុប', // "Undo"
-          textColor: theme.colorScheme.onError,
-          onPressed: () async {
-            await buildingProvider.restoreBuilding(index, building);
-          },
-        ),
-      ),
+        );
+      },
     );
+
+    if (shouldDelete == true) {
+      try {
+        await buildingProvider.deleteBuilding(building.id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('អគារ "${building.name}" ត្រូវបានលុបជោគជ័យ'),
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
+      } catch (error) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('បរាជ័យក្នុងការលុបអគារ: $error'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _onBuildingTap(BuildContext context, Building building) {
+    // Default tap action - navigate to building details
+    _viewBuilding(context, building);
+  }
+
+  void _onBuildingLongPress(BuildContext context, Building building) {
+    // Long press action - show edit form
+    _editBuilding(context, building);
+  }
+
+  void _dismissibleDeleteBuilding(
+      BuildContext context, int index, Building building) {
+    final buildingProvider = context.read<BuildingProvider>();
+
+    buildingProvider.deleteBuilding(building.id);
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
   }
 
   Widget _buildEmptyState(ThemeData theme) {
@@ -192,7 +251,7 @@ class _BuildingScreenState extends State<BuildingScreen>
               ),
               const SizedBox(height: 24),
               Text(
-                'មិនមានអាគារ', // "No buildings available"
+                'មិនមានអគារ', // "No buildings available"
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
@@ -200,7 +259,7 @@ class _BuildingScreenState extends State<BuildingScreen>
               ),
               const SizedBox(height: 8),
               Text(
-                'សូមចុចប៊ូតុង + ដើម្បីបន្ថែមអាគារថ្មី', // "Tap + to add a new building"
+                'សូមចុចប៊ូតុង + ដើម្បីបន្ថែមអគារថ្មី', // "Tap + to add a new building"
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
                 ),
@@ -357,7 +416,7 @@ class _BuildingScreenState extends State<BuildingScreen>
                           ),
                         ),
                         content: Text(
-                          'តើអ្នកពិតជាចង់លុបអាគារ "${building.name}" មែនទេ?', // "Are you sure you want to delete building?"
+                          'តើអ្នកពិតជាចង់លុបអគារ "${building.name}" មែនទេ?', // "Are you sure you want to delete building?"
                           style: TextStyle(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -389,11 +448,15 @@ class _BuildingScreenState extends State<BuildingScreen>
                     },
                   );
                 },
-                onDismissed: (_) => _deleteBuilding(context, index, building),
+                onDismissed: (_) =>
+                    _dismissibleDeleteBuilding(context, index, building),
                 child: BuildingCard(
                   building: building,
-                  onTap: () => _viewBuilding(context, building),
-                  onLongPress: () => _editBuilding(context, building),
+                  onTap: () => _onBuildingTap(context, building),
+                  onLongPress: () => _onBuildingLongPress(context, building),
+                  onEdit: () => _editBuilding(context, building),
+                  onDelete: () => _deleteBuilding(context, building),
+                  onViewDetails: () => _viewBuilding(context, building),
                 ),
               ),
             );
@@ -410,7 +473,7 @@ class _BuildingScreenState extends State<BuildingScreen>
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: AppbarCustom(
-        header: 'អាគារ', // "Buildings"
+        header: 'អគារ', // "Buildings"
         onAddPressed: () => _addBuilding(context),
       ),
       body: Consumer<BuildingProvider>(

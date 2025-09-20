@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:receipts_v2/data/models/building.dart';
 import 'package:receipts_v2/data/models/enum/mode.dart';
-import 'package:receipts_v2/data/models/room.dart'; 
-import 'package:receipts_v2/data/models/enum/room_status.dart'; 
+import 'package:receipts_v2/data/models/room.dart';
+import 'package:receipts_v2/data/models/enum/room_status.dart';
 import 'package:receipts_v2/presentation/view/app_widgets/number_field.dart';
-import 'package:uuid/uuid.dart'; 
+import 'package:uuid/uuid.dart';
 
 class BuildingForm extends StatefulWidget {
   final Mode mode;
@@ -29,7 +29,7 @@ class _BuildingFormState extends State<BuildingForm> {
   late double rentPrice;
   late double electricPrice;
   late double waterPrice;
-  late int roomQuantity; 
+  late int roomQuantity;
 
   bool get isEditing => widget.mode == Mode.editing;
 
@@ -43,15 +43,14 @@ class _BuildingFormState extends State<BuildingForm> {
       rentPrice = building.rentPrice;
       electricPrice = building.electricPrice;
       waterPrice = building.waterPrice;
-      roomQuantity =
-          building.rooms.length; 
+      roomQuantity = building.rooms.length;
     } else {
       id = '';
       name = '';
       rentPrice = 0.0;
       electricPrice = 0.0;
       waterPrice = 0.0;
-      roomQuantity = 0; 
+      roomQuantity = 0;
     }
   }
 
@@ -59,20 +58,22 @@ class _BuildingFormState extends State<BuildingForm> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      List<Room> generatedRooms = [];
-      if (!isEditing && roomQuantity > 0) {
+      List<Room> finalRooms = [];
+
+      if (isEditing && widget.building != null) {
+        // When editing, preserve existing rooms
+        finalRooms = widget.building!.rooms;
+      } else if (!isEditing && roomQuantity > 0) {
+        // When creating, generate new rooms
         for (int i = 1; i <= roomQuantity; i++) {
-          generatedRooms.add(
+          finalRooms.add(
             Room(
               id: const Uuid().v4(),
-              roomNumber: i.toString(), 
+              roomNumber: i.toString(),
               roomStatus: RoomStatus.available,
-              price: rentPrice, 
+              price: rentPrice,
               building: Building(
-                id: isEditing
-                    ? widget.building!.id
-                    : DateTime.now()
-                        .toString(), 
+                id: DateTime.now().toString(),
                 name: name,
                 rentPrice: rentPrice,
                 electricPrice: electricPrice,
@@ -89,7 +90,7 @@ class _BuildingFormState extends State<BuildingForm> {
         rentPrice: rentPrice,
         electricPrice: electricPrice,
         waterPrice: waterPrice,
-        rooms: generatedRooms,
+        rooms: finalRooms,
       );
 
       Navigator.pop(context, newBuilding);
@@ -106,10 +107,8 @@ class _BuildingFormState extends State<BuildingForm> {
         iconTheme: theme.iconTheme.copyWith(
           color: theme.iconTheme.color ?? theme.colorScheme.onPrimary,
         ),
-        title: Text(
-          isEditing ? 'កែប្រែអគារ' : 'បញ្ចូលអគារថ្មី',
-          style: TextStyle(color: theme.colorScheme.onSurface)
-        ),
+        title: Text(isEditing ? 'កែប្រែអគារ' : 'បញ្ចូលអគារថ្មី',
+            style: TextStyle(color: theme.colorScheme.onSurface)),
         actions: [
           IconButton(
             onPressed: () => Navigator.pop(context),
@@ -144,27 +143,54 @@ class _BuildingFormState extends State<BuildingForm> {
                 onSaved: (value) => rentPrice = double.parse(value!),
               ),
               const SizedBox(height: 12),
-              if (!isEditing) 
-                Column(
-                  children: [
-                    NumberTextFormField(
-                      initialValue: roomQuantity.toString(),
-                      label: 'ចំនួនបន្ទប់',
-                      onSaved: (value) => roomQuantity = int.parse(value!),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'សូមបញ្ចូលចំនួនបន្ទប់។';
-                        }
-                        if (int.tryParse(value) == null ||
-                            int.parse(value) < 0) {
-                          return 'សូមបញ្ចូលចំនួនបន្ទប់ត្រឹមត្រូវ។';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                  ],
+
+              // Show room quantity field for both creating and editing
+              NumberTextFormField(
+                initialValue: roomQuantity.toString(),
+                label: isEditing ? 'ចំនួនបន្ទប់បច្ចុប្បន្ន' : 'ចំនួនបន្ទប់',
+                enabled: !isEditing, // Disable editing for existing buildings
+                onSaved: (value) => roomQuantity = int.parse(value!),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'សូមបញ្ចូលចំនួនបន្ទប់។';
+                  }
+                  if (int.tryParse(value) == null || int.parse(value) < 0) {
+                    return 'សូមបញ្ចូលចំនួនបន្ទប់ត្រឹមត្រូវ។';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+
+              // Show a note when editing about room management
+              if (isEditing)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'ចំនួនបន្ទប់មិនអាចកែប្រែបានទេ។ សូមគ្រប់គ្រងបន្ទប់នីមួយៗដាច់ដោយឡែក។',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+
               NumberTextFormField(
                 initialValue: electricPrice.toString(),
                 label: 'តម្លៃអគ្គិសនី (1kWh)',

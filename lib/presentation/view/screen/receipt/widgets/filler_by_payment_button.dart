@@ -99,7 +99,7 @@ class _FilterButtonState extends State<FilterByPaymentButton> {
                 style: theme.textTheme.labelMedium?.copyWith(
                   color:
                       isSelected ? Colors.white : colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 ),
               ),
             ),

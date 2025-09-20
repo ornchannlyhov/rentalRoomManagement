@@ -26,8 +26,9 @@ class AppMenu extends StatelessWidget {
         items: [
           _buildBottomNavItem(context, Icons.receipt, 'វិក្កយបត្រ', 0),
           _buildBottomNavItem(context, Icons.history, 'ទិន្នន័យចាស់', 1),
-          _buildBottomNavItem(context, Icons.apartment, 'អាគារ', 2),
+          _buildBottomNavItem(context, Icons.apartment, 'អគារ', 2),
           _buildBottomNavItem(context, Icons.person, 'អ្នកជួល', 3),
+          // _buildBottomNavItem(context, Icons.settings, 'ការកំណត់', 4)
         ],
       ),
     );

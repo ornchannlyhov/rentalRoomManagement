@@ -152,7 +152,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                   title: Text(
                     'មើលលម្អិត',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   onTap: () {
@@ -165,7 +165,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                   title: Text(
                     'ចែករំលែក',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   onTap: () {
@@ -187,7 +187,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                   title: Text(
                     'កែប្រែ',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   onTap: () {
@@ -201,7 +201,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                   title: Text(
                     'លុប',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                       color: theme.colorScheme.error,
                     ),
                   ),
@@ -309,7 +309,7 @@ class _HistoryScreenState extends State<HistoryScreen>
       height: _isSearching ? 56 : 0,
       child: _isSearching
           ? Container(
-              margin: const EdgeInsets.only(bottom: 16),
+              margin: const EdgeInsets.only(bottom: 8), // Reduced from 16 to 8
               decoration: BoxDecoration(
                 color: theme.colorScheme.surfaceVariant,
                 borderRadius: BorderRadius.circular(16),
@@ -374,7 +374,7 @@ class _HistoryScreenState extends State<HistoryScreen>
   Widget _buildMonthFilter(ThemeData theme) {
     return Container(
       height: 48,
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 8),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: 12,
@@ -407,6 +407,12 @@ class _HistoryScreenState extends State<HistoryScreen>
               checkmarkColor: Colors.white,
               elevation: isSelected ? 4 : 0,
               shadowColor: theme.colorScheme.primary.withOpacity(0.3),
+              side: BorderSide(
+                color: isSelected
+                    ? Colors.transparent
+                    : theme.colorScheme.onSurface.withOpacity(0.4),
+                width: 0.1,
+              ),
             ),
           );
         },
@@ -419,13 +425,13 @@ class _HistoryScreenState extends State<HistoryScreen>
       builder: (context, buildingProvider, child) {
         return buildingProvider.buildings.when(
           loading: () => const Padding(
-            padding: EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(8.0), 
             child: LinearProgressIndicator(),
           ),
           error: (error) => Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(8.0),
             child: Text(
-              'មានបញ្ហាក្នុងការផ្ទុកអគារ: $error', // "Error loading buildings"
+              'មានបញ្ហាក្នុងការផ្ទុកអគារ: $error',
               style: TextStyle(color: theme.colorScheme.error),
             ),
           ),
@@ -434,7 +440,7 @@ class _HistoryScreenState extends State<HistoryScreen>
               DropdownMenuItem(
                 value: null,
                 child: Text(
-                  'ទាំងអស់', // "All"
+                  'ទាំងអស់',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w500,
                   ),
@@ -452,12 +458,12 @@ class _HistoryScreenState extends State<HistoryScreen>
             ];
 
             return Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16), 
-              height: 48, 
-              width: double.infinity, 
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              margin: const EdgeInsets.only(bottom: 8),
+              height: 48,
+              width: double.infinity,
               decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
+                color: theme.colorScheme.surfaceVariant,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
@@ -466,6 +472,10 @@ class _HistoryScreenState extends State<HistoryScreen>
                     offset: const Offset(0, 2),
                   ),
                 ],
+                border: Border.all(
+                  color: theme.colorScheme.onSurface.withOpacity(0.4),
+                  width: 0.1,
+                ),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String?>(
@@ -785,11 +795,11 @@ class _HistoryScreenState extends State<HistoryScreen>
               });
             },
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 2),
         child: Column(
           children: [
             _buildSearchBar(theme),

@@ -8,11 +8,13 @@ import 'package:receipts_v2/data/repositories/room_repository.dart';
 class TenantForm extends StatefulWidget {
   final Mode mode;
   final Tenant? tenant;
+  final String? selectedBuildingId;
 
   const TenantForm({
     super.key,
     this.mode = Mode.creating,
     this.tenant,
+    this.selectedBuildingId,
   });
 
   @override
@@ -60,6 +62,14 @@ class _TenantFormState extends State<TenantForm> {
       setState(() {
         availableRooms = roomRepository.getAvailableRooms();
         rooms = roomRepository.getAllRooms();
+
+        // Filter rooms by selected building if provided
+        if (widget.selectedBuildingId != null) {
+          availableRooms = availableRooms
+              .where((room) => room.building?.id == widget.selectedBuildingId)
+              .toList();
+        }
+
         selectedRoom = isEditing && widget.tenant?.room != null
             ? rooms.firstWhere(
                 (room) => room.id == widget.tenant!.room!.id,
@@ -101,7 +111,9 @@ class _TenantFormState extends State<TenantForm> {
     const fieldSpacing = SizedBox(height: 12);
 
     return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
+        backgroundColor: theme.colorScheme.surface,
         title: Text(isEditing ? 'កែប្រែអ្នកជួល' : 'បង្កើតអ្នកជួលថ្មី'),
         actions: [
           IconButton(

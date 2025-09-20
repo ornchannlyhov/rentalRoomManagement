@@ -42,11 +42,10 @@ class _BuildingDetailState extends State<BuildingDetail> {
   Future<void> _refreshData() async {
     await _loadData();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('ទិន្នន័យ​ត្រូវបានកែប្រែ'),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-        ),
+      _showSnackBar(
+        message: 'ទិន្នន័យ​ត្រូវបានកែប្រែ',
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        icon: Icons.refresh,
       );
     }
   }
@@ -126,7 +125,10 @@ class _BuildingDetailState extends State<BuildingDetail> {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('លុប'),
+                child: Text(
+                  'លុប',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
               ),
             ],
           ),
@@ -146,7 +148,11 @@ class _BuildingDetailState extends State<BuildingDetail> {
 
       // Delete the room from RoomProvider
       await context.read<RoomProvider>().deleteRoom(room.id);
-      _showSuccessMessage('បានលុបបន្ទប់ "${room.roomNumber}" ជោគជ័យ');
+      _showSnackBar(
+        message: 'បានលុបបន្ទប់ "${room.roomNumber}" ជោគជ័យ',
+        backgroundColor: Theme.of(context).colorScheme.error,
+        icon: Icons.delete,
+      );
     }
   }
 
@@ -163,7 +169,10 @@ class _BuildingDetailState extends State<BuildingDetail> {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('លុប'),
+                child: Text(
+                  'លុប',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
               ),
             ],
           ),
@@ -172,15 +181,64 @@ class _BuildingDetailState extends State<BuildingDetail> {
 
     if (confirmed && mounted) {
       await context.read<ServiceProvider>().deleteService(service.id);
-      _showSuccessMessage('បានលុបសេវា "${service.name}" ជោគជ័យ');
+      _showSnackBar(
+        message: 'បានលុបសេវា "${service.name}" ជោគជ័យ',
+        backgroundColor: Theme.of(context).colorScheme.error,
+        icon: Icons.delete,
+      );
     }
   }
 
   void _showSuccessMessage(String message) {
+    _showSnackBar(
+      message: message,
+      backgroundColor: Colors.green.shade600,
+      icon: Icons.check_circle,
+    );
+  }
+
+  void _showSnackBar({
+    required String message,
+    required Color backgroundColor,
+    required IconData icon,
+  }) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
+        content: Row(
+          children: [
+            Icon(
+              icon,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: backgroundColor,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 6,
+        duration: const Duration(seconds: 3),
+        action: SnackBarAction(
+          label: 'បិទ',
+          textColor: Colors.white,
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
       ),
     );
   }
@@ -190,21 +248,41 @@ class _BuildingDetailState extends State<BuildingDetail> {
       builder: (context, provider, _) {
         return provider.rooms.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error) => Center(child: Text('មានកំហុស: $error')),
+          error: (error) => RefreshIndicator(
+            onRefresh: _refreshData,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Center(child: Text('មានកំហុស: $error')),
+              ),
+            ),
+          ),
           success: (rooms) {
             final buildingRooms = rooms
                 .where((r) => r.building!.id == widget.building.id)
                 .toList();
             return buildingRooms.isEmpty
-                ? _buildEmptyState(
-                    icon: Icons.bed,
-                    title: 'គ្មានបន្ទប់',
-                    actionText: 'បន្ថែមបន្ទប់',
-                    onAction: _addRoom,
+                ? RefreshIndicator(
+                    onRefresh: _refreshData,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.5,
+                        child: _buildEmptyState(
+                          icon: Icons.bed,
+                          title: 'គ្មានបន្ទប់',
+                          subtitle: 'ទាញចុះដើម្បីផ្ទុកទិន្នន័យឡើងវិញ',
+                          actionText: 'បន្ថែមបន្ទប់',
+                          onAction: _addRoom,
+                        ),
+                      ),
+                    ),
                   )
                 : RefreshIndicator(
                     onRefresh: _refreshData,
                     child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.all(8),
                       itemCount: buildingRooms.length,
                       itemBuilder: (context, index) {
@@ -213,7 +291,10 @@ class _BuildingDetailState extends State<BuildingDetail> {
                           key: Key(room.id),
                           background: Container(
                             alignment: Alignment.centerRight,
-                            color: Colors.red,
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade600,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                             child: const Padding(
                               padding: EdgeInsets.only(right: 20),
                               child: Icon(Icons.delete, color: Colors.white),
@@ -243,21 +324,39 @@ class _BuildingDetailState extends State<BuildingDetail> {
       builder: (context, provider, _) {
         return provider.services.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error) => Center(child: Text('មានកំហុស: $error')),
+          error: (error) => RefreshIndicator(
+            onRefresh: _refreshData,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Center(child: Text('មានកំហុស: $error')),
+              ),
+            ),
+          ),
           success: (services) {
-            final buildingServices = services
-                .where((s) => s.buildingId == widget.building.id)
-                .toList();
+            final buildingServices = services.toList();
             return buildingServices.isEmpty
-                ? _buildEmptyState(
-                    icon: Icons.room_service,
-                    title: 'គ្មានសេវា',
-                    actionText: 'បន្ថែមសេវា',
-                    onAction: _addService,
+                ? RefreshIndicator(
+                    onRefresh: _refreshData,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.5,
+                        child: _buildEmptyState(
+                          icon: Icons.room_service,
+                          title: 'គ្មានសេវា',
+                          subtitle: 'ទាញចុះដើម្បីផ្ទុកទិន្នន័យឡើងវិញ',
+                          actionText: 'បន្ថែមសេវា',
+                          onAction: _addService,
+                        ),
+                      ),
+                    ),
                   )
                 : RefreshIndicator(
                     onRefresh: _refreshData,
                     child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.all(8),
                       itemCount: buildingServices.length,
                       itemBuilder: (context, index) {
@@ -266,7 +365,10 @@ class _BuildingDetailState extends State<BuildingDetail> {
                           key: Key(service.id),
                           background: Container(
                             alignment: Alignment.centerRight,
-                            color: Colors.red,
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade600,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                             child: const Padding(
                               padding: EdgeInsets.only(right: 20),
                               child: Icon(Icons.delete, color: Colors.white),
@@ -293,6 +395,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
   Widget _buildEmptyState({
     required IconData icon,
     required String title,
+    required String subtitle,
     required String actionText,
     required VoidCallback onAction,
   }) {
@@ -300,13 +403,34 @@ class _BuildingDetailState extends State<BuildingDetail> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 48, color: Colors.grey),
+          Icon(
+            icon,
+            size: 64,
+            color: Theme.of(context).colorScheme.outline,
+          ),
           const SizedBox(height: 16),
-          Text(title, style: const TextStyle(fontSize: 18)),
-          const SizedBox(height: 16),
-          ElevatedButton(
+          Text(
+            title,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
             onPressed: onAction,
-            child: Text(actionText),
+            icon: const Icon(Icons.add),
+            label: Text(actionText),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
           ),
         ],
       ),
@@ -318,12 +442,15 @@ class _BuildingDetailState extends State<BuildingDetail> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
         title: Text(widget.building.name),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _refreshData,
+            tooltip: 'ផ្ទុកទិន្នន័យឡើងវិញ',
           ),
         ],
       ),
@@ -347,11 +474,11 @@ class _BuildingDetailState extends State<BuildingDetail> {
               children: [
                 Text(
                   _currentScreen == ScreenType.room ? 'បន្ទប់' : 'សេវា',
-                  style: theme.textTheme.titleMedium,
+                  style: theme.textTheme.titleLarge,
                 ),
                 IconButton(
                   icon: Icon(
-                    _currentScreen == ScreenType.room ? Icons.add : Icons.add,
+                    Icons.add,
                     size: 20,
                   ),
                   onPressed: _currentScreen == ScreenType.room
@@ -361,6 +488,9 @@ class _BuildingDetailState extends State<BuildingDetail> {
                     backgroundColor: theme.colorScheme.primary,
                     foregroundColor: Colors.white,
                   ),
+                  tooltip: _currentScreen == ScreenType.room
+                      ? 'បន្ថែមបន្ទប់'
+                      : 'បន្ថែមសេវា',
                 ),
               ],
             ),

@@ -72,8 +72,10 @@ class _TenantScreenState extends State<TenantScreen>
   Future<void> _addTenant(BuildContext context) async {
     final newTenant = await Navigator.of(context).push<Tenant>(
       MaterialPageRoute(
-        builder: (ctx) => const TenantForm(
+        builder: (ctx) => TenantForm(
           mode: Mode.creating,
+          selectedBuildingId:
+              _selectedBuildingId, 
         ),
       ),
     );
@@ -118,17 +120,399 @@ class _TenantScreenState extends State<TenantScreen>
     }
   }
 
+  void _viewTenantDetails(BuildContext context, Tenant tenant) {
+    final theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: theme.colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.person,
+              color: theme.colorScheme.primary,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'ព័ត៌មានលម្អិត', // "Detailed Information"
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildDetailRow(theme, 'ឈ្មោះ', tenant.name), // "Name"
+              _buildDetailRow(
+                  theme, 'លេខទូរស័ព្ទ', tenant.phoneNumber), // "Phone Number"
+              _buildDetailRow(
+                  theme, 'ភេទ', _getGenderText(tenant.gender)), // "Gender"
+              if (tenant.room != null) ...[
+                _buildDetailRow(
+                    theme, 'អគារ', tenant.room!.building!.name), // "Building"
+                _buildDetailRow(theme, 'លេខបន្ទប់',
+                    tenant.room!.roomNumber), // "Room Number"
+              ] else
+                _buildDetailRow(theme, 'បន្ទប់',
+                    'មិនមានបន្ទប់'), // "Room" : "No room assigned"
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'បិទ', // "Close"
+              style: TextStyle(
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(ThemeData theme, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getGenderText(dynamic gender) {
+    // Assuming Gender is an enum with values like Gender.male, Gender.female, Gender.other
+    switch (gender.toString().split('.').last) {
+      case 'male':
+        return 'បុរស'; // "Male"
+      case 'female':
+        return 'ស្រី'; // "Female"
+      case 'other':
+        return 'ផ្សេងទៀត'; // "Other"
+      default:
+        return 'មិនបានបញ្ជាក់'; // "Not specified"
+    }
+  }
+
+  void _changeRoom(BuildContext context, Tenant tenant) {
+    final theme = Theme.of(context);
+    final roomProvider = context.read<RoomProvider>();
+
+    // Show room selection dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: theme.colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Text(
+          'ផ្លាស់ប្តូរបន្ទប់', // "Change Room"
+          style: TextStyle(
+            color: theme.colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: roomProvider.rooms.when(
+            loading: () => const Center(
+              child: CircularProgressIndicator(),
+            ),
+            error: (error) => Text(
+              'Error loading rooms: $error',
+              style: TextStyle(color: theme.colorScheme.error),
+            ),
+            success: (rooms) {
+              final availableRooms = rooms
+                  .where((room) =>
+                      room.roomStatus == RoomStatus.available ||
+                      room.id == tenant.room?.id)
+                  .toList();
+
+              if (availableRooms.isEmpty) {
+                return Text(
+                  'មិនមានបន្ទប់ទំនេរ', // "No available rooms"
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                );
+              }
+
+              return SizedBox(
+                height: 300,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: availableRooms.length,
+                  itemBuilder: (context, index) {
+                    final room = availableRooms[index];
+                    final isCurrentRoom = room.id == tenant.room?.id;
+
+                    return ListTile(
+                      leading: Icon(
+                        isCurrentRoom ? Icons.check_circle : Icons.meeting_room,
+                        color: isCurrentRoom
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.onSurfaceVariant,
+                      ),
+                      title: Text(
+                        'បន្ទប់ ${room.roomNumber}', // "Room ${room.roomNumber}"
+                        style: TextStyle(
+                          fontWeight: isCurrentRoom
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      subtitle: Text(
+                        room.building?.name ?? '',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      trailing: isCurrentRoom
+                          ? Text(
+                              'បន្ទប់បច្ចុប្បន្ន', // "Current room"
+                              style: TextStyle(
+                                color: theme.colorScheme.primary,
+                                fontSize: 12,
+                              ),
+                            )
+                          : null,
+                      onTap: isCurrentRoom
+                          ? null
+                          : () async {
+                              Navigator.of(context).pop();
+
+                              // Update tenant's room
+                              final updatedTenant = tenant.copyWith(room: room);
+                              final tenantProvider =
+                                  context.read<TenantProvider>();
+
+                              try {
+                                // Update tenant
+                                await tenantProvider
+                                    .updateTenant(updatedTenant);
+
+                                // Update room statuses
+                                if (tenant.room != null) {
+                                  await roomProvider
+                                      .removeTenant(tenant.room!.id);
+                                  await roomProvider.updateRoomStatus(
+                                      tenant.room!.id, RoomStatus.available);
+                                }
+
+                                await roomProvider.addTenant(
+                                    room.id, updatedTenant);
+                                await roomProvider.updateRoomStatus(
+                                    room.id, RoomStatus.occupied);
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'បានផ្លាស់ប្តូរបន្ទប់សម្រាប់ ${tenant.name} ទៅបន្ទប់ ${room.roomNumber}',
+                                      // "Room changed for ${tenant.name} to room ${room.roomNumber}"
+                                    ),
+                                    backgroundColor: theme.colorScheme.primary,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                );
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'មានបញ្ហាក្នុងការផ្លាស់ប្តូរបន្ទប់', // "Error changing room"
+                                    ),
+                                    backgroundColor: theme.colorScheme.error,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'បោះបង់', // "Cancel"
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteTenant(BuildContext context, Tenant tenant) async {
+    final theme = Theme.of(context);
+
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: theme.colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Text(
+          'បញ្ជាក់ការលុប', // "Confirm Delete"
+          style: TextStyle(
+            color: theme.colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Text(
+          'តើអ្នកពិតជាចង់លុបអ្នកជួល "${tenant.name}" មែនទេ?',
+          // "Are you sure you want to delete tenant '${tenant.name}'?"
+          style: TextStyle(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              'បោះបង់', // "Cancel"
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.error,
+            ),
+            child: Text(
+              'លុប', // "Delete"
+              style: TextStyle(
+                color: theme.colorScheme.onError,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete == true) {
+      final tenantProvider = context.read<TenantProvider>();
+      final roomProvider = context.read<RoomProvider>();
+
+      try {
+        await tenantProvider.deleteTenant(tenant.id);
+        if (tenant.room != null) {
+          await roomProvider.removeTenant(tenant.room!.id);
+          await roomProvider.updateRoomStatus(
+              tenant.room!.id, RoomStatus.available);
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'បានលុបអ្នកជួល ${tenant.name}'), // "Deleted tenant ${tenant.name}"
+            backgroundColor: theme.colorScheme.primary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text('មានបញ្ហាក្នុងការលុបអ្នកជួល'), // "Error deleting tenant"
+            backgroundColor: theme.colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  void _handleMenuSelection(TenantMenuOption option, Tenant tenant) {
+    switch (option) {
+      case TenantMenuOption.viewDetails:
+        _viewTenantDetails(context, tenant);
+        break;
+      case TenantMenuOption.edit:
+        _editTenant(context, tenant);
+        break;
+      case TenantMenuOption.changeRoom:
+        _changeRoom(context, tenant);
+        break;
+      case TenantMenuOption.delete:
+        _deleteTenant(context, tenant);
+        break;
+    }
+  }
+
   void _showUndoSnackbar(
     BuildContext context,
     String content,
     VoidCallback onUndo,
   ) {
     final theme = Theme.of(context);
+
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        margin: EdgeInsets.only(
+          bottom: kBottomNavigationBarHeight + 12, // push above menu bar
+          left: 12,
+          right: 12,
+        ),
         duration: const Duration(seconds: 4),
-        backgroundColor: theme.colorScheme.error,
+        backgroundColor: theme.colorScheme.primary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -137,7 +521,7 @@ class _TenantScreenState extends State<TenantScreen>
           children: [
             Icon(
               Icons.delete_outline,
-              color: theme.colorScheme.onError,
+              color: theme.colorScheme.onPrimary,
               size: 20,
             ),
             const SizedBox(width: 8),
@@ -145,7 +529,7 @@ class _TenantScreenState extends State<TenantScreen>
               child: Text(
                 content,
                 style: TextStyle(
-                  color: theme.colorScheme.onError,
+                  color: theme.colorScheme.onPrimary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -154,7 +538,7 @@ class _TenantScreenState extends State<TenantScreen>
         ),
         action: SnackBarAction(
           label: 'មិនធ្វើវិញ', // "Undo"
-          textColor: theme.colorScheme.onError,
+          textColor: theme.colorScheme.onPrimary,
           onPressed: onUndo,
         ),
       ),
@@ -404,6 +788,8 @@ class _TenantScreenState extends State<TenantScreen>
                 child: TenantCard(
                   tenant: tenant,
                   onTap: () => _editTenant(context, tenant),
+                  onMenuSelected: (option) =>
+                      _handleMenuSelection(option, tenant),
                 ),
               ),
             );
@@ -478,6 +864,10 @@ class _TenantScreenState extends State<TenantScreen>
                       offset: const Offset(0, 2),
                     ),
                   ],
+                  border: Border.all(
+                    color: theme.colorScheme.onSurface.withOpacity(0.4),
+                    width: 0.1,
+                  ),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String?>(

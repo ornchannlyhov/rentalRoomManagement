@@ -6,7 +6,8 @@ import 'package:receipts_v2/data/models/enum/mode.dart';
 import 'package:receipts_v2/data/models/enum/payment_status.dart';
 import 'package:receipts_v2/data/models/receipt.dart';
 import 'package:receipts_v2/presentation/providers/receipt_provider.dart';
-import 'package:receipts_v2/presentation/view/app_widgets/grid_item.dart';
+import 'package:receipts_v2/presentation/providers/building_provider.dart';
+import 'package:receipts_v2/presentation/view/screen/receipt/widgets/advanced_analysis.dart';
 import 'package:receipts_v2/presentation/view/screen/receipt/widgets/filler_by_payment_button.dart';
 import 'package:receipts_v2/presentation/view/screen/receipt/widgets/receipt_card.dart';
 import 'package:receipts_v2/presentation/view/screen/receipt/widgets/receipt_detail.dart';
@@ -22,7 +23,7 @@ class ReceiptScreen extends StatefulWidget {
 class _ReceiptScreenState extends State<ReceiptScreen>
     with SingleTickerProviderStateMixin {
   PaymentStatus selectedStatus = PaymentStatus.paid;
-  int selectedMonth = DateTime.now().month;
+  String? _selectedBuildingId;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -57,7 +58,11 @@ class _ReceiptScreenState extends State<ReceiptScreen>
 
   Future<void> _loadData() async {
     final receiptProvider = context.read<ReceiptProvider>();
-    await receiptProvider.load();
+    final buildingProvider = context.read<BuildingProvider>();
+    await Future.wait([
+      receiptProvider.load(),
+      buildingProvider.load(),
+    ]);
     _animationController.forward();
   }
 
@@ -110,7 +115,6 @@ class _ReceiptScreenState extends State<ReceiptScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Handle Bar
                 Container(
                   width: 40,
                   height: 4,
@@ -120,15 +124,13 @@ class _ReceiptScreenState extends State<ReceiptScreen>
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-
-                // Actions
                 ListTile(
                   leading:
                       Icon(Icons.visibility, color: theme.colorScheme.primary),
                   title: Text(
                     'មើលលម្អិត',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   onTap: () {
@@ -136,38 +138,34 @@ class _ReceiptScreenState extends State<ReceiptScreen>
                     _viewDetail(context, receipt);
                   },
                 ),
-
                 ListTile(
                   leading: Icon(Icons.share, color: theme.colorScheme.primary),
                   title: Text(
                     'ចែករំលែក',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   onTap: () {
-                    Navigator.pop(context); 
+                    Navigator.pop(context);
                     Navigator.of(context)
                         .push(
-                      MaterialPageRoute(
-                        builder: (ctx) => ReceiptDetailScreen(
-                          receipt: receipt,
-                          onShareRequested: () {
-                          },
-                        ),
-                      ),
-                    )
-                        .then((_) {
-                    });
+                          MaterialPageRoute(
+                            builder: (ctx) => ReceiptDetailScreen(
+                              receipt: receipt,
+                              onShareRequested: () {},
+                            ),
+                          ),
+                        )
+                        .then((_) {});
                   },
                 ),
-
                 ListTile(
                   leading: Icon(Icons.edit, color: theme.colorScheme.primary),
                   title: Text(
                     'កែប្រែ',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   onTap: () {
@@ -175,14 +173,13 @@ class _ReceiptScreenState extends State<ReceiptScreen>
                     _editReceipt(context, receipt, allReceipts);
                   },
                 ),
-
                 ListTile(
                   leading: Icon(Icons.delete_outline,
                       color: theme.colorScheme.error),
                   title: Text(
                     'លុប',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                       color: theme.colorScheme.error,
                     ),
                   ),
@@ -224,11 +221,18 @@ class _ReceiptScreenState extends State<ReceiptScreen>
     VoidCallback onUndo,
   ) {
     final theme = Theme.of(context);
+
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        margin: EdgeInsets.only(
+          bottom: kBottomNavigationBarHeight +
+              MediaQuery.of(context).padding.bottom - 12,
+          left: 12,
+          right: 12,
+        ),
         duration: const Duration(seconds: 4),
-        backgroundColor: theme.colorScheme.error,
+        backgroundColor: theme.colorScheme.primary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -237,7 +241,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
           children: [
             Icon(
               Icons.delete_outline,
-              color: theme.colorScheme.onError,
+              color: theme.colorScheme.onPrimary,
               size: 20,
             ),
             const SizedBox(width: 8),
@@ -245,7 +249,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
               child: Text(
                 content,
                 style: TextStyle(
-                  color: theme.colorScheme.onError,
+                  color: theme.colorScheme.onPrimary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -254,7 +258,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
         ),
         action: SnackBarAction(
           label: 'មិនធ្វើវិញ', // "Undo"
-          textColor: theme.colorScheme.onError,
+          textColor: theme.colorScheme.onPrimary,
           onPressed: onUndo,
         ),
       ),
@@ -277,24 +281,6 @@ class _ReceiptScreenState extends State<ReceiptScreen>
       'ធ្នូ'
     ];
     return months[month - 1];
-  }
-
-  List<DropdownMenuItem<int>> _buildMonthItems() {
-    final currentMonth = DateTime.now().month;
-    final List<DropdownMenuItem<int>> items = [];
-
-    for (int month = 1; month <= currentMonth; month++) {
-      items.add(
-        DropdownMenuItem<int>(
-          value: month,
-          child: Text(
-            getKhmerMonth(month),
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ),
-      );
-    }
-    return items;
   }
 
   Widget _buildEmptyState(ThemeData theme) {
@@ -320,7 +306,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
               ),
               const SizedBox(height: 24),
               Text(
-                'មិនមានវិក្កយបត្រ', // "No receipts available"
+                'មិនមានវិក្កយបត្រ',
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
@@ -328,7 +314,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
               ),
               const SizedBox(height: 8),
               Text(
-                'សូមចុចប៊ូតុង + ដើម្បីបន្ថែមវិក្កយបត្រថ្មី', // "Tap + to add a new receipt"
+                'សូមចុចប៊ូតុង + ដើម្បីបន្ថែមវិក្កយបត្រថ្មី',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
                 ),
@@ -353,7 +339,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            'កំពុងដំណើការ...', // "Loading..."
+            'កំពុងដំណើការ...',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -382,7 +368,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            'មានបញ្ហាក្នុងការផ្ទុកទិន្នន័យ', // "Error loading data"
+            'មានបញ្ហាក្នុងការផ្ទុកទិន្នន័យ',
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.onErrorContainer,
               fontWeight: FontWeight.w600,
@@ -400,7 +386,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
           ElevatedButton.icon(
             onPressed: _loadData,
             icon: const Icon(Icons.refresh),
-            label: const Text('ព្យាយាមម្តងទៀត'), // "Try again"
+            label: const Text('ព្យាយាមម្តងទៀត'),
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: theme.colorScheme.onPrimary,
@@ -474,7 +460,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'លុប', // "Delete"
+                        'លុប',
                         style: TextStyle(
                           color: theme.colorScheme.onError,
                           fontSize: 12,
@@ -542,19 +528,30 @@ class _ReceiptScreenState extends State<ReceiptScreen>
     }
   }
 
+  int _countRoomsInBuilding(dynamic building) {
+    // Assuming building has a rooms property (List or count)
+    return building.rooms?.length ?? 0;
+  }
+
+  int _countTotalRooms(List<dynamic> buildings) {
+    return buildings.fold(
+        0, (sum, building) => sum + _countRoomsInBuilding(building));
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final receiptProvider = context.watch<ReceiptProvider>();
-    final currentYear = DateTime.now().year;
-    final thisMonth = getKhmerMonth(selectedMonth);
+    final buildingProvider = context.watch<BuildingProvider>();
+    final currentMonth = DateTime.now().month;
+    final thisMonth = getKhmerMonth(currentMonth);
 
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
         title: Text(
-          'វិក្កយបត្រ', // "Receipts"
+          'វិក្កយបត្រ',
           style: TextStyle(
             color: Theme.of(context).brightness == Brightness.light
                 ? Colors.white
@@ -604,172 +601,401 @@ class _ReceiptScreenState extends State<ReceiptScreen>
               },
             ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: receiptProvider.receipts.when(
-                loading: () => _buildLoadingState(theme),
-                error: (error) => _buildErrorState(theme, error),
-                success: (allReceipts) {
-                  final receipts = receiptProvider.getReceiptsByMonth(
-                      currentYear, selectedMonth);
-                  final filteredReceipts =
-                      _filterReceiptsByStatus(receipts, selectedStatus);
+              loading: () => _buildLoadingState(theme),
+              error: (error) => _buildErrorState(theme, error),
+              success: (allReceipts) {
+                return buildingProvider.buildings.when(
+                  loading: () => _buildLoadingState(theme),
+                  error: (error) => _buildErrorState(theme, error),
+                  success: (buildings) {
+                    // Filter receipts by building or current month
+                    final receipts = _selectedBuildingId != null
+                        ? receiptProvider
+                            .getReceiptByBuilding(_selectedBuildingId!)
+                        : receiptProvider.getReceiptsForCurrentMonth();
+                    final filteredReceipts =
+                        _filterReceiptsByStatus(receipts, selectedStatus);
 
-                  return Column(
-                    children: [
-                      Card(
-                        margin: EdgeInsets.zero,
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                    // Get building name and room counts
+                    final totalRooms = _selectedBuildingId != null
+                        ? _countRoomsInBuilding(buildings
+                            .firstWhere((b) => b.id == _selectedBuildingId))
+                        : _countTotalRooms(buildings);
+                    final receiptCount = receipts.length;
+                    _countReceiptsByStatus(receipts, selectedStatus);
+                    final progress =
+                        totalRooms > 0 ? receiptCount / totalRooms : 0.0;
+
+                    // Define counts for each payment status
+                    final paidCount =
+                        _countReceiptsByStatus(receipts, PaymentStatus.paid);
+                    final unpaidCount =
+                        _countReceiptsByStatus(receipts, PaymentStatus.pending);
+                    final partialCount =
+                        _countReceiptsByStatus(receipts, PaymentStatus.overdue);
+
+                    return Column(
+                      children: [
+                        Card(
+                          margin: EdgeInsets.zero,
+                          elevation: 2,
+                          shadowColor: colorScheme.primary.withOpacity(0.15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  colorScheme.surface,
+                                  colorScheme.surface.withOpacity(0.95),
+                                ],
+                              ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
                                     children: [
-                                      Icon(Icons.calendar_month,
-                                          size: 20, color: colorScheme.primary),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'ខែ $thisMonth',
-                                        style: theme.textTheme.titleMedium
-                                            ?.copyWith(
-                                          fontWeight: FontWeight.bold,
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: colorScheme.primaryContainer,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.calendar_month,
+                                              size: 14,
+                                              color: colorScheme
+                                                  .onPrimaryContainer,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'ខែ $thisMonth',
+                                              style: theme.textTheme.titleSmall
+                                                  ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color: colorScheme
+                                                    .onPrimaryContainer,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      IconButton(
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  AdvancedAnalysisScreen(
+                                                receipts: allReceipts,
+                                                buildings: buildings,
+                                                selectedBuildingId:
+                                                    _selectedBuildingId,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        icon: Icon(
+                                          Icons.analytics_rounded,
+                                          color: colorScheme.primary,
+                                          size: 24,
+                                        ),
+                                        tooltip: 'ការវិភាគលម្អិត',
+                                        style: IconButton.styleFrom(
+                                          backgroundColor: colorScheme.primary
+                                              .withOpacity(0.1),
+                                          padding: const EdgeInsets.all(4),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
-                                  PopupMenuButton<int>(
-                                    icon: Icon(Icons.filter_list,
-                                        color: colorScheme.primary),
-                                    tooltip: 'ជ្រើសរើសខែ',
-                                    onSelected: (int newValue) {
-                                      setState(() {
-                                        selectedMonth = newValue;
-                                      });
-                                    },
-                                    itemBuilder: (BuildContext context) =>
-                                        _buildMonthItems().map((item) {
-                                      return PopupMenuItem<int>(
-                                        value: item.value,
-                                        child: item.child,
-                                      );
-                                    }).toList(),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12),
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: colorScheme.surfaceVariant,
+                                      borderRadius: BorderRadius.circular(8),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: colorScheme.shadow
+                                              .withOpacity(0.1),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 1),
+                                        ),
+                                      ],
+                                      border: Border.all(
+                                        color: colorScheme.onSurface
+                                            .withOpacity(0.3),
+                                        width: 0.1,
+                                      ),
+                                    ),
+                                    child: DropdownButtonHideUnderline(
+                                      child: DropdownButton<String?>(
+                                        isExpanded: true,
+                                        value: _selectedBuildingId,
+                                        icon: Icon(
+                                          Icons.filter_list,
+                                          color: colorScheme.primary,
+                                          size: 20,
+                                        ),
+                                        style: theme.textTheme.titleSmall
+                                            ?.copyWith(
+                                          color: colorScheme.onSurface,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        dropdownColor: colorScheme.surface,
+                                        borderRadius: BorderRadius.circular(10),
+                                        onChanged: (String? newValue) {
+                                          setState(() {
+                                            _selectedBuildingId = newValue;
+                                          });
+                                        },
+                                        items: [
+                                          DropdownMenuItem(
+                                            value: null,
+                                            child: Text(
+                                              'ទាំងអស់',
+                                              style: theme.textTheme.titleSmall
+                                                  ?.copyWith(
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                          ...buildings.map((building) =>
+                                              DropdownMenuItem(
+                                                value: building.id,
+                                                child: Text(
+                                                  building.name,
+                                                  style: theme
+                                                      .textTheme.titleSmall
+                                                      ?.copyWith(
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              )),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  // Status Cards and Progress Indicator in Same Row
+                                  Row(
+                                    children: [
+                                      // Status Cards Column (takes up most space)
+                                      Expanded(
+                                        flex: 3,
+                                        child: Column(
+                                          children: [
+                                            // Status Grid Row
+                                            Row(
+                                              children: [
+                                                // Paid Status
+                                                Expanded(
+                                                  child: _buildStatusCard(
+                                                    PaymentStatus.paid,
+                                                    paidCount,
+                                                    Icons.check_circle_outline,
+                                                    theme,
+                                                    colorScheme,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                // Unpaid Status
+                                                Expanded(
+                                                  child: _buildStatusCard(
+                                                    PaymentStatus.pending,
+                                                    unpaidCount,
+                                                    Icons.pending_actions,
+                                                    theme,
+                                                    colorScheme,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                // Partial Status
+                                                Expanded(
+                                                  child: _buildStatusCard(
+                                                    PaymentStatus.overdue,
+                                                    partialCount,
+                                                    Icons.cancel_outlined,
+                                                    theme,
+                                                    colorScheme,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      // Progress Indicator (takes up remaining space)
+                                      Expanded(
+                                        flex: 1,
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Stack(
+                                              alignment: Alignment.center,
+                                              children: [
+                                                SizedBox(
+                                                  width: 80,
+                                                  height: 80,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    value: progress.clamp(
+                                                        0.0, 1.0),
+                                                    strokeWidth: 3,
+                                                    backgroundColor:
+                                                        Colors.grey.shade200,
+                                                    valueColor:
+                                                        AlwaysStoppedAnimation<
+                                                            Color>(
+                                                      colorScheme.primary,
+                                                    ),
+                                                    strokeCap: StrokeCap.round,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  '$receiptCount/$totalRooms',
+                                                  style: theme
+                                                      .textTheme.bodySmall
+                                                      ?.copyWith(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: colorScheme.primary,
+                                                    fontSize: 9,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'វិក្កយបត្រ/បន្ទប់',
+                                              style: theme.textTheme.bodySmall
+                                                  ?.copyWith(
+                                                color: colorScheme
+                                                    .onSurfaceVariant,
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 9,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 16),
-                              LayoutBuilder(
-                                builder: (context, constraints) {
-                                  final availableWidth = constraints.maxWidth;
-                                  final screenWidth =
-                                      MediaQuery.of(context).size.width;
-
-                                  final itemWidth = (availableWidth - 32) / 3;
-
-                                  double gridHeight;
-                                  if (screenWidth > 1200) {
-                                    gridHeight = itemWidth * 1.2;
-                                  } else if (screenWidth > 768) {
-                                    gridHeight = itemWidth * 1.0;
-                                  } else {
-                                    gridHeight = itemWidth * 0.8;
-                                  }
-
-                                  gridHeight = gridHeight.clamp(80.0, 160.0);
-
-                                  return SizedBox(
-                                    height: gridHeight,
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        SizedBox(
-                                          width: itemWidth,
-                                          child: GridItem(
-                                            label: "កំពុងរង់ចាំ",
-                                            icon: Icons.hourglass_empty_sharp,
-                                            amount: _countReceiptsByStatus(
-                                                receipts,
-                                                PaymentStatus.pending),
-                                            iconColor: _getStatusColor(
-                                                PaymentStatus.pending),
-                                            border: true,
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          width: itemWidth,
-                                          child: GridItem(
-                                            label: "បានបង់",
-                                            icon: Icons.check_circle,
-                                            amount: _countReceiptsByStatus(
-                                                receipts, PaymentStatus.paid),
-                                            iconColor: _getStatusColor(
-                                                PaymentStatus.paid),
-                                            border: true,
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          width: itemWidth,
-                                          child: GridItem(
-                                            label: "ហួសកំណត់",
-                                            icon: Icons.error,
-                                            amount: _countReceiptsByStatus(
-                                                receipts,
-                                                PaymentStatus.overdue),
-                                            iconColor: _getStatusColor(
-                                                PaymentStatus.overdue),
-                                            border: true,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceVariant,
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
                               ),
                             ],
                           ),
+                          child: FilterByPaymentButton(
+                            onStatusSelected: (status) {
+                              setState(() {
+                                selectedStatus = status;
+                              });
+                            },
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: colorScheme.surface,
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: filteredReceipts.isEmpty
+                              ? _buildEmptyState(theme)
+                              : _buildReceiptsList(theme, filteredReceipts),
                         ),
-                        child: FilterByPaymentButton(
-                          onStatusSelected: (status) {
-                            setState(() {
-                              selectedStatus = status;
-                            });
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Expanded(
-                        child: filteredReceipts.isEmpty
-                            ? _buildEmptyState(theme)
-                            : _buildReceiptsList(theme, filteredReceipts),
-                      ),
-                    ],
-                  );
-                }),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusCard(
+    PaymentStatus status,
+    int count,
+    IconData icon,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    final statusColor = _getStatusColor(status);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: statusColor.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: statusColor.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: 16,
+            color: statusColor,
+          ),
+          const SizedBox(height: 3),
+          Text(
+            '$count',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: statusColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+          Text(
+            translatePaymentStatus(status),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: statusColor,
+              fontWeight: FontWeight.w500,
+              fontSize: 9,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -778,22 +1004,23 @@ class _ReceiptScreenState extends State<ReceiptScreen>
 
   double _calculateBackgroundHeight(BuildContext context) {
     final appBarHeight = Scaffold.of(context).appBarMaxHeight ?? 56.0;
-    final paddingTop = 16.0;
+    const paddingTop = 16.0;
     const cardTopMargin = 0.0;
-    const cardPaddingTop = 8.0;
-    const rowHeight = 36.0;
-    const spacing = 4.0;
-    final gridItemHeight =
-        (MediaQuery.of(context).size.width - 32 - 32) / 3 * 0.8 / 2;
+    const cardPaddingTop = 16.0;
+    const monthTextHeight = 32.0;
+    const buildingRowHeight = 24.0;
+    const spacing = 8.0;
+    const statusAndProgressHeight = 60.0;
 
     return appBarHeight +
         paddingTop +
         cardTopMargin +
         cardPaddingTop +
-        rowHeight +
+        monthTextHeight +
+        buildingRowHeight +
         spacing +
-        gridItemHeight -
-        150;
+        statusAndProgressHeight -
+        160;
   }
 
   String translatePaymentStatus(PaymentStatus status) {
@@ -802,8 +1029,8 @@ class _ReceiptScreenState extends State<ReceiptScreen>
         return 'បានបង់ប្រាក់';
       case PaymentStatus.pending:
         return 'មិនទាន់បង់ប្រាក់';
-      default:
-        return status.name;
+      case PaymentStatus.overdue:
+        return 'ហួសកំណត់';
     }
   }
 }

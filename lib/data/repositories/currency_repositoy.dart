@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 
 class CurrencyService {
@@ -12,14 +11,14 @@ class CurrencyService {
 
   static const Map<String, String> supportedCurrencies = {
     'USD': '\$',
-    'KHR': '៛', 
-    'THB': '฿', 
+    'KHR': '៛',
+    'CNY': '¥', // ✅ Changed from THB to Chinese Yuan
   };
 
   static const Map<String, double> _defaultRates = {
     'USD': 1.0,
-    'KHR': 4100.0, 
-    'THB': 40.0,   
+    'KHR': 4100.0,
+    'CNY': 7.2, // ✅ Default fallback exchange rate for CNY
   };
 
   static Future<Map<String, double>> _fetchExchangeRates() async {
@@ -103,11 +102,24 @@ class CurrencyService {
 
     switch (currencyCode) {
       case 'KHR':
-      case 'JPY':
-      case 'VND':
-        return '$symbol${amount.toStringAsFixed(0)}';
+        // Round to nearest 100 and add commas
+        final rounded = (amount / 100).round() * 100;
+        final formatted = rounded
+            .toStringAsFixed(0)
+            .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',');
+        return '$formatted ៛';
+      case 'CNY':
+        // Chinese Yuan, keep 2 decimals and commas
+        final formatted = amount
+            .toStringAsFixed(2)
+            .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',');
+        return '$symbol$formatted';
       default:
-        return '$symbol${amount.toStringAsFixed(2)}';
+        // USD and others
+        final formatted = amount
+            .toStringAsFixed(2)
+            .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',');
+        return '$symbol$formatted';
     }
   }
 
@@ -115,7 +127,7 @@ class CurrencyService {
     const currencyNames = {
       'USD': 'US Dollar',
       'KHR': 'Cambodian Riel',
-      'THB': 'Thai Baht',
+      'CNY': 'Chinese Yuan',
     };
 
     return currencyNames[currencyCode] ?? currencyCode;
