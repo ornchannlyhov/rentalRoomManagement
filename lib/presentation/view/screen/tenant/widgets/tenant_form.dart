@@ -35,7 +35,7 @@ class _TenantFormState extends State<TenantForm> {
   late String id;
   late String name;
   late String phoneNumber;
-  Room? selectedRoom;
+  String? selectedRoomId; // Changed to use room ID instead of Room object
   late Gender gender;
   String? selectedBuildingId;
 
@@ -51,16 +51,16 @@ class _TenantFormState extends State<TenantForm> {
       id = tenant.id;
       name = tenant.name;
       phoneNumber = tenant.phoneNumber;
-      selectedRoom = tenant.room;
+      selectedRoomId = tenant.room?.id; // Use room ID
       gender = tenant.gender;
-      if (selectedRoom?.building != null) {
-        selectedBuildingId = selectedRoom!.building!.id;
+      if (tenant.room?.building != null) {
+        selectedBuildingId = tenant.room!.building!.id;
       }
     } else {
       id = '';
       name = '';
       phoneNumber = '';
-      selectedRoom = null;
+      selectedRoomId = null; // Use room ID
       gender = Gender.male;
     }
   }
@@ -84,17 +84,15 @@ class _TenantFormState extends State<TenantForm> {
         }
 
         // Filter rooms by selected building if provided
-        if (selectedBuildingId != null) {
-          availableRooms = availableRooms
-              .where((room) => room.building?.id == selectedBuildingId)
-              .toList();
-        }
+        _filterRoomsByBuilding();
 
-        // Ensure selectedRoom is valid for the current building filter
-        if (selectedRoom != null &&
+        // Ensure selectedRoomId is valid for the current building filter
+        if (selectedRoomId != null &&
             selectedBuildingId != null &&
-            selectedRoom!.building?.id != selectedBuildingId) {
-          selectedRoom = null;
+            !availableRooms.any((room) =>
+                room.id == selectedRoomId &&
+                room.building?.id == selectedBuildingId)) {
+          selectedRoomId = null;
         }
       });
     } catch (e) {
@@ -106,9 +104,42 @@ class _TenantFormState extends State<TenantForm> {
     }
   }
 
+  void _filterRoomsByBuilding() {
+    if (selectedBuildingId != null) {
+      availableRooms = availableRooms
+          .where((room) => room.building?.id == selectedBuildingId)
+          .toList();
+    } else {
+      // If no building is selected, show all available rooms
+      availableRooms = roomRepository.getAvailableRooms();
+
+      // Include current room if editing
+      if (isEditing && widget.tenant?.room != null) {
+        final currentRoom = rooms.firstWhere(
+          (room) => room.id == widget.tenant!.room!.id,
+          orElse: () => widget.tenant!.room!,
+        );
+        if (!availableRooms.any((room) => room.id == currentRoom.id)) {
+          availableRooms.add(currentRoom);
+        }
+      }
+    }
+  }
+
   void _save() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+
+      // Find the selected room object from the ID
+      Room? selectedRoom;
+      if (selectedRoomId != null) {
+        selectedRoom = rooms.firstWhere(
+          (room) => room.id == selectedRoomId,
+          orElse: () => availableRooms.firstWhere(
+            (room) => room.id == selectedRoomId,
+          ),
+        );
+      }
 
       final newTenant = Tenant(
         id: isEditing ? widget.tenant!.id : DateTime.now().toString(),
@@ -173,16 +204,14 @@ class _TenantFormState extends State<TenantForm> {
                     onChanged: (String? newValue) {
                       setState(() {
                         selectedBuildingId = newValue;
-                        // Filter rooms based on selected building
-                        availableRooms = rooms
-                            .where((room) =>
-                                room.building?.id == newValue ||
-                                newValue == null)
-                            .toList();
+                        // Re-filter rooms based on selected building
+                        _filterRoomsByBuilding();
+
                         // Clear room selection if it doesn't match the new building
-                        if (selectedRoom != null &&
-                            selectedRoom!.building?.id != newValue) {
-                          selectedRoom = null;
+                        if (selectedRoomId != null &&
+                            !availableRooms
+                                .any((room) => room.id == selectedRoomId)) {
+                          selectedRoomId = null;
                         }
                       });
                     },
@@ -248,26 +277,25 @@ class _TenantFormState extends State<TenantForm> {
                     onSaved: (value) => phoneNumber = value!,
                   ),
                   fieldSpacing,
-                  DropdownButtonFormField<Room>(
-                    value: selectedRoom,
+                  // Room Dropdown - Fixed implementation
+                  DropdownButtonFormField<String?>(
+                    value: selectedRoomId,
                     items: availableRooms.map((room) {
-                      return DropdownMenuItem(
-                        value: room,
+                      return DropdownMenuItem<String?>(
+                        value: room.id, // Use room ID as value
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('បន្ទប់: ${room.roomNumber}'),
-                            Text('- ${room.building!.name}'),
+                            Text('- ${room.building?.name ?? ''}'),
                           ],
                         ),
                       );
                     }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          selectedRoom = value;
-                        });
-                      }
+                    onChanged: (String? value) {
+                      setState(() {
+                        selectedRoomId = value;
+                      });
                     },
                     decoration: InputDecoration(
                       labelText: 'បន្ទប់',
