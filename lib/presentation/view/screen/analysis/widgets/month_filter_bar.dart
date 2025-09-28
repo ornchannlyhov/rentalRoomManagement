@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class MonthFilterBar extends StatelessWidget {
-  const MonthFilterBar({
+  const MonthFilterBar({super.key, 
     required this.selectedMonth,
     required this.onMonthChanged,
     required this.monthNames,

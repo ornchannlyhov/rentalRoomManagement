@@ -5,7 +5,7 @@ import 'package:receipts_v2/presentation/view/screen/analysis/widgets/month_filt
 import 'package:receipts_v2/presentation/view/screen/analysis/widgets/utility_analysis_card.dart';
 
 class BuildingAnalysisTab extends StatelessWidget {
-  const BuildingAnalysisTab({
+  const BuildingAnalysisTab({super.key, 
     required this.selectedMonth,
     required this.onMonthChanged,
     required this.buildings,
@@ -155,7 +155,7 @@ class BuildingAnalysisTab extends StatelessWidget {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

@@ -11,7 +11,7 @@ import 'package:receipts_v2/presentation/view/screen/receipt/widgets/receipt_car
 import 'package:receipts_v2/presentation/view/screen/tenant/widgets/tenant_state.dart';
 
 class ReceiptList extends StatelessWidget {
-  const ReceiptList({
+  const ReceiptList({super.key, 
     required this.receiptProvider,
     required this.buildingProvider,
     required this.selectedBuildingId,

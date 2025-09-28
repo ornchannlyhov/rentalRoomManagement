@@ -73,7 +73,7 @@ class TenantDetailDialog extends StatelessWidget {
           children: [
             _buildDetailRow(theme, 'ឈ្មោះ', tenant.name), // "Name"
             _buildDetailRow(
-                theme, 'លេខទូរស័ព្p', tenant.phoneNumber), // "Phone Number"
+                theme, 'លេខទូរស័ព្ទ', tenant.phoneNumber), // "Phone Number"
             _buildDetailRow(
                 theme, 'ភេទ', _getGenderText(tenant.gender)), // "Gender"
             if (tenant.room != null) ...[

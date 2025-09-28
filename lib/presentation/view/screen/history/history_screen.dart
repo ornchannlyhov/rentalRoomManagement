@@ -57,7 +57,6 @@ class ReceiptSearchBar extends StatelessWidget {
                   hintText: 'ស្វែងរកបង្កាន់ដៃ...',
                   hintStyle: TextStyle(
                     color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
-                    height: 0.5,
                   ),
                   prefixIcon: Icon(
                     Icons.search,
@@ -73,17 +72,17 @@ class ReceiptSearchBar extends StatelessWidget {
                         )
                       : null,
                   border: InputBorder.none,
+                  isDense: true, // reduce default height
                   contentPadding: const EdgeInsets.symmetric(
+                    vertical: 12, // controls vertical centering
                     horizontal: 16,
-                    vertical: 16,
                   ),
                 ),
                 style: TextStyle(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
                 onChanged: onSearchQueryChanged,
-              ),
-            )
+              ))
           : const SizedBox.shrink(),
     );
   }

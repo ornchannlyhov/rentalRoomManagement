@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:receipts_v2/presentation/providers/building_provider.dart';
 
 class BuildingFilterDropdown extends StatelessWidget {
-  const BuildingFilterDropdown({
+  const BuildingFilterDropdown({super.key, 
     required this.buildingProvider,
     required this.selectedBuildingId,
     required this.onChanged,

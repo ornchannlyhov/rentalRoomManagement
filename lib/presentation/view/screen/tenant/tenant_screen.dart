@@ -352,7 +352,7 @@ class _TenantScreenState extends State<TenantScreen>
         title: Text('បញ្ជាក់ការលុប', // "Confirm Delete"
             style: theme.textTheme.titleLarge),
         content: Text(
-          'តើអ្នកពិតជាចង់លុបអ្នកជួល "${tenantName}" មែនទេ?',
+          'តើអ្នកពិតជាចង់លុបអ្នកជួល "$tenantName" មែនទេ?',
           style: theme.textTheme.bodyMedium,
         ),
         actions: [

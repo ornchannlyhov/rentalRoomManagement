@@ -3,7 +3,7 @@ import 'package:receipts_v2/data/models/tenant.dart';
 import 'package:receipts_v2/presentation/view/screen/tenant/widgets/tenant_card.dart';
 
 class TenantList extends StatelessWidget {
-  const TenantList({
+  const TenantList({super.key, 
     required this.tenants,
     required this.theme,
     required this.animationController,
@@ -111,7 +111,7 @@ class TenantList extends StatelessWidget {
         title: Text('បញ្ជាក់ការលុប', // "Confirm Delete"
             style: theme.textTheme.titleLarge),
         content: Text(
-          'តើអ្នកពិតជាចង់លុបអ្នកជួល "${tenantName}" មែនទេ?',
+          'តើអ្នកពិតជាចង់លុបអ្នកជួល "$tenantName" មែនទេ?',
           style: theme.textTheme.bodyMedium,
         ),
         actions: [

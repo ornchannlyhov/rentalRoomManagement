@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class EmptyState extends StatelessWidget {
-  const EmptyState({
+  const EmptyState({super.key, 
     required this.theme,
     required this.fadeAnimation,
     required this.slideAnimation,
@@ -59,7 +59,7 @@ class EmptyState extends StatelessWidget {
 
 /// Widget to display when data is loading.
 class LoadingState extends StatelessWidget {
-  const LoadingState({required this.theme});
+  const LoadingState({super.key, required this.theme});
 
   final ThemeData theme;
 
@@ -88,7 +88,7 @@ class LoadingState extends StatelessWidget {
 
 /// Widget to display when an error occurs during data loading.
 class ErrorState extends StatelessWidget {
-  const ErrorState({
+  const ErrorState({super.key, 
     required this.theme,
     required this.error,
     required this.onRetry,

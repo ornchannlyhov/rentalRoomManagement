@@ -31,7 +31,7 @@ class _AdvancedAnalysisScreenState extends State<AdvancedAnalysisScreen>
   DateTime _selectedMonth = DateTime.now();
   List<Receipt> _filteredReceipts = [];
 
-  Set<String> _expandedBuildings = <String>{};
+  final Set<String> _expandedBuildings = <String>{};
 
   final List<String> _monthNames = const [
     'មករា',

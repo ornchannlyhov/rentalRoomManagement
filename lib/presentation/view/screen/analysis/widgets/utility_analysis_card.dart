@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class UtilityAnalysisCard extends StatelessWidget {
-  const UtilityAnalysisCard({
+  const UtilityAnalysisCard({super.key, 
     required this.title,
     required this.icon,
     required this.color,

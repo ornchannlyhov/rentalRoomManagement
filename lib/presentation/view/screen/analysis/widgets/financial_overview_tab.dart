@@ -5,7 +5,7 @@ import 'package:receipts_v2/presentation/view/screen/analysis/widgets/month_filt
 import 'package:receipts_v2/presentation/view/screen/analysis/widgets/utility_analysis_card.dart';
 
 class FinancialOverviewTab extends StatelessWidget {
-  const FinancialOverviewTab({
+  const FinancialOverviewTab({super.key, 
     required this.selectedMonth,
     required this.onMonthChanged,
     required this.filteredReceipts,

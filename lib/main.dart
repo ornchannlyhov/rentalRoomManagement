@@ -1,32 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
+import 'package:receipts_v2/data/repositories/auth_repository.dart';
 import 'package:receipts_v2/data/repositories/buidling_repository.dart';
-import 'package:receipts_v2/data/repositories/room_repository.dart'; 
+import 'package:receipts_v2/data/repositories/room_repository.dart';
+import 'package:receipts_v2/presentation/providers/auth_provider.dart';
 import 'package:receipts_v2/presentation/providers/building_provider.dart';
 import 'package:receipts_v2/presentation/providers/receipt_provider.dart';
 import 'package:receipts_v2/presentation/providers/room_provider.dart';
 import 'package:receipts_v2/presentation/providers/service_provider.dart';
 import 'package:receipts_v2/presentation/providers/tenant_provider.dart';
+import 'package:receipts_v2/presentation/providers/theme_provider.dart';
 import 'package:receipts_v2/presentation/view/app_widgets/app_menu.dart';
+import 'package:receipts_v2/presentation/view/screen/auth/login_screen.dart';
+import 'package:receipts_v2/presentation/view/screen/auth/onboard_screen.dart';
+import 'package:receipts_v2/presentation/view/screen/auth/register_screen.dart';
 import 'package:receipts_v2/presentation/view/screen/building/building_screen.dart';
 import 'package:receipts_v2/presentation/view/screen/history/history_screen.dart';
 import 'package:receipts_v2/presentation/view/screen/receipt/receipt_screen.dart';
-// import 'package:receipts_v2/presentation/view/screen/setting/profile_screen.dart';
 import 'package:receipts_v2/presentation/view/screen/tenant/tenant_screen.dart';
 import 'core/app_theme.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // clearSecureStorage();
   await initializeDateFormatting();
   runApp(const MyApp());
-}
-
-Future<void> clearSecureStorage() async {
-  const storage = FlutterSecureStorage();
-  await storage.deleteAll();
 }
 
 class MyApp extends StatelessWidget {
@@ -35,24 +33,67 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final roomRepository = RoomRepository();
-    final buildingRepository = BuildingRepository(roomRepository); 
+    final buildingRepository = BuildingRepository(roomRepository);
+    final authRepository = AuthRepository();
 
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => BuildingProvider(buildingRepository)..load()),
+        ChangeNotifierProvider(
+            create: (_) => AuthProvider(authRepository)..load()),
+        ChangeNotifierProvider(
+            create: (_) => BuildingProvider(buildingRepository)..load()),
         ChangeNotifierProvider(create: (_) => TenantProvider()..load()),
         ChangeNotifierProvider(create: (_) => ServiceProvider()..load()),
-        ChangeNotifierProvider(create: (_) => RoomProvider(roomRepository)..load()), 
+        ChangeNotifierProvider(
+            create: (_) => RoomProvider(roomRepository)..load()),
         ChangeNotifierProvider(create: (_) => ReceiptProvider()..load()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
-      child: MaterialApp(
-        title: 'Receipts',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.light,
-        home: const MainScreen(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            title: 'Receipts',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.themeMode,
+            home: const AuthWrapper(),
+            routes: {
+              '/onboarding': (context) => const OnboardingScreen(),
+              '/login': (context) => const LoginScreen(),
+              '/register': (context) => const RegisterScreen(),
+              '/home': (context) => const MainScreen(),
+            },
+          );
+        },
       ),
+    );
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        return authProvider.user.when(
+          loading: () => const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          success: (user) {
+            if (user != null && authProvider.isAuthenticated()) {
+              return const MainScreen();
+            } else {
+              return const OnboardingScreen();
+            }
+          },
+          error: (error) => const OnboardingScreen(),
+        );
+      },
     );
   }
 }
@@ -72,7 +113,6 @@ class _MainScreenState extends State<MainScreen> {
     const HistoryScreen(),
     const BuildingScreen(),
     const TenantScreen(),
-    // const ProfileScreen(), 
   ];
 
   void _onTabSelected(int index) {
