@@ -12,13 +12,13 @@ class CurrencyService {
   static const Map<String, String> supportedCurrencies = {
     'USD': '\$',
     'KHR': '៛',
-    'CNY': '¥', // ✅ Changed from THB to Chinese Yuan
+    'CNY': '¥',
   };
 
   static const Map<String, double> _defaultRates = {
     'USD': 1.0,
     'KHR': 4100.0,
-    'CNY': 7.2, // ✅ Default fallback exchange rate for CNY
+    'CNY': 7.2,
   };
 
   static Future<Map<String, double>> _fetchExchangeRates() async {

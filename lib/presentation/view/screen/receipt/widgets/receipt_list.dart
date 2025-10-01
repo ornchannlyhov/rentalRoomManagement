@@ -73,7 +73,7 @@ class ReceiptList extends StatelessWidget {
               ErrorState(theme: theme, error: error, onRetry: onRefresh),
           success: (buildings) {
             final receiptsForCurrentMonthOrBuilding = selectedBuildingId != null
-                ? receiptProvider.getReceiptByBuilding(selectedBuildingId!)
+                ? receiptProvider.getReceiptsByBuilding(selectedBuildingId!)
                 : receiptProvider.getReceiptsForCurrentMonth();
             final filteredReceiptsByStatus = receiptsForCurrentMonthOrBuilding
                 .where((receipt) => receipt.paymentStatus == selectedStatus)
@@ -238,12 +238,7 @@ class ReceiptList extends StatelessWidget {
                                       } else if (direction ==
                                           DismissDirection.endToStart) {
                                         provider.deleteReceipt(receipt.id);
-                                        onShowUndoSnackbar(
-                                          context,
-                                          'បានលុបវិក្កយបត្របន្ទប់ $roomNumber',
-                                          () => provider.restoreReceipt(
-                                              index, receipt),
-                                        );
+                                        
                                       }
                                     },
                                     child: ReceiptCard(
@@ -368,14 +363,14 @@ class _ReceiptSummaryCard extends StatelessWidget {
                         Icon(
                           Icons.calendar_month,
                           size: 14,
-                          color: colorScheme.onPrimaryContainer,
+                          color: Colors.white,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           'ខែ $thisMonth',
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: colorScheme.onPrimaryContainer,
+                            color: Colors.white,
                           ),
                         ),
                       ],

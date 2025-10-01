@@ -12,9 +12,22 @@ class BuildingProvider extends ChangeNotifier {
   AsyncValue<List<Building>> _buildings = const AsyncValue.loading();
   AsyncValue<List<Building>> get buildings => _buildings;
 
+  String? get errorMessage {
+    return _buildings.when(
+      loading: () => null,
+      success: (_) => null,
+      error: (error) => error.toString(),
+    );
+  }
+
+  bool get isLoading => _buildings.isLoading;
+  bool get hasData => _buildings.hasData;
+  bool get hasError => _buildings.hasError;
+
   Future<void> load() async {
     _buildings = const AsyncValue.loading();
     notifyListeners();
+
     try {
       await _repository.load();
       final data = _repository.getAllBuildings();
@@ -25,43 +38,38 @@ class BuildingProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> createBuilding(Building building) async {
+  Future<Building> createBuilding(Building building) async {
     try {
-      await _repository.createBuilding(building);
-      await load();
+      final created = await _repository.createBuilding(building);
+      await load(); // Reload to sync with server
+      return created;
     } catch (e) {
       _buildings = AsyncValue.error(e);
       notifyListeners();
+      rethrow;
     }
   }
 
-  Future<void> updateBuilding(Building building) async {
+  Future<Building> updateBuilding(Building building) async {
     try {
-      await _repository.updateBuilding(building);
-      await load();
+      final updated = await _repository.updateBuilding(building);
+      await load(); // Reload to sync with server
+      return updated;
     } catch (e) {
       _buildings = AsyncValue.error(e);
       notifyListeners();
-    }
-  }
-
-  Future<void> restoreBuilding(int index, Building building) async {
-    try {
-      await _repository.restoreBuilding(index, building);
-      await load();
-    } catch (e) {
-      _buildings = AsyncValue.error(e);
-      notifyListeners();
+      rethrow;
     }
   }
 
   Future<void> deleteBuilding(String buildingId) async {
     try {
       await _repository.deleteBuilding(buildingId);
-      await load();
+      await load(); // Reload to sync with server
     } catch (e) {
       _buildings = AsyncValue.error(e);
       notifyListeners();
+      rethrow;
     }
   }
 
@@ -72,7 +80,15 @@ class BuildingProvider extends ChangeNotifier {
     } catch (e) {
       _buildings = AsyncValue.error(e);
       notifyListeners();
+      rethrow;
     }
+  }
+
+  Building? getBuildingById(String buildingId) {
+    if (_buildings.hasData) {
+      return _repository.getBuildingById(buildingId);
+    }
+    return null;
   }
 
   bool isBuildingEmpty(String buildingId) {
@@ -80,6 +96,24 @@ class BuildingProvider extends ChangeNotifier {
       return _repository.isBuildingEmpty(buildingId);
     } catch (e) {
       return true;
+    }
+  }
+
+  int get buildingCount {
+    if (_buildings.hasData) {
+      return _repository.getBuildingCount();
+    }
+    return 0;
+  }
+
+  Future<void> refresh() async {
+    await load();
+  }
+
+  void clearError() {
+    if (_buildings.hasError) {
+      _buildings = AsyncValue.success(_repository.getAllBuildings());
+      notifyListeners();
     }
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:receipts_v2/data/models/receipt.dart';
 import 'package:receipts_v2/data/models/enum/payment_status.dart';
 import 'package:receipts_v2/data/repositories/currency_repositoy.dart';
-import 'package:receipts_v2/presentation/view/screen/analysis/building_analysis_tab.dart';
+import 'package:receipts_v2/presentation/view/screen/analysis/widgets/building_analysis_tab.dart';
 import 'package:receipts_v2/presentation/view/screen/analysis/widgets/financial_overview_tab.dart';
 
 class AdvancedAnalysisScreen extends StatefulWidget {
@@ -156,9 +156,9 @@ class _AdvancedAnalysisScreenState extends State<AdvancedAnalysisScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.background,
         title: const Text('ការវិភាគលម្អិត'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(40),

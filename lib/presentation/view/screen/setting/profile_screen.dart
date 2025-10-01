@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:receipts_v2/presentation/providers/theme_provider.dart';
+import 'package:receipts_v2/presentation/providers/auth_provider.dart';
+import 'package:receipts_v2/data/models/user.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -8,133 +12,305 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool _isDarkMode = false;
-  String _selectedLanguage = 'ខ្មែរ';
+  String _selectedLanguage = 'ខ្មែរ'; // Default language
 
-  final Map<String, String> _userInfo = {
-    'name': 'សុខ វណ្ណា',
-    'email': 'sokvanna@example.com',
-    'phone': '+855 12 345 678',
-    'status': 'Premium Member',
-  };
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: colorScheme.background,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+        backgroundColor: colorScheme.background,
         centerTitle: true,
         title: Text(
-          'ការកំណត់',
+          'ការកំណត់', // Settings
           style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface,
+            color: colorScheme.onSurface,
             fontWeight: FontWeight.w600,
           ),
-        ),),
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
+        ),
+      ),
+      body: authProvider.user.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Profile Header
-                _buildModernProfileHeader(),
-
-                // Settings Sections
-                _buildSettingsSection([
-                  _buildSettingsItem(
-                    icon: Icons.person_outline,
-                    title: 'Account Settings',
-                    subtitle: 'Privacy, security, change password',
-                    onTap: () {},
-                  ),
-                  _buildSettingsItem(
-                    icon: Icons.payment,
-                    title: 'Subscriptions',
-                    subtitle: 'Plans, payment methods',
-                    onTap: () {},
-                  ),
-                  _buildSettingsItem(
-                    icon: Icons.build_outlined,
-                    title: 'Services',
-                    subtitle: 'Manage services',
-                    onTap: () {},
-                  ),
-                ]),
-
-                _buildSettingsSection([
-                  _buildSettingsItem(
-                    icon: Icons.palette_outlined,
-                    title: 'Appearance',
-                    subtitle: _isDarkMode ? 'Dark mode' : 'Light mode',
-                    trailing: Switch(
-                      value: _isDarkMode,
-                      onChanged: (value) {
-                        setState(() {
-                          _isDarkMode = value;
-                        });
-                      },
-                      activeColor: Theme.of(context).colorScheme.primary,
+                Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to load profile.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500),
+                ),
+                Text(
+                  'Error: ${error.toString().contains("Exception:") ? error.toString().split("Exception:")[1].trim() : error.toString()}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: colorScheme.onSurface.withOpacity(0.7),
+                      fontSize: 14),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () => authProvider.getProfile(),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry Loading Profile'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    onTap: () {
-                      setState(() {
-                        _isDarkMode = !_isDarkMode;
-                      });
-                    },
                   ),
-                  _buildSettingsItem(
-                    icon: Icons.language_outlined,
-                    title: 'Language',
-                    subtitle: _selectedLanguage,
-                    onTap: () => _showLanguageDialog(),
+                ),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () => _showLogoutDialog(
+                      context, isDarkMode, colorScheme, authProvider),
+                  child: Text(
+                    'Or Sign Out',
+                    style: TextStyle(color: Colors.red, fontSize: 16),
                   ),
-                  _buildSettingsItem(
-                    icon: Icons.text_fields_outlined,
-                    title: 'Text Size',
-                    subtitle: 'Default',
-                    onTap: () {},
-                  ),
-                ]),
-
-                _buildSettingsSection([
-                  _buildSettingsItem(
-                    icon: Icons.help_outline,
-                    title: 'Help & Support',
-                    subtitle: 'FAQs, contact us',
-                    onTap: () {},
-                  ),
-                  _buildSettingsItem(
-                    icon: Icons.info_outline,
-                    title: 'About',
-                    subtitle: 'Version 1.2.3',
-                    onTap: () {},
-                  ),
-                ]),
-
-                const SizedBox(height: 30),
-
-                // Logout Button
-                _buildLogoutButton(),
-
-                const SizedBox(height: 50),
+                )
               ],
             ),
           ),
-        ],
+        ),
+        success: (user) {
+          if (user == null) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.person_off_outlined,
+                        size: 48,
+                        color: colorScheme.onSurface.withOpacity(0.6)),
+                    const SizedBox(height: 16),
+                    Text(
+                      'You are not logged in.',
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pushNamedAndRemoveUntil(
+                            '/onboarding', (route) => false);
+                      },
+                      child: const Text('Go to Onboarding'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+          return _buildContent(
+            context,
+            themeProvider,
+            authProvider,
+            isDarkMode,
+            colorScheme,
+            user,
+          );
+        },
       ),
     );
   }
 
-  Widget _buildModernProfileHeader() {
+  Widget _buildContent(
+    BuildContext context,
+    ThemeProvider themeProvider,
+    AuthProvider authProvider,
+    bool isDarkMode,
+    ColorScheme colorScheme,
+    User user,
+  ) {
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Column(
+            children: [
+              // Profile Header
+              _buildModernProfileHeader(context, isDarkMode, colorScheme, user),
+
+              // Settings Sections
+              _buildSettingsSection(
+                context,
+                isDarkMode,
+                colorScheme,
+                [
+                  _buildSettingsItem(
+                    context: context,
+                    isDarkMode: isDarkMode,
+                    colorScheme: colorScheme,
+                    icon: Icons.person_outline,
+                    title: 'Account Settings',
+                    subtitle: 'Privacy, security, change password',
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: const Text('Account Settings tapped'),
+                            backgroundColor: colorScheme.primary),
+                      );
+                    },
+                  ),
+                  _buildSettingsItem(
+                    context: context,
+                    isDarkMode: isDarkMode,
+                    colorScheme: colorScheme,
+                    icon: Icons.payment,
+                    title: 'Subscriptions',
+                    subtitle: 'Plans, payment methods',
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: const Text('Subscriptions tapped'),
+                            backgroundColor: colorScheme.primary),
+                      );
+                    },
+                  ),
+                  _buildSettingsItem(
+                    context: context,
+                    isDarkMode: isDarkMode,
+                    colorScheme: colorScheme,
+                    icon: Icons.build_outlined,
+                    title: 'Services',
+                    subtitle: 'Manage services',
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: const Text('Services tapped'),
+                            backgroundColor: colorScheme.primary),
+                      );
+                    },
+                  ),
+                ],
+              ),
+
+              _buildSettingsSection(
+                context,
+                isDarkMode,
+                colorScheme,
+                [
+                  _buildSettingsItem(
+                    context: context,
+                    isDarkMode: isDarkMode,
+                    colorScheme: colorScheme,
+                    icon: Icons.palette_outlined,
+                    title: 'Appearance',
+                    subtitle: themeProvider.themeMode == ThemeMode.dark
+                        ? 'Dark mode'
+                        : themeProvider.themeMode == ThemeMode.light
+                            ? 'Light mode'
+                            : 'System default',
+                    trailing: Switch(
+                      value: themeProvider.themeMode == ThemeMode.dark,
+                      onChanged: (value) {
+                        themeProvider.toggleTheme();
+                      },
+                      activeColor: colorScheme.primary,
+                    ),
+                    onTap: () {
+                      themeProvider.toggleTheme();
+                    },
+                  ),
+                  _buildSettingsItem(
+                    context: context,
+                    isDarkMode: isDarkMode,
+                    colorScheme: colorScheme,
+                    icon: Icons.language_outlined,
+                    title: 'Language',
+                    subtitle: _selectedLanguage,
+                    onTap: () =>
+                        _showLanguageDialog(context, isDarkMode, colorScheme),
+                  ),
+                ],
+              ),
+
+              _buildSettingsSection(
+                context,
+                isDarkMode,
+                colorScheme,
+                [
+                  _buildSettingsItem(
+                    context: context,
+                    isDarkMode: isDarkMode,
+                    colorScheme: colorScheme,
+                    icon: Icons.help_outline,
+                    title: 'Help & Support',
+                    subtitle: 'FAQs, contact us',
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: const Text('Help & Support tapped'),
+                            backgroundColor: colorScheme.primary),
+                      );
+                    },
+                  ),
+                  _buildSettingsItem(
+                    context: context,
+                    isDarkMode: isDarkMode,
+                    colorScheme: colorScheme,
+                    icon: Icons.info_outline,
+                    title: 'About',
+                    subtitle: 'Version 1.2.3',
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: const Text('About tapped'),
+                            backgroundColor: colorScheme.primary),
+                      );
+                    },
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 30),
+
+              // Logout Button
+              _buildLogoutButton(
+                  context, isDarkMode, colorScheme, authProvider),
+
+              const SizedBox(height: 50),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModernProfileHeader(BuildContext context, bool isDarkMode,
+      ColorScheme colorScheme, User user) {
     return Container(
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: _isDarkMode ? const Color(0xFF1C1C1E) : Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: _isDarkMode
+            color: isDarkMode
                 ? Colors.black.withOpacity(0.3)
                 : Colors.black.withOpacity(0.05),
             blurRadius: 10,
@@ -150,7 +326,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             height: 70,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Theme.of(context).colorScheme.primary,
+              color: colorScheme.primary,
             ),
             child: const Icon(
               Icons.person,
@@ -166,19 +342,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _userInfo['name']!,
+                  user.username ?? 'Unknown User', // Handle nullable username
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
-                    color: _isDarkMode ? Colors.white : Colors.black,
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  _userInfo['email']!,
+                  user.email ?? 'No Email Provided', // Handle nullable email
                   style: TextStyle(
                     fontSize: 14,
-                    color: _isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                    color: colorScheme.onSurface.withOpacity(0.6),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -190,7 +366,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    _userInfo['status']!,
+                    'Premium Member', // This can be dynamic based on user.
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -204,10 +380,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           // Edit Button
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                    content: const Text('Edit profile tapped'),
+                    backgroundColor: colorScheme.primary),
+              );
+            },
             icon: Icon(
               Icons.edit_outlined,
-              color: _isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              color: colorScheme.onSurface.withOpacity(0.6),
               size: 20,
             ),
           ),
@@ -216,15 +398,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildSettingsSection(List<Widget> items) {
+  Widget _buildSettingsSection(BuildContext context, bool isDarkMode,
+      ColorScheme colorScheme, List<Widget> items) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
-        color: _isDarkMode ? const Color(0xFF1C1C1E) : Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: _isDarkMode
+            color: isDarkMode
                 ? Colors.black.withOpacity(0.3)
                 : Colors.black.withOpacity(0.03),
             blurRadius: 8,
@@ -244,7 +427,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Divider(
                   height: 1,
                   indent: 60,
-                  color: _isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                  color: colorScheme.onSurface.withOpacity(0.1),
                 ),
             ],
           );
@@ -254,6 +437,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildSettingsItem({
+    required BuildContext context,
+    required bool isDarkMode,
+    required ColorScheme colorScheme,
     required IconData icon,
     required String title,
     required String subtitle,
@@ -262,18 +448,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }) {
     return ListTile(
       onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
       leading: Container(
-        width: 36,
-        height: 36,
+        width: 40,
+        height: 40,
         decoration: BoxDecoration(
-          color: _isDarkMode ? Colors.grey[800] : Colors.grey[100],
+          color: colorScheme.onSurface.withOpacity(0.05),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
           icon,
           size: 20,
-          color: _isDarkMode ? Colors.white : Colors.grey[700],
+          color: colorScheme.onSurface.withOpacity(0.7),
         ),
       ),
       title: Text(
@@ -281,33 +467,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w500,
-          color: _isDarkMode ? Colors.white : Colors.black,
+          color: colorScheme.onSurface,
         ),
       ),
       subtitle: Text(
         subtitle,
         style: TextStyle(
           fontSize: 14,
-          color: _isDarkMode ? Colors.grey[400] : Colors.grey[600],
+          color: colorScheme.onSurface.withOpacity(0.6),
         ),
       ),
       trailing: trailing ??
           Icon(
             Icons.arrow_forward_ios,
             size: 14,
-            color: _isDarkMode ? Colors.grey[500] : Colors.grey[400],
+            color: colorScheme.onSurface.withOpacity(0.4),
           ),
     );
   }
 
-  Widget _buildLogoutButton() {
+  Widget _buildLogoutButton(BuildContext context, bool isDarkMode,
+      ColorScheme colorScheme, AuthProvider authProvider) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       width: double.infinity,
       child: TextButton(
-        onPressed: () => _showLogoutDialog(),
+        onPressed: () =>
+            _showLogoutDialog(context, isDarkMode, colorScheme, authProvider),
         style: TextButton.styleFrom(
-          backgroundColor: _isDarkMode ? const Color(0xFF1C1C1E) : Colors.white,
+          backgroundColor: Colors.red.withOpacity(0.1),
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -329,14 +517,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showLanguageDialog() {
+  void _showLanguageDialog(
+      BuildContext context, bool isDarkMode, ColorScheme colorScheme) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
         return Container(
           decoration: BoxDecoration(
-            color: _isDarkMode ? const Color(0xFF1C1C1E) : Colors.white,
+            color: colorScheme.surface,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
@@ -350,7 +539,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 height: 4,
                 margin: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: _isDarkMode ? Colors.grey[600] : Colors.grey[300],
+                  color: colorScheme.onSurface.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -361,14 +550,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: _isDarkMode ? Colors.white : Colors.black,
+                    color: colorScheme.onSurface,
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              _buildLanguageOption('ខ្មែរ', 'ខ្មែរ'),
-              _buildLanguageOption('English', 'English'),
-              _buildLanguageOption('中文', '中文'),
+              _buildLanguageOption('ខ្មែរ', 'ខ្មែរ', colorScheme),
+              _buildLanguageOption('English', 'English', colorScheme),
+              _buildLanguageOption('中文', '中文', colorScheme),
               const SizedBox(height: 30),
             ],
           ),
@@ -377,7 +566,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildLanguageOption(String language, String displayName) {
+  Widget _buildLanguageOption(
+      String language, String displayName, ColorScheme colorScheme) {
     bool isSelected = language == _selectedLanguage;
 
     return ListTile(
@@ -393,32 +583,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
         style: TextStyle(
           fontSize: 16,
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-          color: _isDarkMode ? Colors.white : Colors.black,
+          color: colorScheme.onSurface,
         ),
       ),
       trailing: isSelected
           ? Icon(
               Icons.check,
-              color: Colors.blue,
+              color: colorScheme.primary,
               size: 20,
             )
           : null,
     );
   }
 
-  void _showLogoutDialog() {
+  void _showLogoutDialog(BuildContext context, bool isDarkMode,
+      ColorScheme colorScheme, AuthProvider authProvider) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: _isDarkMode ? const Color(0xFF1C1C1E) : Colors.white,
+          backgroundColor: colorScheme.background,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           title: Text(
             'Sign Out',
             style: TextStyle(
-              color: _isDarkMode ? Colors.white : Colors.black,
+              color: colorScheme.onSurface,
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -426,7 +617,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           content: Text(
             'Are you sure you want to sign out?',
             style: TextStyle(
-              color: _isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              color: colorScheme.onSurface.withOpacity(0.6),
               fontSize: 16,
             ),
           ),
@@ -436,24 +627,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Text(
                 'Cancel',
                 style: TextStyle(
-                  color: _isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                  color: colorScheme.onSurface.withOpacity(0.6),
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Signed out successfully'),
-                    backgroundColor: Colors.red[600],
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                );
+              onPressed: () async {
+                Navigator.of(context).pop(); // Close the dialog first
+
+                try {
+                  await authProvider.logout();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Signed out successfully!'),
+                        backgroundColor: Colors.green, // Indicate success
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    );
+                    // Navigate to login screen and clear navigation stack
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      '/login', // Or '/onboarding' if that's your first unauthenticated screen
+                      (route) => false,
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    // Show error message if logout failed
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                            'Failed to sign out: ${e.toString().contains("Exception:") ? e.toString().split("Exception:")[1].trim() : e.toString()}'),
+                        backgroundColor: Colors.red[600],
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    );
+                  }
+                }
               },
               child: const Text(
                 'Sign Out',

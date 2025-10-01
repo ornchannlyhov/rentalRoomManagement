@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class UtilityAnalysisCard extends StatelessWidget {
-  const UtilityAnalysisCard({super.key, 
+  const UtilityAnalysisCard({
+    super.key,
     required this.title,
     required this.icon,
     required this.color,
@@ -23,6 +24,8 @@ class UtilityAnalysisCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: isBuildingSpecific ? const EdgeInsets.only(top: 8) : null,
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -48,7 +51,7 @@ class UtilityAnalysisCard extends StatelessWidget {
               title: 'ទឹក',
               amount: utilityData['water']!,
               icon: Icons.water_drop,
-              color: Colors.blue,
+              color: Colors.lightBlue.shade400, 
               totalRevenue: totalRevenue,
               formatCurrency: formatCurrency,
               isBuildingSpecific: isBuildingSpecific,
@@ -57,7 +60,7 @@ class UtilityAnalysisCard extends StatelessWidget {
               title: 'អគ្គិសនី',
               amount: utilityData['electric']!,
               icon: Icons.electrical_services,
-              color: Colors.yellow[700]!,
+              color: Colors.amber.shade600, 
               totalRevenue: totalRevenue,
               formatCurrency: formatCurrency,
               isBuildingSpecific: isBuildingSpecific,
@@ -66,7 +69,7 @@ class UtilityAnalysisCard extends StatelessWidget {
               title: 'បន្ទប់',
               amount: utilityData['room']!,
               icon: Icons.home,
-              color: Colors.brown,
+              color: Colors.teal.shade400, 
               totalRevenue: totalRevenue,
               formatCurrency: formatCurrency,
               isBuildingSpecific: isBuildingSpecific,
@@ -75,7 +78,7 @@ class UtilityAnalysisCard extends StatelessWidget {
               title: 'សេវាកម្ម',
               amount: utilityData['service']!,
               icon: Icons.miscellaneous_services,
-              color: Colors.purple,
+              color: Colors.deepPurple.shade400, 
               totalRevenue: totalRevenue,
               formatCurrency: formatCurrency,
               isBuildingSpecific: isBuildingSpecific,
@@ -127,10 +130,14 @@ class _UtilityRow extends StatelessWidget {
           ),
           Expanded(
             flex: 3,
-            child: LinearProgressIndicator(
-              value: percentage / 100,
-              backgroundColor: Colors.grey[300],
-              valueColor: AlwaysStoppedAnimation<Color>(color),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: percentage / 100,
+                backgroundColor: Colors.grey.shade200,
+                valueColor: AlwaysStoppedAnimation<Color>(color),
+                minHeight: 6,
+              ),
             ),
           ),
           const SizedBox(width: 8),

@@ -4,10 +4,24 @@ import 'package:receipts_v2/data/models/service.dart';
 import 'package:receipts_v2/data/repositories/service_repository.dart';
 
 class ServiceProvider extends ChangeNotifier {
-  final ServiceRepository _repository = ServiceRepository();
+  final ServiceRepository _repository;
+
+  ServiceProvider(this._repository);
 
   AsyncValue<List<Service>> _services = const AsyncValue.loading();
   AsyncValue<List<Service>> get services => _services;
+
+  String? get errorMessage {
+    return _services.when(
+      loading: () => null,
+      success: (_) => null,
+      error: (error) => error.toString(),
+    );
+  }
+
+  bool get isLoading => _services.isLoading;
+  bool get hasData => _services.hasData;
+  bool get hasError => _services.hasError;
 
   Future<void> load() async {
     _services = const AsyncValue.loading();
@@ -23,23 +37,27 @@ class ServiceProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> createService(Service service) async {
+  Future<Service> createService(Service service) async {
     try {
-      await _repository.createService(service);
+      final created = await _repository.createService(service);
       await load();
+      return created;
     } catch (e) {
       _services = AsyncValue.error(e);
       notifyListeners();
+      rethrow;
     }
   }
 
-  Future<void> updateService(Service service) async {
+  Future<Service> updateService(Service service) async {
     try {
-      await _repository.updateService(service);
+      final updated = await _repository.updateService(service);
       await load();
+      return updated;
     } catch (e) {
       _services = AsyncValue.error(e);
       notifyListeners();
+      rethrow;
     }
   }
 
@@ -50,15 +68,38 @@ class ServiceProvider extends ChangeNotifier {
     } catch (e) {
       _services = AsyncValue.error(e);
       notifyListeners();
+      rethrow;
     }
   }
 
-  Future<void> restoreService(int index, Service service) async {
-    try {
-      await _repository.restoreService(index, service);
-      await load();
-    } catch (e) {
-      _services = AsyncValue.error(e);
+  Service? getServiceById(String serviceId) {
+    if (_services.hasData) {
+      return _repository.getServiceById(serviceId);
+    }
+    return null;
+  }
+
+  List<Service> getServicesByBuilding(String buildingId) {
+    if (_services.hasData) {
+      return _repository.getServicesByBuilding(buildingId);
+    }
+    return [];
+  }
+
+  int get serviceCount {
+    if (_services.hasData) {
+      return _services.data!.length;
+    }
+    return 0;
+  }
+
+  Future<void> refresh() async {
+    await load();
+  }
+
+  void clearError() {
+    if (_services.hasError) {
+      _services = AsyncValue.success(_repository.getAllServices());
       notifyListeners();
     }
   }

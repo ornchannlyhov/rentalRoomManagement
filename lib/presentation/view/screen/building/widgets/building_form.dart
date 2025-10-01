@@ -59,12 +59,34 @@ class _BuildingFormState extends State<BuildingForm> {
       _formKey.currentState!.save();
 
       List<Room> finalRooms = [];
+      final buildingId =
+          isEditing ? widget.building!.id : DateTime.now().toString();
+
+      // Create a Building instance without rooms to avoid circular reference
+      final tempBuilding = Building(
+        id: buildingId,
+        name: name,
+        rentPrice: rentPrice,
+        electricPrice: electricPrice,
+        waterPrice: waterPrice,
+        rooms: const [], // Empty rooms list to avoid circular reference
+      );
 
       if (isEditing && widget.building != null) {
-        // When editing, preserve existing rooms
-        finalRooms = widget.building!.rooms;
+        // In editing mode, preserve existing rooms and update their building reference
+        finalRooms = widget.building!.rooms.map((room) {
+          return Room(
+            id: room.id,
+            roomNumber: room.roomNumber,
+            roomStatus: room.roomStatus,
+            price: room.price,
+            buildingId: buildingId,
+            building: tempBuilding,
+            tenant: room.tenant,
+          );
+        }).toList();
       } else if (!isEditing && roomQuantity > 0) {
-        // When creating, generate new rooms
+        // In creating mode, generate new rooms
         for (int i = 1; i <= roomQuantity; i++) {
           finalRooms.add(
             Room(
@@ -72,20 +94,16 @@ class _BuildingFormState extends State<BuildingForm> {
               roomNumber: i.toString(),
               roomStatus: RoomStatus.available,
               price: rentPrice,
-              building: Building(
-                id: DateTime.now().toString(),
-                name: name,
-                rentPrice: rentPrice,
-                electricPrice: electricPrice,
-                waterPrice: waterPrice,
-              ),
+              buildingId: buildingId,
+              building: tempBuilding, 
+              tenant: null,
             ),
           );
         }
       }
 
       final newBuilding = Building(
-        id: isEditing ? widget.building!.id : DateTime.now().toString(),
+        id: buildingId,
         name: name,
         rentPrice: rentPrice,
         electricPrice: electricPrice,

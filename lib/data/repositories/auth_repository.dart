@@ -1,282 +1,295 @@
 import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
+import 'package:receipts_v2/core/api_helper.dart';
+import 'package:receipts_v2/data/dtos/user_dto.dart';
 import 'package:receipts_v2/data/models/user.dart';
 
+class StorageKeys {
+  static const token = 'token';
+  static const user = 'user';
+}
+
+class RegisterRequest {
+  final String username;
+  final String email;
+  final String password;
+
+  RegisterRequest({
+    required this.username,
+    required this.email,
+    required this.password,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'username': username,
+        'email': email,
+        'password': password,
+      };
+}
+
+class LoginRequest {
+  final String email;
+  final String password;
+
+  LoginRequest({required this.email, required this.password});
+
+  Map<String, dynamic> toJson() => {
+        'email': email,
+        'password': password,
+      };
+}
+
+class UpdatePasswordRequest {
+  final String oldPassword;
+  final String newPassword;
+
+  UpdatePasswordRequest({
+    required this.oldPassword,
+    required this.newPassword,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'oldPassword': oldPassword,
+        'newPassword': newPassword,
+      };
+}
+
 class AuthRepository {
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
-  final String storageKey = 'user_secure_data';
-  final String baseUrl = 'http://localhost:80/api';
+  final ApiHelper _apiHelper = ApiHelper.instance;
   final Logger _logger = Logger();
-  User? _userCache;
 
-  Future<void> load() async {
+  Future<bool> _hasNetwork() => _apiHelper.hasNetwork();
+
+  // Validate token and get user profile
+  Future<UserDto?> _validateTokenAndGetUser() async {
+    final token = await _apiHelper.storage.read(key: StorageKeys.token);
+    if (token == null || token.isEmpty) return null;
+
     try {
-      _logger.i('Loading user data from secure storage');
-      final jsonString = await _secureStorage.read(key: storageKey);
-      if (jsonString != null && jsonString.isNotEmpty) {
-        _logger.d('Found user data in secure storage: $jsonString');
-        final jsonData = jsonDecode(jsonString);
-        _userCache = User.fromJson(jsonData);
-        _logger.i('User data loaded successfully');
+      final response = await _apiHelper.dio.get(
+        '${_apiHelper.baseUrl}/auth/profile',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final userDto = UserDto.fromJson(response.data);
+        await _apiHelper.storage.write(
+          key: StorageKeys.user,
+          value: jsonEncode(userDto.toJson()),
+        );
+        return userDto;
       } else {
-        _logger.w('No user data found in secure storage');
-        _userCache = null;
+        await _clearAuth();
+        return null;
       }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        await _clearAuth();
+      }
+      _logger.e("Token validation failed: ${e.message}");
+      return null;
     } catch (e) {
-      _logger.e('Failed to load user data from secure storage: $e');
-      throw Exception('Failed to load user data from secure storage: $e');
+      _logger.e("Unexpected error during token validation: $e");
+      return null;
     }
   }
 
-  Future<void> save() async {
+  // Clear authentication data
+  Future<void> _clearAuth() async {
+    await _apiHelper.storage.delete(key: StorageKeys.token);
+    await _apiHelper.storage.delete(key: StorageKeys.user);
+  }
+
+  // Generic authentication handler
+  Future<User> _authenticateAndStore(
+    Future<Response> Function() apiCall,
+    String successMessage,
+  ) async {
     try {
-      if (_userCache != null) {
-        _logger.i('Saving user data to secure storage');
-        final jsonString = jsonEncode(_userCache!.toJson());
-        await _secureStorage.write(key: storageKey, value: jsonString);
-        _logger.d('User data saved successfully: $jsonString');
+      final response = await apiCall();
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final userDto = UserDto.fromJson(response.data);
+
+        // Store token and user data
+        if (userDto.token != null) {
+          await _apiHelper.storage.write(
+            key: StorageKeys.token,
+            value: userDto.token!,
+          );
+        }
+
+        await _apiHelper.storage.write(
+          key: StorageKeys.user,
+          value: jsonEncode(userDto.toJson()),
+        );
+
+        _logger.i(successMessage);
+        return userDto.toUser();
       } else {
-        _logger.i('Deleting user data from secure storage');
-        await _secureStorage.delete(key: storageKey);
-        _logger.d('User data deleted successfully');
+        throw Exception('Authentication failed: ${response.data}');
       }
-    } catch (e) {
-      _logger.e('Failed to save user data to secure storage: $e');
-      throw Exception('Failed to save user data to secure storage: $e');
+    } on DioException catch (e) {
+      _logger.e('Authentication error: ${e.message}');
+      final errorMessage = e.response?.data['message'] ??
+          e.response?.data['error'] ??
+          e.message ??
+          'Authentication failed';
+      throw Exception(errorMessage);
     }
   }
 
+  // Register user
   Future<User> register(RegisterRequest request) async {
-    try {
-      _logger
-          .i('Attempting to register user with request: ${request.toJson()}');
-
-      final uri = Uri.parse('$baseUrl/auth/register');
-      _logger.d('Request URI: $uri');
-
-      final headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
-      _logger.d('Request headers: $headers');
-
-      final body = jsonEncode(request.toJson());
-      _logger.d('Request body: $body');
-
-      final response = await http.post(
-        uri,
-        headers: headers,
-        body: body,
-      );
-
-      _logger.d('Response status code: ${response.statusCode}');
-      _logger.d('Response headers: ${response.headers}');
-      _logger.d('Response body: ${response.body}');
-
-      if (response.statusCode == 201) {
-        final jsonData = jsonDecode(response.body);
-        _userCache = User.fromJson(jsonData);
-        await save();
-        _logger.i('User registered successfully: ${_userCache!.toJson()}');
-        return _userCache!;
-      } else if (response.statusCode == 400) {
-        String errorMessage = 'Invalid registration data';
-        try {
-          final errorData = jsonDecode(response.body);
-          errorMessage =
-              errorData['message'] ?? errorData['error'] ?? errorMessage;
-          _logger.w('Bad request during registration: $errorMessage');
-          _logger.d('Full error response: ${response.body}');
-        } catch (e) {
-          _logger.w('Could not parse error response: ${response.body}');
-        }
-        throw Exception('Bad request: $errorMessage');
-      } else {
-        _logger.e(
-            'Failed to register user: ${response.statusCode} - ${response.body}');
-        throw Exception(
-            'Failed to register user: Server returned ${response.statusCode}');
-      }
-    } catch (e) {
-      if (e.toString().contains('Bad request:')) {
-        rethrow; // Preserve the original error message for 400 errors
-      }
-      _logger.e('Failed to register user: $e');
-      throw Exception('Failed to register user: $e');
+    if (!await _hasNetwork()) {
+      throw Exception("No internet connection.");
     }
+
+    final url = '${_apiHelper.baseUrl}/auth/register';
+    return _authenticateAndStore(
+      () => _apiHelper.dio.post(url, data: request.toJson()),
+      'User registered successfully',
+    );
   }
 
+  // Login user
   Future<User> login(LoginRequest request) async {
-    try {
-      _logger.i('Attempting to login with request: ${request.toJson()}');
-
-      final uri = Uri.parse('$baseUrl/auth/login');
-      _logger.d('Request URI: $uri');
-
-      final headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
-
-      final body = jsonEncode(request.toJson());
-      _logger.d('Request body: $body');
-
-      final response = await http.post(
-        uri,
-        headers: headers,
-        body: body,
-      );
-
-      _logger.d('Response status code: ${response.statusCode}');
-      _logger.d('Response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
-        _userCache = User.fromJson(jsonData);
-        await save();
-        _logger.i('User logged in successfully: ${_userCache!.toJson()}');
-        return _userCache!;
-      } else if (response.statusCode == 400) {
-        String errorMessage = 'Invalid credentials';
-        try {
-          final errorData = jsonDecode(response.body);
-          errorMessage =
-              errorData['message'] ?? errorData['error'] ?? errorMessage;
-        } catch (e) {
-          _logger.w('Could not parse error response: ${response.body}');
-        }
-        _logger.w('Invalid credentials during login: $errorMessage');
-        throw Exception(errorMessage);
-      } else {
-        _logger.e('Failed to login: ${response.statusCode} - ${response.body}');
-        throw Exception(
-            'Failed to login: Server returned ${response.statusCode}');
-      }
-    } catch (e) {
-      _logger.e('Failed to login: $e');
-      throw Exception('Failed to login: $e');
+    if (!await _hasNetwork()) {
+      throw Exception("No internet connection.");
     }
+
+    final url = '${_apiHelper.baseUrl}/auth/login';
+    return _authenticateAndStore(
+      () => _apiHelper.dio.post(url, data: request.toJson()),
+      'User logged in successfully',
+    );
   }
 
+  // Update password
   Future<void> updatePassword(UpdatePasswordRequest request) async {
+    if (!await _hasNetwork()) {
+      throw Exception("No internet connection.");
+    }
+
+    final token = await _apiHelper.storage.read(key: StorageKeys.token);
+    if (token == null || token.isEmpty) {
+      throw Exception("Not authenticated.");
+    }
+
+    final url = '${_apiHelper.baseUrl}/auth/update-password';
+
     try {
-      if (_userCache == null || _userCache!.token == null) {
-        _logger.w('No authenticated user found for password update');
-        throw Exception('No authenticated user found');
-      }
-
-      _logger
-          .i('Attempting to update password for user: ${_userCache!.toJson()}');
-      final response = await http.put(
-        Uri.parse('$baseUrl/auth/update-password'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${_userCache!.token}',
-        },
-        body: jsonEncode(request.toJson()),
+      final response = await _apiHelper.dio.put(
+        url,
+        data: request.toJson(),
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
       );
-
-      _logger.d('Response status code: ${response.statusCode}');
-      _logger.d('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         _logger.i('Password updated successfully');
-      } else if (response.statusCode == 400) {
-        String errorMessage = 'Invalid password data';
-        try {
-          final errorData = jsonDecode(response.body);
-          errorMessage =
-              errorData['message'] ?? errorData['error'] ?? errorMessage;
-        } catch (e) {
-          _logger.w('Could not parse error response: ${response.body}');
-        }
-        _logger.w('Bad request during password update: $errorMessage');
-        throw Exception('Bad request: $errorMessage');
       } else {
-        _logger.e(
-            'Failed to update password: ${response.statusCode} - ${response.body}');
-        throw Exception(
-            'Failed to update password: Server returned ${response.statusCode}');
+        final error = response.data['message'] ?? 'Password update failed';
+        throw Exception(error);
       }
-    } catch (e) {
-      _logger.e('Failed to update password: $e');
-      throw Exception('Failed to update password: $e');
+    } on DioException catch (e) {
+      final message = e.response?.data['message'] ??
+          e.response?.data['error'] ??
+          e.message ??
+          'Failed to update password';
+      _logger.e("Update password failed: $message");
+      throw Exception(message);
     }
   }
 
+  // Logout user
   Future<void> logout() async {
-    try {
-      if (_userCache == null || _userCache!.token == null) {
-        _logger.w('No authenticated user found for logout');
-        throw Exception('No authenticated user found');
-      }
+    if (!await _hasNetwork()) {
+      throw Exception("No internet connection.");
+    }
 
-      _logger.i('Attempting to logout user: ${_userCache!.toJson()}');
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/logout'),
-        headers: {
-          'Authorization': 'Bearer ${_userCache!.token}',
-        },
+    final token = await _apiHelper.storage.read(key: StorageKeys.token);
+    if (token == null) {
+      await _clearAuth();
+      return;
+    }
+
+    final url = '${_apiHelper.baseUrl}/auth/logout';
+
+    try {
+      final response = await _apiHelper.dio.post(
+        url,
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
       );
 
       if (response.statusCode == 200) {
-        _userCache = null;
-        await save();
+        await _clearAuth();
         _logger.i('User logged out successfully');
       } else {
-        _logger.e('Failed to logout: ${response.statusCode}');
-        throw Exception('Failed to logout: ${response.statusCode}');
+        throw Exception('Logout failed: ${response.data}');
       }
-    } catch (e) {
-      _logger.e('Failed to logout: $e');
-      throw Exception('Failed to logout: $e');
+    } on DioException catch (e) {
+      _logger.e('Logout error: ${e.message}');
+      await _clearAuth(); // Clear local data even if server logout fails
+      throw Exception(e.response?.data['message'] ??
+          e.response?.data['error'] ??
+          'Logout failed');
     }
   }
 
-  Future<User> getProfile() async {
-    try {
-      if (_userCache == null || _userCache!.token == null) {
-        _logger.w('No authenticated user found for profile retrieval');
-        throw Exception('No authenticated user found');
-      }
+  // Check if user is logged in
+  Future<bool> isLoggedIn() async {
+    final token = await _apiHelper.storage.read(key: StorageKeys.token);
+    if (token == null || token.isEmpty) {
+      return false;
+    }
 
-      _logger.i('Retrieving profile for user: ${_userCache!.toJson()}');
-      final response = await http.get(
-        Uri.parse('$baseUrl/auth/profile'),
-        headers: {
-          'Authorization': 'Bearer ${_userCache!.token}',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
-        _userCache = User.fromJson(jsonData);
-        await save();
-        _logger.i('Profile retrieved successfully: ${_userCache!.toJson()}');
-        return _userCache!;
-      } else if (response.statusCode == 404) {
-        _logger.w('User not found during profile retrieval');
-        throw Exception('User not found');
-      } else {
-        _logger.e('Failed to retrieve profile: ${response.statusCode}');
-        throw Exception('Failed to retrieve profile: ${response.statusCode}');
-      }
-    } catch (e) {
-      _logger.e('Failed to retrieve profile: $e');
-      throw Exception('Failed to retrieve profile: $e');
+    if (await _hasNetwork()) {
+      final userDto = await _validateTokenAndGetUser();
+      return userDto != null;
+    } else {
+      final userJson = await _apiHelper.storage.read(key: StorageKeys.user);
+      return userJson != null && userJson.isNotEmpty;
     }
   }
 
-  User? getCurrentUser() {
-    _logger.d('Getting current user: ${_userCache?.toJson() ?? 'null'}');
-    return _userCache;
+  // Get user profile
+  Future<User?> getUser() async {
+    final userJson = await _apiHelper.storage.read(key: StorageKeys.user);
+    if (userJson != null) {
+      try {
+        final userDto = UserDto.fromJson(jsonDecode(userJson));
+        return userDto.toUser();
+      } catch (e) {
+        _logger.w("Failed to parse cached user data: $e. Clearing cache.");
+        await _clearAuth();
+      }
+    }
+
+    if (await _hasNetwork()) {
+      final userDto = await _validateTokenAndGetUser();
+      if (userDto != null) {
+        return userDto.toUser();
+      }
+    }
+
+    return null;
   }
 
-  bool isAuthenticated() {
-    final authenticated = _userCache != null && _userCache!.token != null;
-    _logger.d('Checking authentication status: $authenticated');
-    return authenticated;
+  // Get current token
+  Future<String?> getToken() async {
+    return await _apiHelper.storage.read(key: StorageKeys.token);
   }
+
+  // Stream for unauthenticated events
+  Stream<void> get onUnauthenticated => _apiHelper.onUnauthenticated;
+
+  // Stream for no network events
+  Stream<void> get onNoNetwork => _apiHelper.onNoNetwork;
 }

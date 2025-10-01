@@ -1,9 +1,5 @@
 import 'package:receipts_v2/data/models/room.dart';
-import 'package:json_annotation/json_annotation.dart';
 
-part '../dtos/building.g.dart';
-
-@JsonSerializable(explicitToJson: true)
 class Building {
   final String id;
   final String name;
@@ -19,9 +15,4 @@ class Building {
       this.rooms = const [],
       required this.electricPrice,
       required this.waterPrice});
-
-  factory Building.fromJson(Map<String, dynamic> json) =>
-      _$BuildingFromJson(json);
-
-  Map<String, dynamic> toJson() => _$BuildingToJson(this);
 }

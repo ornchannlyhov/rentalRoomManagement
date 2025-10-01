@@ -1,10 +1,6 @@
 import 'package:receipts_v2/data/models/enum/gender.dart';
 import 'package:receipts_v2/data/models/room.dart';
-import 'package:json_annotation/json_annotation.dart';
 
-part '../dtos/tenant.g.dart';
-
-@JsonSerializable(explicitToJson: true)
 class Tenant {
   final String id;
   final String name;
@@ -19,9 +15,6 @@ class Tenant {
     required this.gender,
     this.room,
   });
-
-  factory Tenant.fromJson(Map<String, dynamic> json) => _$TenantFromJson(json);
-  Map<String, dynamic> toJson() => _$TenantToJson(this);
 
   Tenant copyWith({
     String? id,

@@ -55,6 +55,7 @@ class _RoomFormState extends State<RoomForm> {
         id: isEditing ? widget.room!.id : const Uuid().v4(),
         roomNumber: roomNumber,
         roomStatus: roomStatus,
+        buildingId: selectedBuilding!.id,
         price: price,
         building: selectedBuilding,
       );

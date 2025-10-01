@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:receipts_v2/data/models/building.dart';
@@ -12,10 +14,10 @@ import 'package:receipts_v2/presentation/providers/tenant_provider.dart';
 import 'package:receipts_v2/presentation/view/screen/building/widgets/building_card.dart';
 import 'package:receipts_v2/presentation/view/screen/building/widgets/building_form.dart';
 import 'package:receipts_v2/presentation/view/screen/building/widgets/switch_button.dart';
-import 'package:receipts_v2/presentation/view/screen/room/room_card.dart';
-import 'package:receipts_v2/presentation/view/screen/room/room_form.dart';
-import 'package:receipts_v2/presentation/view/screen/service/service_card.dart';
-import 'package:receipts_v2/presentation/view/screen/service/service_form.dart';
+import 'package:receipts_v2/presentation/view/screen/building/widgets/room/room_card.dart';
+import 'package:receipts_v2/presentation/view/screen/building/widgets/room/room_form.dart';
+import 'package:receipts_v2/presentation/view/screen/building/widgets/service/service_card.dart';
+import 'package:receipts_v2/presentation/view/screen/building/widgets/service/service_form.dart';
 
 class BuildingDetail extends StatefulWidget {
   final Building building;
@@ -106,7 +108,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
 
     if (confirmed && mounted) {
       final tenantProvider = context.read<TenantProvider>();
-      final tenants = tenantProvider.getTenantByBuilding(widget.building.id);
+      final tenants = tenantProvider.getTenantsByBuilding(widget.building.id);
 
       for (final tenant in tenants) {
         if (tenant.room!.id == room.id) {
@@ -234,7 +236,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
       final serviceProvider = context.read<ServiceProvider>();
 
       // Remove associated tenants
-      final tenants = tenantProvider.getTenantByBuilding(widget.building.id);
+      final tenants = tenantProvider.getTenantsByBuilding(widget.building.id);
       for (final tenant in tenants) {
         await tenantProvider.removeRoom(tenant.id);
       }
@@ -336,8 +338,10 @@ class _BuildingDetailState extends State<BuildingDetail> {
           ),
           success: (rooms) {
             final buildingRooms = rooms
-                .where((r) => r.building!.id == widget.building.id)
+                .where((r) =>
+                    r.buildingId == widget.building.id)
                 .toList();
+
             return buildingRooms.isEmpty
                 ? RefreshIndicator(
                     onRefresh: _refreshData,

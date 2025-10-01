@@ -404,7 +404,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
                         child: Text(
                           selectedBuildingId != null
                               ? 'បន្ទប់ ${room.roomNumber}'
-                              : 'បន្ទប់ ${room.roomNumber} - ${room.building!.name}',
+                              : 'បន្ទប់ ${room.roomNumber} - ${room.building?.name}',
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w500,
                           ),
