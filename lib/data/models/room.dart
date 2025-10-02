@@ -5,7 +5,6 @@ import 'package:receipts_v2/data/models/enum/room_status.dart';
 class Room {
   final String id;
   final String roomNumber;
-  final String buildingId;
   Building? building;
   Tenant? tenant;
   RoomStatus roomStatus;
@@ -16,7 +15,6 @@ class Room {
     required this.roomNumber,
     required this.roomStatus,
     required this.price,
-    required this.buildingId,
     this.building,
     this.tenant,
   });

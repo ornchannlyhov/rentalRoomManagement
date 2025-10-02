@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:receipts_v2/core/asyn_value.dart';
 import 'package:receipts_v2/data/models/building.dart';
-import 'package:receipts_v2/data/models/room.dart';
 import 'package:receipts_v2/data/repositories/buidling_repository.dart';
+import 'package:receipts_v2/presentation/providers/room_provider.dart';
 
 class BuildingProvider extends ChangeNotifier {
   final BuildingRepository _repository;
+  final RoomProvider _roomProvider;
 
-  BuildingProvider(this._repository);
+  BuildingProvider(this._repository, this._roomProvider);
 
   AsyncValue<List<Building>> _buildings = const AsyncValue.loading();
   AsyncValue<List<Building>> get buildings => _buildings;
@@ -38,72 +39,94 @@ class BuildingProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<Building> createBuilding(Building building) async {
+  Future<void> syncFromApi() async {
+    _buildings = const AsyncValue.loading();
+    notifyListeners();
+
     try {
-      final created = await _repository.createBuilding(building);
-      await load(); // Reload to sync with server
-      return created;
+      await _repository.syncFromApi();
+      final data = _repository.getAllBuildings();
+      _buildings = AsyncValue.success(data);
     } catch (e) {
       _buildings = AsyncValue.error(e);
-      notifyListeners();
+    }
+    notifyListeners();
+  }
+
+  Future<void> createBuilding(Building building) async {
+    _buildings = const AsyncValue.loading();
+    notifyListeners();
+
+    try {
+      await _repository.createBuilding(building);
+      final data = _repository.getAllBuildings();
+      _buildings = AsyncValue.success(data);
+    } catch (e) {
+      _buildings = AsyncValue.error(e);
       rethrow;
+    } finally {
+      notifyListeners();
     }
   }
 
-  Future<Building> updateBuilding(Building building) async {
+  Future<void> updateBuilding(Building building) async {
+    _buildings = const AsyncValue.loading();
+    notifyListeners();
+
     try {
-      final updated = await _repository.updateBuilding(building);
-      await load(); // Reload to sync with server
-      return updated;
+      await _repository.updateBuilding(building);
+      final data = _repository.getAllBuildings();
+      _buildings = AsyncValue.success(data);
     } catch (e) {
       _buildings = AsyncValue.error(e);
-      notifyListeners();
       rethrow;
+    } finally {
+      notifyListeners();
     }
   }
 
   Future<void> deleteBuilding(String buildingId) async {
+    _buildings = const AsyncValue.loading();
+    notifyListeners();
+
     try {
       await _repository.deleteBuilding(buildingId);
-      await load(); // Reload to sync with server
+      final data = _repository.getAllBuildings();
+      _buildings = AsyncValue.success(data);
     } catch (e) {
       _buildings = AsyncValue.error(e);
-      notifyListeners();
       rethrow;
+    } finally {
+      notifyListeners();
     }
   }
 
-  Future<void> updateRoom(String buildingId, Room room) async {
+  Future<void> restoreBuilding(int restoreIndex, Building building) async {
+    _buildings = const AsyncValue.loading();
+    notifyListeners();
+
     try {
-      await _repository.updateRoom(buildingId, room);
-      await load();
+      await _repository.restoreBuilding(restoreIndex, building);
+      final data = _repository.getAllBuildings();
+      _buildings = AsyncValue.success(data);
     } catch (e) {
       _buildings = AsyncValue.error(e);
-      notifyListeners();
       rethrow;
+    } finally {
+      notifyListeners();
     }
-  }
-
-  Building? getBuildingById(String buildingId) {
-    if (_buildings.hasData) {
-      return _repository.getBuildingById(buildingId);
-    }
-    return null;
   }
 
   bool isBuildingEmpty(String buildingId) {
-    try {
-      return _repository.isBuildingEmpty(buildingId);
-    } catch (e) {
-      return true;
+    if (_buildings.hasData && _roomProvider.hasData) {
+      final rooms = _roomProvider.getRoomsByBuilding(buildingId);
+      return rooms.isEmpty;
     }
+    return true;
   }
 
   int get buildingCount {
-    if (_buildings.hasData) {
-      return _repository.getBuildingCount();
-    }
-    return 0;
+    return _buildings.hasData ? _repository.getAllBuildings().length : 0;
   }
 
   Future<void> refresh() async {

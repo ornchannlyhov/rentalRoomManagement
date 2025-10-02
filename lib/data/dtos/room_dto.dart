@@ -112,7 +112,6 @@ class RoomDto {
       roomNumber: roomNumber,
       roomStatus: status,
       price: price,
-      buildingId: buildingId ??  building?.id ?? '',
       building: building?.toBuilding(),
       tenant: tenant?.toTenant(),
     );

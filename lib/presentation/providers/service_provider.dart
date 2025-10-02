@@ -37,11 +37,25 @@ class ServiceProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> syncFromApi() async {
+    _services = const AsyncValue.loading();
+    notifyListeners();
+
+    try {
+      await _repository.syncFromApi();
+      final data = _repository.getAllServices();
+      _services = AsyncValue.success(data);
+    } catch (e) {
+      _services = AsyncValue.error(e);
+    }
+    notifyListeners();
+  }
+
   Future<Service> createService(Service service) async {
     try {
-      final created = await _repository.createService(service);
+      await _repository.createService(service);
       await load();
-      return created;
+      return service;
     } catch (e) {
       _services = AsyncValue.error(e);
       notifyListeners();
@@ -51,9 +65,9 @@ class ServiceProvider extends ChangeNotifier {
 
   Future<Service> updateService(Service service) async {
     try {
-      final updated = await _repository.updateService(service);
+      await _repository.updateService(service);
       await load();
-      return updated;
+      return service;
     } catch (e) {
       _services = AsyncValue.error(e);
       notifyListeners();
@@ -72,11 +86,17 @@ class ServiceProvider extends ChangeNotifier {
     }
   }
 
-  Service? getServiceById(String serviceId) {
-    if (_services.hasData) {
-      return _repository.getServiceById(serviceId);
+  Future<void> restoreService(int restoreIndex, Service service) async {
+    try {
+      await _repository.restoreService(restoreIndex, service);
+      final data = _repository.getAllServices();
+      _services = AsyncValue.success(data);
+      notifyListeners();
+    } catch (e) {
+      _services = AsyncValue.error(e);
+      notifyListeners();
+      rethrow;
     }
-    return null;
   }
 
   List<Service> getServicesByBuilding(String buildingId) {
@@ -94,7 +114,7 @@ class ServiceProvider extends ChangeNotifier {
   }
 
   Future<void> refresh() async {
-    await load();
+    await syncFromApi();
   }
 
   void clearError() {

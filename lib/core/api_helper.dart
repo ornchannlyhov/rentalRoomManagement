@@ -8,9 +8,12 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class ApiHelper {
   CancelToken _cancelToken = CancelToken();
 
+  /// Public getter for cancel token (so other classes can use it)
+  CancelToken get cancelToken => _cancelToken;
+
   void cancelRequests() {
     _cancelToken.cancel('Network connection lost');
-    _cancelToken = CancelToken();
+    _cancelToken = CancelToken(); // reset so new requests can use a fresh token
   }
 
   // Singleton instance
@@ -40,7 +43,6 @@ class ApiHelper {
   Stream<bool> get onNetworkStatusChanged => _networkStatusController.stream;
 
   ApiHelper._privateConstructor() {
-    // Add Dio interceptor
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
@@ -73,7 +75,6 @@ class ApiHelper {
       ),
     );
 
-    // Watch for connectivity changes
     Connectivity().onConnectivityChanged.listen((result) async {
       final hasNet = await hasNetwork();
       _networkStatusController.add(hasNet);
@@ -83,14 +84,12 @@ class ApiHelper {
   /// Check for internet access
   Future<bool> hasNetwork() async {
     final connectivityResult = await Connectivity().checkConnectivity();
-    // ignore: unrelated_type_equality_checks
     if (connectivityResult == ConnectivityResult.none) {
       return false;
     }
     try {
       final result = await InternetAddress.lookup('google.com');
-      final hasInternet = result.isNotEmpty && result[0].rawAddress.isNotEmpty;
-      return hasInternet;
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
     } on SocketException catch (_) {
       return false;
     }

@@ -339,7 +339,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
           success: (rooms) {
             final buildingRooms = rooms
                 .where((r) =>
-                    r.buildingId == widget.building.id)
+                    r.building!.id == widget.building.id)
                 .toList();
 
             return buildingRooms.isEmpty

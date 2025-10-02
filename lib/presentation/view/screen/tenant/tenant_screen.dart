@@ -30,7 +30,7 @@ class _TenantScreenState extends State<TenantScreen>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  String? _selectedBuildingId; // State for the selected building filter
+  String? _selectedBuildingId; 
 
   @override
   void initState() {

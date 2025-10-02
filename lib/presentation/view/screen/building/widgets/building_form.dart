@@ -80,7 +80,6 @@ class _BuildingFormState extends State<BuildingForm> {
             roomNumber: room.roomNumber,
             roomStatus: room.roomStatus,
             price: room.price,
-            buildingId: buildingId,
             building: tempBuilding,
             tenant: room.tenant,
           );
@@ -94,7 +93,6 @@ class _BuildingFormState extends State<BuildingForm> {
               roomNumber: i.toString(),
               roomStatus: RoomStatus.available,
               price: rentPrice,
-              buildingId: buildingId,
               building: tempBuilding, 
               tenant: null,
             ),

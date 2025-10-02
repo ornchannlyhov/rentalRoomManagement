@@ -1,254 +1,299 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
-import 'package:logger/logger.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:receipts_v2/core/api_helper.dart';
-import 'package:receipts_v2/data/dtos/room_dto.dart';
-import 'package:receipts_v2/data/models/enum/room_status.dart';
 import 'package:receipts_v2/data/models/room.dart';
 import 'package:receipts_v2/data/models/tenant.dart';
-import 'package:receipts_v2/data/repositories/auth_repository.dart';
+import 'package:receipts_v2/data/models/enum/room_status.dart';
+import 'package:receipts_v2/data/dtos/room_dto.dart';
+import 'package:receipts_v2/data/dtos/building_dto.dart';
+import 'package:receipts_v2/data/dtos/tenant_dto.dart';
+import 'package:logger/logger.dart';
 
 class RoomRepository {
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  final String storageKey = 'room_secure_data';
   final ApiHelper _apiHelper = ApiHelper.instance;
   final Logger _logger = Logger();
-  final AuthRepository _authRepository;
 
   List<Room> _roomCache = [];
 
-  RoomRepository(this._authRepository);
-
-  Future<bool> _hasNetwork() => _apiHelper.hasNetwork();
-
-  Future<String?> _getToken() async {
-    final token = await _authRepository.getToken();
-    if (token == null || token.isEmpty) {
-      throw Exception('Not authenticated. Please login again.');
-    }
-    return token;
-  }
-
-  Future<List<RoomDto>> _fetchRoomDtos() async {
-    if (!await _hasNetwork()) {
-      throw Exception('No internet connection.');
-    }
-
-    final token = await _getToken();
-    final url = '${_apiHelper.baseUrl}/rooms';
-
-    try {
-      final response = await _apiHelper.dio.get(
-        url,
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
-      );
-
-      if (response.statusCode == 200) {
-        final data = response.data['data'] ?? response.data;
-        if (data is List) {
-          return data.map((json) => RoomDto.fromJson(json)).toList();
-        }
-        throw Exception('Unexpected response format');
-      } else {
-        throw Exception('Failed to fetch rooms: ${response.statusCode}');
-      }
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        throw Exception('Session expired. Please login again.');
-      }
-      _logger.e('fetchRoomDtos error: ${e.message}');
-      final errorMessage = e.response?.data['message'] ??
-          e.response?.data['error'] ??
-          'Failed to fetch rooms';
-      throw Exception(errorMessage);
-    }
-  }
-
   Future<void> load() async {
     try {
-      final dtos = await _fetchRoomDtos();
-      _roomCache = dtos.map((dto) => dto.toRoom()).toList();
-      _logger.i('Rooms loaded successfully: ${_roomCache.length} rooms');
-    } catch (e) {
-      _logger.e('Failed to load rooms: $e');
-      if (_roomCache.isEmpty) {
-        throw Exception('Failed to load room data: $e');
-      }
-      rethrow;
-    }
-  }
+      _logger.i('Loading rooms from secure storage');
+      final jsonString = await _secureStorage.read(key: storageKey);
+      if (jsonString != null && jsonString.isNotEmpty) {
+        final List<dynamic> jsonData = jsonDecode(jsonString);
+        _roomCache = jsonData.map((json) {
+          final roomDto = RoomDto.fromJson(json);
+          final room = roomDto.toRoom();
 
-  Future<Room> createRoom(Room newRoom) async {
-    if (!await _hasNetwork()) {
-      throw Exception('No internet connection.');
-    }
+          // Preserve building data if present in storage
+          if (roomDto.building != null) {
+            room.building = roomDto.building!.toBuilding();
+          }
 
-    final token = await _getToken();
-    final url = '${_apiHelper.baseUrl}/rooms';
+          // Preserve tenant data if present in storage
+          if (roomDto.tenant != null) {
+            room.tenant = roomDto.tenant!.toTenant();
+          }
 
-    try {
-      final requestBody = {
-        'buildingId': newRoom.building!.id,
-        'roomNumber': newRoom.roomNumber,
-        'price': newRoom.price,
-        'roomStatus': newRoom.roomStatus.name,
-        if (newRoom.tenant != null) 'tenantChatId': 0, // Add if needed
-      };
-
-      final response = await _apiHelper.dio.post(
-        url,
-        data: requestBody,
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
-      );
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        final roomDto =
-            RoomDto.fromJson(response.data['data'] ?? response.data);
-        final createdRoom = roomDto.toRoom();
-        _roomCache.add(createdRoom);
-        _logger.i('Room created successfully');
-        return createdRoom;
+          return room;
+        }).toList();
+        _logger.i('Loaded ${_roomCache.length} rooms from storage');
       } else {
-        throw Exception('Failed to create room: ${response.statusCode}');
+        _roomCache = [];
       }
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        throw Exception('Session expired. Please login again.');
-      }
-      if (e.response?.statusCode == 403) {
-        throw Exception('Building not found or not authorized');
-      }
-      _logger.e('createRoom error: ${e.message}');
-      final errorMessage = e.response?.data['message'] ??
-          e.response?.data['error'] ??
-          'Failed to create room';
-      throw Exception(errorMessage);
+    } catch (e) {
+      _logger.e('Failed to load rooms from secure storage: $e');
+      throw Exception('Failed to load room data from secure storage: $e');
     }
   }
 
-  Future<Room> updateRoom(Room updatedRoom) async {
-    if (!await _hasNetwork()) {
-      throw Exception('No internet connection.');
-    }
-
-    final token = await _getToken();
-    final url = '${_apiHelper.baseUrl}/rooms/${updatedRoom.id}';
-
+  Future<void> save() async {
     try {
-      final requestBody = {
-        'roomNumber': updatedRoom.roomNumber,
-        'price': updatedRoom.price,
-        'roomStatus': updatedRoom.roomStatus.name,
-        if (updatedRoom.tenant != null) 'tenantChatId': 0, // Add if needed
-      };
+      final jsonString = jsonEncode(_roomCache.map((room) {
+        // Save room with building AND tenant references
+        final roomDto = RoomDto(
+          id: room.id,
+          roomNumber: room.roomNumber,
+          roomStatus:
+              room.roomStatus == RoomStatus.occupied ? 'occupied' : 'available',
+          price: room.price,
+          buildingId: room.building?.id,
+          building: room.building != null
+              ? BuildingDto(
+                  id: room.building!.id,
+                  name: room.building!.name,
+                  rentPrice: room.building!.rentPrice,
+                  electricPrice: room.building!.electricPrice,
+                  waterPrice: room.building!.waterPrice,
+                )
+              : null,
+          tenant: room.tenant != null
+              ? TenantDto(
+                  id: room.tenant!.id,
+                  name: room.tenant!.name,
+                  phoneNumber: room.tenant!.phoneNumber,
+                  gender: room.tenant!.gender.toString().split('.').last,
+                  roomId: room.id,
+                )
+              : null,
+        );
+        return roomDto.toJson();
+      }).toList());
+      await _secureStorage.write(key: storageKey, value: jsonString);
+      _logger.d('Saved ${_roomCache.length} rooms to storage');
+    } catch (e) {
+      _logger.e('Failed to save rooms to secure storage: $e');
+      throw Exception('Failed to save room data to secure storage: $e');
+    }
+  }
 
-      final response = await _apiHelper.dio.put(
-        url,
-        data: requestBody,
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
+  Future<void> syncFromApi() async {
+    try {
+      if (!await _apiHelper.hasNetwork()) {
+        _logger.w('No network connection, skipping sync');
+        return;
+      }
+
+      final token = await _secureStorage.read(key: 'auth_token');
+      if (token == null) {
+        _logger.w('No auth token found, skipping sync');
+        return;
+      }
+
+      _logger.i('Syncing rooms from API');
+      final response = await _apiHelper.dio.get(
+        '${_apiHelper.baseUrl}/rooms',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+        cancelToken: _apiHelper.cancelToken,
       );
+
+      if (response.data['cancelled'] == true) {
+        _logger.w('Request cancelled due to network loss');
+        return;
+      }
 
       if (response.statusCode == 200) {
-        final index = _roomCache.indexWhere((r) => r.id == updatedRoom.id);
-        if (index != -1) {
-          _roomCache[index] = updatedRoom;
+        final List<dynamic> roomsJson = response.data['data'];
+        _roomCache = roomsJson.map((json) {
+          final roomDto = RoomDto.fromJson(json);
+          final room = roomDto.toRoom();
+
+          // Preserve building reference from API response
+          if (roomDto.building != null) {
+            room.building = roomDto.building!.toBuilding();
+          }
+
+          // Preserve tenant reference from API response
+          if (roomDto.tenant != null) {
+            room.tenant = roomDto.tenant!.toTenant();
+          }
+
+          return room;
+        }).toList();
+        await save();
+        _logger.i('Synced ${_roomCache.length} rooms from API');
+      }
+    } catch (e) {
+      _logger.e('Failed to sync rooms from API: $e');
+      // Don't throw - fallback to cached data
+    }
+  }
+
+  Future<void> createRoom(Room newRoom) async {
+    try {
+      if (await _apiHelper.hasNetwork()) {
+        final token = await _secureStorage.read(key: 'auth_token');
+        if (token != null) {
+          _logger.i('Creating room via API: ${newRoom.roomNumber}');
+
+          final response = await _apiHelper.dio.post(
+            '${_apiHelper.baseUrl}/rooms',
+            data: {
+              'buildingId': newRoom.building?.id,
+              'roomNumber': newRoom.roomNumber,
+              'price': newRoom.price,
+              'roomStatus': newRoom.roomStatus == RoomStatus.occupied
+                  ? 'occupied'
+                  : 'available',
+              if (newRoom.tenant != null) 'tenantChatId': 0, // Placeholder
+            },
+            options: Options(headers: {'Authorization': 'Bearer $token'}),
+            cancelToken: _apiHelper.cancelToken,
+          );
+
+          if (response.data['cancelled'] == true) {
+            _logger.w('Request cancelled, saving locally');
+            _roomCache.add(newRoom);
+            await save();
+            return;
+          }
+
+          if (response.statusCode == 201) {
+            final roomDto = RoomDto.fromJson(response.data['data']);
+            final createdRoom = roomDto.toRoom();
+
+            // Preserve the building and tenant references from newRoom
+            createdRoom.building = newRoom.building;
+            createdRoom.tenant = newRoom.tenant;
+
+            _roomCache.add(createdRoom);
+            _logger.i('Room created successfully via API');
+          }
+        } else {
+          _roomCache.add(newRoom);
         }
-        _logger.i('Room updated successfully');
-        return updatedRoom;
-      } else if (response.statusCode == 400) {
-        throw Exception('No changes detected');
       } else {
-        throw Exception('Failed to update room: ${response.statusCode}');
+        _roomCache.add(newRoom);
       }
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        throw Exception('Session expired. Please login again.');
+
+      await save();
+    } catch (e) {
+      _logger.e('Failed to create room: $e');
+      throw Exception('Failed to create room: $e');
+    }
+  }
+
+  Future<void> updateRoom(Room updatedRoom) async {
+    try {
+      if (await _apiHelper.hasNetwork()) {
+        final token = await _secureStorage.read(key: 'auth_token');
+        if (token != null) {
+          _logger.i('Updating room via API: ${updatedRoom.id}');
+
+          final response = await _apiHelper.dio.put(
+            '${_apiHelper.baseUrl}/rooms/${updatedRoom.id}',
+            data: {
+              'roomNumber': updatedRoom.roomNumber,
+              'price': updatedRoom.price,
+              'roomStatus': updatedRoom.roomStatus == RoomStatus.occupied
+                  ? 'occupied'
+                  : 'available',
+            },
+            options: Options(headers: {'Authorization': 'Bearer $token'}),
+            cancelToken: _apiHelper.cancelToken,
+          );
+
+          if (response.data['cancelled'] != true &&
+              response.statusCode != 200) {
+            throw Exception('Failed to update room via API');
+          }
+        }
       }
-      if (e.response?.statusCode == 404) {
-        throw Exception('Room not found or not authorized');
+
+      final index = _roomCache.indexWhere((room) => room.id == updatedRoom.id);
+      if (index != -1) {
+        // Preserve building and tenant references if not explicitly changed
+        if (updatedRoom.building == null &&
+            _roomCache[index].building != null) {
+          updatedRoom.building = _roomCache[index].building;
+        }
+        if (updatedRoom.tenant == null && _roomCache[index].tenant != null) {
+          updatedRoom.tenant = _roomCache[index].tenant;
+        }
+
+        _roomCache[index] = updatedRoom;
+        await save();
+        _logger.i('Room updated successfully');
+      } else {
+        throw Exception('Room not found: ${updatedRoom.id}');
       }
-      if (e.response?.statusCode == 400) {
-        throw Exception('No changes detected');
-      }
-      _logger.e('updateRoom error: ${e.message}');
-      final errorMessage = e.response?.data['message'] ??
-          e.response?.data['error'] ??
-          'Failed to update room';
-      throw Exception(errorMessage);
+    } catch (e) {
+      _logger.e('Failed to update room: $e');
+      throw Exception('Failed to update room: $e');
     }
   }
 
   Future<void> deleteRoom(String roomId) async {
-    if (!await _hasNetwork()) {
-      throw Exception('No internet connection.');
-    }
-
-    final token = await _getToken();
-    final url = '${_apiHelper.baseUrl}/rooms/$roomId';
-
     try {
-      final response = await _apiHelper.dio.delete(
-        url,
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
-      );
+      if (await _apiHelper.hasNetwork()) {
+        final token = await _secureStorage.read(key: 'auth_token');
+        if (token != null) {
+          _logger.i('Deleting room via API: $roomId');
 
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        _roomCache.removeWhere((r) => r.id == roomId);
-        _logger.i('Room deleted successfully');
-      } else {
-        throw Exception('Failed to delete room: ${response.statusCode}');
+          final response = await _apiHelper.dio.delete(
+            '${_apiHelper.baseUrl}/rooms/$roomId',
+            options: Options(headers: {'Authorization': 'Bearer $token'}),
+            cancelToken: _apiHelper.cancelToken,
+          );
+
+          if (response.data['cancelled'] != true &&
+              response.statusCode != 200) {
+            throw Exception('Failed to delete room via API');
+          }
+        }
       }
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        throw Exception('Session expired. Please login again.');
-      }
-      if (e.response?.statusCode == 404) {
-        throw Exception('Room not found or not authorized');
-      }
-      _logger.e('deleteRoom error: ${e.message}');
-      final errorMessage = e.response?.data['message'] ??
-          e.response?.data['error'] ??
-          'Failed to delete room';
-      throw Exception(errorMessage);
+
+      _roomCache.removeWhere((room) => room.id == roomId);
+      await save();
+      _logger.i('Room deleted successfully');
+    } catch (e) {
+      _logger.e('Failed to delete room: $e');
+      throw Exception('Failed to delete room: $e');
     }
+  }
+
+  Future<void> restoreRoom(int restoreIndex, Room room) async {
+    _roomCache.insert(restoreIndex, room);
+    await save();
   }
 
   Future<void> updateRoomStatus(String roomId, RoomStatus status) async {
-    final room = _roomCache.firstWhere(
-      (r) => r.id == roomId,
-      orElse: () => throw Exception('Room not found'),
-    );
-    final updatedRoom = Room(
-      id: room.id,
-      roomNumber: room.roomNumber,
-      roomStatus: status,
-      price: room.price,
-      buildingId: room.buildingId,
-      building: room.building,
-      tenant: room.tenant,
-    );
-    await updateRoom(updatedRoom);
+    final room = _roomCache.firstWhere((room) => room.id == roomId);
+    room.roomStatus = status;
+    await updateRoom(room);
   }
 
   Future<void> addTenant(String roomId, Tenant tenant) async {
-    final room = _roomCache.firstWhere(
-      (r) => r.id == roomId,
-      orElse: () => throw Exception('Room not found'),
-    );
+    final room = _roomCache.firstWhere((room) => room.id == roomId);
     room.tenant = tenant;
     await updateRoom(room);
   }
 
   Future<void> removeTenant(String roomId) async {
-    final room = _roomCache.firstWhere(
-      (r) => r.id == roomId,
-      orElse: () => throw Exception('Room not found'),
-    );
+    final room = _roomCache.firstWhere((room) => room.id == roomId);
     room.tenant = null;
     await updateRoom(room);
   }
@@ -265,26 +310,5 @@ class RoomRepository {
 
   List<Room> getThisBuildingRooms(String buildingId) {
     return _roomCache.where((room) => room.building?.id == buildingId).toList();
-  }
-
-  Room? getRoomById(String roomId) {
-    try {
-      return _roomCache.firstWhere((r) => r.id == roomId);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  int getRoomCount() {
-    return _roomCache.length;
-  }
-
-  void clearCache() {
-    _roomCache.clear();
-    _logger.i('Room cache cleared');
-  }
-
-  bool hasData() {
-    return _roomCache.isNotEmpty;
   }
 }

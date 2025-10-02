@@ -39,11 +39,27 @@ class RoomProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<Room> createRoom(Room room) async {
+  Future<void> syncFromApi() async {
+    _rooms = const AsyncValue.loading();
+    notifyListeners();
+
     try {
-      final created = await _repository.createRoom(room);
-      await load();
-      return created;
+      await _repository.syncFromApi();
+      final data = _repository.getAllRooms();
+      _rooms = AsyncValue.success(data);
+    } catch (e) {
+      _rooms = AsyncValue.error(e);
+    }
+    notifyListeners();
+  }
+
+  Future<void> createRoom(Room room) async {
+    try {
+      await _repository.createRoom(room);
+      // Update the local state with the new data from repository
+      final data = _repository.getAllRooms();
+      _rooms = AsyncValue.success(data);
+      notifyListeners();
     } catch (e) {
       _rooms = AsyncValue.error(e);
       notifyListeners();
@@ -51,11 +67,13 @@ class RoomProvider extends ChangeNotifier {
     }
   }
 
-  Future<Room> updateRoom(Room room) async {
+  Future<void> updateRoom(Room room) async {
     try {
-      final updated = await _repository.updateRoom(room);
-      await load();
-      return updated;
+      await _repository.updateRoom(room);
+      // Update the local state with the updated data from repository
+      final data = _repository.getAllRooms();
+      _rooms = AsyncValue.success(data);
+      notifyListeners();
     } catch (e) {
       _rooms = AsyncValue.error(e);
       notifyListeners();
@@ -66,7 +84,24 @@ class RoomProvider extends ChangeNotifier {
   Future<void> deleteRoom(String roomId) async {
     try {
       await _repository.deleteRoom(roomId);
-      await load();
+      // Update the local state with the updated data from repository
+      final data = _repository.getAllRooms();
+      _rooms = AsyncValue.success(data);
+      notifyListeners();
+    } catch (e) {
+      _rooms = AsyncValue.error(e);
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> restoreRoom(int restoreIndex, Room room) async {
+    try {
+      await _repository.restoreRoom(restoreIndex, room);
+      // Update the local state with the updated data from repository
+      final data = _repository.getAllRooms();
+      _rooms = AsyncValue.success(data);
+      notifyListeners();
     } catch (e) {
       _rooms = AsyncValue.error(e);
       notifyListeners();
@@ -77,7 +112,10 @@ class RoomProvider extends ChangeNotifier {
   Future<void> updateRoomStatus(String roomId, RoomStatus status) async {
     try {
       await _repository.updateRoomStatus(roomId, status);
-      await load();
+      // Update the local state with the updated data from repository
+      final data = _repository.getAllRooms();
+      _rooms = AsyncValue.success(data);
+      notifyListeners();
     } catch (e) {
       _rooms = AsyncValue.error(e);
       notifyListeners();
@@ -88,7 +126,10 @@ class RoomProvider extends ChangeNotifier {
   Future<void> addTenant(String roomId, Tenant tenant) async {
     try {
       await _repository.addTenant(roomId, tenant);
-      await load();
+      // Update the local state with the updated data from repository
+      final data = _repository.getAllRooms();
+      _rooms = AsyncValue.success(data);
+      notifyListeners();
     } catch (e) {
       _rooms = AsyncValue.error(e);
       notifyListeners();
@@ -99,7 +140,10 @@ class RoomProvider extends ChangeNotifier {
   Future<void> removeTenant(String roomId) async {
     try {
       await _repository.removeTenant(roomId);
-      await load();
+      // Update the local state with the updated data from repository
+      final data = _repository.getAllRooms();
+      _rooms = AsyncValue.success(data);
+      notifyListeners();
     } catch (e) {
       _rooms = AsyncValue.error(e);
       notifyListeners();
@@ -109,7 +153,13 @@ class RoomProvider extends ChangeNotifier {
 
   Room? getRoomById(String roomId) {
     if (_rooms.hasData) {
-      return _repository.getRoomById(roomId);
+      try {
+        return _rooms.data!.firstWhere(
+          (room) => room.id == roomId,
+        );
+      } catch (e) {
+        return null;
+      }
     }
     return null;
   }
@@ -130,7 +180,7 @@ class RoomProvider extends ChangeNotifier {
 
   int get roomCount {
     if (_rooms.hasData) {
-      return _repository.getRoomCount();
+      return _rooms.data!.length;
     }
     return 0;
   }

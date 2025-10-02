@@ -1,275 +1,299 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
-import 'package:logger/logger.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:receipts_v2/core/api_helper.dart';
-import 'package:receipts_v2/data/dtos/building_dto.dart';
 import 'package:receipts_v2/data/models/building.dart';
+import 'package:receipts_v2/data/dtos/building_dto.dart';
 import 'package:receipts_v2/data/models/room.dart';
-import 'package:receipts_v2/data/repositories/auth_repository.dart';
 import 'package:receipts_v2/data/repositories/room_repository.dart';
+import 'package:logger/logger.dart';
 
 class BuildingRepository {
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  final String storageKey = 'building_secure_data';
   final ApiHelper _apiHelper = ApiHelper.instance;
   final Logger _logger = Logger();
+
   List<Building> _buildingCache = [];
-
   final RoomRepository _roomRepository;
-  final AuthRepository _authRepository;
 
-  BuildingRepository(this._roomRepository, this._authRepository);
-
-  Future<bool> _hasNetwork() => _apiHelper.hasNetwork();
-
-  Future<String?> _getToken() async {
-    final token = await _authRepository.getToken();
-    if (token == null || token.isEmpty) {
-      throw Exception('Not authenticated. Please login again.');
-    }
-    return token;
-  }
-
-  Future<List<BuildingDto>> _fetchBuildingDtos() async {
-    if (!await _hasNetwork()) {
-      throw Exception('No internet connection.');
-    }
-
-    final token = await _getToken();
-    final url = '${_apiHelper.baseUrl}/buildings';
-
-    try {
-      final response = await _apiHelper.dio.get(
-        url,
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
-      );
-
-      if (response.statusCode == 200) {
-        final data = response.data['data'] ?? response.data;
-        if (data is List) {
-          return data.map((json) => BuildingDto.fromJson(json)).toList();
-        }
-        throw Exception('Unexpected response format');
-      } else {
-        throw Exception('Failed to fetch buildings: ${response.statusCode}');
-      }
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        throw Exception('Session expired. Please login again.');
-      }
-      _logger.e('fetchBuildingDtos error: ${e.message}');
-      final errorMessage = e.response?.data['message'] ??
-          e.response?.data['error'] ??
-          'Failed to fetch buildings';
-      throw Exception(errorMessage);
-    }
-  }
+  BuildingRepository(this._roomRepository);
 
   Future<void> load() async {
     try {
-      final dtos = await _fetchBuildingDtos();
-      _buildingCache = dtos.map((dto) => dto.toBuilding()).toList();
-      _logger.i(
-          'Buildings loaded successfully: ${_buildingCache.length} buildings');
-    } catch (e) {
-      _logger.e('Failed to load buildings: $e');
-      if (_buildingCache.isEmpty) {
-        throw Exception('Failed to load building data: $e');
-      }
-      rethrow;
-    }
-  }
+      _logger.i('Loading buildings from secure storage');
+      final jsonString = await _secureStorage.read(key: storageKey);
+      if (jsonString != null && jsonString.isNotEmpty) {
+        final List<dynamic> jsonData = jsonDecode(jsonString);
+        _buildingCache = jsonData
+            .map((json) => BuildingDto.fromJson(json).toBuilding())
+            .toList();
 
-  Future<Building> createBuilding(Building newBuilding) async {
-    if (!await _hasNetwork()) {
-      throw Exception('No internet connection.');
-    }
+        // Restore room-building relationships
+        await _linkRoomsToBuildings();
 
-    final token = await _getToken();
-    final url = '${_apiHelper.baseUrl}/buildings';
-
-    try {
-      final requestBody = {
-        'name': newBuilding.name,
-        'rentPrice': newBuilding.rentPrice,
-        'electricPrice': newBuilding.electricPrice,
-        'waterPrice': newBuilding.waterPrice,
-      };
-
-      final response = await _apiHelper.dio.post(
-        url,
-        data: requestBody,
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
-      );
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        // Parse response - API wraps in 'data' key
-        final responseData = response.data['data'] ?? response.data;
-        final buildingDto = BuildingDto.fromJson(responseData);
-        final createdBuilding = buildingDto.toBuilding();
-        _buildingCache.add(createdBuilding);
-
-        // If newBuilding has rooms, create them
-        if (newBuilding.rooms.isNotEmpty) {
-          for (Room room in newBuilding.rooms) {
-            final roomWithBuildingRef = Room(
-              id: room.id,
-              roomNumber: room.roomNumber,
-              roomStatus: room.roomStatus,
-              price: room.price,
-              buildingId: createdBuilding.id,
-              building: createdBuilding,
-              tenant: room.tenant,
-            );
-            await _roomRepository.createRoom(roomWithBuildingRef);
-          }
-        }
-
-        _logger.i('Building created successfully');
-        return createdBuilding;
-      } else if (response.statusCode == 400) {
-        final errorMessage = response.data['message'] ??
-            response.data['error'] ??
-            'Building name is required';
-        throw Exception(errorMessage);
-      } else if (response.statusCode == 409) {
-        final errorMessage = response.data['message'] ??
-            response.data['error'] ??
-            'Building with this name already exists';
-        throw Exception(errorMessage);
+        _logger.i('Loaded ${_buildingCache.length} buildings from storage');
       } else {
-        throw Exception('Failed to create building');
+        _buildingCache = [];
       }
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        throw Exception('Session expired. Please login again.');
-      }
-      if (e.response?.statusCode == 400) {
-        final errorMessage = e.response?.data['message'] ??
-            e.response?.data['error'] ??
-            'Building name is required';
-        throw Exception(errorMessage);
-      }
-      if (e.response?.statusCode == 409) {
-        final errorMessage = e.response?.data['message'] ??
-            e.response?.data['error'] ??
-            'Building with this name already exists';
-        throw Exception(errorMessage);
-      }
-      _logger.e('createBuilding error: ${e.message}');
-      final errorMessage = e.response?.data['message'] ??
-          e.response?.data['error'] ??
-          'Failed to create building';
-      throw Exception(errorMessage);
+    } catch (e) {
+      _logger.e('Failed to load buildings from secure storage: $e');
+      throw Exception('Failed to load building data from secure storage: $e');
     }
   }
 
-  Future<Building> updateBuilding(Building updatedBuilding) async {
-    if (!await _hasNetwork()) {
-      throw Exception('No internet connection.');
+  Future<void> _linkRoomsToBuildings() async {
+    final allRooms = _roomRepository.getAllRooms();
+
+    for (var building in _buildingCache) {
+      final buildingRooms =
+          allRooms.where((room) => room.building?.id == building.id).toList();
+
+      // Update the building's rooms list
+      building.rooms.clear();
+      building.rooms.addAll(buildingRooms);
+
+      // Ensure each room has proper building reference
+      for (var room in buildingRooms) {
+        room.building = building;
+      }
     }
+  }
 
-    final token = await _getToken();
-    final url = '${_apiHelper.baseUrl}/buildings/${updatedBuilding.id}';
-
+  Future<void> save() async {
     try {
-      final requestBody = {
-        'name': updatedBuilding.name,
-        'rentPrice': updatedBuilding.rentPrice,
-        'electricPrice': updatedBuilding.electricPrice,
-        'waterPrice': updatedBuilding.waterPrice,
-      };
+      final jsonString = jsonEncode(_buildingCache
+          .map((b) => BuildingDto(
+                id: b.id,
+                name: b.name,
+                rentPrice: b.rentPrice,
+                electricPrice: b.electricPrice,
+                waterPrice: b.waterPrice,
+              ).toJson())
+          .toList());
+      await _secureStorage.write(key: storageKey, value: jsonString);
+      _logger.d('Saved ${_buildingCache.length} buildings to storage');
+    } catch (e) {
+      _logger.e('Failed to save buildings to secure storage: $e');
+      throw Exception('Failed to save building data to secure storage: $e');
+    }
+  }
 
-      final response = await _apiHelper.dio.put(
-        url,
-        data: requestBody,
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
+  Future<void> syncFromApi() async {
+    try {
+      if (!await _apiHelper.hasNetwork()) {
+        _logger.w('No network connection, skipping sync');
+        return;
+      }
+
+      final token = await _secureStorage.read(key: 'auth_token');
+      if (token == null) {
+        _logger.w('No auth token found, skipping sync');
+        return;
+      }
+
+      _logger.i('Syncing buildings from API');
+      final response = await _apiHelper.dio.get(
+        '${_apiHelper.baseUrl}/buildings',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+        cancelToken: _apiHelper.cancelToken,
       );
+
+      if (response.data['cancelled'] == true) {
+        _logger.w('Request cancelled due to network loss');
+        return;
+      }
 
       if (response.statusCode == 200) {
-        final index =
-            _buildingCache.indexWhere((b) => b.id == updatedBuilding.id);
-        if (index != -1) {
-          _buildingCache[index] = updatedBuilding;
+        final List<dynamic> buildingsJson = response.data['data'];
+        _buildingCache = buildingsJson
+            .map((json) => BuildingDto.fromJson(json).toBuilding())
+            .toList();
+
+        // Sync rooms separately and link them
+        await _roomRepository.syncFromApi();
+        await _linkRoomsToBuildings();
+
+        await save();
+        _logger.i('Synced ${_buildingCache.length} buildings from API');
+      }
+    } catch (e) {
+      _logger.e('Failed to sync buildings from API: $e');
+      // Don't throw - fallback to cached data
+    }
+  }
+
+  Future<void> createBuilding(Building newBuilding) async {
+    try {
+      if (await _apiHelper.hasNetwork()) {
+        final token = await _secureStorage.read(key: 'auth_token');
+        if (token != null) {
+          _logger.i('Creating building via API: ${newBuilding.name}');
+
+          final response = await _apiHelper.dio.post(
+            '${_apiHelper.baseUrl}/buildings',
+            data: {
+              'name': newBuilding.name,
+              'rentPrice': newBuilding.rentPrice,
+              'electricPrice': newBuilding.electricPrice,
+              'waterPrice': newBuilding.waterPrice,
+            },
+            options: Options(headers: {'Authorization': 'Bearer $token'}),
+            cancelToken: _apiHelper.cancelToken,
+          );
+
+          if (response.data['cancelled'] == true) {
+            _logger.w('Request cancelled, saving locally');
+            _buildingCache.add(newBuilding);
+            await save();
+            return;
+          }
+
+          if (response.statusCode == 201) {
+            final createdBuilding =
+                BuildingDto.fromJson(response.data['data']).toBuilding();
+
+            // Transfer rooms from newBuilding to createdBuilding
+            createdBuilding.rooms.addAll(newBuilding.rooms);
+            _buildingCache.add(createdBuilding);
+
+            // Save rooms with proper building reference
+            if (createdBuilding.rooms.isNotEmpty) {
+              for (var room in createdBuilding.rooms) {
+                room.building = createdBuilding;
+                await _roomRepository.createRoom(room);
+              }
+            }
+
+            _logger.i('Building created successfully via API');
+          }
+        } else {
+          _buildingCache.add(newBuilding);
         }
-        _logger.i('Building updated successfully');
-        return updatedBuilding;
-      } else if (response.statusCode == 404) {
-        throw Exception('Building not found or not authorized');
       } else {
-        throw Exception('Failed to update building');
+        _buildingCache.add(newBuilding);
       }
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        throw Exception('Session expired. Please login again.');
+
+      // Save rooms to RoomRepository if not online
+      if (newBuilding.rooms.isNotEmpty) {
+        for (var room in newBuilding.rooms) {
+          room.building = newBuilding;
+          // Check if room already exists in repository
+          final existingRooms = _roomRepository.getAllRooms();
+          if (!existingRooms.any((r) => r.id == room.id)) {
+            await _roomRepository.createRoom(room);
+          }
+        }
       }
-      if (e.response?.statusCode == 404) {
-        throw Exception('Building not found or not authorized');
+
+      await save();
+    } catch (e) {
+      _logger.e('Failed to create building: $e');
+      throw Exception('Failed to create building: $e');
+    }
+  }
+
+  Future<void> updateBuilding(Building updatedBuilding) async {
+    try {
+      if (await _apiHelper.hasNetwork()) {
+        final token = await _secureStorage.read(key: 'auth_token');
+        if (token != null) {
+          _logger.i('Updating building via API: ${updatedBuilding.id}');
+
+          final response = await _apiHelper.dio.put(
+            '${_apiHelper.baseUrl}/buildings/${updatedBuilding.id}',
+            data: {
+              'name': updatedBuilding.name,
+              'rentPrice': updatedBuilding.rentPrice,
+              'electricPrice': updatedBuilding.electricPrice,
+              'waterPrice': updatedBuilding.waterPrice,
+            },
+            options: Options(headers: {'Authorization': 'Bearer $token'}),
+            cancelToken: _apiHelper.cancelToken,
+          );
+
+          if (response.data['cancelled'] != true &&
+              response.statusCode != 200) {
+            throw Exception('Failed to update building via API');
+          }
+        }
       }
-      _logger.e('updateBuilding error: ${e.message}');
-      final errorMessage = e.response?.data['message'] ??
-          e.response?.data['error'] ??
-          'Failed to update building';
-      throw Exception(errorMessage);
+
+      final index =
+          _buildingCache.indexWhere((b) => b.id == updatedBuilding.id);
+      if (index != -1) {
+        // Preserve room relationships
+        final oldRooms = _buildingCache[index].rooms;
+        _buildingCache[index] = updatedBuilding;
+        updatedBuilding.rooms.clear();
+        updatedBuilding.rooms.addAll(oldRooms);
+
+        // Update building reference in rooms
+        for (var room in updatedBuilding.rooms) {
+          room.building = updatedBuilding;
+          await _roomRepository.updateRoom(room);
+        }
+
+        await save();
+        _logger.i('Building updated successfully');
+      } else {
+        throw Exception('Building not found: ${updatedBuilding.id}');
+      }
+    } catch (e) {
+      _logger.e('Failed to update building: $e');
+      throw Exception('Failed to update building: $e');
     }
   }
 
   Future<void> deleteBuilding(String buildingId) async {
-    if (!await _hasNetwork()) {
-      throw Exception('No internet connection.');
-    }
-
-    final token = await _getToken();
-    final url = '${_apiHelper.baseUrl}/buildings/$buildingId';
-
     try {
-      final response = await _apiHelper.dio.delete(
-        url,
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
-      );
+      if (await _apiHelper.hasNetwork()) {
+        final token = await _secureStorage.read(key: 'auth_token');
+        if (token != null) {
+          _logger.i('Deleting building via API: $buildingId');
 
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        // Delete associated rooms from cache
-        final buildingToDelete = _buildingCache.firstWhere(
-          (b) => b.id == buildingId,
-          orElse: () => throw Exception('Building not found in cache'),
-        );
+          final response = await _apiHelper.dio.delete(
+            '${_apiHelper.baseUrl}/buildings/$buildingId',
+            options: Options(headers: {'Authorization': 'Bearer $token'}),
+            cancelToken: _apiHelper.cancelToken,
+          );
 
-        if (buildingToDelete.rooms.isNotEmpty) {
-          for (Room room in buildingToDelete.rooms) {
-            try {
-              await _roomRepository.deleteRoom(room.id);
-            } catch (e) {
-              _logger.w('Failed to delete room ${room.id}: $e');
-            }
+          if (response.data['cancelled'] != true &&
+              response.statusCode != 200) {
+            throw Exception('Failed to delete building via API');
           }
         }
+      }
 
-        _buildingCache.removeWhere((b) => b.id == buildingId);
-        _logger.i('Building deleted successfully');
-      } else if (response.statusCode == 404) {
-        throw Exception('Building not found or not authorized');
-      } else {
-        throw Exception('Failed to delete building');
+      final buildingToDelete =
+          _buildingCache.firstWhere((b) => b.id == buildingId);
+      if (buildingToDelete.rooms.isNotEmpty) {
+        for (var room in buildingToDelete.rooms) {
+          await _roomRepository.deleteRoom(room.id);
+        }
       }
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        throw Exception('Session expired. Please login again.');
-      }
-      if (e.response?.statusCode == 404) {
-        throw Exception('Building not found or not authorized');
-      }
-      _logger.e('deleteBuilding error: ${e.message}');
-      final errorMessage = e.response?.data['message'] ??
-          e.response?.data['error'] ??
-          'Failed to delete building';
-      throw Exception(errorMessage);
+
+      _buildingCache.removeWhere((b) => b.id == buildingId);
+      await save();
+      _logger.i('Building deleted successfully');
+    } catch (e) {
+      _logger.e('Failed to delete building: $e');
+      throw Exception('Failed to delete building: $e');
     }
+  }
+
+  Future<void> restoreBuilding(int restoreIndex, Building building) async {
+    _buildingCache.insert(restoreIndex, building);
+
+    // Restore rooms
+    if (building.rooms.isNotEmpty) {
+      for (var room in building.rooms) {
+        room.building = building;
+        await _roomRepository.createRoom(room);
+      }
+    }
+
+    await save();
   }
 
   Future<void> updateRoom(String buildingId, Room room) async {
@@ -277,46 +301,18 @@ class BuildingRepository {
       (b) => b.id == buildingId,
       orElse: () => throw Exception('Building not found'),
     );
-
     final roomIndex = building.rooms.indexWhere((r) => r.id == room.id);
     if (roomIndex != -1) {
       building.rooms[roomIndex] = room;
+      room.building = building;
+      await save();
       await _roomRepository.updateRoom(room);
     } else {
-      throw Exception('Room not found in building');
+      throw Exception('Room not found in building: ${room.id}');
     }
   }
 
   List<Building> getAllBuildings() {
     return List.unmodifiable(_buildingCache);
-  }
-
-  Building? getBuildingById(String buildingId) {
-    try {
-      return _buildingCache.firstWhere((b) => b.id == buildingId);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  bool isBuildingEmpty(String buildingId) {
-    final building = _buildingCache.firstWhere(
-      (b) => b.id == buildingId,
-      orElse: () => throw Exception('Building not found'),
-    );
-    return building.rooms.isEmpty;
-  }
-
-  int getBuildingCount() {
-    return _buildingCache.length;
-  }
-
-  void clearCache() {
-    _buildingCache.clear();
-    _logger.i('Building cache cleared');
-  }
-
-  bool hasData() {
-    return _buildingCache.isNotEmpty;
   }
 }

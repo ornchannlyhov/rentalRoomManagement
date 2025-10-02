@@ -37,11 +37,27 @@ class ReceiptProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> syncFromApi() async {
+    _receipts = const AsyncValue.loading();
+    notifyListeners();
+
+    try {
+      await _repository.syncFromApi();
+      final data = _repository.getAllReceipts();
+      _receipts = AsyncValue.success(data);
+    } catch (e) {
+      _receipts = AsyncValue.error(e);
+    }
+    notifyListeners();
+  }
+
   Future<Receipt> createReceipt(Receipt receipt) async {
     try {
-      final created = await _repository.createReceipt(receipt);
-      await load();
-      return created;
+      await _repository.createReceipt(receipt);
+      final data = _repository.getAllReceipts();
+      _receipts = AsyncValue.success(data);
+      notifyListeners();
+      return receipt;
     } catch (e) {
       _receipts = AsyncValue.error(e);
       notifyListeners();
@@ -51,9 +67,11 @@ class ReceiptProvider extends ChangeNotifier {
 
   Future<Receipt> updateReceipt(Receipt receipt) async {
     try {
-      final updated = await _repository.updateReceipt(receipt);
-      await load();
-      return updated;
+      await _repository.updateReceipt(receipt);
+      final data = _repository.getAllReceipts();
+      _receipts = AsyncValue.success(data);
+      notifyListeners();
+      return receipt;
     } catch (e) {
       _receipts = AsyncValue.error(e);
       notifyListeners();
@@ -64,7 +82,9 @@ class ReceiptProvider extends ChangeNotifier {
   Future<void> deleteReceipt(String receiptId) async {
     try {
       await _repository.deleteReceipt(receiptId);
-      await load();
+      final data = _repository.getAllReceipts();
+      _receipts = AsyncValue.success(data);
+      notifyListeners();
     } catch (e) {
       _receipts = AsyncValue.error(e);
       notifyListeners();
@@ -72,32 +92,69 @@ class ReceiptProvider extends ChangeNotifier {
     }
   }
 
-  Receipt? getReceiptById(String receiptId) {
-    if (_receipts.hasData) {
-      return _repository.getReceiptById(receiptId);
+  Future<void> restoreReceipt(int restoreIndex, Receipt receipt) async {
+    try {
+      await _repository.restoreReceipt(restoreIndex, receipt);
+      final data = _repository.getAllReceipts();
+      _receipts = AsyncValue.success(data);
+      notifyListeners();
+    } catch (e) {
+      _receipts = AsyncValue.error(e);
+      notifyListeners();
+      rethrow;
     }
-    return null;
+  }
+
+  Future<void> deleteLastYearReceipts() async {
+    try {
+      await _repository.deleteLastYearReceipts();
+      final data = _repository.getAllReceipts();
+      _receipts = AsyncValue.success(data);
+      notifyListeners();
+    } catch (e) {
+      _receipts = AsyncValue.error(e);
+      notifyListeners();
+      rethrow;
+    }
   }
 
   List<Receipt> getReceiptsForCurrentMonth() {
-    if (_receipts.hasData) {
-      return _repository.getReceiptsForCurrentMonth();
+    try {
+      if (_receipts.hasData) {
+        return _repository.getReceiptsForCurrentMonth();
+      }
+      return [];
+    } catch (e) {
+      _receipts = AsyncValue.error(e);
+      notifyListeners();
+      return [];
     }
-    return [];
   }
 
   List<Receipt> getReceiptsByMonth(int year, int month) {
-    if (_receipts.hasData) {
-      return _repository.getReceiptsByMonth(year, month);
+    try {
+      if (_receipts.hasData) {
+        return _repository.getReceiptsByMonth(year, month);
+      }
+      return [];
+    } catch (e) {
+      _receipts = AsyncValue.error(e);
+      notifyListeners();
+      return [];
     }
-    return [];
   }
 
   List<Receipt> getReceiptsByBuilding(String buildingId) {
-    if (_receipts.hasData) {
-      return _repository.getReceiptsByBuilding(buildingId);
+    try {
+      if (_receipts.hasData) {
+        return _repository.getReceiptsByBuilding(buildingId);
+      }
+      return [];
+    } catch (e) {
+      _receipts = AsyncValue.error(e);
+      notifyListeners();
+      return [];
     }
-    return [];
   }
 
   int get receiptCount {
@@ -108,7 +165,7 @@ class ReceiptProvider extends ChangeNotifier {
   }
 
   Future<void> refresh() async {
-    await load();
+    await syncFromApi();
   }
 
   void clearError() {
