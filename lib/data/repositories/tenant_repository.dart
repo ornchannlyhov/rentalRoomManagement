@@ -167,7 +167,6 @@ class TenantRepository {
         final token = await _secureStorage.read(key: 'auth_token');
         if (token != null) {
           _logger.i('Creating tenant via API: $name');
-
           String genderStr;
           switch (gender) {
             case Gender.male:

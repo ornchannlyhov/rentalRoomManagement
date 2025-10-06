@@ -337,10 +337,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
             ),
           ),
           success: (rooms) {
-            final buildingRooms = rooms
-                .where((r) =>
-                    r.building!.id == widget.building.id)
-                .toList();
+            final buildingRooms = rooms.toList();
 
             return buildingRooms.isEmpty
                 ? RefreshIndicator(

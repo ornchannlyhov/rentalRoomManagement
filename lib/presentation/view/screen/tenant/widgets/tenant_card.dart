@@ -250,7 +250,7 @@ class TenantCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'អគារ: ${tenant.room?.building!.name}',
+                    'អគារ: ${tenant.room?.building?.name}',
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurface.withOpacity(0.7),
                       fontSize: 12,

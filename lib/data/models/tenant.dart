@@ -6,7 +6,7 @@ class Tenant {
   final String name;
   final String phoneNumber;
   final Gender gender;
-  late final Room? room;
+  Room? room;
 
   Tenant({
     required this.id,

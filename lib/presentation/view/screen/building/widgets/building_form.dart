@@ -60,7 +60,7 @@ class _BuildingFormState extends State<BuildingForm> {
 
       List<Room> finalRooms = [];
       final buildingId =
-          isEditing ? widget.building!.id : DateTime.now().toString();
+          isEditing ? widget.building!.id : const Uuid().v4();
 
       // Create a Building instance without rooms to avoid circular reference
       final tempBuilding = Building(
@@ -93,7 +93,7 @@ class _BuildingFormState extends State<BuildingForm> {
               roomNumber: i.toString(),
               roomStatus: RoomStatus.available,
               price: rentPrice,
-              building: tempBuilding, 
+              building: tempBuilding,
               tenant: null,
             ),
           );

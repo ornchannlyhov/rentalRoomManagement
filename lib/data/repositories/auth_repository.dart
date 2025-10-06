@@ -6,7 +6,7 @@ import 'package:receipts_v2/data/dtos/user_dto.dart';
 import 'package:receipts_v2/data/models/user.dart';
 
 class StorageKeys {
-  static const token = 'token';
+  static const token = 'auth_token';
   static const user = 'user';
 }
 
