@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
-import 'package:receipts_v2/core/api_helper.dart';
+import 'package:receipts_v2/helpers/api_helper.dart';
 import 'package:receipts_v2/data/repositories/auth_repository.dart';
 import 'package:receipts_v2/data/repositories/buidling_repository.dart';
 import 'package:receipts_v2/data/repositories/receipt_repository.dart';
@@ -27,7 +27,7 @@ import 'package:receipts_v2/presentation/view/screen/history/history_screen.dart
 import 'package:receipts_v2/presentation/view/screen/receipt/receipt_screen.dart';
 import 'package:receipts_v2/presentation/view/screen/setting/profile_screen.dart';
 import 'package:receipts_v2/presentation/view/screen/tenant/tenant_screen.dart';
-import 'core/app_theme.dart';
+import 'helpers/app_theme.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 Future<void> main() async {

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:receipts_v2/core/asyn_value.dart';
+import 'package:receipts_v2/helpers/asyn_value.dart';
 import 'package:receipts_v2/data/models/user.dart';
 import 'package:receipts_v2/data/repositories/auth_repository.dart';
 

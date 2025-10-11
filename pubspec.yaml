@@ -54,6 +54,7 @@ dependencies:
   flutter_dotenv: ^6.0.0
   connectivity_plus: ^7.0.0
   dio: ^5.9.0
+  collection: ^1.19.1
 
 dev_dependencies:
   flutter_test:

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:receipts_v2/core/api_helper.dart';
+import 'package:receipts_v2/helpers/api_helper.dart';
 import 'package:receipts_v2/data/models/building.dart';
 import 'package:receipts_v2/data/dtos/building_dto.dart';
 import 'package:receipts_v2/data/models/room.dart';
@@ -29,9 +29,6 @@ class BuildingRepository {
             .map((json) => BuildingDto.fromJson(json).toBuilding())
             .toList();
 
-        // Restore room-building relationships
-        await _linkRoomsToBuildings();
-
         _logger.i('Loaded ${_buildingCache.length} buildings from storage');
       } else {
         _buildingCache = [];
@@ -39,24 +36,6 @@ class BuildingRepository {
     } catch (e) {
       _logger.e('Failed to load buildings from secure storage: $e');
       throw Exception('Failed to load building data from secure storage: $e');
-    }
-  }
-
-  Future<void> _linkRoomsToBuildings() async {
-    final allRooms = _roomRepository.getAllRooms();
-
-    for (var building in _buildingCache) {
-      final buildingRooms =
-          allRooms.where((room) => room.building?.id == building.id).toList();
-
-      // Update the building's rooms list
-      building.rooms.clear();
-      building.rooms.addAll(buildingRooms);
-
-      // Ensure each room has proper building reference
-      for (var room in buildingRooms) {
-        room.building = building;
-      }
     }
   }
 
@@ -79,7 +58,7 @@ class BuildingRepository {
     }
   }
 
-  Future<void> syncFromApi() async {
+  Future<void> syncFromApi({bool skipHydration = false}) async {
     try {
       if (!await _apiHelper.hasNetwork()) {
         _logger.w('No network connection, skipping sync');
@@ -110,21 +89,22 @@ class BuildingRepository {
             .map((json) => BuildingDto.fromJson(json).toBuilding())
             .toList();
 
-        // Sync rooms separately and link them
-        await _roomRepository.syncFromApi();
-        await _linkRoomsToBuildings();
+        if (!skipHydration) {
+          await save();
+        }
 
-        await save();
         _logger.i('Synced ${_buildingCache.length} buildings from API');
       }
     } catch (e) {
       _logger.e('Failed to sync buildings from API: $e');
-      // Don't throw - fallback to cached data
     }
   }
 
   Future<void> createBuilding(Building newBuilding) async {
     try {
+      Building createdBuilding =
+          newBuilding; // Default to the input building for offline case
+
       if (await _apiHelper.hasNetwork()) {
         final token = await _secureStorage.read(key: 'auth_token');
         if (token != null) {
@@ -145,37 +125,53 @@ class BuildingRepository {
           if (response.data['cancelled'] == true) {
             _logger.w('Request cancelled, saving locally');
             _buildingCache.add(newBuilding);
+            // Ensure rooms reference the correct building
+            for (var room in newBuilding.rooms) {
+              room.building = newBuilding;
+              // Check if room already exists in repository
+              final existingRooms = _roomRepository.getAllRooms();
+              if (!existingRooms.any((r) => r.id == room.id)) {
+                await _roomRepository.createRoom(room);
+              }
+            }
             await save();
             return;
           }
 
           if (response.statusCode == 201) {
-            final createdBuilding =
+            createdBuilding =
                 BuildingDto.fromJson(response.data['data']).toBuilding();
-
-            // Transfer rooms from newBuilding to createdBuilding
+            // Preserve room relationships from the input building
             createdBuilding.rooms.addAll(newBuilding.rooms);
-            _buildingCache.add(createdBuilding);
-
-            // Save rooms with proper building reference
-            if (createdBuilding.rooms.isNotEmpty) {
-              for (var room in createdBuilding.rooms) {
-                room.building = createdBuilding;
+            // Update building reference in all rooms
+            for (var room in createdBuilding.rooms) {
+              room.building = createdBuilding;
+              // Check if room already exists in repository
+              final existingRooms = _roomRepository.getAllRooms();
+              if (!existingRooms.any((r) => r.id == room.id)) {
                 await _roomRepository.createRoom(room);
               }
             }
-
+            _buildingCache.add(createdBuilding);
             _logger.i('Building created successfully via API');
           }
         } else {
+          // No token, proceed with local creation
           _buildingCache.add(newBuilding);
+          // Ensure rooms reference the correct building
+          for (var room in newBuilding.rooms) {
+            room.building = newBuilding;
+            // Check if room already exists in repository
+            final existingRooms = _roomRepository.getAllRooms();
+            if (!existingRooms.any((r) => r.id == room.id)) {
+              await _roomRepository.createRoom(room);
+            }
+          }
         }
       } else {
+        // No network, proceed with local creation
         _buildingCache.add(newBuilding);
-      }
-
-      // Save rooms to RoomRepository if not online
-      if (newBuilding.rooms.isNotEmpty) {
+        // Ensure rooms reference the correct building
         for (var room in newBuilding.rooms) {
           room.building = newBuilding;
           // Check if room already exists in repository
@@ -193,6 +189,7 @@ class BuildingRepository {
     }
   }
 
+// In BuildingRepository.updateBuilding
   Future<void> updateBuilding(Building updatedBuilding) async {
     try {
       if (await _apiHelper.hasNetwork()) {
@@ -222,16 +219,14 @@ class BuildingRepository {
       final index =
           _buildingCache.indexWhere((b) => b.id == updatedBuilding.id);
       if (index != -1) {
-        // Preserve room relationships
         final oldRooms = _buildingCache[index].rooms;
         _buildingCache[index] = updatedBuilding;
         updatedBuilding.rooms.clear();
         updatedBuilding.rooms.addAll(oldRooms);
 
-        // Update building reference in rooms
+        // Update building reference in all rooms
         for (var room in updatedBuilding.rooms) {
           room.building = updatedBuilding;
-          await _roomRepository.updateRoom(room);
         }
 
         await save();

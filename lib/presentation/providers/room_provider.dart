@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:receipts_v2/core/asyn_value.dart';
+import 'package:receipts_v2/helpers/asyn_value.dart';
 import 'package:receipts_v2/data/models/enum/room_status.dart';
 import 'package:receipts_v2/data/models/room.dart';
 import 'package:receipts_v2/data/models/tenant.dart';

@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:receipts_v2/core/api_helper.dart';
+import 'package:receipts_v2/helpers/api_helper.dart';
 import 'package:receipts_v2/data/models/enum/payment_status.dart';
 import 'package:receipts_v2/data/models/receipt.dart';
 import 'package:receipts_v2/data/dtos/receipt_dto.dart';
@@ -9,6 +9,7 @@ import 'package:receipts_v2/data/dtos/building_dto.dart';
 import 'package:receipts_v2/data/dtos/service_dto.dart';
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
+import 'package:receipts_v2/data/models/service.dart';
 
 class ReceiptRepository {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
@@ -27,7 +28,7 @@ class ReceiptRepository {
         _receiptCache = jsonData.map((json) {
           final receiptDto = ReceiptDto.fromJson(json);
           final receipt = receiptDto.toReceipt();
-          
+
           // Preserve full room and building references
           if (receiptDto.room != null) {
             receipt.room = receiptDto.room!.toRoom();
@@ -35,14 +36,14 @@ class ReceiptRepository {
               receipt.room!.building = receiptDto.room!.building!.toBuilding();
             }
           }
-          
+
           // Preserve services
           if (receiptDto.receiptServices != null) {
             receipt.services = receiptDto.receiptServices!
                 .map((rs) => rs.service.toService())
                 .toList();
           }
-          
+
           return receipt;
         }).toList();
         _logger.i('Loaded ${_receiptCache.length} receipts from storage');
@@ -85,32 +86,40 @@ class ReceiptRepository {
             paymentStatus: statusStr,
             roomId: receipt.room?.id,
             roomNumber: receipt.room?.roomNumber,
-            room: receipt.room != null ? RoomDto(
-              id: receipt.room!.id,
-              roomNumber: receipt.room!.roomNumber,
-              roomStatus: receipt.room!.roomStatus.toString().split('.').last,
-              price: receipt.room!.price,
-              buildingId: receipt.room!.building?.id,
-              building: receipt.room!.building != null ? BuildingDto(
-                id: receipt.room!.building!.id,
-                name: receipt.room!.building!.name,
-                rentPrice: receipt.room!.building!.rentPrice,
-                electricPrice: receipt.room!.building!.electricPrice,
-                waterPrice: receipt.room!.building!.waterPrice,
-              ) : null,
-            ) : null,
-            receiptServices: receipt.services.isNotEmpty 
-                ? receipt.services.map((service) => ReceiptServiceDto(
-                    id: '${receipt.id}_${service.id}',
-                    receiptId: receipt.id,
-                    serviceId: service.id,
-                    service: ServiceDto(
-                      id: service.id,
-                      name: service.name,
-                      price: service.price,
-                      buildingId: service.buildingId,
-                    ),
-                  )).toList()
+            room: receipt.room != null
+                ? RoomDto(
+                    id: receipt.room!.id,
+                    roomNumber: receipt.room!.roomNumber,
+                    roomStatus:
+                        receipt.room!.roomStatus.toString().split('.').last,
+                    price: receipt.room!.price,
+                    buildingId: receipt.room!.building?.id,
+                    building: receipt.room!.building != null
+                        ? BuildingDto(
+                            id: receipt.room!.building!.id,
+                            name: receipt.room!.building!.name,
+                            rentPrice: receipt.room!.building!.rentPrice,
+                            electricPrice:
+                                receipt.room!.building!.electricPrice,
+                            waterPrice: receipt.room!.building!.waterPrice,
+                          )
+                        : null,
+                  )
+                : null,
+            receiptServices: receipt.services.isNotEmpty
+                ? receipt.services
+                    .map((service) => ReceiptServiceDto(
+                          id: '${receipt.id}_${service.id}',
+                          receiptId: receipt.id,
+                          serviceId: service.id,
+                          service: ServiceDto(
+                            id: service.id,
+                            name: service.name,
+                            price: service.price,
+                            buildingId: service.buildingId,
+                          ),
+                        ))
+                    .toList()
                 : null,
           );
           return receiptDto.toJson();
@@ -124,7 +133,7 @@ class ReceiptRepository {
     }
   }
 
-  Future<void> syncFromApi() async {
+  Future<void> syncFromApi({bool skipHydration = false}) async {
     try {
       if (!await _apiHelper.hasNetwork()) {
         _logger.w('No network connection, skipping sync');
@@ -154,18 +163,30 @@ class ReceiptRepository {
         _receiptCache = receiptsJson.map((json) {
           final receiptDto = ReceiptDto.fromJson(json);
           final receipt = receiptDto.toReceipt();
-          
-          // Preserve full relationships from API
+
+          // Reconstruct room and building references
           if (receiptDto.room != null) {
             receipt.room = receiptDto.room!.toRoom();
             if (receiptDto.room!.building != null) {
               receipt.room!.building = receiptDto.room!.building!.toBuilding();
             }
           }
-          
+
+          // Reconstruct service references
+          if (receiptDto.receiptServices != null) {
+            receipt.services = receiptDto.receiptServices!
+                .map((rs) => rs.service.toService())
+                .toList();
+          } else {
+            receipt.services = [];
+          }
+
           return receipt;
         }).toList();
-        await save();
+
+        if (!skipHydration) {
+          await save();
+        }
         _logger.i('Synced ${_receiptCache.length} receipts from API');
       }
     } catch (e) {
@@ -175,16 +196,28 @@ class ReceiptRepository {
 
   Future<void> createReceipt(Receipt newReceipt) async {
     try {
+      // Validate required references
+      if (newReceipt.room == null) {
+        throw Exception('Receipt must have a room reference');
+      }
+      if (newReceipt.room!.building == null) {
+        throw Exception('Room must have a building reference');
+      }
+
       final existingIndex = _receiptCache.indexWhere((receipt) {
         return receipt.room?.roomNumber == newReceipt.room?.roomNumber &&
             receipt.date.year == newReceipt.date.year &&
             receipt.date.month == newReceipt.date.month;
       });
 
+      Receipt createdReceipt =
+          newReceipt; // Default to input receipt for offline case
+
       if (await _apiHelper.hasNetwork()) {
         final token = await _secureStorage.read(key: 'auth_token');
         if (token != null && newReceipt.room?.id != null) {
-          _logger.i('Creating receipt via API for room: ${newReceipt.room?.roomNumber}');
+          _logger.i(
+              'Creating receipt via API for room: ${newReceipt.room?.roomNumber}');
 
           String statusStr;
           switch (newReceipt.paymentStatus) {
@@ -208,6 +241,14 @@ class ReceiptRepository {
             'thisWaterUsed': newReceipt.thisWaterUsed,
             'thisElectricUsed': newReceipt.thisElectricUsed,
             'paymentStatus': statusStr,
+            'services': newReceipt.services
+                .map((service) => {
+                      'id': service.id,
+                      'name': service.name,
+                      'price': service.price,
+                      'buildingId': service.buildingId,
+                    })
+                .toList(),
           });
 
           final response = await _apiHelper.dio.post(
@@ -230,12 +271,12 @@ class ReceiptRepository {
 
           if (response.statusCode == 201) {
             final receiptDto = ReceiptDto.fromJson(response.data['data']);
-            final createdReceipt = receiptDto.toReceipt();
-            
-            // Preserve full room, building, and service references from newReceipt
+            createdReceipt = receiptDto.toReceipt();
+
+            // Preserve room, building, and service references from newReceipt
             createdReceipt.room = newReceipt.room;
-            createdReceipt.services = newReceipt.services;
-            
+            createdReceipt.services = List<Service>.from(newReceipt.services);
+
             if (existingIndex != -1) {
               _receiptCache[existingIndex] = createdReceipt;
             } else {
@@ -244,6 +285,7 @@ class ReceiptRepository {
             _logger.i('Receipt created successfully via API');
           }
         } else {
+          // No token, proceed with local creation
           if (existingIndex != -1) {
             _receiptCache[existingIndex] = newReceipt;
           } else {
@@ -251,6 +293,7 @@ class ReceiptRepository {
           }
         }
       } else {
+        // No network, proceed with local creation
         if (existingIndex != -1) {
           _receiptCache[existingIndex] = newReceipt;
         } else {
@@ -285,8 +328,10 @@ class ReceiptRepository {
           }
 
           final formData = FormData.fromMap({
-            if (updatedReceipt.room?.id != null) 'roomId': updatedReceipt.room!.id,
-            if (updatedReceipt.room?.roomNumber != null) 'roomNumber': updatedReceipt.room!.roomNumber,
+            if (updatedReceipt.room?.id != null)
+              'roomId': updatedReceipt.room!.id,
+            if (updatedReceipt.room?.roomNumber != null)
+              'roomNumber': updatedReceipt.room!.roomNumber,
             'date': updatedReceipt.date.toIso8601String(),
             'dueDate': updatedReceipt.dueDate.toIso8601String(),
             'lastWaterUsed': updatedReceipt.lastWaterUsed,
@@ -294,6 +339,14 @@ class ReceiptRepository {
             'thisWaterUsed': updatedReceipt.thisWaterUsed,
             'thisElectricUsed': updatedReceipt.thisElectricUsed,
             'paymentStatus': statusStr,
+            'services': updatedReceipt.services
+                .map((service) => {
+                      'id': service.id,
+                      'name': service.name,
+                      'price': service.price,
+                      'buildingId': service.buildingId,
+                    })
+                .toList(),
           });
 
           final response = await _apiHelper.dio.put(
@@ -303,7 +356,8 @@ class ReceiptRepository {
             cancelToken: _apiHelper.cancelToken,
           );
 
-          if (response.data['cancelled'] != true && response.statusCode != 200) {
+          if (response.data['cancelled'] != true &&
+              response.statusCode != 200) {
             throw Exception('Failed to update receipt via API');
           }
         }
@@ -311,11 +365,16 @@ class ReceiptRepository {
 
       final index = _receiptCache.indexWhere((r) => r.id == updatedReceipt.id);
       if (index != -1) {
-        // Preserve room/building references if not changed
+        // Preserve room and services references if not provided
         if (updatedReceipt.room == null && _receiptCache[index].room != null) {
           updatedReceipt.room = _receiptCache[index].room;
         }
-        
+        if (updatedReceipt.services.isEmpty &&
+            _receiptCache[index].services.isNotEmpty) {
+          updatedReceipt.services =
+              List<Service>.from(_receiptCache[index].services);
+        }
+
         _receiptCache[index] = updatedReceipt;
         await save();
         _logger.i('Receipt updated successfully');
@@ -341,7 +400,8 @@ class ReceiptRepository {
             cancelToken: _apiHelper.cancelToken,
           );
 
-          if (response.data['cancelled'] != true && response.statusCode != 200) {
+          if (response.data['cancelled'] != true &&
+              response.statusCode != 200) {
             throw Exception('Failed to delete receipt via API');
           }
         }

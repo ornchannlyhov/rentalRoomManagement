@@ -1,5 +1,6 @@
 import 'package:receipts_v2/data/dtos/building_dto.dart';
 import 'package:receipts_v2/data/dtos/tenant_dto.dart';
+import 'package:receipts_v2/data/models/building.dart';
 import 'package:receipts_v2/data/models/enum/room_status.dart';
 import 'package:receipts_v2/data/models/room.dart';
 
@@ -97,23 +98,35 @@ class RoomDto {
     };
   }
 
-  Room toRoom() {
-    RoomStatus status;
-    switch (roomStatus.toLowerCase()) {
-      case 'occupied':
-        status = RoomStatus.occupied;
-        break;
-      default:
-        status = RoomStatus.available;
-    }
+Room toRoom() {
+  RoomStatus status;
+  switch (roomStatus.toLowerCase()) {
+    case 'occupied':
+      status = RoomStatus.occupied;
+      break;
+    default:
+      status = RoomStatus.available;
+  }
 
-    return Room(
-      id: id,
-      roomNumber: roomNumber,
-      roomStatus: status,
-      price: price,
-      building: building?.toBuilding(),
-      tenant: tenant?.toTenant(),
+  final room = Room(
+    id: id,
+    roomNumber: roomNumber,
+    roomStatus: status,
+    price: price,
+    building: building?.toBuilding(),
+    tenant: tenant?.toTenant(),
+  );
+  if (room.building != null && building != null) {
+    room.building = Building(
+      id: building!.id,
+      name: building!.name,
+      rentPrice: building!.rentPrice,
+      electricPrice: building!.electricPrice,
+      waterPrice: building!.waterPrice,
+      rooms: [],
     );
   }
+
+  return room;
+}
 }

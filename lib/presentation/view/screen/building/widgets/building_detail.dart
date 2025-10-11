@@ -337,8 +337,9 @@ class _BuildingDetailState extends State<BuildingDetail> {
             ),
           ),
           success: (rooms) {
-            final buildingRooms = rooms.toList();
-
+            final buildingRooms = rooms
+                .where((r) => r.building!.id == widget.building.id)
+                .toList();
             return buildingRooms.isEmpty
                 ? RefreshIndicator(
                     onRefresh: _refreshData,
@@ -419,7 +420,9 @@ class _BuildingDetailState extends State<BuildingDetail> {
             ),
           ),
           success: (services) {
-            final buildingServices = services.toList();
+            final buildingServices = services
+                .where((s) => s.buildingId == widget.building.id)
+                .toList();
             return buildingServices.isEmpty
                 ? RefreshIndicator(
                     onRefresh: _refreshData,
@@ -535,7 +538,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.background,
         title: Text(widget.building.name),
         actions: [
           IconButton(

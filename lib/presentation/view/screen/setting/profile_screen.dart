@@ -190,21 +190,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                   ),
-                  _buildSettingsItem(
-                    context: context,
-                    isDarkMode: isDarkMode,
-                    colorScheme: colorScheme,
-                    icon: Icons.build_outlined,
-                    title: 'Services',
-                    subtitle: 'Manage services',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: const Text('Services tapped'),
-                            backgroundColor: colorScheme.primary),
-                      );
-                    },
-                  ),
                 ],
               ),
 

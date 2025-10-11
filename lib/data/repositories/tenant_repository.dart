@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:receipts_v2/core/api_helper.dart';
+import 'package:receipts_v2/helpers/api_helper.dart';
 import 'package:receipts_v2/data/models/tenant.dart';
 import 'package:receipts_v2/data/models/enum/gender.dart';
 import 'package:receipts_v2/data/dtos/tenant_dto.dart';
@@ -63,7 +63,6 @@ class TenantRepository {
               genderStr = 'other';
           }
 
-          // Save with FULL room and building data
           return TenantDto(
             id: tenant.id,
             name: tenant.name,
@@ -100,7 +99,8 @@ class TenantRepository {
     }
   }
 
-  Future<void> syncFromApi({String? roomId, String? search}) async {
+  Future<void> syncFromApi(
+      {String? roomId, String? search, bool skipHydration = false}) async {
     try {
       if (!await _apiHelper.hasNetwork()) {
         _logger.w('No network connection, skipping sync');
@@ -135,24 +135,16 @@ class TenantRepository {
         final List<dynamic> tenantsJson = response.data['data'];
         _tenantCache = tenantsJson.map((json) {
           final tenantDto = TenantDto.fromJson(json);
-          final tenant = tenantDto.toTenant();
-
-          // Preserve full relationships from API
-          if (tenantDto.room != null) {
-            tenant.room = tenantDto.room!.toRoom();
-            if (tenantDto.room!.building != null) {
-              tenant.room!.building = tenantDto.room!.building!.toBuilding();
-            }
-          }
-
-          return tenant;
+          return tenantDto.toTenant();
         }).toList();
-        await save();
+
+        if (!skipHydration) {
+          await save();
+        }
         _logger.i('Synced ${_tenantCache.length} tenants from API');
       }
     } catch (e) {
       _logger.e('Failed to sync tenants from API: $e');
-      // Don't throw - fallback to cached data
     }
   }
 
@@ -163,6 +155,8 @@ class TenantRepository {
     String? roomId,
   }) async {
     try {
+      Tenant createdTenant; // To store the created tenant
+
       if (await _apiHelper.hasNetwork()) {
         final token = await _secureStorage.read(key: 'auth_token');
         if (token != null) {
@@ -196,28 +190,32 @@ class TenantRepository {
 
           if (response.data['cancelled'] == true) {
             _logger.w('Request cancelled, saving locally');
-            final newTenant = Tenant(
+            createdTenant = Tenant(
               id: DateTime.now().millisecondsSinceEpoch.toString(),
               name: name,
               phoneNumber: phoneNumber,
               gender: gender,
               room: null,
             );
-            _tenantCache.add(newTenant);
+            _tenantCache.add(createdTenant);
             await save();
-            return newTenant;
+            return createdTenant;
           }
 
           if (response.statusCode == 201) {
             final tenantDto = TenantDto.fromJson(response.data['data']);
-            final createdTenant = tenantDto.toTenant();
+            createdTenant = tenantDto.toTenant();
 
-            // Preserve room reference if present in response
+            // Reconstruct room and building references
             if (tenantDto.room != null) {
               createdTenant.room = tenantDto.room!.toRoom();
               if (tenantDto.room!.building != null) {
                 createdTenant.room!.building =
                     tenantDto.room!.building!.toBuilding();
+              }
+              // Set bidirectional reference: room.tenant
+              if (createdTenant.room != null) {
+                createdTenant.room!.tenant = createdTenant;
               }
             }
 
@@ -234,78 +232,19 @@ class TenantRepository {
 
       // Offline creation
       _logger.i('Creating tenant offline: $name');
-      final newTenant = Tenant(
+      createdTenant = Tenant(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         name: name,
         phoneNumber: phoneNumber,
         gender: gender,
         room: null,
       );
-      _tenantCache.add(newTenant);
+      _tenantCache.add(createdTenant);
       await save();
-      return newTenant;
+      return createdTenant;
     } catch (e) {
       _logger.e('Failed to create tenant: $e');
       throw Exception('Failed to create tenant: $e');
-    }
-  }
-
-  Future<Tenant> getTenantById(String id) async {
-    try {
-      if (await _apiHelper.hasNetwork()) {
-        final token = await _secureStorage.read(key: 'auth_token');
-        if (token != null) {
-          _logger.i('Fetching tenant via API: $id');
-          final response = await _apiHelper.dio.get(
-            '${_apiHelper.baseUrl}/tenants/$id',
-            options: Options(headers: {'Authorization': 'Bearer $token'}),
-            cancelToken: _apiHelper.cancelToken,
-          );
-
-          if (response.data['cancelled'] == true) {
-            _logger.w('Request cancelled, checking cache');
-            final cachedTenant = _tenantCache.firstWhere(
-              (tenant) => tenant.id == id,
-              orElse: () => throw Exception('Tenant not found in cache: $id'),
-            );
-            return cachedTenant;
-          }
-
-          if (response.statusCode == 200) {
-            final tenantDto = TenantDto.fromJson(response.data['data']);
-            final tenant = tenantDto.toTenant();
-
-            // Preserve room and building references
-            if (tenantDto.room != null) {
-              tenant.room = tenantDto.room!.toRoom();
-              if (tenantDto.room!.building != null) {
-                tenant.room!.building = tenantDto.room!.building!.toBuilding();
-              }
-            }
-
-            final existingIndex = _tenantCache.indexWhere((t) => t.id == id);
-            if (existingIndex >= 0) {
-              _tenantCache[existingIndex] = tenant;
-            } else {
-              _tenantCache.add(tenant);
-            }
-            await save();
-            _logger.i('Tenant fetched successfully via API: $id');
-            return tenant;
-          }
-        }
-      }
-
-      // Fallback to cache
-      final cachedTenant = _tenantCache.firstWhere(
-        (tenant) => tenant.id == id,
-        orElse: () => throw Exception('Tenant not found in cache: $id'),
-      );
-      _logger.i('Returning cached tenant: $id');
-      return cachedTenant;
-    } catch (e) {
-      _logger.e('Failed to get tenant by ID: $e');
-      throw Exception('Failed to get tenant by ID: $e');
     }
   }
 
@@ -344,6 +283,8 @@ class TenantRepository {
         roomId: roomId ?? existingTenant.room?.id,
       );
 
+      Tenant updatedTenant;
+
       if (await _apiHelper.hasNetwork()) {
         final token = await _secureStorage.read(key: 'auth_token');
         if (token != null) {
@@ -357,14 +298,19 @@ class TenantRepository {
 
           if (response.data['cancelled'] == true) {
             _logger.w('Request cancelled, updating locally');
-            final updatedTenant = existingTenant.copyWith(
+            updatedTenant = existingTenant.copyWith(
               name: name,
               phoneNumber: phoneNumber,
               gender: gender,
+              room: roomId == null ? existingTenant.room : null,
             );
             final index = _tenantCache.indexWhere((t) => t.id == id);
             if (index >= 0) {
               _tenantCache[index] = updatedTenant;
+              // Set bidirectional reference: room.tenant
+              if (updatedTenant.room != null) {
+                updatedTenant.room!.tenant = updatedTenant;
+              }
             }
             await save();
             return updatedTenant;
@@ -372,18 +318,22 @@ class TenantRepository {
 
           if (response.statusCode == 200) {
             final tenantDto = TenantDto.fromJson(response.data['data']);
-            final updatedTenant = tenantDto.toTenant();
+            updatedTenant = tenantDto.toTenant();
 
-            // Preserve room and building references
+            // Reconstruct room and building references
             if (tenantDto.room != null) {
               updatedTenant.room = tenantDto.room!.toRoom();
               if (tenantDto.room!.building != null) {
                 updatedTenant.room!.building =
                     tenantDto.room!.building!.toBuilding();
               }
-            } else if (existingTenant.room != null) {
-              // If no room in response but existed before, preserve it
+            } else if (existingTenant.room != null && roomId == null) {
+              // Preserve existing room if not explicitly changed
               updatedTenant.room = existingTenant.room;
+            }
+            // Set bidirectional reference: room.tenant
+            if (updatedTenant.room != null) {
+              updatedTenant.room!.tenant = updatedTenant;
             }
 
             final index = _tenantCache.indexWhere((t) => t.id == id);
@@ -400,11 +350,16 @@ class TenantRepository {
       }
 
       // Offline update
-      final updatedTenant = existingTenant.copyWith(
+      updatedTenant = existingTenant.copyWith(
         name: name,
         phoneNumber: phoneNumber,
         gender: gender,
+        room: roomId == null ? existingTenant.room : null,
       );
+      // Set bidirectional reference: room.tenant
+      if (updatedTenant.room != null) {
+        updatedTenant.room!.tenant = updatedTenant;
+      }
       final index = _tenantCache.indexWhere((t) => t.id == id);
       if (index >= 0) {
         _tenantCache[index] = updatedTenant;

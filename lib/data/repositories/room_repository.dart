@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:receipts_v2/core/api_helper.dart';
+import 'package:receipts_v2/helpers/api_helper.dart';
 import 'package:receipts_v2/data/models/room.dart';
 import 'package:receipts_v2/data/models/tenant.dart';
 import 'package:receipts_v2/data/models/enum/room_status.dart';
@@ -90,7 +90,7 @@ class RoomRepository {
     }
   }
 
-  Future<void> syncFromApi() async {
+  Future<void> syncFromApi({bool skipHydration = false}) async {
     try {
       if (!await _apiHelper.hasNetwork()) {
         _logger.w('No network connection, skipping sync');
@@ -121,29 +121,40 @@ class RoomRepository {
           final roomDto = RoomDto.fromJson(json);
           final room = roomDto.toRoom();
 
-          // Preserve building reference from API response
+          // Reconstruct building and tenant references
           if (roomDto.building != null) {
             room.building = roomDto.building!.toBuilding();
           }
-
-          // Preserve tenant reference from API response
           if (roomDto.tenant != null) {
             room.tenant = roomDto.tenant!.toTenant();
+            // Ensure bidirectional reference: tenant.room
+            if (room.tenant != null) {
+              room.tenant!.room = room;
+            }
           }
 
           return room;
         }).toList();
-        await save();
+
+        if (!skipHydration) {
+          await save();
+        }
         _logger.i('Synced ${_roomCache.length} rooms from API');
       }
     } catch (e) {
       _logger.e('Failed to sync rooms from API: $e');
-      // Don't throw - fallback to cached data
     }
   }
 
   Future<void> createRoom(Room newRoom) async {
     try {
+      // Validate required references
+      if (newRoom.building == null) {
+        throw Exception('Room must have a building reference');
+      }
+
+      Room createdRoom = newRoom; // Default to input room for offline case
+
       if (await _apiHelper.hasNetwork()) {
         final token = await _secureStorage.read(key: 'auth_token');
         if (token != null) {
@@ -152,13 +163,19 @@ class RoomRepository {
           final response = await _apiHelper.dio.post(
             '${_apiHelper.baseUrl}/rooms',
             data: {
-              'buildingId': newRoom.building?.id,
+              'buildingId': newRoom.building!.id,
               'roomNumber': newRoom.roomNumber,
               'price': newRoom.price,
               'roomStatus': newRoom.roomStatus == RoomStatus.occupied
                   ? 'occupied'
                   : 'available',
-              if (newRoom.tenant != null) 'tenantChatId': 0, // Placeholder
+              if (newRoom.tenant != null)
+                'tenant': {
+                  'id': newRoom.tenant!.id,
+                  'name': newRoom.tenant!.name,
+                  'phoneNumber': newRoom.tenant!.phoneNumber,
+                  'gender': newRoom.tenant!.gender.toString().split('.').last,
+                },
             },
             options: Options(headers: {'Authorization': 'Bearer $token'}),
             cancelToken: _apiHelper.cancelToken,
@@ -167,26 +184,44 @@ class RoomRepository {
           if (response.data['cancelled'] == true) {
             _logger.w('Request cancelled, saving locally');
             _roomCache.add(newRoom);
+            // Set bidirectional reference for tenant
+            if (newRoom.tenant != null) {
+              newRoom.tenant!.room = newRoom;
+            }
             await save();
             return;
           }
 
           if (response.statusCode == 201) {
             final roomDto = RoomDto.fromJson(response.data['data']);
-            final createdRoom = roomDto.toRoom();
+            createdRoom = roomDto.toRoom();
 
-            // Preserve the building and tenant references from newRoom
+            // Preserve building and tenant references from newRoom
             createdRoom.building = newRoom.building;
             createdRoom.tenant = newRoom.tenant;
+            // Set bidirectional reference for tenant
+            if (createdRoom.tenant != null) {
+              createdRoom.tenant!.room = createdRoom;
+            }
 
             _roomCache.add(createdRoom);
             _logger.i('Room created successfully via API');
           }
         } else {
+          // No token, proceed with local creation
           _roomCache.add(newRoom);
+          // Set bidirectional reference for tenant
+          if (newRoom.tenant != null) {
+            newRoom.tenant!.room = newRoom;
+          }
         }
       } else {
+        // No network, proceed with local creation
         _roomCache.add(newRoom);
+        // Set bidirectional reference for tenant
+        if (newRoom.tenant != null) {
+          newRoom.tenant!.room = newRoom;
+        }
       }
 
       await save();
@@ -211,6 +246,14 @@ class RoomRepository {
               'roomStatus': updatedRoom.roomStatus == RoomStatus.occupied
                   ? 'occupied'
                   : 'available',
+              if (updatedRoom.tenant != null)
+                'tenant': {
+                  'id': updatedRoom.tenant!.id,
+                  'name': updatedRoom.tenant!.name,
+                  'phoneNumber': updatedRoom.tenant!.phoneNumber,
+                  'gender':
+                      updatedRoom.tenant!.gender.toString().split('.').last,
+                },
             },
             options: Options(headers: {'Authorization': 'Bearer $token'}),
             cancelToken: _apiHelper.cancelToken,
@@ -232,6 +275,10 @@ class RoomRepository {
         }
         if (updatedRoom.tenant == null && _roomCache[index].tenant != null) {
           updatedRoom.tenant = _roomCache[index].tenant;
+        }
+        // Set bidirectional reference for tenant
+        if (updatedRoom.tenant != null) {
+          updatedRoom.tenant!.room = updatedRoom;
         }
 
         _roomCache[index] = updatedRoom;
