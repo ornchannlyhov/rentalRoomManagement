@@ -163,14 +163,8 @@ class _ReceiptScreenState extends State<ReceiptScreen>
                   () {
                     Navigator.pop(context);
                     final provider = context.read<ReceiptProvider>();
-                    final roomNumber = receipt.room?.roomNumber ?? 'ទរទេ';
                     provider.deleteReceipt(receipt.id);
-                    _showUndoSnackbar(
-                      context,
-                      'បានលុបវិក្កយបត្របន្ទប់ $roomNumber',
-                      () => provider.restoreReceipt(
-                          allReceipts.indexOf(receipt), receipt),
-                    );
+                    
                   },
                   isDestructive: true,
                 ),

@@ -1,11 +1,7 @@
 import 'package:receipts_v2/data/models/enum/payment_status.dart';
 import 'package:receipts_v2/data/models/room.dart';
 import 'package:receipts_v2/data/models/service.dart';
-import 'package:json_annotation/json_annotation.dart';
 
-part '../dtos/receipt.g.dart';
-
-@JsonSerializable(explicitToJson: true)
 class Receipt {
   final String id;
   final DateTime date;
@@ -16,6 +12,7 @@ class Receipt {
   final int thisElectricUsed;
   PaymentStatus paymentStatus;
   List<Service> services;
+  List<String> serviceIds;
   Room? room;
 
   Receipt({
@@ -29,6 +26,7 @@ class Receipt {
     required this.paymentStatus,
     this.room,
     this.services = const [],
+    this.serviceIds = const [],
   });
 
   int get waterUsage {
@@ -78,10 +76,6 @@ class Receipt {
     }
   }
 
-  factory Receipt.fromJson(Map<String, dynamic> json) => _$ReceiptFromJson(json);
-
-  Map<String, dynamic> toJson() => _$ReceiptToJson(this);
-
   Receipt copyWith({
     String? id,
     DateTime? date,
@@ -92,6 +86,7 @@ class Receipt {
     int? thisElectricUsed,
     PaymentStatus? paymentStatus,
     List<Service>? services,
+    List<String>? serviceIds,
     Room? room,
   }) {
     return Receipt(
@@ -104,6 +99,7 @@ class Receipt {
       thisElectricUsed: thisElectricUsed ?? this.thisElectricUsed,
       paymentStatus: paymentStatus ?? this.paymentStatus,
       services: services ?? List<Service>.from(this.services),
+      serviceIds: serviceIds ?? List<String>.from(this.serviceIds),
       room: room ?? this.room,
     );
   }

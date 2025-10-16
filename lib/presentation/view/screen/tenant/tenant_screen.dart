@@ -30,7 +30,7 @@ class _TenantScreenState extends State<TenantScreen>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  String? _selectedBuildingId; // State for the selected building filter
+  String? _selectedBuildingId; 
 
   @override
   void initState() {
@@ -309,9 +309,6 @@ class _TenantScreenState extends State<TenantScreen>
             textColor: Theme.of(context).colorScheme.onPrimary,
             onPressed: () async {
               try {
-                // Assuming restoreTenant can insert at the correct position or handle it internally
-                await tenantProvider.restoreTenant(
-                    0, removedTenant); // Adjust index if needed
                 if (originalRoomId != null) {
                   await roomProvider.addTenant(originalRoomId, removedTenant);
                   await roomProvider.updateRoomStatus(
@@ -430,7 +427,7 @@ class _TenantScreenState extends State<TenantScreen>
                   final filteredTenants = _selectedBuildingId == null
                       ? allTenants
                       : tenantProvider
-                          .getTenantByBuilding(_selectedBuildingId!);
+                          .getTenantsByBuilding(_selectedBuildingId!);
 
                   if (filteredTenants.isEmpty) {
                     return EmptyState(
@@ -484,7 +481,6 @@ class _TenantScreenState extends State<TenantScreen>
           textColor: theme.colorScheme.onPrimary,
           onPressed: () async {
             try {
-              await tenantProvider.restoreTenant(index, removedTenant);
               if (originalRoomId != null) {
                 await roomProvider.addTenant(originalRoomId, removedTenant);
                 await roomProvider.updateRoomStatus(

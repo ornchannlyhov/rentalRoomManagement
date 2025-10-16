@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:receipts_v2/presentation/providers/building_provider.dart';
 
 class BuildingFilterDropdown extends StatelessWidget {
-  const BuildingFilterDropdown({super.key, 
+  const BuildingFilterDropdown({
+    super.key,
     required this.buildingProvider,
     required this.selectedBuildingId,
     required this.onChanged,
@@ -51,42 +52,52 @@ class BuildingFilterDropdown extends StatelessWidget {
 
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+          padding: const EdgeInsets.only(left: 8, right: 16, top: 2, bottom: 2),
           height: 48,
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
+            color: theme.colorScheme.surface.withOpacity(0.7),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
                 color: theme.colorScheme.shadow.withOpacity(0.1),
                 blurRadius: 8,
-                offset: const Offset(0, 2),
+                offset: const Offset(0, 1),
               ),
             ],
             border: Border.all(
               color: theme.colorScheme.onSurface.withOpacity(0.4),
-              width: 0.1,
+              width: 0.2,
             ),
           ),
           child: DropdownButtonHideUnderline(
-            child: DropdownButton<String?>(
-              isExpanded: true,
-              value: selectedBuildingId,
-              icon: Icon(
-                Icons.filter_list,
-                color: theme.colorScheme.primary,
-                size: 24,
-              ),
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.onSurface,
-                fontWeight: FontWeight.w500,
-              ),
-              dropdownColor: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
-              onChanged: onChanged,
-              items: dropdownItems,
+              child: DropdownButton<String?>(
+            isExpanded: true,
+            value: selectedBuildingId,
+            icon: Icon(
+              Icons.filter_list,
+              color: theme.colorScheme.primary,
+              size: 24,
             ),
-          ),
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w500,
+            ),
+            dropdownColor: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            onChanged: onChanged,
+            items: dropdownItems,
+            selectedItemBuilder: (context) {
+              return dropdownItems.map((item) {
+                return Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 8.0), 
+                    child: item.child,
+                  ),
+                );
+              }).toList();
+            },
+          )),
         );
       },
     );
