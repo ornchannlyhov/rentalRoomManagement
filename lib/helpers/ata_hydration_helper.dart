@@ -3,6 +3,7 @@ import 'package:receipts_v2/data/models/room.dart';
 import 'package:receipts_v2/data/models/tenant.dart';
 import 'package:receipts_v2/data/models/receipt.dart';
 import 'package:receipts_v2/data/models/service.dart';
+import 'package:receipts_v2/data/models/report.dart';
 import 'package:logger/logger.dart';
 import 'package:collection/collection.dart';
 
@@ -26,8 +27,13 @@ class DataHydrationHelper {
   });
 
   /// Main method: Hydrate all relationships in correct order
-  void hydrateAll({List<Receipt>? receipts}) {
+  void hydrateAll({
+    List<Receipt>? receipts,
+    List<Report>? reports,
+  }) {
     _logger.i('Starting data hydration...');
+    _logger.d(
+        'Input: ${buildings.length} buildings, ${rooms.length} rooms, ${tenants.length} tenants, ${services.length} services, ${receipts?.length ?? 0} receipts, ${reports?.length ?? 0} reports');
 
     // Order matters: dependencies first
     hydrateRoomsWithBuildings();
@@ -35,8 +41,12 @@ class DataHydrationHelper {
     hydrateTenantsWithRooms();
     hydrateRoomsWithTenants();
 
-    if (receipts != null) {
+    if (receipts != null && receipts.isNotEmpty) {
       hydrateReceipts(receipts);
+    }
+
+    if (reports != null && reports.isNotEmpty) {
+      hydrateReports(reports);
     }
 
     _logger.i('Data hydration complete');
@@ -45,26 +55,34 @@ class DataHydrationHelper {
   /// Step 1: Link rooms to their buildings
   void hydrateRoomsWithBuildings() {
     _logger.d('Hydrating rooms with buildings...');
+    int hydrated = 0;
+    int failed = 0;
 
     for (var room in rooms) {
-      // If room has a building ID or a partial building object
-      if (room.building?.id != null) {
-        final buildingId = room.building!.id;
+      String? buildingId = room.building?.id;
 
-        // Find the full building object, or keep the existing partial/null one if not found
+      if (buildingId != null && buildingId.isNotEmpty) {
         final fullBuilding = buildings.firstWhereOrNull(
           (b) => b.id == buildingId,
         );
 
-        // Assign the found building, or null if not found
-        room.building = fullBuilding;
+        if (fullBuilding != null) {
+          room.building = fullBuilding;
+          hydrated++;
+          _logger.d('Room ${room.roomNumber} -> Building ${fullBuilding.name}');
+        } else {
+          _logger.w(
+              'Building not found for room ${room.roomNumber} (buildingId: $buildingId)');
+          room.building = null;
+          failed++;
+        }
       } else {
-        // If there's no building ID, ensure the building reference is null
+        _logger.d('Room ${room.roomNumber} has no building ID');
         room.building = null;
       }
     }
 
-    _logger.d('Hydrated ${rooms.length} rooms with buildings');
+    _logger.d('Hydrated $hydrated rooms with buildings, $failed failed');
   }
 
   /// Step 2: Link buildings to their rooms (bidirectional)
@@ -72,18 +90,17 @@ class DataHydrationHelper {
     _logger.d('Hydrating buildings with rooms...');
 
     for (var building in buildings) {
-      // Find all rooms belonging to this building
       final buildingRooms =
           rooms.where((r) => r.building?.id == building.id).toList();
 
-      // Clear and repopulate the rooms list
       building.rooms.clear();
       building.rooms.addAll(buildingRooms);
 
-      // Ensure each room has proper building reference
       for (var room in buildingRooms) {
         room.building = building;
       }
+
+      _logger.d('Building ${building.name} has ${buildingRooms.length} rooms');
     }
 
     _logger.d('Hydrated ${buildings.length} buildings with rooms');
@@ -92,27 +109,30 @@ class DataHydrationHelper {
   /// Step 3: Link tenants to their rooms (and transitively to buildings)
   void hydrateTenantsWithRooms() {
     _logger.d('Hydrating tenants with rooms...');
+    int hydrated = 0;
 
     for (var tenant in tenants) {
-      // If tenant has a room ID or a partial room object
       if (tenant.room?.id != null) {
         final roomId = tenant.room!.id;
 
-        // Find the full room object (which already has building reference),
-        // or keep the existing partial/null one if not found
         final fullRoom = rooms.firstWhereOrNull(
           (r) => r.id == roomId,
         );
 
-        // Assign the found room, or null if not found
-        tenant.room = fullRoom;
+        if (fullRoom != null) {
+          tenant.room = fullRoom;
+          hydrated++;
+        } else {
+          _logger
+              .w('Room not found for tenant ${tenant.name} (roomId: $roomId)');
+          tenant.room = null;
+        }
       } else {
-        // If there's no room ID, ensure the room reference is null
         tenant.room = null;
       }
     }
 
-    _logger.d('Hydrated ${tenants.length} tenants with rooms');
+    _logger.d('Hydrated $hydrated tenants with rooms');
   }
 
   /// Step 4: Link rooms back to their tenants (bidirectional)
@@ -120,17 +140,14 @@ class DataHydrationHelper {
     _logger.d('Hydrating rooms with tenants...');
 
     for (var room in rooms) {
-      // Find tenant assigned to this room, safely handling null room references
       final tenant = tenants.firstWhereOrNull(
         (t) => t.room?.id == room.id,
       );
 
-      // Assign the found tenant, or null if not found
       room.tenant = tenant;
-      // Ensure the tenant's room reference also points back to this room if assigned
+
       if (tenant != null && tenant.room?.id != room.id) {
-        tenant.room =
-            room; // This might be redundant if hydrateTenantsWithRooms ran first
+        tenant.room = room;
       }
     }
 
@@ -140,65 +157,181 @@ class DataHydrationHelper {
   /// Step 5: Hydrate receipts with full object graphs
   void hydrateReceipts(List<Receipt> receipts) {
     _logger.d('Hydrating receipts...');
+    int receiptsWithRooms = 0;
+    int receiptsWithBuildings = 0;
+    int receiptsWithServices = 0;
 
     for (var receipt in receipts) {
-      // Hydrate room reference
+      // Hydrate room reference WITH FULL BUILDING
       if (receipt.room?.id != null) {
         final roomId = receipt.room!.id;
 
-        // Find the full room object (already has building and tenant),
-        // or keep the existing partial/null one if not found
         final fullRoom = rooms.firstWhereOrNull(
           (r) => r.id == roomId,
         );
 
-        receipt.room = fullRoom;
+        if (fullRoom != null) {
+          receipt.room = fullRoom;
+          receiptsWithRooms++;
+
+          if (fullRoom.building != null) {
+            receiptsWithBuildings++;
+            _logger.d(
+                'Receipt ${receipt.id} -> Room ${fullRoom.roomNumber} -> Building ${fullRoom.building!.name}');
+          } else {
+            _logger.w(
+                'Receipt ${receipt.id} has room ${fullRoom.roomNumber} but NO BUILDING!');
+          }
+        } else {
+          _logger
+              .w('Room not found for receipt ${receipt.id} (roomId: $roomId)');
+          receipt.room = null;
+        }
       } else {
+        _logger.d('Receipt ${receipt.id} has no room ID');
         receipt.room = null;
       }
 
-      // Hydrate services references
-      if (receipt.services.isNotEmpty) {
+      // Hydrate services using serviceIds
+      if (receipt.serviceIds.isNotEmpty) {
         final hydratedServices = <Service>[];
 
-        for (var service in receipt.services) {
+        for (var serviceId in receipt.serviceIds) {
           final fullService = services.firstWhereOrNull(
-            (s) => s.id == service.id,
+            (s) => s.id == serviceId,
           );
           if (fullService != null) {
             hydratedServices.add(fullService);
           } else {
-            // If service not found in main list, keep the partial one from receipt
-            hydratedServices.add(service);
+            _logger.w(
+                'Service not found for receipt ${receipt.id} (serviceId: $serviceId)');
           }
         }
 
         receipt.services = hydratedServices;
+        if (hydratedServices.isNotEmpty) {
+          receiptsWithServices++;
+        }
       }
     }
 
-    _logger.d('Hydrated ${receipts.length} receipts');
+    _logger.d('Hydrated ${receipts.length} receipts:');
+    _logger.d('  - With rooms: $receiptsWithRooms');
+    _logger.d('  - With buildings: $receiptsWithBuildings');
+    _logger.d('  - With services: $receiptsWithServices');
   }
 
-  /// Validate hydration results (optional debugging)
-  Map<String, dynamic> validate({List<Receipt>? receipts}) {
+  /// Step 6: Hydrate reports with full object graphs
+  void hydrateReports(List<Report> reports) {
+    _logger.d('Hydrating reports...');
+    int reportsWithTenants = 0;
+    int reportsWithRooms = 0;
+
+    for (var report in reports) {
+      // Hydrate tenant reference
+      if (report.tenant?.id != null) {
+        final tenantId = report.tenant!.id;
+
+        final fullTenant = tenants.firstWhereOrNull(
+          (t) => t.id == tenantId,
+        );
+
+        if (fullTenant != null) {
+          report.tenant = fullTenant;
+          reportsWithTenants++;
+        } else {
+          _logger.w(
+              'Tenant not found for report ${report.id} (tenantId: $tenantId)');
+          report.tenant = null;
+        }
+      }
+
+      // Hydrate room reference
+      if (report.room?.id != null) {
+        final roomId = report.room!.id;
+
+        final fullRoom = rooms.firstWhereOrNull(
+          (r) => r.id == roomId,
+        );
+
+        if (fullRoom != null) {
+          report.room = fullRoom;
+          reportsWithRooms++;
+        } else {
+          _logger.w('Room not found for report ${report.id} (roomId: $roomId)');
+          report.room = null;
+        }
+      }
+    }
+
+    _logger.d('Hydrated ${reports.length} reports:');
+    _logger.d('  - With tenants: $reportsWithTenants');
+    _logger.d('  - With rooms: $reportsWithRooms');
+  }
+
+  /// Validate hydration results (for debugging)
+  Map<String, dynamic> validate({
+    List<Receipt>? receipts,
+    List<Report>? reports,
+  }) {
     int roomsWithBuildings = rooms.where((r) => r.building != null).length;
+    int roomsWithoutBuildings = rooms.where((r) => r.building == null).length;
     int buildingsWithRooms = buildings.where((b) => b.rooms.isNotEmpty).length;
     int tenantsWithRooms = tenants.where((t) => t.room != null).length;
     int receiptsWithRooms = receipts?.where((r) => r.room != null).length ?? 0;
+    int receiptsWithBuildings =
+        receipts?.where((r) => r.room?.building != null).length ?? 0;
+    int receiptsWithServices =
+        receipts?.where((r) => r.services.isNotEmpty).length ?? 0;
+    int reportsWithTenants =
+        reports?.where((r) => r.tenant != null).length ?? 0;
+    int reportsWithRooms = reports?.where((r) => r.room != null).length ?? 0;
 
     final results = {
       'total_rooms': rooms.length,
       'rooms_with_buildings': roomsWithBuildings,
+      'rooms_without_buildings': roomsWithoutBuildings,
       'total_buildings': buildings.length,
       'buildings_with_rooms': buildingsWithRooms,
       'total_tenants': tenants.length,
       'tenants_with_rooms': tenantsWithRooms,
       'total_receipts': receipts?.length ?? 0,
       'receipts_with_rooms': receiptsWithRooms,
+      'receipts_with_buildings': receiptsWithBuildings,
+      'receipts_missing_buildings': receiptsWithRooms - receiptsWithBuildings,
+      'receipts_with_services': receiptsWithServices,
+      'total_reports': reports?.length ?? 0,
+      'reports_with_tenants': reportsWithTenants,
+      'reports_with_rooms': reportsWithRooms,
     };
 
     _logger.i('Hydration validation: $results');
+
+    // Log warnings for receipts without buildings
+    if (receipts != null) {
+      for (var receipt in receipts) {
+        if (receipt.room != null && receipt.room!.building == null) {
+          _logger.w(
+              '⚠️ Receipt ${receipt.id} has room ${receipt.room!.roomNumber} (${receipt.room!.id}) but NO BUILDING!');
+
+          final possibleBuilding = buildings.firstWhereOrNull(
+              (b) => b.rooms.any((r) => r.id == receipt.room!.id));
+          if (possibleBuilding != null) {
+            _logger.w(
+                '   -> Building ${possibleBuilding.name} contains this room ID');
+          }
+        }
+      }
+    }
+
+    // Log warnings for rooms without buildings
+    for (var room in rooms) {
+      if (room.building == null) {
+        _logger.w(
+            '⚠️ Room ${room.roomNumber} (${room.id}) has NO BUILDING reference!');
+      }
+    }
+
     return results;
   }
 }

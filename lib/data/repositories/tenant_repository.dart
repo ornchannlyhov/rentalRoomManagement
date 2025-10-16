@@ -99,8 +99,11 @@ class TenantRepository {
     }
   }
 
-  Future<void> syncFromApi(
-      {String? roomId, String? search, bool skipHydration = false}) async {
+  Future<void> syncFromApi({
+    String? roomId,
+    String? search,
+    bool skipHydration = false,
+  }) async {
     try {
       if (!await _apiHelper.hasNetwork()) {
         _logger.w('No network connection, skipping sync');
@@ -131,11 +134,25 @@ class TenantRepository {
         return;
       }
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && response.data['success'] == true) {
         final List<dynamic> tenantsJson = response.data['data'];
         _tenantCache = tenantsJson.map((json) {
           final tenantDto = TenantDto.fromJson(json);
-          return tenantDto.toTenant();
+          final tenant = tenantDto.toTenant();
+
+          // Reconstruct room and building references
+          if (tenantDto.room != null) {
+            tenant.room = tenantDto.room!.toRoom();
+            if (tenantDto.room!.building != null) {
+              tenant.room!.building = tenantDto.room!.building!.toBuilding();
+            }
+            // Set bidirectional reference
+            if (tenant.room != null) {
+              tenant.room!.tenant = tenant;
+            }
+          }
+
+          return tenant;
         }).toList();
 
         if (!skipHydration) {
@@ -155,12 +172,13 @@ class TenantRepository {
     String? roomId,
   }) async {
     try {
-      Tenant createdTenant; // To store the created tenant
+      Tenant createdTenant;
 
       if (await _apiHelper.hasNetwork()) {
         final token = await _secureStorage.read(key: 'auth_token');
         if (token != null) {
           _logger.i('Creating tenant via API: $name');
+
           String genderStr;
           switch (gender) {
             case Gender.male:
@@ -173,17 +191,16 @@ class TenantRepository {
               genderStr = 'other';
           }
 
-          final tenantDto = TenantDto(
-            id: '',
-            name: name,
-            phoneNumber: phoneNumber,
-            gender: genderStr,
-            roomId: roomId,
-          );
+          final requestData = {
+            'name': name,
+            'phoneNumber': phoneNumber,
+            'gender': genderStr,
+            if (roomId != null) 'roomId': roomId,
+          };
 
           final response = await _apiHelper.dio.post(
             '${_apiHelper.baseUrl}/tenants',
-            data: tenantDto.toRequestJson(),
+            data: requestData,
             options: Options(headers: {'Authorization': 'Bearer $token'}),
             cancelToken: _apiHelper.cancelToken,
           );
@@ -202,7 +219,7 @@ class TenantRepository {
             return createdTenant;
           }
 
-          if (response.statusCode == 201) {
+          if (response.statusCode == 201 && response.data['success'] == true) {
             final tenantDto = TenantDto.fromJson(response.data['data']);
             createdTenant = tenantDto.toTenant();
 
@@ -213,7 +230,7 @@ class TenantRepository {
                 createdTenant.room!.building =
                     tenantDto.room!.building!.toBuilding();
               }
-              // Set bidirectional reference: room.tenant
+              // Set bidirectional reference
               if (createdTenant.room != null) {
                 createdTenant.room!.tenant = createdTenant;
               }
@@ -261,37 +278,36 @@ class TenantRepository {
         orElse: () => throw Exception('Tenant not found in cache: $id'),
       );
 
-      String? genderStr;
-      if (gender != null) {
-        switch (gender) {
-          case Gender.male:
-            genderStr = 'male';
-            break;
-          case Gender.female:
-            genderStr = 'female';
-            break;
-          default:
-            genderStr = 'other';
-        }
-      }
-
-      final tenantDto = TenantDto(
-        id: id,
-        name: name ?? existingTenant.name,
-        phoneNumber: phoneNumber ?? existingTenant.phoneNumber,
-        gender: genderStr ?? existingTenant.gender.toString().split('.').last,
-        roomId: roomId ?? existingTenant.room?.id,
-      );
-
       Tenant updatedTenant;
 
       if (await _apiHelper.hasNetwork()) {
         final token = await _secureStorage.read(key: 'auth_token');
         if (token != null) {
           _logger.i('Updating tenant via API: $id');
+
+          String? genderStr;
+          if (gender != null) {
+            switch (gender) {
+              case Gender.male:
+                genderStr = 'male';
+                break;
+              case Gender.female:
+                genderStr = 'female';
+                break;
+              default:
+                genderStr = 'other';
+            }
+          }
+
+          final requestData = <String, dynamic>{};
+          if (name != null) requestData['name'] = name;
+          if (phoneNumber != null) requestData['phoneNumber'] = phoneNumber;
+          if (genderStr != null) requestData['gender'] = genderStr;
+          if (roomId != null) requestData['roomId'] = roomId;
+
           final response = await _apiHelper.dio.put(
             '${_apiHelper.baseUrl}/tenants/$id',
-            data: tenantDto.toRequestJson(),
+            data: requestData,
             options: Options(headers: {'Authorization': 'Bearer $token'}),
             cancelToken: _apiHelper.cancelToken,
           );
@@ -307,7 +323,7 @@ class TenantRepository {
             final index = _tenantCache.indexWhere((t) => t.id == id);
             if (index >= 0) {
               _tenantCache[index] = updatedTenant;
-              // Set bidirectional reference: room.tenant
+              // Set bidirectional reference
               if (updatedTenant.room != null) {
                 updatedTenant.room!.tenant = updatedTenant;
               }
@@ -316,7 +332,7 @@ class TenantRepository {
             return updatedTenant;
           }
 
-          if (response.statusCode == 200) {
+          if (response.statusCode == 200 && response.data['success'] == true) {
             final tenantDto = TenantDto.fromJson(response.data['data']);
             updatedTenant = tenantDto.toTenant();
 
@@ -331,7 +347,7 @@ class TenantRepository {
               // Preserve existing room if not explicitly changed
               updatedTenant.room = existingTenant.room;
             }
-            // Set bidirectional reference: room.tenant
+            // Set bidirectional reference
             if (updatedTenant.room != null) {
               updatedTenant.room!.tenant = updatedTenant;
             }
@@ -345,6 +361,9 @@ class TenantRepository {
             await save();
             _logger.i('Tenant updated successfully via API: $id');
             return updatedTenant;
+          } else {
+            throw Exception(
+                'Failed to update tenant via API: ${response.statusCode}');
           }
         }
       }
@@ -356,7 +375,7 @@ class TenantRepository {
         gender: gender,
         room: roomId == null ? existingTenant.room : null,
       );
-      // Set bidirectional reference: room.tenant
+      // Set bidirectional reference
       if (updatedTenant.room != null) {
         updatedTenant.room!.tenant = updatedTenant;
       }
@@ -402,10 +421,70 @@ class TenantRepository {
     }
   }
 
+  Future<Tenant?> getTenantById(String id) async {
+    try {
+      // Check cache first
+      try {
+        return _tenantCache.firstWhere((tenant) => tenant.id == id);
+      } catch (e) {
+        // Not in cache, try API if online
+      }
+
+      if (await _apiHelper.hasNetwork()) {
+        final token = await _secureStorage.read(key: 'auth_token');
+        if (token != null) {
+          _logger.i('Fetching tenant from API: $id');
+          final response = await _apiHelper.dio.get(
+            '${_apiHelper.baseUrl}/tenants/$id',
+            options: Options(headers: {'Authorization': 'Bearer $token'}),
+            cancelToken: _apiHelper.cancelToken,
+          );
+
+          if (response.statusCode == 200 && response.data['success'] == true) {
+            final tenantDto = TenantDto.fromJson(response.data['data']);
+            final tenant = tenantDto.toTenant();
+
+            // Reconstruct room and building references
+            if (tenantDto.room != null) {
+              tenant.room = tenantDto.room!.toRoom();
+              if (tenantDto.room!.building != null) {
+                tenant.room!.building = tenantDto.room!.building!.toBuilding();
+              }
+              // Set bidirectional reference
+              if (tenant.room != null) {
+                tenant.room!.tenant = tenant;
+              }
+            }
+
+            // Update cache
+            final index = _tenantCache.indexWhere((t) => t.id == id);
+            if (index >= 0) {
+              _tenantCache[index] = tenant;
+            } else {
+              _tenantCache.add(tenant);
+            }
+            await save();
+
+            return tenant;
+          }
+        }
+      }
+
+      return null;
+    } catch (e) {
+      _logger.e('Failed to get tenant by id: $e');
+      return null;
+    }
+  }
+
   Future<void> restoreTenant(int restoreIndex, Tenant tenant) async {
-    _tenantCache.insert(restoreIndex, tenant);
-    await save();
-    _logger.i('Tenant restored at index $restoreIndex: ${tenant.id}');
+    if (restoreIndex >= 0 && restoreIndex <= _tenantCache.length) {
+      _tenantCache.insert(restoreIndex, tenant);
+      await save();
+      _logger.i('Tenant restored at index $restoreIndex: ${tenant.id}');
+    } else {
+      throw Exception('Invalid restore index: $restoreIndex');
+    }
   }
 
   Future<void> removeRoom(String tenantId) async {
@@ -413,13 +492,13 @@ class TenantRepository {
       (tenant) => tenant.id == tenantId,
       orElse: () => throw Exception('Tenant not found: $tenantId'),
     );
-    tenant.room = null;
+
     await updateTenant(
       id: tenantId,
       name: tenant.name,
       phoneNumber: tenant.phoneNumber,
       gender: tenant.gender,
-      roomId: null,
+      roomId: null, // This will remove the room assignment
     );
   }
 
@@ -437,8 +516,25 @@ class TenantRepository {
         return tenant.room != null && tenant.room!.building?.id == buildingId;
       }).toList();
     } catch (e) {
+      _logger.e('Failed to retrieve tenants for building $buildingId: $e');
       throw Exception(
           'Failed to retrieve tenants for building $buildingId: $e');
     }
+  }
+
+  List<Tenant> searchTenants(String query) {
+    final lowerQuery = query.toLowerCase();
+    return _tenantCache.where((tenant) {
+      return tenant.name.toLowerCase().contains(lowerQuery) ||
+          tenant.phoneNumber.contains(query);
+    }).toList();
+  }
+
+  int getTenantCount() {
+    return _tenantCache.length;
+  }
+
+  int getTenantCountByBuilding(String buildingId) {
+    return getTenantsByBuilding(buildingId).length;
   }
 }

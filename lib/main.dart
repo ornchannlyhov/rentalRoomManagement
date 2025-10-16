@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
+import 'package:receipts_v2/data/repositories/report_repository.dart';
 import 'package:receipts_v2/helpers/api_helper.dart';
+import 'package:receipts_v2/helpers/repository_manager.dart';
 import 'package:receipts_v2/data/repositories/auth_repository.dart';
-import 'package:receipts_v2/data/repositories/buidling_repository.dart';
+import 'package:receipts_v2/data/repositories/building_repository.dart';
 import 'package:receipts_v2/data/repositories/receipt_repository.dart';
 import 'package:receipts_v2/data/repositories/room_repository.dart';
 import 'package:receipts_v2/data/repositories/service_repository.dart';
@@ -14,6 +16,7 @@ import 'package:receipts_v2/data/repositories/tenant_repository.dart';
 import 'package:receipts_v2/presentation/providers/auth_provider.dart';
 import 'package:receipts_v2/presentation/providers/building_provider.dart';
 import 'package:receipts_v2/presentation/providers/receipt_provider.dart';
+import 'package:receipts_v2/presentation/providers/report_provider.dart';
 import 'package:receipts_v2/presentation/providers/room_provider.dart';
 import 'package:receipts_v2/presentation/providers/service_provider.dart';
 import 'package:receipts_v2/presentation/providers/tenant_provider.dart';
@@ -29,53 +32,81 @@ import 'package:receipts_v2/presentation/view/screen/setting/profile_screen.dart
 import 'package:receipts_v2/presentation/view/screen/tenant/tenant_screen.dart';
 import 'helpers/app_theme.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:logger/logger.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await initializeDateFormatting();
+
+  final Logger logger = Logger();
+
   // await SecureStorageHelper.clearAll(); //uncomment incase of wanting to clean data (testing only)
 
-  // Initialize repositories in correct order
-  final authRepository = AuthRepository();
+  // Initialize repositories in correct dependency order
   final roomRepository = RoomRepository();
-  final roomProvider = RoomProvider(roomRepository);
   final buildingRepository = BuildingRepository(roomRepository);
   final receiptRepository = ReceiptRepository();
   final serviceRepository = ServiceRepository();
   final tenantRepository = TenantRepository();
+  final authRepository = AuthRepository();
+  final reportRepository = ReportRepository();
+
+  // Initialize RepositoryManager to handle all data operations
+  final repositoryManager = RepositoryManager(
+    buildingRepository: buildingRepository,
+    roomRepository: roomRepository,
+    tenantRepository: tenantRepository,
+    receiptRepository: receiptRepository,
+    serviceRepository: serviceRepository,
+    reportRepository: reportRepository,
+  );
 
   // Initialize auth provider first
   final authProvider = AuthProvider(authRepository);
   await authProvider.load();
 
-  await roomRepository.load();
-  await buildingRepository.load();
-  await serviceRepository.load();
-  await tenantRepository.load();
-  await receiptRepository.load();
+  try {
+    // Load all data from storage with proper hydration
+    logger.i('Loading all data from storage...');
+    await repositoryManager.loadAll();
 
-  // Sync from API if authenticated and online
-  if (authProvider.isAuthenticated()) {
-    try {
-      await buildingRepository.syncFromApi(); // Also syncs rooms
-      await serviceRepository.syncFromApi();
-      await tenantRepository.syncFromApi();
-      await receiptRepository.syncFromApi();
-    } catch (e) {
-      // Sync errors are logged but don't prevent app startup
-      print('Error syncing from API: $e');
+    // Log data summary after loading
+    final loadSummary = repositoryManager.getDataSummary();
+    logger.i('Data loaded successfully: $loadSummary');
+
+    // Sync from API if authenticated and online
+    if (authProvider.isAuthenticated()) {
+      try {
+        logger.i('User authenticated, syncing from API...');
+        await repositoryManager.syncAll();
+
+        // Log data summary after sync
+        final syncSummary = repositoryManager.getDataSummary();
+        logger.i('Data synced successfully: $syncSummary');
+      } catch (e) {
+        // Sync errors are logged but don't prevent app startup
+        logger.e('Error syncing from API: $e');
+      }
     }
+  } catch (e) {
+    logger.e('Error loading data: $e');
+    // Continue with empty data rather than crashing
   }
+
+  // Initialize providers
+  final roomProvider = RoomProvider(roomRepository);
 
   runApp(MyApp(
     authProvider: authProvider,
+    repositoryManager: repositoryManager,
     roomRepository: roomRepository,
     buildingRepository: buildingRepository,
     receiptRepository: receiptRepository,
     serviceRepository: serviceRepository,
     tenantRepository: tenantRepository,
     roomProvider: roomProvider,
+    reportRepository: reportRepository,
   ));
 }
 
@@ -89,22 +120,26 @@ class SecureStorageHelper {
 
 class MyApp extends StatelessWidget {
   final AuthProvider authProvider;
+  final RepositoryManager repositoryManager;
   final RoomProvider roomProvider;
   final RoomRepository roomRepository;
   final BuildingRepository buildingRepository;
   final ReceiptRepository receiptRepository;
   final ServiceRepository serviceRepository;
   final TenantRepository tenantRepository;
+  final ReportRepository reportRepository;
 
   const MyApp({
     super.key,
     required this.authProvider,
+    required this.repositoryManager,
     required this.roomRepository,
     required this.buildingRepository,
     required this.receiptRepository,
     required this.serviceRepository,
     required this.tenantRepository,
     required this.roomProvider,
+    required this.reportRepository,
   });
 
   @override
@@ -117,30 +152,34 @@ class MyApp extends StatelessWidget {
         // Theme provider
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
 
-        // Room provider (already loaded in main)
+        // Provide RepositoryManager for global access
+        Provider.value(value: repositoryManager),
+
+        // Room provider
         ChangeNotifierProvider(
           create: (_) => RoomProvider(roomRepository),
         ),
 
-        // Service provider (already loaded in main)
+        // Service provider
         ChangeNotifierProvider(
           create: (_) => ServiceProvider(serviceRepository),
         ),
 
-        // Tenant provider (already loaded in main)
+        // Tenant provider
         ChangeNotifierProvider(
           create: (_) => TenantProvider(tenantRepository),
         ),
 
-        // Building provider (already loaded in main with rooms linked)
+        // Building provider
         ChangeNotifierProvider(
           create: (_) => BuildingProvider(buildingRepository, roomProvider),
         ),
 
-        // Receipt provider (already loaded in main)
+        // Receipt provider
         ChangeNotifierProvider(
           create: (_) => ReceiptProvider(receiptRepository),
         ),
+        ChangeNotifierProvider(create: (_) => ReportProvider(reportRepository)),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
@@ -172,6 +211,8 @@ class AuthWrapper extends StatefulWidget {
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
+  final Logger _logger = Logger();
+
   @override
   void initState() {
     super.initState();
@@ -212,23 +253,23 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   Future<void> _syncDataWhenNetworkRestored() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final repositoryManager =
+        Provider.of<RepositoryManager>(context, listen: false);
 
     if (authProvider.isAuthenticated()) {
-      final buildingProvider =
-          Provider.of<BuildingProvider>(context, listen: false);
-      final serviceProvider =
-          Provider.of<ServiceProvider>(context, listen: false);
-      final tenantProvider =
-          Provider.of<TenantProvider>(context, listen: false);
-      final receiptProvider =
-          Provider.of<ReceiptProvider>(context, listen: false);
-
       try {
-        // Sync all data when network is restored
-        await buildingProvider.syncFromApi();
-        await serviceProvider.syncFromApi();
-        await tenantProvider.syncFromApi();
-        await receiptProvider.syncFromApi();
+        _logger.i('Network restored, syncing all data...');
+
+        // Use RepositoryManager to sync everything with proper hydration
+        await repositoryManager.syncAll();
+
+        // Notify all providers to refresh their data
+        if (mounted) {
+          Provider.of<BuildingProvider>(context, listen: false).load();
+          Provider.of<ServiceProvider>(context, listen: false).load();
+          Provider.of<TenantProvider>(context, listen: false).load();
+          Provider.of<ReceiptProvider>(context, listen: false).load();
+        }
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -238,9 +279,11 @@ class _AuthWrapperState extends State<AuthWrapper> {
             ),
           );
         }
+
+        _logger.i('All data synced and hydrated successfully');
       } catch (e) {
         // Silent fail - data remains cached
-        print('Failed to sync after network restore: $e');
+        _logger.e('Failed to sync after network restore: $e');
       }
     }
   }

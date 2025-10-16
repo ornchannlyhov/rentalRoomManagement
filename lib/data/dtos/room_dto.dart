@@ -8,70 +8,41 @@ class RoomDto {
   final String id;
   final String roomNumber;
   final String? buildingId;
-  final BuildingDto? building;
-  final TenantDto? tenant;
-  final int? tenantChatId;
   final String roomStatus;
   final double price;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
+  final BuildingDto? building;
+  final TenantDto? tenant;
+  final List<dynamic>? receipts;
+  final List<dynamic>? reports; 
 
   RoomDto({
     required this.id,
     required this.roomNumber,
     this.buildingId,
-    this.building,
-    this.tenant,
-    this.tenantChatId,
     required this.roomStatus,
     required this.price,
-    this.createdAt,
-    this.updatedAt,
+    this.building,
+    this.tenant,
+    this.receipts,
+    this.reports,
   });
 
   factory RoomDto.fromJson(Map<String, dynamic> json) {
     return RoomDto(
       id: json['id']?.toString() ?? '',
-      roomNumber:
-          json['roomNumber']?.toString() ?? json['name']?.toString() ?? '',
+      roomNumber: json['roomNumber']?.toString() ?? '',
       buildingId: json['buildingId']?.toString(),
+      roomStatus: json['roomStatus']?.toString() ?? 'available',
+      price: _parseDouble(json['price']),
       building: json['building'] != null
           ? BuildingDto.fromJson(json['building'] as Map<String, dynamic>)
           : null,
       tenant: json['tenant'] != null
           ? TenantDto.fromJson(json['tenant'] as Map<String, dynamic>)
           : null,
-      tenantChatId: _parseInt(json['tenantChatId']),
-      roomStatus: json['roomStatus']?.toString() ??
-          json['status']?.toString() ??
-          'available',
-      price: _parseDouble(json['price']),
-      createdAt: _parseDateTime(json['createdAt']),
-      updatedAt: _parseDateTime(json['updatedAt']),
+      receipts: json['receipts'] as List?,
+      reports: json['reports'] as List?,
     );
-  }
-
-  static DateTime? _parseDateTime(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value;
-    if (value is String) {
-      try {
-        return DateTime.parse(value);
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
-  }
-
-  static int? _parseInt(dynamic value) {
-    if (value == null) return null;
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    if (value is String) {
-      return int.tryParse(value);
-    }
-    return null;
   }
 
   static double _parseDouble(dynamic value) {
@@ -88,45 +59,61 @@ class RoomDto {
       'id': id,
       'roomNumber': roomNumber,
       if (buildingId != null) 'buildingId': buildingId,
-      if (building != null) 'building': building!.toJson(),
-      if (tenant != null) 'tenant': tenant!.toJson(),
-      if (tenantChatId != null) 'tenantChatId': tenantChatId,
       'roomStatus': roomStatus,
       'price': price,
-      if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
-      if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
+      if (building != null) 'building': building!.toJson(),
+      if (tenant != null) 'tenant': tenant!.toJson(),
+      if (receipts != null) 'receipts': receipts,
+      if (reports != null) 'reports': reports,
     };
   }
 
-Room toRoom() {
-  RoomStatus status;
-  switch (roomStatus.toLowerCase()) {
-    case 'occupied':
-      status = RoomStatus.occupied;
-      break;
-    default:
-      status = RoomStatus.available;
+  Map<String, dynamic> toRequestJson() {
+    return {
+      'buildingId': buildingId,
+      'roomNumber': roomNumber,
+      'price': price,
+      'roomStatus': roomStatus,
+    };
   }
 
-  final room = Room(
-    id: id,
-    roomNumber: roomNumber,
-    roomStatus: status,
-    price: price,
-    building: building?.toBuilding(),
-    tenant: tenant?.toTenant(),
-  );
-  if (room.building != null && building != null) {
-    room.building = Building(
-      id: building!.id,
-      name: building!.name,
-      rentPrice: building!.rentPrice,
-      electricPrice: building!.electricPrice,
-      waterPrice: building!.waterPrice,
-      rooms: [],
+  Room toRoom() {
+    RoomStatus status;
+    switch (roomStatus.toLowerCase()) {
+      case 'occupied':
+        status = RoomStatus.occupied;
+        break;
+      default:
+        status = RoomStatus.available;
+    }
+
+    final room = Room(
+      id: id,
+      roomNumber: roomNumber,
+      roomStatus: status,
+      price: price,
     );
-  }
 
-  return room;
-}
+    if (building != null) {
+      room.building = building!.toBuilding();
+    } else if (buildingId != null && buildingId!.isNotEmpty) {
+      room.building = Building(
+        id: buildingId!,
+        name: '',
+        rentPrice: 0.0,
+        electricPrice: 0.0,
+        waterPrice: 0.0,
+        rooms: [],
+      );
+    }
+
+    if (tenant != null) {
+      room.tenant = tenant!.toTenant();
+      if (room.tenant != null) {
+        room.tenant!.room = room;
+      }
+    }
+
+    return room;
+  }
 }

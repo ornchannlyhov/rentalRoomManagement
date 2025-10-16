@@ -74,8 +74,8 @@ class AuthRepository {
         ),
       );
 
-      if (response.statusCode == 200 && response.data != null) {
-        final userDto = UserDto.fromJson(response.data);
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final userDto = UserDto.fromJson(response.data['user']);
         await _apiHelper.storage.write(
           key: StorageKeys.user,
           value: jsonEncode(userDto.toJson()),
@@ -103,45 +103,6 @@ class AuthRepository {
     await _apiHelper.storage.delete(key: StorageKeys.user);
   }
 
-  // Generic authentication handler
-  Future<User> _authenticateAndStore(
-    Future<Response> Function() apiCall,
-    String successMessage,
-  ) async {
-    try {
-      final response = await apiCall();
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final userDto = UserDto.fromJson(response.data);
-
-        // Store token and user data
-        if (userDto.token != null) {
-          await _apiHelper.storage.write(
-            key: StorageKeys.token,
-            value: userDto.token!,
-          );
-        }
-
-        await _apiHelper.storage.write(
-          key: StorageKeys.user,
-          value: jsonEncode(userDto.toJson()),
-        );
-
-        _logger.i(successMessage);
-        return userDto.toUser();
-      } else {
-        throw Exception('Authentication failed: ${response.data}');
-      }
-    } on DioException catch (e) {
-      _logger.e('Authentication error: ${e.message}');
-      final errorMessage = e.response?.data['message'] ??
-          e.response?.data['error'] ??
-          e.message ??
-          'Authentication failed';
-      throw Exception(errorMessage);
-    }
-  }
-
   // Register user
   Future<User> register(RegisterRequest request) async {
     if (!await _hasNetwork()) {
@@ -149,10 +110,39 @@ class AuthRepository {
     }
 
     final url = '${_apiHelper.baseUrl}/auth/register';
-    return _authenticateAndStore(
-      () => _apiHelper.dio.post(url, data: request.toJson()),
-      'User registered successfully',
-    );
+
+    try {
+      final response = await _apiHelper.dio.post(url, data: request.toJson());
+
+      if (response.statusCode == 201 && response.data['success'] == true) {
+        final token = response.data['token'] as String;
+        final userDto = UserDto.fromJson(response.data['user']);
+
+        // Store token and user data
+        await _apiHelper.storage.write(key: StorageKeys.token, value: token);
+        await _apiHelper.storage.write(
+          key: StorageKeys.user,
+          value: jsonEncode(userDto.toJson()),
+        );
+
+        _logger.i('User registered successfully');
+        return User(
+          id: userDto.id,
+          username: userDto.username,
+          email: userDto.email,
+          token: token,
+        );
+      } else {
+        throw Exception('Registration failed: ${response.data}');
+      }
+    } on DioException catch (e) {
+      _logger.e('Registration error: ${e.message}');
+      final errorMessage = e.response?.data['message'] ??
+          e.response?.data['error'] ??
+          e.message ??
+          'Registration failed';
+      throw Exception(errorMessage);
+    }
   }
 
   // Login user
@@ -162,10 +152,39 @@ class AuthRepository {
     }
 
     final url = '${_apiHelper.baseUrl}/auth/login';
-    return _authenticateAndStore(
-      () => _apiHelper.dio.post(url, data: request.toJson()),
-      'User logged in successfully',
-    );
+
+    try {
+      final response = await _apiHelper.dio.post(url, data: request.toJson());
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final token = response.data['token'] as String;
+        final userDto = UserDto.fromJson(response.data['user']);
+
+        // Store token and user data
+        await _apiHelper.storage.write(key: StorageKeys.token, value: token);
+        await _apiHelper.storage.write(
+          key: StorageKeys.user,
+          value: jsonEncode(userDto.toJson()),
+        );
+
+        _logger.i('User logged in successfully');
+        return User(
+          id: userDto.id,
+          username: userDto.username,
+          email: userDto.email,
+          token: token,
+        );
+      } else {
+        throw Exception('Login failed: ${response.data}');
+      }
+    } on DioException catch (e) {
+      _logger.e('Login error: ${e.message}');
+      final errorMessage = e.response?.data['message'] ??
+          e.response?.data['error'] ??
+          e.message ??
+          'Login failed';
+      throw Exception(errorMessage);
+    }
   }
 
   // Update password
@@ -265,7 +284,11 @@ class AuthRepository {
     if (userJson != null) {
       try {
         final userDto = UserDto.fromJson(jsonDecode(userJson));
-        return userDto.toUser();
+        return User(
+          id: userDto.id,
+          username: userDto.username,
+          email: userDto.email,
+        );
       } catch (e) {
         _logger.w("Failed to parse cached user data: $e. Clearing cache.");
         await _clearAuth();
@@ -275,7 +298,11 @@ class AuthRepository {
     if (await _hasNetwork()) {
       final userDto = await _validateTokenAndGetUser();
       if (userDto != null) {
-        return userDto.toUser();
+        return User(
+          id: userDto.id,
+          username: userDto.username,
+          email: userDto.email,
+        );
       }
     }
 

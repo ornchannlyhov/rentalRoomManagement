@@ -1,7 +1,7 @@
+import 'package:receipts_v2/data/models/receipt.dart';
+import 'package:receipts_v2/data/models/enum/payment_status.dart';
 import 'package:receipts_v2/data/dtos/room_dto.dart';
 import 'package:receipts_v2/data/dtos/service_dto.dart';
-import 'package:receipts_v2/data/models/enum/payment_status.dart';
-import 'package:receipts_v2/data/models/receipt.dart';
 
 class ReceiptServiceDto {
   final String id;
@@ -18,9 +18,9 @@ class ReceiptServiceDto {
 
   factory ReceiptServiceDto.fromJson(Map<String, dynamic> json) {
     return ReceiptServiceDto(
-      id: json['id']?.toString() ?? '',
-      receiptId: json['receiptId']?.toString() ?? '',
-      serviceId: json['serviceId']?.toString() ?? '',
+      id: json['id'] as String,
+      receiptId: json['receiptId'] as String,
+      serviceId: json['serviceId'] as String,
       service: ServiceDto.fromJson(json['service'] as Map<String, dynamic>),
     );
   }
@@ -47,11 +47,7 @@ class ReceiptDto {
   final String? roomId;
   final String? roomNumber;
   final RoomDto? room;
-  final List<ReceiptServiceDto>? receiptServices; // Changed from services
-  final String? receiptImage;
-  final String? source;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
+  final List<ReceiptServiceDto>? receiptServices;
 
   ReceiptDto({
     required this.id,
@@ -65,63 +61,35 @@ class ReceiptDto {
     this.roomId,
     this.roomNumber,
     this.room,
-    this.receiptServices, // Changed
-    this.receiptImage,
-    this.source,
-    this.createdAt,
-    this.updatedAt,
+    this.receiptServices,
   });
 
   factory ReceiptDto.fromJson(Map<String, dynamic> json) {
+    // Parse receiptServices from API
+    List<ReceiptServiceDto>? receiptServices;
+    if (json['receiptServices'] != null) {
+      receiptServices = (json['receiptServices'] as List)
+          .map((item) =>
+              ReceiptServiceDto.fromJson(item as Map<String, dynamic>))
+          .toList();
+    }
+
     return ReceiptDto(
-      id: json['id']?.toString() ?? '',
-      date: _parseDateTime(json['date']) ?? DateTime.now(),
-      dueDate: _parseDateTime(json['dueDate']) ??
-          DateTime.now().add(const Duration(days: 7)),
-      lastWaterUsed: _parseInt(json['lastWaterUsed']),
-      lastElectricUsed: _parseInt(json['lastElectricUsed']),
-      thisWaterUsed: _parseInt(json['thisWaterUsed']),
-      thisElectricUsed: _parseInt(json['thisElectricUsed']),
-      paymentStatus: json['paymentStatus']?.toString() ?? 'pending',
-      roomId: json['roomId']?.toString(),
-      roomNumber: json['roomNumber']?.toString(),
+      id: json['id'] as String,
+      date: DateTime.parse(json['date'] as String),
+      dueDate: DateTime.parse(json['dueDate'] as String),
+      lastWaterUsed: json['lastWaterUsed'] as int,
+      lastElectricUsed: json['lastElectricUsed'] as int,
+      thisWaterUsed: json['thisWaterUsed'] as int,
+      thisElectricUsed: json['thisElectricUsed'] as int,
+      paymentStatus: json['paymentStatus'] as String,
+      roomId: json['roomId'] as String?,
+      roomNumber: json['roomNumber'] as String?,
       room: json['room'] != null
           ? RoomDto.fromJson(json['room'] as Map<String, dynamic>)
           : null,
-      receiptServices: json['receiptServices'] != null
-          ? (json['receiptServices'] as List)
-              .map((rs) =>
-                  ReceiptServiceDto.fromJson(rs as Map<String, dynamic>))
-              .toList()
-          : null,
-      receiptImage: json['receiptImage']?.toString(),
-      source: json['source']?.toString(),
-      createdAt: _parseDateTime(json['createdAt']),
-      updatedAt: _parseDateTime(json['updatedAt']),
+      receiptServices: receiptServices,
     );
-  }
-
-  static DateTime? _parseDateTime(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value;
-    if (value is String) {
-      try {
-        return DateTime.parse(value);
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
-  }
-
-  static int _parseInt(dynamic value) {
-    if (value == null) return 0;
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    if (value is String) {
-      return int.tryParse(value) ?? 0;
-    }
-    return 0;
   }
 
   Map<String, dynamic> toJson() {
@@ -139,10 +107,6 @@ class ReceiptDto {
       if (room != null) 'room': room!.toJson(),
       if (receiptServices != null)
         'receiptServices': receiptServices!.map((rs) => rs.toJson()).toList(),
-      if (receiptImage != null) 'receiptImage': receiptImage,
-      if (source != null) 'source': source,
-      if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
-      if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
     };
   }
 
@@ -159,6 +123,14 @@ class ReceiptDto {
         status = PaymentStatus.pending;
     }
 
+    // Extract service IDs from receiptServices
+    final serviceIds =
+        receiptServices?.map((rs) => rs.serviceId).toList() ?? [];
+
+    // Create services list from receiptServices
+    final services =
+        receiptServices?.map((rs) => rs.service.toService()).toList() ?? [];
+
     return Receipt(
       id: id,
       date: date,
@@ -169,8 +141,8 @@ class ReceiptDto {
       thisElectricUsed: thisElectricUsed,
       paymentStatus: status,
       room: room?.toRoom(),
-      services:
-          receiptServices?.map((rs) => rs.service.toService()).toList() ?? [],
+      services: services,
+      serviceIds: serviceIds,
     );
   }
 }

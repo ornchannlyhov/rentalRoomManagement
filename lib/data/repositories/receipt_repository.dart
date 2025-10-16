@@ -29,7 +29,6 @@ class ReceiptRepository {
           final receiptDto = ReceiptDto.fromJson(json);
           final receipt = receiptDto.toReceipt();
 
-          // Preserve full room and building references
           if (receiptDto.room != null) {
             receipt.room = receiptDto.room!.toRoom();
             if (receiptDto.room!.building != null) {
@@ -37,7 +36,6 @@ class ReceiptRepository {
             }
           }
 
-          // Preserve services
           if (receiptDto.receiptServices != null) {
             receipt.services = receiptDto.receiptServices!
                 .map((rs) => rs.service.toService())
@@ -74,7 +72,6 @@ class ReceiptRepository {
               statusStr = 'pending';
           }
 
-          // Save with full room and building data
           final receiptDto = ReceiptDto(
             id: receipt.id,
             date: receipt.date,
@@ -133,7 +130,13 @@ class ReceiptRepository {
     }
   }
 
-  Future<void> syncFromApi({bool skipHydration = false}) async {
+  Future<void> syncFromApi({
+    String? roomId,
+    String? tenantId,
+    String? buildingId,
+    PaymentStatus? paymentStatus,
+    bool skipHydration = false,
+  }) async {
     try {
       if (!await _apiHelper.hasNetwork()) {
         _logger.w('No network connection, skipping sync');
@@ -147,8 +150,29 @@ class ReceiptRepository {
       }
 
       _logger.i('Syncing receipts from API');
+
+      final queryParams = <String, String>{};
+      if (roomId != null) queryParams['roomId'] = roomId;
+      if (tenantId != null) queryParams['tenantId'] = tenantId;
+      if (buildingId != null) queryParams['buildingId'] = buildingId;
+      if (paymentStatus != null) {
+        String statusStr;
+        switch (paymentStatus) {
+          case PaymentStatus.paid:
+            statusStr = 'paid';
+            break;
+          case PaymentStatus.overdue:
+            statusStr = 'overdue';
+            break;
+          default:
+            statusStr = 'pending';
+        }
+        queryParams['paymentStatus'] = statusStr;
+      }
+
       final response = await _apiHelper.dio.get(
-        '${_apiHelper.baseUrl}/flutter-receipts',
+        '${_apiHelper.baseUrl}/receipts',
+        queryParameters: queryParams,
         options: Options(headers: {'Authorization': 'Bearer $token'}),
         cancelToken: _apiHelper.cancelToken,
       );
@@ -158,7 +182,7 @@ class ReceiptRepository {
         return;
       }
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && response.data['success'] == true) {
         final List<dynamic> receiptsJson = response.data['data'];
         _receiptCache = receiptsJson.map((json) {
           final receiptDto = ReceiptDto.fromJson(json);
@@ -172,13 +196,18 @@ class ReceiptRepository {
             }
           }
 
-          // Reconstruct service references
-          if (receiptDto.receiptServices != null) {
+          // Services are already set in toReceipt() from receiptServices
+          // But ensure serviceIds is also populated
+          if (receiptDto.receiptServices != null &&
+              receiptDto.receiptServices!.isNotEmpty) {
             receipt.services = receiptDto.receiptServices!
                 .map((rs) => rs.service.toService())
                 .toList();
+            receipt.serviceIds =
+                receiptDto.receiptServices!.map((rs) => rs.serviceId).toList();
           } else {
             receipt.services = [];
+            receipt.serviceIds = [];
           }
 
           return receipt;
@@ -196,7 +225,6 @@ class ReceiptRepository {
 
   Future<void> createReceipt(Receipt newReceipt) async {
     try {
-      // Validate required references
       if (newReceipt.room == null) {
         throw Exception('Receipt must have a room reference');
       }
@@ -210,8 +238,7 @@ class ReceiptRepository {
             receipt.date.month == newReceipt.date.month;
       });
 
-      Receipt createdReceipt =
-          newReceipt; // Default to input receipt for offline case
+      Receipt createdReceipt = newReceipt;
 
       if (await _apiHelper.hasNetwork()) {
         final token = await _secureStorage.read(key: 'auth_token');
@@ -233,7 +260,6 @@ class ReceiptRepository {
 
           final formData = FormData.fromMap({
             'roomId': newReceipt.room!.id,
-            'roomNumber': newReceipt.room!.roomNumber,
             'date': newReceipt.date.toIso8601String(),
             'dueDate': newReceipt.dueDate.toIso8601String(),
             'lastWaterUsed': newReceipt.lastWaterUsed,
@@ -241,20 +267,18 @@ class ReceiptRepository {
             'thisWaterUsed': newReceipt.thisWaterUsed,
             'thisElectricUsed': newReceipt.thisElectricUsed,
             'paymentStatus': statusStr,
-            'services': newReceipt.services
-                .map((service) => {
-                      'id': service.id,
-                      'name': service.name,
-                      'price': service.price,
-                      'buildingId': service.buildingId,
-                    })
-                .toList(),
+            if (newReceipt.services.isNotEmpty)
+              'serviceIds':
+                  jsonEncode(newReceipt.services.map((s) => s.id).toList()),
           });
 
           final response = await _apiHelper.dio.post(
-            '${_apiHelper.baseUrl}/flutter-receipts',
+            '${_apiHelper.baseUrl}/receipts',
             data: formData,
-            options: Options(headers: {'Authorization': 'Bearer $token'}),
+            options: Options(
+              headers: {'Authorization': 'Bearer $token'},
+              contentType: 'multipart/form-data',
+            ),
             cancelToken: _apiHelper.cancelToken,
           );
 
@@ -269,13 +293,18 @@ class ReceiptRepository {
             return;
           }
 
-          if (response.statusCode == 201) {
+          if (response.statusCode == 201 && response.data['success'] == true) {
             final receiptDto = ReceiptDto.fromJson(response.data['data']);
             createdReceipt = receiptDto.toReceipt();
 
-            // Preserve room, building, and service references from newReceipt
+            // Preserve room and building references from newReceipt
             createdReceipt.room = newReceipt.room;
+
+            // Preserve services and serviceIds from newReceipt
+            // API might not return full service objects, so use local data
             createdReceipt.services = List<Service>.from(newReceipt.services);
+            createdReceipt.serviceIds =
+                List<String>.from(newReceipt.serviceIds);
 
             if (existingIndex != -1) {
               _receiptCache[existingIndex] = createdReceipt;
@@ -283,9 +312,11 @@ class ReceiptRepository {
               _receiptCache.add(createdReceipt);
             }
             _logger.i('Receipt created successfully via API');
+          } else {
+            throw Exception(
+                'Failed to create receipt via API: ${response.statusCode}');
           }
         } else {
-          // No token, proceed with local creation
           if (existingIndex != -1) {
             _receiptCache[existingIndex] = newReceipt;
           } else {
@@ -293,7 +324,6 @@ class ReceiptRepository {
           }
         }
       } else {
-        // No network, proceed with local creation
         if (existingIndex != -1) {
           _receiptCache[existingIndex] = newReceipt;
         } else {
@@ -330,8 +360,6 @@ class ReceiptRepository {
           final formData = FormData.fromMap({
             if (updatedReceipt.room?.id != null)
               'roomId': updatedReceipt.room!.id,
-            if (updatedReceipt.room?.roomNumber != null)
-              'roomNumber': updatedReceipt.room!.roomNumber,
             'date': updatedReceipt.date.toIso8601String(),
             'dueDate': updatedReceipt.dueDate.toIso8601String(),
             'lastWaterUsed': updatedReceipt.lastWaterUsed,
@@ -339,20 +367,18 @@ class ReceiptRepository {
             'thisWaterUsed': updatedReceipt.thisWaterUsed,
             'thisElectricUsed': updatedReceipt.thisElectricUsed,
             'paymentStatus': statusStr,
-            'services': updatedReceipt.services
-                .map((service) => {
-                      'id': service.id,
-                      'name': service.name,
-                      'price': service.price,
-                      'buildingId': service.buildingId,
-                    })
-                .toList(),
+            if (updatedReceipt.services.isNotEmpty)
+              'serviceIds':
+                  jsonEncode(updatedReceipt.services.map((s) => s.id).toList()),
           });
 
           final response = await _apiHelper.dio.put(
-            '${_apiHelper.baseUrl}/flutter-receipts/${updatedReceipt.id}',
+            '${_apiHelper.baseUrl}/receipts/${updatedReceipt.id}',
             data: formData,
-            options: Options(headers: {'Authorization': 'Bearer $token'}),
+            options: Options(
+              headers: {'Authorization': 'Bearer $token'},
+              contentType: 'multipart/form-data',
+            ),
             cancelToken: _apiHelper.cancelToken,
           );
 
@@ -365,14 +391,21 @@ class ReceiptRepository {
 
       final index = _receiptCache.indexWhere((r) => r.id == updatedReceipt.id);
       if (index != -1) {
-        // Preserve room and services references if not provided
+        // Preserve room reference if not provided
         if (updatedReceipt.room == null && _receiptCache[index].room != null) {
           updatedReceipt.room = _receiptCache[index].room;
         }
+
+        // Preserve services and serviceIds if not provided
         if (updatedReceipt.services.isEmpty &&
             _receiptCache[index].services.isNotEmpty) {
           updatedReceipt.services =
               List<Service>.from(_receiptCache[index].services);
+        }
+        if (updatedReceipt.serviceIds.isEmpty &&
+            _receiptCache[index].serviceIds.isNotEmpty) {
+          updatedReceipt.serviceIds =
+              List<String>.from(_receiptCache[index].serviceIds);
         }
 
         _receiptCache[index] = updatedReceipt;
@@ -395,7 +428,7 @@ class ReceiptRepository {
           _logger.i('Deleting receipt via API: $receiptId');
 
           final response = await _apiHelper.dio.delete(
-            '${_apiHelper.baseUrl}/flutter-receipts/$receiptId',
+            '${_apiHelper.baseUrl}/receipts/$receiptId',
             options: Options(headers: {'Authorization': 'Bearer $token'}),
             cancelToken: _apiHelper.cancelToken,
           );
@@ -474,4 +507,20 @@ class ReceiptRepository {
       return receipt.room?.building?.id == buildingId;
     }).toList();
   }
+
+  Future<String?> getReceiptImageUrl(String receiptId) async {
+    try {
+      if (await _apiHelper.hasNetwork()) {
+        final token = await _secureStorage.read(key: 'auth_token');
+        if (token != null) {
+          return '${_apiHelper.baseUrl}/receipts/$receiptId/image';
+        }
+      }
+      return null;
+    } catch (e) {
+      _logger.e('Failed to get receipt image URL: $e');
+      return null;
+    }
+  }
+
 }

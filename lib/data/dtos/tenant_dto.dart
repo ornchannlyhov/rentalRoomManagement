@@ -9,8 +9,6 @@ class TenantDto {
   final String gender;
   final String? roomId;
   final RoomDto? room;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
 
   TenantDto({
     required this.id,
@@ -19,8 +17,6 @@ class TenantDto {
     required this.gender,
     this.roomId,
     this.room,
-    this.createdAt,
-    this.updatedAt,
   });
 
   factory TenantDto.fromJson(Map<String, dynamic> json) {
@@ -33,22 +29,7 @@ class TenantDto {
       room: json['room'] != null
           ? RoomDto.fromJson(json['room'] as Map<String, dynamic>)
           : null,
-      createdAt: _parseDateTime(json['createdAt']),
-      updatedAt: _parseDateTime(json['updatedAt']),
     );
-  }
-
-  static DateTime? _parseDateTime(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value;
-    if (value is String) {
-      try {
-        return DateTime.parse(value);
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
   }
 
   Map<String, dynamic> toJson() {
@@ -59,12 +40,9 @@ class TenantDto {
       'gender': gender,
       if (roomId != null) 'roomId': roomId,
       if (room != null) 'room': room!.toJson(),
-      if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
-      if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
     };
   }
 
-  /// Create a JSON for POST/PUT requests (excludes read-only fields)
   Map<String, dynamic> toRequestJson() {
     return {
       'name': name,

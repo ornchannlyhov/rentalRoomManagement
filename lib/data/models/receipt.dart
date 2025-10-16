@@ -12,6 +12,7 @@ class Receipt {
   final int thisElectricUsed;
   PaymentStatus paymentStatus;
   List<Service> services;
+  List<String> serviceIds;
   Room? room;
 
   Receipt({
@@ -25,6 +26,7 @@ class Receipt {
     required this.paymentStatus,
     this.room,
     this.services = const [],
+    this.serviceIds = const [],
   });
 
   int get waterUsage {
@@ -84,6 +86,7 @@ class Receipt {
     int? thisElectricUsed,
     PaymentStatus? paymentStatus,
     List<Service>? services,
+    List<String>? serviceIds,
     Room? room,
   }) {
     return Receipt(
@@ -96,6 +99,7 @@ class Receipt {
       thisElectricUsed: thisElectricUsed ?? this.thisElectricUsed,
       paymentStatus: paymentStatus ?? this.paymentStatus,
       services: services ?? List<Service>.from(this.services),
+      serviceIds: serviceIds ?? List<String>.from(this.serviceIds),
       room: room ?? this.room,
     );
   }

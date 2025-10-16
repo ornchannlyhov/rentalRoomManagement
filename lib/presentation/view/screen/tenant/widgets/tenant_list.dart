@@ -37,8 +37,6 @@ class TenantList extends StatelessWidget {
           separatorBuilder: (context, index) => const SizedBox(height: 4),
           itemBuilder: (ctx, index) {
             final tenant = tenants[index];
-            print('Tenant: ${tenant.name}, Room: ${tenant.room?.roomNumber}');
-            print('Tenant: ${tenant.name}, Room: ${tenant.room?.building?.name}');
             return SlideTransition(
               position: Tween<Offset>(
                 begin: const Offset(1, 0),
