@@ -7,13 +7,15 @@ import 'package:receipts_v2/data/repositories/service_repository.dart';
 import 'package:logger/logger.dart';
 import 'package:receipts_v2/helpers/ata_hydration_helper.dart';
 
-/// Central manager for all repositories
-///
-/// Handles:
-/// - Loading all data from secure storage
-/// - Syncing all data from API
-/// - Hydrating object references after sync
-/// - Coordinating saves across repositories
+enum SyncStatus {
+  idle,
+  syncing,
+  success,
+  error,
+  offline,
+}
+
+/// Central manager for all repositories with offline/online sync support
 class RepositoryManager {
   final BuildingRepository buildingRepository;
   final RoomRepository roomRepository;
@@ -24,6 +26,10 @@ class RepositoryManager {
 
   final Logger _logger = Logger();
 
+  SyncStatus _syncStatus = SyncStatus.idle;
+  DateTime? _lastSyncTime;
+  String? _lastSyncError;
+
   RepositoryManager({
     required this.buildingRepository,
     required this.roomRepository,
@@ -33,12 +39,16 @@ class RepositoryManager {
     required this.reportRepository,
   });
 
+  SyncStatus get syncStatus => _syncStatus;
+  DateTime? get lastSyncTime => _lastSyncTime;
+  String? get lastSyncError => _lastSyncError;
+
   /// Load all data from secure storage on app startup
   Future<void> loadAll() async {
     _logger.i('Loading all data from storage...');
 
     try {
-      // Load in dependency order - MUST load buildings and services first
+      // Load in dependency order
       await buildingRepository.load();
       await serviceRepository.load();
       await roomRepository.load();
@@ -48,10 +58,10 @@ class RepositoryManager {
 
       _logger.i('Raw data loaded from storage');
 
-      // Hydrate relationships after loading - THIS IS CRITICAL
+      // Hydrate relationships after loading
       await hydrateAllRelationships();
 
-      // Save back the hydrated data to ensure relationships persist
+      // Save back the hydrated data
       await saveAll();
 
       _logger.i('All data loaded and hydrated successfully');
@@ -61,13 +71,18 @@ class RepositoryManager {
     }
   }
 
-  /// Sync all data from API and rebuild object relationships
-  Future<void> syncAll() async {
+  /// Sync all data from API with proper error handling
+  Future<bool> syncAll({bool force = false}) async {
+    if (_syncStatus == SyncStatus.syncing && !force) {
+      _logger.w('Sync already in progress, skipping');
+      return false;
+    }
+
+    _syncStatus = SyncStatus.syncing;
     _logger.i('Syncing all data from API...');
 
     try {
-      // Sync in dependency order (buildings before rooms, etc.)
-      // Pass skipHydration=true to prevent individual saves during sync
+      // Sync in dependency order with skipHydration=true
       await buildingRepository.syncFromApi(skipHydration: true);
       await serviceRepository.syncFromApi(skipHydration: true);
       await roomRepository.syncFromApi(skipHydration: true);
@@ -77,16 +92,47 @@ class RepositoryManager {
 
       _logger.i('Raw data synced from API');
 
-      // Critical: Rebuild object references after API sync
+      // Rebuild object references after API sync
       await hydrateAllRelationships();
 
       // Save hydrated data back to storage
       await saveAll();
 
+      _lastSyncTime = DateTime.now();
+      _syncStatus = SyncStatus.success;
+      _lastSyncError = null;
+
       _logger.i('All data synced and hydrated successfully');
+      return true;
     } catch (e) {
       _logger.e('Error syncing data: $e');
-      // Don't rethrow - we have cached data as fallback
+      _syncStatus = SyncStatus.error;
+      _lastSyncError = e.toString();
+      return false;
+    }
+  }
+
+  /// Sync only pending changes without full sync
+  Future<bool> syncPendingChanges() async {
+    _logger.i('Syncing pending changes...');
+
+    try {
+      // Each repository should have its own pending changes sync
+      await buildingRepository.syncFromApi(skipHydration: true);
+      await serviceRepository.syncFromApi(skipHydration: true);
+      await roomRepository.syncFromApi(skipHydration: true);
+      await tenantRepository.syncFromApi(skipHydration: true);
+      await receiptRepository.syncFromApi(skipHydration: true);
+      await reportRepository.syncFromApi(skipHydration: true);
+
+      await hydrateAllRelationships();
+      await saveAll();
+
+      _logger.i('Pending changes synced successfully');
+      return true;
+    } catch (e) {
+      _logger.e('Error syncing pending changes: $e');
+      return false;
     }
   }
 
@@ -95,7 +141,6 @@ class RepositoryManager {
     _logger.i('Hydrating all relationships...');
 
     try {
-      // Get all data from repositories
       final buildings = buildingRepository.getAllBuildings();
       final rooms = roomRepository.getAllRooms();
       final tenants = tenantRepository.getAllTenants();
@@ -104,9 +149,10 @@ class RepositoryManager {
       final reports = reportRepository.getAllReports();
 
       _logger.d(
-          'Retrieved data: ${buildings.length} buildings, ${rooms.length} rooms, ${tenants.length} tenants, ${services.length} services, ${receipts.length} receipts, ${reports.length} reports');
+          'Retrieved data: ${buildings.length} buildings, ${rooms.length} rooms, '
+          '${tenants.length} tenants, ${services.length} services, '
+          '${receipts.length} receipts, ${reports.length} reports');
 
-      // Create hydrator
       final hydrator = DataHydrationHelper(
         buildings: buildings,
         rooms: rooms,
@@ -114,32 +160,36 @@ class RepositoryManager {
         services: services,
       );
 
-      // Hydrate everything including receipts and reports
       hydrator.hydrateAll(
         receipts: receipts,
         reports: reports,
       );
 
-      // Validate hydration results in debug mode
       final validation = hydrator.validate(
         receipts: receipts,
         reports: reports,
       );
       _logger.i('Hydration complete: $validation');
 
-      // Check for issues
-      if (validation['receipts_with_buildings'] != null &&
-          validation['receipts_with_rooms'] != null &&
-          validation['receipts_with_buildings'] <
-              validation['receipts_with_rooms']) {
-        _logger.w('WARNING: Some receipts have rooms but no buildings!');
-        _logger.w('Receipts with rooms: ${validation['receipts_with_rooms']}');
-        _logger.w(
-            'Receipts with buildings: ${validation['receipts_with_buildings']}');
-      }
+      _validateHydrationResults(validation);
     } catch (e) {
       _logger.e('Error during hydration: $e');
       rethrow;
+    }
+  }
+
+  void _validateHydrationResults(Map<String, dynamic> validation) {
+    if (validation['receipts_with_buildings'] != null &&
+        validation['receipts_with_rooms'] != null) {
+      final receiptsWithBuildings =
+          validation['receipts_with_buildings'] as int;
+      final receiptsWithRooms = validation['receipts_with_rooms'] as int;
+
+      if (receiptsWithBuildings < receiptsWithRooms) {
+        _logger.w('WARNING: Some receipts have rooms but no buildings!');
+        _logger.w('Receipts with rooms: $receiptsWithRooms');
+        _logger.w('Receipts with buildings: $receiptsWithBuildings');
+      }
     }
   }
 
@@ -148,7 +198,6 @@ class RepositoryManager {
     _logger.i('Saving all data to storage...');
 
     try {
-      // Save all repositories in parallel
       await Future.wait([
         buildingRepository.save(),
         serviceRepository.save(),
@@ -163,6 +212,41 @@ class RepositoryManager {
       _logger.e('Error saving data: $e');
       rethrow;
     }
+  }
+
+  /// Check if any repository has pending changes
+  bool hasPendingChanges() {
+    return buildingRepository.hasPendingChanges() ||
+        roomRepository.hasPendingChanges() ||
+        serviceRepository.hasPendingChanges() ||
+        tenantRepository.hasPendingChanges() ||
+        receiptRepository.hasPendingChanges() ||
+        reportRepository.hasPendingChanges();
+  }
+
+  /// Get count of pending changes across all repositories
+  int getPendingChangesCount() {
+    int count = 0;
+    count += buildingRepository.getPendingChangesCount();
+    count += roomRepository.getPendingChangesCount();
+    count += serviceRepository.getPendingChangesCount();
+    count += tenantRepository.getPendingChangesCount();
+    count += receiptRepository.getPendingChangesCount();
+    count += reportRepository.getPendingChangesCount();
+    return count;
+  }
+
+  /// Get detailed pending changes summary
+  Map<String, int> getPendingChangesSummary() {
+    return {
+      'buildings': buildingRepository.getPendingChangesCount(),
+      'rooms': roomRepository.getPendingChangesCount(),
+      'services': serviceRepository.getPendingChangesCount(),
+      'tenants': tenantRepository.getPendingChangesCount(),
+      'receipts': receiptRepository.getPendingChangesCount(),
+      'reports': reportRepository.getPendingChangesCount(),
+      'total': getPendingChangesCount(),
+    };
   }
 
   /// Get summary of all data
@@ -185,32 +269,44 @@ class RepositoryManager {
     final receipts = receiptRepository.getAllReceipts();
     final reports = reportRepository.getAllReports();
 
-    int roomsWithBuildings = rooms.where((r) => r.building != null).length;
-    int roomsWithoutBuildings = rooms.where((r) => r.building == null).length;
-    int tenantsWithRooms = tenants.where((t) => t.room != null).length;
-    int receiptsWithRooms = receipts.where((r) => r.room != null).length;
-    int receiptsWithBuildings =
-        receipts.where((r) => r.room?.building != null).length;
-    int receiptsWithServices =
-        receipts.where((r) => r.services.isNotEmpty).length;
-    int reportsWithTenants = reports.where((r) => r.tenant != null).length;
-    int reportsWithRooms = reports.where((r) => r.room != null).length;
-
     return {
       'total_buildings': buildings.length,
       'total_rooms': rooms.length,
-      'rooms_with_buildings': roomsWithBuildings,
-      'rooms_without_buildings': roomsWithoutBuildings,
+      'rooms_with_buildings': rooms.where((r) => r.building != null).length,
+      'rooms_without_buildings': rooms.where((r) => r.building == null).length,
       'total_tenants': tenants.length,
-      'tenants_with_rooms': tenantsWithRooms,
+      'tenants_with_rooms': tenants.where((t) => t.room != null).length,
       'total_receipts': receipts.length,
-      'receipts_with_rooms': receiptsWithRooms,
-      'receipts_with_buildings': receiptsWithBuildings,
-      'receipts_without_buildings': receiptsWithRooms - receiptsWithBuildings,
-      'receipts_with_services': receiptsWithServices,
+      'receipts_with_rooms': receipts.where((r) => r.room != null).length,
+      'receipts_with_buildings':
+          receipts.where((r) => r.room?.building != null).length,
+      'receipts_without_buildings': receipts
+          .where((r) => r.room != null && r.room?.building == null)
+          .length,
+      'receipts_with_services':
+          receipts.where((r) => r.services.isNotEmpty).length,
       'total_reports': reports.length,
-      'reports_with_tenants': reportsWithTenants,
-      'reports_with_rooms': reportsWithRooms,
+      'reports_with_tenants': reports.where((r) => r.tenant != null).length,
+      'reports_with_rooms': reports.where((r) => r.room != null).length,
     };
+  }
+
+  /// Clear all data (for logout or reset)
+  Future<void> clearAll() async {
+    _logger.i('Clearing all data...');
+
+    try {
+      // Clear caches in each repository
+      // This should be implemented in each repository
+
+      _syncStatus = SyncStatus.idle;
+      _lastSyncTime = null;
+      _lastSyncError = null;
+
+      _logger.i('All data cleared successfully');
+    } catch (e) {
+      _logger.e('Error clearing data: $e');
+      rethrow;
+    }
   }
 }

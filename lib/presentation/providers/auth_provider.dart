@@ -38,23 +38,28 @@ class AuthProvider with ChangeNotifier {
 
   // Initialize app - check if user is logged in
   Future<void> load() async {
-    _user = const AsyncValue.loading();
-    notifyListeners();
-
     try {
+      _user = const AsyncValue.loading();
+      notifyListeners();
+
       final isLoggedIn = await _repository.isLoggedIn();
+
       if (isLoggedIn) {
-        final userData = await _repository.getUser();
-        _user = AsyncValue.success(userData);
+        final user = await _repository.getUser();
+        if (user != null) {
+          _user = AsyncValue.success(user);
+        } else {
+          _user = const AsyncValue.success(null);
+        }
       } else {
         _user = const AsyncValue.success(null);
       }
+
+      notifyListeners();
     } catch (e) {
       _user = AsyncValue.error(e);
-      debugPrint('Initialization error: $e');
+      notifyListeners();
     }
-
-    notifyListeners();
   }
 
   // Register

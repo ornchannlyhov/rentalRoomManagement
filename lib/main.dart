@@ -33,6 +33,7 @@ import 'package:receipts_v2/presentation/view/screen/tenant/tenant_screen.dart';
 import 'helpers/app_theme.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:logger/logger.dart';
+import 'dart:async';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,9 +42,7 @@ Future<void> main() async {
 
   final Logger logger = Logger();
 
-  // await SecureStorageHelper.clearAll(); //uncomment incase of wanting to clean data (testing only)
-
-  // Initialize repositories in correct dependency order
+  // Initialize repositories
   final roomRepository = RoomRepository();
   final buildingRepository = BuildingRepository(roomRepository);
   final receiptRepository = ReceiptRepository();
@@ -52,7 +51,6 @@ Future<void> main() async {
   final authRepository = AuthRepository();
   final reportRepository = ReportRepository();
 
-  // Initialize RepositoryManager to handle all data operations
   final repositoryManager = RepositoryManager(
     buildingRepository: buildingRepository,
     roomRepository: roomRepository,
@@ -62,39 +60,41 @@ Future<void> main() async {
     reportRepository: reportRepository,
   );
 
-  // Initialize auth provider first
+  // Initialize auth provider
   final authProvider = AuthProvider(authRepository);
   await authProvider.load();
 
   try {
-    // Load all data from storage with proper hydration
+    // Always load from storage first (works offline)
     logger.i('Loading all data from storage...');
     await repositoryManager.loadAll();
 
-    // Log data summary after loading
     final loadSummary = repositoryManager.getDataSummary();
-    logger.i('Data loaded successfully: $loadSummary');
+    logger.i('Data loaded from storage: $loadSummary');
 
-    // Sync from API if authenticated and online
+    // Attempt to sync if authenticated and online
     if (authProvider.isAuthenticated()) {
-      try {
-        logger.i('User authenticated, syncing from API...');
-        await repositoryManager.syncAll();
+      if (await ApiHelper.instance.hasNetwork()) {
+        logger.i('User authenticated and online, syncing from API...');
+        final syncSuccess = await repositoryManager.syncAll();
 
-        // Log data summary after sync
-        final syncSummary = repositoryManager.getDataSummary();
-        logger.i('Data synced successfully: $syncSummary');
-      } catch (e) {
-        // Sync errors are logged but don't prevent app startup
-        logger.e('Error syncing from API: $e');
+        if (syncSuccess) {
+          final syncSummary = repositoryManager.getDataSummary();
+          logger.i('Data synced from API: $syncSummary');
+        } else {
+          logger.w('Sync failed, using cached data');
+        }
+      } else {
+        logger.i('No network, using cached data');
       }
+    } else {
+      logger.i('User not authenticated, skipping sync');
     }
   } catch (e) {
-    logger.e('Error loading data: $e');
-    // Continue with empty data rather than crashing
+    logger.e('Error during initialization: $e');
+    // Continue with empty/cached data
   }
 
-  // Initialize providers
   final roomProvider = RoomProvider(roomRepository);
 
   runApp(MyApp(
@@ -146,39 +146,17 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // Auth provider (already initialized and loaded)
         ChangeNotifierProvider.value(value: authProvider),
-
-        // Theme provider
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-
-        // Provide RepositoryManager for global access
         Provider.value(value: repositoryManager),
-
-        // Room provider
+        ChangeNotifierProvider(create: (_) => RoomProvider(roomRepository)),
         ChangeNotifierProvider(
-          create: (_) => RoomProvider(roomRepository),
-        ),
-
-        // Service provider
+            create: (_) => ServiceProvider(serviceRepository)),
+        ChangeNotifierProvider(create: (_) => TenantProvider(tenantRepository)),
         ChangeNotifierProvider(
-          create: (_) => ServiceProvider(serviceRepository),
-        ),
-
-        // Tenant provider
+            create: (_) => BuildingProvider(buildingRepository, roomProvider)),
         ChangeNotifierProvider(
-          create: (_) => TenantProvider(tenantRepository),
-        ),
-
-        // Building provider
-        ChangeNotifierProvider(
-          create: (_) => BuildingProvider(buildingRepository, roomProvider),
-        ),
-
-        // Receipt provider
-        ChangeNotifierProvider(
-          create: (_) => ReceiptProvider(receiptRepository),
-        ),
+            create: (_) => ReceiptProvider(receiptRepository)),
         ChangeNotifierProvider(create: (_) => ReportProvider(reportRepository)),
       ],
       child: Consumer<ThemeProvider>(
@@ -212,32 +190,42 @@ class AuthWrapper extends StatefulWidget {
 
 class _AuthWrapperState extends State<AuthWrapper> {
   final Logger _logger = Logger();
+  Timer? _syncTimer;
+  bool _isSyncing = false;
 
   @override
   void initState() {
     super.initState();
+    _setupNetworkListeners();
+    _startPeriodicSync();
+  }
 
-    // Listen to API helper streams for network/auth events
+  @override
+  void dispose() {
+    _syncTimer?.cancel();
+    super.dispose();
+  }
+
+  void _setupNetworkListeners() {
     final apiHelper = ApiHelper.instance;
 
-    // Listen for unauthenticated events (401 responses)
+    // Listen for unauthenticated events
     apiHelper.onUnauthenticated.listen((_) {
       if (mounted) {
         _showSessionExpiredDialog();
       }
     });
 
-    // Listen for network loss events
+    // Listen for network loss
     apiHelper.onNoNetwork.listen((_) {
       if (mounted) {
         _showNetworkErrorDialog();
       }
     });
 
-    // Listen for network status changes
+    // Listen for network restoration
     apiHelper.onNetworkStatusChanged.listen((hasNetwork) {
       if (mounted && hasNetwork) {
-        // Network restored - attempt to sync
         _syncDataWhenNetworkRestored();
       }
     });
@@ -251,40 +239,89 @@ class _AuthWrapperState extends State<AuthWrapper> {
     });
   }
 
-  Future<void> _syncDataWhenNetworkRestored() async {
+  void _startPeriodicSync() {
+    // Sync every 5 minutes if authenticated and online
+    _syncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+      _performBackgroundSync();
+    });
+  }
+
+  Future<void> _performBackgroundSync() async {
+    if (_isSyncing) return;
+
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final repositoryManager =
         Provider.of<RepositoryManager>(context, listen: false);
 
-    if (authProvider.isAuthenticated()) {
-      try {
-        _logger.i('Network restored, syncing all data...');
+    if (!authProvider.isAuthenticated()) return;
+    if (!await ApiHelper.instance.hasNetwork()) return;
 
-        // Use RepositoryManager to sync everything with proper hydration
-        await repositoryManager.syncAll();
+    _isSyncing = true;
+    try {
+      _logger.i('Performing background sync...');
+      await repositoryManager.syncAll();
+      _logger.i('Background sync completed');
+    } catch (e) {
+      _logger.e('Background sync failed: $e');
+    } finally {
+      _isSyncing = false;
+    }
+  }
 
-        // Notify all providers to refresh their data
-        if (mounted) {
-          Provider.of<BuildingProvider>(context, listen: false).load();
-          Provider.of<ServiceProvider>(context, listen: false).load();
-          Provider.of<TenantProvider>(context, listen: false).load();
-          Provider.of<ReceiptProvider>(context, listen: false).load();
-        }
+  Future<void> _syncDataWhenNetworkRestored() async {
+    if (_isSyncing) return;
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Data synced successfully'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final repositoryManager =
+        Provider.of<RepositoryManager>(context, listen: false);
 
-        _logger.i('All data synced and hydrated successfully');
-      } catch (e) {
-        // Silent fail - data remains cached
-        _logger.e('Failed to sync after network restore: $e');
+    if (!authProvider.isAuthenticated()) return;
+
+    _isSyncing = true;
+    try {
+      _logger.i('Network restored, syncing all data...');
+
+      final success = await repositoryManager.syncAll();
+
+      if (success && mounted) {
+        // Refresh all providers
+        Provider.of<BuildingProvider>(context, listen: false).load();
+        Provider.of<ServiceProvider>(context, listen: false).load();
+        Provider.of<TenantProvider>(context, listen: false).load();
+        Provider.of<ReceiptProvider>(context, listen: false).load();
+        Provider.of<ReportProvider>(context, listen: false).load();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Data synced successfully'),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        _logger.i('All data synced after network restoration');
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Sync completed with some errors'),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.orange,
+          ),
+        );
       }
+    } catch (e) {
+      _logger.e('Failed to sync after network restore: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Sync failed, using cached data'),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      _isSyncing = false;
     }
   }
 
@@ -294,16 +331,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text('Session Expired'),
-        content: const Text(
-          'Your session has expired. Please log in again.',
-        ),
+        content: const Text('Your session has expired. Please log in again.'),
         actions: [
           TextButton(
             onPressed: () async {
-              final authProvider = Provider.of<AuthProvider>(
-                context,
-                listen: false,
-              );
+              final authProvider =
+                  Provider.of<AuthProvider>(context, listen: false);
               await authProvider.logout();
               authProvider.acknowledgeSessionExpired();
               if (mounted) {
@@ -324,15 +357,13 @@ class _AuthWrapperState extends State<AuthWrapper> {
       builder: (context) => AlertDialog(
         title: const Text('No Internet Connection'),
         content: const Text(
-          'You are currently offline. Changes will be synced when connection is restored.',
+          'You are currently offline. Changes will be saved locally and synced when connection is restored.',
         ),
         actions: [
           TextButton(
             onPressed: () {
-              final authProvider = Provider.of<AuthProvider>(
-                context,
-                listen: false,
-              );
+              final authProvider =
+                  Provider.of<AuthProvider>(context, listen: false);
               authProvider.acknowledgeNetworkError();
               Navigator.of(context).pop();
             },
@@ -347,28 +378,30 @@ class _AuthWrapperState extends State<AuthWrapper> {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
-        // Show network error if needed
+        // Show dialogs if needed
         if (authProvider.showNetworkError) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _showNetworkErrorDialog();
           });
         }
 
-        // Show session expired if needed
         if (authProvider.sessionHasExpired) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _showSessionExpiredDialog();
           });
         }
 
+        // Check authentication
+        if (authProvider.isAuthenticated()) {
+          return const MainScreen();
+        }
+
         return authProvider.user.when(
           loading: () => const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           ),
           success: (user) {
-            if (user != null && authProvider.isAuthenticated()) {
+            if (user != null) {
               return const MainScreen();
             } else {
               return const OnboardingScreen();
@@ -410,9 +443,7 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       body: Column(
         children: [
-          Expanded(
-            child: _screens[_currentIndex],
-          ),
+          Expanded(child: _screens[_currentIndex]),
           AppMenu(
             selectedIndex: _currentIndex,
             onTap: _onTabSelected,
