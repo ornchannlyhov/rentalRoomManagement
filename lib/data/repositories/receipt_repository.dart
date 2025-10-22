@@ -153,7 +153,6 @@ class ReceiptRepository {
       );
       await _secureStorage.write(key: storageKey, value: jsonString);
 
-      // Save pending changes
       if (_pendingChanges.isNotEmpty) {
         await _secureStorage.write(
           key: pendingChangesKey,
@@ -270,7 +269,6 @@ class ReceiptRepository {
         return;
       }
 
-      // Sync pending changes first
       await _syncPendingChanges();
 
       _logger.i('Syncing receipts from API');
@@ -308,6 +306,9 @@ class ReceiptRepository {
 
       if (response.statusCode == 200 && response.data['success'] == true) {
         final List<dynamic> receiptsJson = response.data['data'];
+
+        final allServices = _serviceRepository.getAllServices();
+
         _receiptCache = receiptsJson.map((json) {
           final receiptDto = ReceiptDto.fromJson(json);
           final receipt = receiptDto.toReceipt();
@@ -319,16 +320,19 @@ class ReceiptRepository {
             }
           }
 
-          if (receiptDto.receiptServices != null &&
-              receiptDto.receiptServices!.isNotEmpty) {
-            receipt.services = receiptDto.receiptServices!
-                .map((rs) => rs.service.toService())
-                .toList();
-            receipt.serviceIds =
-                receiptDto.receiptServices!.map((rs) => rs.serviceId).toList();
-          } else {
-            receipt.services = [];
-            receipt.serviceIds = [];
+          if (receipt.serviceIds.isNotEmpty) {
+            final List<Service> foundServices = [];
+            for (final serviceId in receipt.serviceIds) {
+              try {
+                final service =
+                    allServices.firstWhere((s) => s.id == serviceId);
+                foundServices.add(service);
+              } catch (e) {
+                _logger.w(
+                    'During sync, could not find service with ID $serviceId for receipt ${receipt.id}');
+              }
+            }
+            receipt.services = foundServices;
           }
 
           return receipt;
@@ -496,13 +500,32 @@ class ReceiptRepository {
               final receiptDto = ReceiptDto.fromJson(response.data['data']);
               createdReceipt = receiptDto.toReceipt();
 
+              if (createdReceipt.serviceIds.isNotEmpty) {
+                _logger.i(
+                    'Hydrating services for new receipt ${createdReceipt.id}...');
+                final allServices = _serviceRepository.getAllServices();
+                final List<Service> foundServices = [];
+
+                for (final serviceId in createdReceipt.serviceIds) {
+                  try {
+                    final service =
+                        allServices.firstWhere((s) => s.id == serviceId);
+                    foundServices.add(service);
+                  } catch (e) {
+                    _logger.w(
+                        'Could not find service with ID $serviceId locally while creating receipt.');
+                  }
+                }
+                createdReceipt.services = foundServices;
+                _logger.i(
+                    'Hydrated ${foundServices.length} services for the new receipt.');
+              }
+
               createdReceipt.room = newReceipt.room;
-              createdReceipt.services = List<Service>.from(newReceipt.services);
-              createdReceipt.serviceIds =
-                  List<String>.from(newReceipt.serviceIds);
 
               syncedOnline = true;
-              _logger.i('Receipt created successfully via API');
+              _logger.i(
+                  'Receipt created successfully via API and hydrated locally.');
             }
           } catch (e) {
             _logger.w('Failed to create receipt online, will sync later: $e');
@@ -510,14 +533,12 @@ class ReceiptRepository {
         }
       }
 
-      // Update or add to cache
       if (existingIndex != -1) {
         _receiptCache[existingIndex] = createdReceipt;
       } else {
         _receiptCache.add(createdReceipt);
       }
 
-      // Add to pending changes if not synced online
       if (!syncedOnline) {
         await _addPendingChange('create', {
           'roomId': newReceipt.room!.id,
