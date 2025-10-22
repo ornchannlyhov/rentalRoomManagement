@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:receipts_v2/data/repositories/service_repository.dart';
 import 'package:receipts_v2/helpers/api_helper.dart';
 import 'package:receipts_v2/data/models/enum/payment_status.dart';
 import 'package:receipts_v2/data/models/receipt.dart';
@@ -10,6 +11,7 @@ import 'package:receipts_v2/data/dtos/service_dto.dart';
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 import 'package:receipts_v2/data/models/service.dart';
+import 'dart:typed_data';
 
 class ReceiptRepository {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
@@ -20,40 +22,52 @@ class ReceiptRepository {
 
   List<Receipt> _receiptCache = [];
   List<Map<String, dynamic>> _pendingChanges = [];
+  final ServiceRepository _serviceRepository;
+  ReceiptRepository(this._serviceRepository);
 
   Future<void> load() async {
     try {
       _logger.i('Loading receipts from secure storage');
 
-      // Load receipts
       final jsonString = await _secureStorage.read(key: storageKey);
       if (jsonString != null && jsonString.isNotEmpty) {
         final List<dynamic> jsonData = jsonDecode(jsonString);
         _receiptCache = jsonData.map((json) {
-          final receiptDto = ReceiptDto.fromJson(json);
-          final receipt = receiptDto.toReceipt();
-
-          if (receiptDto.room != null) {
-            receipt.room = receiptDto.room!.toRoom();
-            if (receiptDto.room!.building != null) {
-              receipt.room!.building = receiptDto.room!.building!.toBuilding();
-            }
-          }
-
-          if (receiptDto.receiptServices != null) {
-            receipt.services = receiptDto.receiptServices!
-                .map((rs) => rs.service.toService())
-                .toList();
-          }
-
-          return receipt;
+          return ReceiptDto.fromJson(json).toReceipt();
         }).toList();
         _logger.i('Loaded ${_receiptCache.length} receipts from storage');
       } else {
         _receiptCache = [];
       }
 
-      // Load pending changes
+      _logger.i('Hydrating receipt services from local data...');
+      final allServices = _serviceRepository.getAllServices();
+      if (allServices.isNotEmpty && _receiptCache.isNotEmpty) {
+        for (final receipt in _receiptCache) {
+          if (receipt.serviceIds.isNotEmpty && receipt.services.isEmpty) {
+            final List<Service> foundServices = [];
+            for (final serviceId in receipt.serviceIds) {
+              final service = allServices.firstWhere(
+                (s) => s.id == serviceId,
+                orElse: () => Service(
+                    id: 'not-found',
+                    name: 'Not Found',
+                    price: 0,
+                    buildingId: ''),
+              );
+              if (service.id != 'not-found') {
+                foundServices.add(service);
+              } else {
+                _logger.w(
+                    'Service with ID $serviceId not found for receipt ${receipt.id}');
+              }
+            }
+            receipt.services = foundServices;
+          }
+        }
+        _logger.i('Local receipt service hydration complete.');
+      }
+
       final pendingString = await _secureStorage.read(key: pendingChangesKey);
       if (pendingString != null && pendingString.isNotEmpty) {
         _pendingChanges =
@@ -330,7 +344,83 @@ class ReceiptRepository {
     }
   }
 
-  Future<void> createReceipt(Receipt newReceipt) async {
+  Future<List<Map<String, dynamic>>> _fetchCurrentMonthUsage() async {
+    final token = await _secureStorage.read(key: 'auth_token');
+    if (token == null) {
+      _logger.w('No auth token found, skipping usage fetch');
+      return [];
+    }
+
+    try {
+      final response = await _apiHelper.dio.get(
+        '${_apiHelper.baseUrl}/usage/current-month',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return List<Map<String, dynamic>>.from(response.data['data']);
+      }
+      return [];
+    } catch (e) {
+      _logger.e('Failed to fetch usage data: $e');
+      return [];
+    }
+  }
+
+  Future<void> generateReceiptsFromUsage({
+    required Future<Uint8List?> Function(Receipt) createImage,
+  }) async {
+    _logger.i('Starting automatic receipt generation from usage data...');
+
+    final usageData = await _fetchCurrentMonthUsage();
+    if (usageData.isEmpty) {
+      _logger.i('No usage data found for the current month.');
+      return;
+    }
+
+    final now = DateTime.now();
+    final lastMonth = now.month == 1 ? 12 : now.month - 1;
+    final yearOfLastMonth = now.month == 1 ? now.year - 1 : now.year;
+    final lastMonthReceipts = getReceiptsByMonth(yearOfLastMonth, lastMonth);
+
+    for (var usage in usageData) {
+      final String roomNumber = usage['roomNumber'];
+
+      final lastReceipt = lastMonthReceipts.firstWhere(
+        (r) => r.room?.roomNumber == roomNumber,
+        orElse: () => Receipt(
+          id: '',
+          date: DateTime.now(),
+          dueDate: DateTime.now(),
+          lastWaterUsed: 0,
+          lastElectricUsed: 0,
+          thisWaterUsed: 0,
+          thisElectricUsed: 0,
+          paymentStatus: PaymentStatus.pending,
+        ),
+      );
+
+      final newReceipt = Receipt(
+        id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
+        date: now,
+        dueDate: DateTime(now.year, now.month + 1, 5),
+        lastWaterUsed: lastReceipt.thisWaterUsed,
+        lastElectricUsed: lastReceipt.thisElectricUsed,
+        thisWaterUsed: (usage['waterUsage'] as num).toInt(),
+        thisElectricUsed: (usage['electricityUsage'] as num).toInt(),
+        paymentStatus: PaymentStatus.pending,
+        room: lastReceipt.room,
+      );
+
+      final Uint8List? imageBytes = await createImage(newReceipt);
+
+      await createReceipt(newReceipt, receiptImage: imageBytes);
+    }
+    _logger.i('Finished automatic receipt generation.');
+  }
+
+  Future<void> createReceipt(Receipt newReceipt,
+      {Uint8List? receiptImage}) async {
     try {
       if (newReceipt.room == null) {
         throw Exception('Receipt must have a room reference');
@@ -367,7 +457,7 @@ class ReceiptRepository {
           }
 
           try {
-            final formData = FormData.fromMap({
+            final formDataMap = {
               'roomId': newReceipt.room!.id,
               'date': newReceipt.date.toIso8601String(),
               'dueDate': newReceipt.dueDate.toIso8601String(),
@@ -379,7 +469,16 @@ class ReceiptRepository {
               if (newReceipt.services.isNotEmpty)
                 'serviceIds':
                     jsonEncode(newReceipt.services.map((s) => s.id).toList()),
-            });
+            };
+
+            if (receiptImage != null) {
+              formDataMap['receiptImage'] = MultipartFile.fromBytes(
+                receiptImage,
+                filename: 'receipt_${newReceipt.id}.png',
+              );
+            }
+
+            final formData = FormData.fromMap(formDataMap);
 
             final response = await _apiHelper.dio.post(
               '${_apiHelper.baseUrl}/receipts',

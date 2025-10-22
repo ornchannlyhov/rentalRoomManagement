@@ -34,6 +34,14 @@ class BuildingDetail extends StatefulWidget {
 class _BuildingDetailState extends State<BuildingDetail> {
   ScreenType _currentScreen = ScreenType.room;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
+  }
+
   Future<void> _loadData() async {
     if (!mounted) return;
     await Future.wait([
