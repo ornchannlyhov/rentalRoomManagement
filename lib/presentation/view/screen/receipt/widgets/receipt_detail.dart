@@ -202,6 +202,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
     final hasServices = widget.receipt.services.isNotEmpty;
     final hasWaterUsage = widget.receipt.thisWaterUsed > 0;
     final hasElectricUsage = widget.receipt.thisElectricUsed > 0;
+    final tenant = widget.receipt.room?.tenant;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
@@ -256,7 +257,17 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+
+                // Tenant Information
+                if (tenant != null) ...[
+                  _buildSectionHeader(theme, 'ព័ត៌មានអ្នកជួល'),
+                  _buildInfoRow(theme, 'ឈ្មោះ', tenant.name),
+                  _buildInfoRow(theme, 'លេខទូរស័ព្ទ', tenant.phoneNumber),
+                  const SizedBox(height: 8),
+                  _buildDividerSimple(theme),
+                  const SizedBox(height: 8),
+                ],
 
                 // Utility usage (only show if has usage)
                 if (hasWaterUsage || hasElectricUsage) ...[
@@ -389,7 +400,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                 ],
 
                 // Footer note
-                const SizedBox(height: 48),
+                const SizedBox(height: 16),
                 Center(
                   child: Text(
                     'សូមអរគុណសម្រាប់ការប្រើប្រាស់សេវាកម្មរបស់យើងខ្ញុំ!',
