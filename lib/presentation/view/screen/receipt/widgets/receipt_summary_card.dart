@@ -210,7 +210,7 @@ class ReceiptSummaryCard extends StatelessWidget {
                                   child: CircularProgressIndicator(
                                     value: progress.clamp(0.0, 1.0),
                                     strokeWidth: 3,
-                                    backgroundColor: Colors.grey.shade200,
+                                    backgroundColor: theme.colorScheme.outline.withOpacity(0.1),
                                     valueColor: AlwaysStoppedAnimation<Color>(
                                       colorScheme.primary,
                                     ),

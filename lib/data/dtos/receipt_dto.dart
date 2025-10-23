@@ -48,6 +48,7 @@ class ReceiptDto {
   final String? roomNumber;
   final RoomDto? room;
   final List<ReceiptServiceDto>? receiptServices;
+  final List<String>? serviceIds;
 
   ReceiptDto({
     required this.id,
@@ -62,16 +63,22 @@ class ReceiptDto {
     this.roomNumber,
     this.room,
     this.receiptServices,
+    this.serviceIds, 
   });
 
   factory ReceiptDto.fromJson(Map<String, dynamic> json) {
-    // Parse receiptServices from API
     List<ReceiptServiceDto>? receiptServices;
     if (json['receiptServices'] != null) {
       receiptServices = (json['receiptServices'] as List)
           .map((item) =>
               ReceiptServiceDto.fromJson(item as Map<String, dynamic>))
           .toList();
+    }
+
+    List<String>? serviceIds;
+    if (json['serviceIds'] != null) {
+      serviceIds =
+          (json['serviceIds'] as List).map((id) => id.toString()).toList();
     }
 
     return ReceiptDto(
@@ -89,6 +96,7 @@ class ReceiptDto {
           ? RoomDto.fromJson(json['room'] as Map<String, dynamic>)
           : null,
       receiptServices: receiptServices,
+      serviceIds: serviceIds, 
     );
   }
 
@@ -123,11 +131,9 @@ class ReceiptDto {
         status = PaymentStatus.pending;
     }
 
-    // Extract service IDs from receiptServices
-    final serviceIds =
-        receiptServices?.map((rs) => rs.serviceId).toList() ?? [];
+    final finalServiceIds =
+        receiptServices?.map((rs) => rs.serviceId).toList() ?? serviceIds ?? [];
 
-    // Create services list from receiptServices
     final services =
         receiptServices?.map((rs) => rs.service.toService()).toList() ?? [];
 
@@ -141,8 +147,8 @@ class ReceiptDto {
       thisElectricUsed: thisElectricUsed,
       paymentStatus: status,
       room: room?.toRoom(),
-      services: services,
-      serviceIds: serviceIds,
+      services: services, 
+      serviceIds: finalServiceIds, 
     );
   }
 }

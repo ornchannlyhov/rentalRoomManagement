@@ -11,7 +11,8 @@ import 'package:receipts_v2/presentation/view/screen/receipt/widgets/receipt_sum
 import 'package:receipts_v2/presentation/view/screen/tenant/widgets/tenant_state.dart';
 
 class ReceiptList extends StatelessWidget {
-  const ReceiptList({super.key, 
+  const ReceiptList({
+    super.key,
     required this.receiptProvider,
     required this.buildingProvider,
     required this.selectedBuildingId,
@@ -140,6 +141,13 @@ class ReceiptList extends StatelessWidget {
                                   const SizedBox(height: 2),
                               itemBuilder: (ctx, index) {
                                 final receipt = filteredReceiptsByStatus[index];
+
+                                // Calculate staggered animation intervals with proper clamping
+                                final double begin =
+                                    (index * 0.05).clamp(0.0, 0.4);
+                                final double end =
+                                    ((index * 0.05) + 0.6).clamp(0.0, 1.0);
+
                                 return SlideTransition(
                                   position: Tween<Offset>(
                                     begin: const Offset(1, 0),
@@ -148,8 +156,8 @@ class ReceiptList extends StatelessWidget {
                                     CurvedAnimation(
                                       parent: animationController,
                                       curve: Interval(
-                                        index * 0.1,
-                                        (index * 0.1) + 0.6,
+                                        begin,
+                                        end,
                                         curve: Curves.easeOutCubic,
                                       ),
                                     ),
@@ -238,7 +246,6 @@ class ReceiptList extends StatelessWidget {
                                       } else if (direction ==
                                           DismissDirection.endToStart) {
                                         provider.deleteReceipt(receipt.id);
-                                        
                                       }
                                     },
                                     child: ReceiptCard(

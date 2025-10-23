@@ -8,13 +8,13 @@ import 'package:receipts_v2/data/models/tenant.dart';
 import 'package:receipts_v2/presentation/providers/building_provider.dart';
 import 'package:receipts_v2/presentation/providers/room_provider.dart';
 import 'package:receipts_v2/presentation/providers/tenant_provider.dart';
-import 'package:receipts_v2/presentation/view/app_widgets/app_bar.dart';
 import 'package:receipts_v2/presentation/view/app_widgets/building_filter_dropdown.dart';
 import 'package:receipts_v2/presentation/view/screen/tenant/widgets/room_change_dialog.dart';
 import 'package:receipts_v2/presentation/view/screen/tenant/widgets/tenant_card.dart';
 import 'package:receipts_v2/presentation/view/screen/tenant/widgets/tenant_detail_dialog.dart';
 import 'package:receipts_v2/presentation/view/screen/tenant/widgets/tenant_form.dart';
 import 'package:receipts_v2/presentation/view/screen/tenant/widgets/tenant_list.dart';
+import 'package:receipts_v2/presentation/view/screen/tenant/widgets/tenant_search_bar.dart';
 import 'package:receipts_v2/presentation/view/screen/tenant/widgets/tenant_state.dart';
 
 class TenantScreen extends StatefulWidget {
@@ -30,7 +30,10 @@ class _TenantScreenState extends State<TenantScreen>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  String? _selectedBuildingId; 
+  String? _selectedBuildingId;
+  String _searchQuery = '';
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -58,6 +61,7 @@ class _TenantScreenState extends State<TenantScreen>
   @override
   void dispose() {
     _animationController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -73,6 +77,29 @@ class _TenantScreenState extends State<TenantScreen>
       buildingProvider.load(),
     ]);
     _animationController.forward(); // Start animation after data is loaded
+  }
+
+  /// Filters tenants based on search query or building selection
+  List<Tenant> _filterTenants(List<Tenant> tenants) {
+    if (_searchQuery.isNotEmpty) {
+      return tenants.where((tenant) {
+        final nameLower = tenant.name.toLowerCase();
+        final phoneLower = tenant.phoneNumber.toLowerCase();
+        final roomNumber = tenant.room?.roomNumber.toLowerCase() ?? '';
+        final buildingName = tenant.room?.building?.name.toLowerCase() ?? '';
+        final queryLower = _searchQuery.toLowerCase();
+
+        return nameLower.contains(queryLower) ||
+            phoneLower.contains(queryLower) ||
+            roomNumber.contains(queryLower) ||
+            buildingName.contains(queryLower);
+      }).toList();
+    } else if (_selectedBuildingId != null) {
+      return context
+          .read<TenantProvider>()
+          .getTenantsByBuilding(_selectedBuildingId!);
+    }
+    return tenants;
   }
 
   /// Shows a standardized SnackBar with customizable message, icon, and actions.
@@ -397,25 +424,83 @@ class _TenantScreenState extends State<TenantScreen>
 
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
-      appBar: AppbarCustom(
-        header: 'អ្នកជួល', // "Tenants"
-        onAddPressed: () => _addTenant(context),
+      appBar: AppBar(
+        title: Text(
+          'អ្នកជួល',
+          style: TextStyle(
+            color: theme.colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: theme.colorScheme.background,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(
+              _isSearching ? Icons.close : Icons.search,
+              color: theme.colorScheme.onSurface,
+            ),
+            onPressed: () {
+              setState(() {
+                _isSearching = !_isSearching;
+                if (!_isSearching) {
+                  _searchController.clear();
+                  _searchQuery = '';
+                }
+              });
+            },
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.add,
+              color: theme.colorScheme.onSurface,
+            ),
+            onPressed: () => _addTenant(context),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: Column(
         children: [
-          // Building Filter Dropdown
+          // Search Bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: BuildingFilterDropdown(
-              buildingProvider: buildingProvider,
-              selectedBuildingId: _selectedBuildingId,
-              onChanged: (newValue) {
+            child: TenantSearchBar(
+              isSearching: _isSearching,
+              searchController: _searchController,
+              searchQuery: _searchQuery,
+              onSearchQueryChanged: (value) {
                 setState(() {
-                  _selectedBuildingId = newValue;
+                  _searchQuery = value;
+                  if (value.isNotEmpty) {
+                    _selectedBuildingId = null;
+                  }
+                });
+              },
+              onClearSearch: () {
+                _searchController.clear();
+                setState(() {
+                  _searchQuery = '';
                 });
               },
             ),
           ),
+          // Building Filter Dropdown
+          if (!_isSearching || _searchQuery.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: BuildingFilterDropdown(
+                buildingProvider: buildingProvider,
+                selectedBuildingId: _selectedBuildingId,
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedBuildingId = newValue;
+                    _searchQuery = '';
+                    _searchController.clear();
+                  });
+                },
+              ),
+            ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -424,10 +509,7 @@ class _TenantScreenState extends State<TenantScreen>
                 error: (error) =>
                     ErrorState(theme: theme, error: error, onRetry: _loadData),
                 success: (allTenants) {
-                  final filteredTenants = _selectedBuildingId == null
-                      ? allTenants
-                      : tenantProvider
-                          .getTenantsByBuilding(_selectedBuildingId!);
+                  final filteredTenants = _filterTenants(allTenants);
 
                   if (filteredTenants.isEmpty) {
                     return EmptyState(

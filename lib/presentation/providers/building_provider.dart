@@ -59,6 +59,7 @@ class BuildingProvider extends ChangeNotifier {
 
     try {
       await _repository.createBuilding(building);
+      await _roomProvider.load();
       final data = _repository.getAllBuildings();
       _buildings = AsyncValue.success(data);
     } catch (e) {

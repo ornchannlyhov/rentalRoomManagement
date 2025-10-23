@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:receipts_v2/data/repositories/service_repository.dart';
 import 'package:receipts_v2/helpers/api_helper.dart';
 import 'package:receipts_v2/data/models/enum/payment_status.dart';
 import 'package:receipts_v2/data/models/receipt.dart';
@@ -10,50 +11,78 @@ import 'package:receipts_v2/data/dtos/service_dto.dart';
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 import 'package:receipts_v2/data/models/service.dart';
+import 'dart:typed_data';
 
 class ReceiptRepository {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   final String storageKey = 'receipt_secure_data';
+  final String pendingChangesKey = 'receipt_pending_changes';
   final ApiHelper _apiHelper = ApiHelper.instance;
   final Logger _logger = Logger();
 
   List<Receipt> _receiptCache = [];
+  List<Map<String, dynamic>> _pendingChanges = [];
+  final ServiceRepository _serviceRepository;
+  ReceiptRepository(this._serviceRepository);
 
   Future<void> load() async {
     try {
       _logger.i('Loading receipts from secure storage');
+
       final jsonString = await _secureStorage.read(key: storageKey);
       if (jsonString != null && jsonString.isNotEmpty) {
         final List<dynamic> jsonData = jsonDecode(jsonString);
         _receiptCache = jsonData.map((json) {
-          final receiptDto = ReceiptDto.fromJson(json);
-          final receipt = receiptDto.toReceipt();
-
-          if (receiptDto.room != null) {
-            receipt.room = receiptDto.room!.toRoom();
-            if (receiptDto.room!.building != null) {
-              receipt.room!.building = receiptDto.room!.building!.toBuilding();
-            }
-          }
-
-          if (receiptDto.receiptServices != null) {
-            receipt.services = receiptDto.receiptServices!
-                .map((rs) => rs.service.toService())
-                .toList();
-          }
-
-          return receipt;
+          return ReceiptDto.fromJson(json).toReceipt();
         }).toList();
         _logger.i('Loaded ${_receiptCache.length} receipts from storage');
       } else {
         _receiptCache = [];
       }
+
+      _logger.i('Hydrating receipt services from local data...');
+      final allServices = _serviceRepository.getAllServices();
+      if (allServices.isNotEmpty && _receiptCache.isNotEmpty) {
+        for (final receipt in _receiptCache) {
+          if (receipt.serviceIds.isNotEmpty && receipt.services.isEmpty) {
+            final List<Service> foundServices = [];
+            for (final serviceId in receipt.serviceIds) {
+              final service = allServices.firstWhere(
+                (s) => s.id == serviceId,
+                orElse: () => Service(
+                    id: 'not-found',
+                    name: 'Not Found',
+                    price: 0,
+                    buildingId: ''),
+              );
+              if (service.id != 'not-found') {
+                foundServices.add(service);
+              } else {
+                _logger.w(
+                    'Service with ID $serviceId not found for receipt ${receipt.id}');
+              }
+            }
+            receipt.services = foundServices;
+          }
+        }
+        _logger.i('Local receipt service hydration complete.');
+      }
+
+      final pendingString = await _secureStorage.read(key: pendingChangesKey);
+      if (pendingString != null && pendingString.isNotEmpty) {
+        _pendingChanges =
+            List<Map<String, dynamic>>.from(jsonDecode(pendingString));
+        _logger.i('Loaded ${_pendingChanges.length} pending receipt changes');
+      } else {
+        _pendingChanges = [];
+      }
+
+      await updateStatusToOverdue();
     } catch (e) {
       _logger.e('Error loading receipts from secure storage: $e');
       _receiptCache = [];
+      _pendingChanges = [];
     }
-
-    await updateStatusToOverdue();
   }
 
   Future<void> save() async {
@@ -123,10 +152,101 @@ class ReceiptRepository {
         }).toList(),
       );
       await _secureStorage.write(key: storageKey, value: jsonString);
-      _logger.d('Saved ${_receiptCache.length} receipts to storage');
+
+      if (_pendingChanges.isNotEmpty) {
+        await _secureStorage.write(
+          key: pendingChangesKey,
+          value: jsonEncode(_pendingChanges),
+        );
+      }
+
+      _logger.d(
+          'Saved ${_receiptCache.length} receipts and ${_pendingChanges.length} pending changes to storage');
     } catch (e) {
       _logger.e('Failed to save receipts to secure storage: $e');
       throw Exception('Failed to save receipts to secure storage: $e');
+    }
+  }
+
+  Future<void> _addPendingChange(String type, Map<String, dynamic> data) async {
+    _pendingChanges.add({
+      'type': type,
+      'data': data,
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+    await save();
+  }
+
+  Future<void> _syncPendingChanges() async {
+    if (_pendingChanges.isEmpty) return;
+
+    _logger.i('Syncing ${_pendingChanges.length} pending receipt changes...');
+    final successfulChanges = <int>[];
+
+    for (int i = 0; i < _pendingChanges.length; i++) {
+      final change = _pendingChanges[i];
+      try {
+        await _applyPendingChange(change);
+        successfulChanges.add(i);
+      } catch (e) {
+        _logger.e('Failed to apply pending receipt change: $e');
+      }
+    }
+
+    // Remove successfully synced changes
+    for (int i = successfulChanges.length - 1; i >= 0; i--) {
+      _pendingChanges.removeAt(successfulChanges[i]);
+    }
+
+    if (successfulChanges.isNotEmpty) {
+      await _secureStorage.write(
+        key: pendingChangesKey,
+        value: jsonEncode(_pendingChanges),
+      );
+      _logger.i(
+          'Successfully synced ${successfulChanges.length} pending receipt changes');
+    }
+  }
+
+  Future<void> _applyPendingChange(Map<String, dynamic> change) async {
+    final token = await _secureStorage.read(key: 'auth_token');
+    if (token == null) throw Exception('No auth token');
+
+    final type = change['type'];
+    final data = change['data'];
+
+    switch (type) {
+      case 'create':
+        final formData = FormData.fromMap(data);
+        await _apiHelper.dio.post(
+          '${_apiHelper.baseUrl}/receipts',
+          data: formData,
+          options: Options(
+            headers: {'Authorization': 'Bearer $token'},
+            contentType: 'multipart/form-data',
+          ),
+        );
+        break;
+      case 'update':
+        final receiptId = data['id'];
+        final updateData = Map<String, dynamic>.from(data);
+        updateData.remove('id');
+        final formData = FormData.fromMap(updateData);
+        await _apiHelper.dio.put(
+          '${_apiHelper.baseUrl}/receipts/$receiptId',
+          data: formData,
+          options: Options(
+            headers: {'Authorization': 'Bearer $token'},
+            contentType: 'multipart/form-data',
+          ),
+        );
+        break;
+      case 'delete':
+        await _apiHelper.dio.delete(
+          '${_apiHelper.baseUrl}/receipts/${data['id']}',
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+        break;
     }
   }
 
@@ -148,6 +268,8 @@ class ReceiptRepository {
         _logger.w('No auth token found, skipping sync');
         return;
       }
+
+      await _syncPendingChanges();
 
       _logger.i('Syncing receipts from API');
 
@@ -184,11 +306,13 @@ class ReceiptRepository {
 
       if (response.statusCode == 200 && response.data['success'] == true) {
         final List<dynamic> receiptsJson = response.data['data'];
+
+        final allServices = _serviceRepository.getAllServices();
+
         _receiptCache = receiptsJson.map((json) {
           final receiptDto = ReceiptDto.fromJson(json);
           final receipt = receiptDto.toReceipt();
 
-          // Reconstruct room and building references
           if (receiptDto.room != null) {
             receipt.room = receiptDto.room!.toRoom();
             if (receiptDto.room!.building != null) {
@@ -196,18 +320,19 @@ class ReceiptRepository {
             }
           }
 
-          // Services are already set in toReceipt() from receiptServices
-          // But ensure serviceIds is also populated
-          if (receiptDto.receiptServices != null &&
-              receiptDto.receiptServices!.isNotEmpty) {
-            receipt.services = receiptDto.receiptServices!
-                .map((rs) => rs.service.toService())
-                .toList();
-            receipt.serviceIds =
-                receiptDto.receiptServices!.map((rs) => rs.serviceId).toList();
-          } else {
-            receipt.services = [];
-            receipt.serviceIds = [];
+          if (receipt.serviceIds.isNotEmpty) {
+            final List<Service> foundServices = [];
+            for (final serviceId in receipt.serviceIds) {
+              try {
+                final service =
+                    allServices.firstWhere((s) => s.id == serviceId);
+                foundServices.add(service);
+              } catch (e) {
+                _logger.w(
+                    'During sync, could not find service with ID $serviceId for receipt ${receipt.id}');
+              }
+            }
+            receipt.services = foundServices;
           }
 
           return receipt;
@@ -223,7 +348,83 @@ class ReceiptRepository {
     }
   }
 
-  Future<void> createReceipt(Receipt newReceipt) async {
+  Future<List<Map<String, dynamic>>> _fetchCurrentMonthUsage() async {
+    final token = await _secureStorage.read(key: 'auth_token');
+    if (token == null) {
+      _logger.w('No auth token found, skipping usage fetch');
+      return [];
+    }
+
+    try {
+      final response = await _apiHelper.dio.get(
+        '${_apiHelper.baseUrl}/usage/current-month',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return List<Map<String, dynamic>>.from(response.data['data']);
+      }
+      return [];
+    } catch (e) {
+      _logger.e('Failed to fetch usage data: $e');
+      return [];
+    }
+  }
+
+  Future<void> generateReceiptsFromUsage({
+    required Future<Uint8List?> Function(Receipt) createImage,
+  }) async {
+    _logger.i('Starting automatic receipt generation from usage data...');
+
+    final usageData = await _fetchCurrentMonthUsage();
+    if (usageData.isEmpty) {
+      _logger.i('No usage data found for the current month.');
+      return;
+    }
+
+    final now = DateTime.now();
+    final lastMonth = now.month == 1 ? 12 : now.month - 1;
+    final yearOfLastMonth = now.month == 1 ? now.year - 1 : now.year;
+    final lastMonthReceipts = getReceiptsByMonth(yearOfLastMonth, lastMonth);
+
+    for (var usage in usageData) {
+      final String roomNumber = usage['roomNumber'];
+
+      final lastReceipt = lastMonthReceipts.firstWhere(
+        (r) => r.room?.roomNumber == roomNumber,
+        orElse: () => Receipt(
+          id: '',
+          date: DateTime.now(),
+          dueDate: DateTime.now(),
+          lastWaterUsed: 0,
+          lastElectricUsed: 0,
+          thisWaterUsed: 0,
+          thisElectricUsed: 0,
+          paymentStatus: PaymentStatus.pending,
+        ),
+      );
+
+      final newReceipt = Receipt(
+        id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
+        date: now,
+        dueDate: DateTime(now.year, now.month + 1, 5),
+        lastWaterUsed: lastReceipt.thisWaterUsed,
+        lastElectricUsed: lastReceipt.thisElectricUsed,
+        thisWaterUsed: (usage['waterUsage'] as num).toInt(),
+        thisElectricUsed: (usage['electricityUsage'] as num).toInt(),
+        paymentStatus: PaymentStatus.pending,
+        room: lastReceipt.room,
+      );
+
+      final Uint8List? imageBytes = await createImage(newReceipt);
+
+      await createReceipt(newReceipt, receiptImage: imageBytes);
+    }
+    _logger.i('Finished automatic receipt generation.');
+  }
+
+  Future<void> createReceipt(Receipt newReceipt,
+      {Uint8List? receiptImage}) async {
     try {
       if (newReceipt.room == null) {
         throw Exception('Receipt must have a room reference');
@@ -239,6 +440,7 @@ class ReceiptRepository {
       });
 
       Receipt createdReceipt = newReceipt;
+      bool syncedOnline = false;
 
       if (await _apiHelper.hasNetwork()) {
         final token = await _secureStorage.read(key: 'auth_token');
@@ -258,77 +460,100 @@ class ReceiptRepository {
               statusStr = 'pending';
           }
 
-          final formData = FormData.fromMap({
-            'roomId': newReceipt.room!.id,
-            'date': newReceipt.date.toIso8601String(),
-            'dueDate': newReceipt.dueDate.toIso8601String(),
-            'lastWaterUsed': newReceipt.lastWaterUsed,
-            'lastElectricUsed': newReceipt.lastElectricUsed,
-            'thisWaterUsed': newReceipt.thisWaterUsed,
-            'thisElectricUsed': newReceipt.thisElectricUsed,
-            'paymentStatus': statusStr,
-            if (newReceipt.services.isNotEmpty)
-              'serviceIds':
-                  jsonEncode(newReceipt.services.map((s) => s.id).toList()),
-          });
+          try {
+            final formDataMap = {
+              'roomId': newReceipt.room!.id,
+              'date': newReceipt.date.toIso8601String(),
+              'dueDate': newReceipt.dueDate.toIso8601String(),
+              'lastWaterUsed': newReceipt.lastWaterUsed,
+              'lastElectricUsed': newReceipt.lastElectricUsed,
+              'thisWaterUsed': newReceipt.thisWaterUsed,
+              'thisElectricUsed': newReceipt.thisElectricUsed,
+              'paymentStatus': statusStr,
+              if (newReceipt.services.isNotEmpty)
+                'serviceIds':
+                    jsonEncode(newReceipt.services.map((s) => s.id).toList()),
+            };
 
-          final response = await _apiHelper.dio.post(
-            '${_apiHelper.baseUrl}/receipts',
-            data: formData,
-            options: Options(
-              headers: {'Authorization': 'Bearer $token'},
-              contentType: 'multipart/form-data',
-            ),
-            cancelToken: _apiHelper.cancelToken,
-          );
-
-          if (response.data['cancelled'] == true) {
-            _logger.w('Request cancelled, saving locally');
-            if (existingIndex != -1) {
-              _receiptCache[existingIndex] = newReceipt;
-            } else {
-              _receiptCache.add(newReceipt);
+            if (receiptImage != null) {
+              formDataMap['receiptImage'] = MultipartFile.fromBytes(
+                receiptImage,
+                filename: 'receipt_${newReceipt.id}.png',
+              );
             }
-            await save();
-            return;
-          }
 
-          if (response.statusCode == 201 && response.data['success'] == true) {
-            final receiptDto = ReceiptDto.fromJson(response.data['data']);
-            createdReceipt = receiptDto.toReceipt();
+            final formData = FormData.fromMap(formDataMap);
 
-            // Preserve room and building references from newReceipt
-            createdReceipt.room = newReceipt.room;
+            final response = await _apiHelper.dio.post(
+              '${_apiHelper.baseUrl}/receipts',
+              data: formData,
+              options: Options(
+                headers: {'Authorization': 'Bearer $token'},
+                contentType: 'multipart/form-data',
+              ),
+              cancelToken: _apiHelper.cancelToken,
+            );
 
-            // Preserve services and serviceIds from newReceipt
-            // API might not return full service objects, so use local data
-            createdReceipt.services = List<Service>.from(newReceipt.services);
-            createdReceipt.serviceIds =
-                List<String>.from(newReceipt.serviceIds);
+            if (response.data['cancelled'] != true &&
+                response.statusCode == 201 &&
+                response.data['success'] == true) {
+              final receiptDto = ReceiptDto.fromJson(response.data['data']);
+              createdReceipt = receiptDto.toReceipt();
 
-            if (existingIndex != -1) {
-              _receiptCache[existingIndex] = createdReceipt;
-            } else {
-              _receiptCache.add(createdReceipt);
+              if (createdReceipt.serviceIds.isNotEmpty) {
+                _logger.i(
+                    'Hydrating services for new receipt ${createdReceipt.id}...');
+                final allServices = _serviceRepository.getAllServices();
+                final List<Service> foundServices = [];
+
+                for (final serviceId in createdReceipt.serviceIds) {
+                  try {
+                    final service =
+                        allServices.firstWhere((s) => s.id == serviceId);
+                    foundServices.add(service);
+                  } catch (e) {
+                    _logger.w(
+                        'Could not find service with ID $serviceId locally while creating receipt.');
+                  }
+                }
+                createdReceipt.services = foundServices;
+                _logger.i(
+                    'Hydrated ${foundServices.length} services for the new receipt.');
+              }
+
+              createdReceipt.room = newReceipt.room;
+
+              syncedOnline = true;
+              _logger.i(
+                  'Receipt created successfully via API and hydrated locally.');
             }
-            _logger.i('Receipt created successfully via API');
-          } else {
-            throw Exception(
-                'Failed to create receipt via API: ${response.statusCode}');
-          }
-        } else {
-          if (existingIndex != -1) {
-            _receiptCache[existingIndex] = newReceipt;
-          } else {
-            _receiptCache.add(newReceipt);
+          } catch (e) {
+            _logger.w('Failed to create receipt online, will sync later: $e');
           }
         }
+      }
+
+      if (existingIndex != -1) {
+        _receiptCache[existingIndex] = createdReceipt;
       } else {
-        if (existingIndex != -1) {
-          _receiptCache[existingIndex] = newReceipt;
-        } else {
-          _receiptCache.add(newReceipt);
-        }
+        _receiptCache.add(createdReceipt);
+      }
+
+      if (!syncedOnline) {
+        await _addPendingChange('create', {
+          'roomId': newReceipt.room!.id,
+          'date': newReceipt.date.toIso8601String(),
+          'dueDate': newReceipt.dueDate.toIso8601String(),
+          'lastWaterUsed': newReceipt.lastWaterUsed,
+          'lastElectricUsed': newReceipt.lastElectricUsed,
+          'thisWaterUsed': newReceipt.thisWaterUsed,
+          'thisElectricUsed': newReceipt.thisElectricUsed,
+          'paymentStatus': newReceipt.paymentStatus.toString().split('.').last,
+          if (newReceipt.services.isNotEmpty)
+            'serviceIds':
+                jsonEncode(newReceipt.services.map((s) => s.id).toList()),
+          'localId': newReceipt.id,
+        });
       }
 
       await save();
@@ -340,6 +565,8 @@ class ReceiptRepository {
 
   Future<void> updateReceipt(Receipt updatedReceipt) async {
     try {
+      bool syncedOnline = false;
+
       if (await _apiHelper.hasNetwork()) {
         final token = await _secureStorage.read(key: 'auth_token');
         if (token != null) {
@@ -357,46 +584,49 @@ class ReceiptRepository {
               statusStr = 'pending';
           }
 
-          final formData = FormData.fromMap({
-            if (updatedReceipt.room?.id != null)
-              'roomId': updatedReceipt.room!.id,
-            'date': updatedReceipt.date.toIso8601String(),
-            'dueDate': updatedReceipt.dueDate.toIso8601String(),
-            'lastWaterUsed': updatedReceipt.lastWaterUsed,
-            'lastElectricUsed': updatedReceipt.lastElectricUsed,
-            'thisWaterUsed': updatedReceipt.thisWaterUsed,
-            'thisElectricUsed': updatedReceipt.thisElectricUsed,
-            'paymentStatus': statusStr,
-            if (updatedReceipt.services.isNotEmpty)
-              'serviceIds':
-                  jsonEncode(updatedReceipt.services.map((s) => s.id).toList()),
-          });
+          try {
+            final formData = FormData.fromMap({
+              if (updatedReceipt.room?.id != null)
+                'roomId': updatedReceipt.room!.id,
+              'date': updatedReceipt.date.toIso8601String(),
+              'dueDate': updatedReceipt.dueDate.toIso8601String(),
+              'lastWaterUsed': updatedReceipt.lastWaterUsed,
+              'lastElectricUsed': updatedReceipt.lastElectricUsed,
+              'thisWaterUsed': updatedReceipt.thisWaterUsed,
+              'thisElectricUsed': updatedReceipt.thisElectricUsed,
+              'paymentStatus': statusStr,
+              if (updatedReceipt.services.isNotEmpty)
+                'serviceIds': jsonEncode(
+                    updatedReceipt.services.map((s) => s.id).toList()),
+            });
 
-          final response = await _apiHelper.dio.put(
-            '${_apiHelper.baseUrl}/receipts/${updatedReceipt.id}',
-            data: formData,
-            options: Options(
-              headers: {'Authorization': 'Bearer $token'},
-              contentType: 'multipart/form-data',
-            ),
-            cancelToken: _apiHelper.cancelToken,
-          );
+            final response = await _apiHelper.dio.put(
+              '${_apiHelper.baseUrl}/receipts/${updatedReceipt.id}',
+              data: formData,
+              options: Options(
+                headers: {'Authorization': 'Bearer $token'},
+                contentType: 'multipart/form-data',
+              ),
+              cancelToken: _apiHelper.cancelToken,
+            );
 
-          if (response.data['cancelled'] != true &&
-              response.statusCode != 200) {
-            throw Exception('Failed to update receipt via API');
+            if (response.data['cancelled'] != true &&
+                response.statusCode == 200) {
+              syncedOnline = true;
+              _logger.i('Receipt updated successfully via API');
+            }
+          } catch (e) {
+            _logger.w('Failed to update receipt online, will sync later: $e');
           }
         }
       }
 
       final index = _receiptCache.indexWhere((r) => r.id == updatedReceipt.id);
       if (index != -1) {
-        // Preserve room reference if not provided
         if (updatedReceipt.room == null && _receiptCache[index].room != null) {
           updatedReceipt.room = _receiptCache[index].room;
         }
 
-        // Preserve services and serviceIds if not provided
         if (updatedReceipt.services.isEmpty &&
             _receiptCache[index].services.isNotEmpty) {
           updatedReceipt.services =
@@ -409,8 +639,29 @@ class ReceiptRepository {
         }
 
         _receiptCache[index] = updatedReceipt;
+
+        // Add to pending changes if not synced online
+        if (!syncedOnline) {
+          await _addPendingChange('update', {
+            'id': updatedReceipt.id,
+            if (updatedReceipt.room?.id != null)
+              'roomId': updatedReceipt.room!.id,
+            'date': updatedReceipt.date.toIso8601String(),
+            'dueDate': updatedReceipt.dueDate.toIso8601String(),
+            'lastWaterUsed': updatedReceipt.lastWaterUsed,
+            'lastElectricUsed': updatedReceipt.lastElectricUsed,
+            'thisWaterUsed': updatedReceipt.thisWaterUsed,
+            'thisElectricUsed': updatedReceipt.thisElectricUsed,
+            'paymentStatus':
+                updatedReceipt.paymentStatus.toString().split('.').last,
+            if (updatedReceipt.services.isNotEmpty)
+              'serviceIds':
+                  jsonEncode(updatedReceipt.services.map((s) => s.id).toList()),
+          });
+        }
+
         await save();
-        _logger.i('Receipt updated successfully');
+        _logger.i('Receipt updated in local cache');
       } else {
         throw Exception('Receipt not found: ${updatedReceipt.id}');
       }
@@ -422,27 +673,40 @@ class ReceiptRepository {
 
   Future<void> deleteReceipt(String receiptId) async {
     try {
+      bool syncedOnline = false;
+
       if (await _apiHelper.hasNetwork()) {
         final token = await _secureStorage.read(key: 'auth_token');
         if (token != null) {
           _logger.i('Deleting receipt via API: $receiptId');
 
-          final response = await _apiHelper.dio.delete(
-            '${_apiHelper.baseUrl}/receipts/$receiptId',
-            options: Options(headers: {'Authorization': 'Bearer $token'}),
-            cancelToken: _apiHelper.cancelToken,
-          );
+          try {
+            final response = await _apiHelper.dio.delete(
+              '${_apiHelper.baseUrl}/receipts/$receiptId',
+              options: Options(headers: {'Authorization': 'Bearer $token'}),
+              cancelToken: _apiHelper.cancelToken,
+            );
 
-          if (response.data['cancelled'] != true &&
-              response.statusCode != 200) {
-            throw Exception('Failed to delete receipt via API');
+            if (response.data['cancelled'] != true &&
+                response.statusCode == 200) {
+              syncedOnline = true;
+              _logger.i('Receipt deleted successfully via API');
+            }
+          } catch (e) {
+            _logger.w('Failed to delete receipt online, will sync later: $e');
           }
         }
       }
 
       _receiptCache.removeWhere((receipt) => receipt.id == receiptId);
+
+      // Add to pending changes if not synced online
+      if (!syncedOnline) {
+        await _addPendingChange('delete', {'id': receiptId});
+      }
+
       await save();
-      _logger.i('Receipt deleted successfully');
+      _logger.i('Receipt deleted from local cache');
     } catch (e) {
       _logger.e('Failed to delete receipt: $e');
       throw Exception('Failed to delete receipt: $e');
@@ -508,19 +772,12 @@ class ReceiptRepository {
     }).toList();
   }
 
-  Future<String?> getReceiptImageUrl(String receiptId) async {
-    try {
-      if (await _apiHelper.hasNetwork()) {
-        final token = await _secureStorage.read(key: 'auth_token');
-        if (token != null) {
-          return '${_apiHelper.baseUrl}/receipts/$receiptId/image';
-        }
-      }
-      return null;
-    } catch (e) {
-      _logger.e('Failed to get receipt image URL: $e');
-      return null;
-    }
+
+  bool hasPendingChanges() {
+    return _pendingChanges.isNotEmpty;
   }
 
+  int getPendingChangesCount() {
+    return _pendingChanges.length;
+  }
 }

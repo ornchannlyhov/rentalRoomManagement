@@ -163,9 +163,9 @@ class _TenantFormState extends State<TenantForm> {
     final roomProvider = context.watch<RoomProvider>();
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface,
+        backgroundColor: theme.colorScheme.background,
         title: Text(isEditing ? 'កែប្រែអ្នកជួល' : 'បង្កើតអ្នកជួលថ្មី'),
         actions: [
           IconButton(
