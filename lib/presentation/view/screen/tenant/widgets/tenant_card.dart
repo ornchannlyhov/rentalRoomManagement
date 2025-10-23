@@ -13,12 +13,14 @@ enum TenantMenuOption {
 class TenantCard extends StatelessWidget {
   final Tenant tenant;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
   final Function(TenantMenuOption)? onMenuSelected;
 
   const TenantCard({
     super.key,
     required this.tenant,
     required this.onTap,
+    required this.onLongPress,
     this.onMenuSelected,
   });
 
@@ -210,6 +212,7 @@ class TenantCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress, // FIXED: Added onLongPress here
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
         padding: const EdgeInsets.all(16),

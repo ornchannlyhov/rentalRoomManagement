@@ -91,6 +91,7 @@ flutter:
     - assets/avatar/female_avatar.png
     - assets/avatar/male_avatar.png
     - assets/avatar/lgbtq+_avatar.png
+    - assets/joul-logo.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

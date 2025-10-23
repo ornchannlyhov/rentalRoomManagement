@@ -145,13 +145,6 @@ class TenantProvider extends ChangeNotifier {
     }
   }
 
-  List<Tenant> getTenantsByRoom(String roomId) {
-    if (_tenants.hasData) {
-      return _repository.getTenantsByRoom(roomId);
-    }
-    return [];
-  }
-
   List<Tenant> getTenantsByBuilding(String buildingId) {
     if (_tenants.hasData) {
       return _repository.getTenantsByBuilding(buildingId);

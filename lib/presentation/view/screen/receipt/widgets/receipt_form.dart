@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:receipts_v2/data/models/building.dart';
 import 'package:receipts_v2/data/models/enum/mode.dart';
 import 'package:receipts_v2/data/models/enum/payment_status.dart';
+import 'package:receipts_v2/data/models/enum/room_status.dart';
 import 'package:receipts_v2/data/models/receipt.dart';
 import 'package:receipts_v2/data/models/room.dart';
 import 'package:receipts_v2/data/models/service.dart';
@@ -224,15 +225,21 @@ class _ReceiptFormState extends State<ReceiptForm> {
 
     Room? correctedSelectedRoom;
     List<Room> filteredRooms = [];
+    List<Service> filteredServices = [];
 
     roomProvider.rooms.when(
       success: (rooms) {
+        // Filter by building and only show occupied rooms
         if (selectedBuildingId != null) {
           filteredRooms = rooms
-              .where((room) => room.building?.id == selectedBuildingId)
+              .where((room) =>
+                  room.building?.id == selectedBuildingId &&
+                  room.roomStatus == RoomStatus.occupied)
               .toList();
         } else {
-          filteredRooms = rooms;
+          filteredRooms = rooms
+              .where((room) => room.roomStatus == RoomStatus.occupied)
+              .toList();
         }
 
         if (selectedRoom != null) {
@@ -248,6 +255,21 @@ class _ReceiptFormState extends State<ReceiptForm> {
             correctedSelectedRoom = null;
             selectedRoom = null;
           }
+        }
+      },
+      loading: () {},
+      error: (_) {},
+    );
+
+    // Filter services based on selected building
+    serviceProvider.services.when(
+      success: (services) {
+        if (selectedBuildingId != null) {
+          filteredServices = services
+              .where((service) => service.buildingId == selectedBuildingId)
+              .toList();
+        } else {
+          filteredServices = [];
         }
       },
       loading: () {},
@@ -363,6 +385,8 @@ class _ReceiptFormState extends State<ReceiptForm> {
                         if (selectedRoom?.building?.id != newValue) {
                           selectedRoom = null;
                         }
+                        // Clear selected services when building changes
+                        selectedServices.clear();
                       });
                     },
                     decoration: InputDecoration(
@@ -395,7 +419,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Room Selection
+                  // Room Selection - Only occupied rooms
                   DropdownButtonFormField<Room>(
                     value: correctedSelectedRoom,
                     items: filteredRooms.map((room) {
@@ -417,6 +441,9 @@ class _ReceiptFormState extends State<ReceiptForm> {
                     },
                     decoration: InputDecoration(
                       labelText: 'ជ្រើសរើសបន្ទប់',
+                      hintText: filteredRooms.isEmpty
+                          ? 'មិនមានបន្ទប់ដែលមានអ្នកជួលទេ'
+                          : null,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(
@@ -476,31 +503,61 @@ class _ReceiptFormState extends State<ReceiptForm> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Services Selection
+                  // Services Selection - Now filtered by building
                   Text('សេវាកម្ម', style: theme.textTheme.titleMedium),
                   const SizedBox(height: 8),
                   serviceProvider.services.when(
-                    success: (services) => Column(
-                      children: services.map((service) {
-                        final isSelected =
-                            selectedServices.any((s) => s.id == service.id);
-                        return CheckboxListTile(
-                          title: Text(service.name),
-                          value: isSelected,
-                          onChanged: (value) {
-                            setState(() {
-                              if (value == true) {
-                                selectedServices.add(service);
-                              } else {
-                                selectedServices
-                                    .removeWhere((s) => s.id == service.id);
-                              }
-                            });
-                          },
-                          contentPadding: EdgeInsets.zero,
+                    success: (services) {
+                      if (selectedBuildingId == null) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Text(
+                            'សូមជ្រើសរើសអគារមុនសិន',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey,
+                              fontStyle: FontStyle.italic,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         );
-                      }).toList(),
-                    ),
+                      }
+
+                      if (filteredServices.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Text(
+                            'មិនមានសេវាកម្មសម្រាប់អគារនេះទេ',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey,
+                              fontStyle: FontStyle.italic,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        );
+                      }
+
+                      return Column(
+                        children: filteredServices.map((service) {
+                          final isSelected =
+                              selectedServices.any((s) => s.id == service.id);
+                          return CheckboxListTile(
+                            title: Text(service.name),
+                            value: isSelected,
+                            onChanged: (value) {
+                              setState(() {
+                                if (value == true) {
+                                  selectedServices.add(service);
+                                } else {
+                                  selectedServices
+                                      .removeWhere((s) => s.id == service.id);
+                                }
+                              });
+                            },
+                            contentPadding: EdgeInsets.zero,
+                          );
+                        }).toList(),
+                      );
+                    },
                     loading: () => const CircularProgressIndicator(),
                     error: (_) => const Text('មានបញ្ហាក្នុងការផ្ទុកសេវាកម្ម'),
                   ),

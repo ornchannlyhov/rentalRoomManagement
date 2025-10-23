@@ -11,7 +11,7 @@ import 'package:receipts_v2/presentation/providers/tenant_provider.dart';
 import 'package:receipts_v2/presentation/view/app_widgets/building_filter_dropdown.dart';
 import 'package:receipts_v2/presentation/view/screen/tenant/widgets/room_change_dialog.dart';
 import 'package:receipts_v2/presentation/view/screen/tenant/widgets/tenant_card.dart';
-import 'package:receipts_v2/presentation/view/screen/tenant/widgets/tenant_detail_dialog.dart';
+import 'package:receipts_v2/presentation/view/screen/tenant/widgets/tenant_detail.dart';
 import 'package:receipts_v2/presentation/view/screen/tenant/widgets/tenant_form.dart';
 import 'package:receipts_v2/presentation/view/screen/tenant/widgets/tenant_list.dart';
 import 'package:receipts_v2/presentation/view/screen/tenant/widgets/tenant_search_bar.dart';
@@ -243,11 +243,12 @@ class _TenantScreenState extends State<TenantScreen>
     }
   }
 
-  /// Shows a dialog with detailed information about a tenant.
+  /// Shows detailed information about a tenant.
   void _viewTenantDetails(BuildContext context, Tenant tenant) {
-    showDialog(
-      context: context,
-      builder: (context) => TenantDetailDialog(tenant: tenant),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (ctx) => TenantDetail(tenant: tenant),
+      ),
     );
   }
 
@@ -524,7 +525,8 @@ class _TenantScreenState extends State<TenantScreen>
                     fadeAnimation: _fadeAnimation,
                     onRefresh: _loadData,
                     onDismissed: _handleTenantDismissed,
-                    onTapTenant: _editTenant,
+                    onTapTenant: _viewTenantDetails,
+                    onLongPress: _editTenant,
                     onMenuSelected: _handleMenuSelection,
                   );
                 },

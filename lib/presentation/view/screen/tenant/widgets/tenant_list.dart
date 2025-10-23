@@ -12,6 +12,7 @@ class TenantList extends StatelessWidget {
     required this.onRefresh,
     required this.onDismissed,
     required this.onTapTenant,
+    required this.onLongPress,
     required this.onMenuSelected,
   });
 
@@ -22,6 +23,7 @@ class TenantList extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final Future<void> Function(Tenant, int, DismissDirection) onDismissed;
   final Function(BuildContext, Tenant) onTapTenant;
+  final Function(BuildContext, Tenant) onLongPress;
   final Function(TenantMenuOption, Tenant) onMenuSelected;
 
   @override
@@ -95,6 +97,7 @@ class TenantList extends StatelessWidget {
                 child: TenantCard(
                   tenant: tenant,
                   onTap: () => onTapTenant(context, tenant),
+                  onLongPress: () => onLongPress(context, tenant),
                   onMenuSelected: (option) => onMenuSelected(option, tenant),
                 ),
               ),
