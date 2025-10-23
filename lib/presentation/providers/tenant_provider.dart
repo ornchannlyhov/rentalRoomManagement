@@ -139,6 +139,13 @@ class TenantProvider extends ChangeNotifier {
     await syncFromApi(roomId: roomId, search: search);
   }
 
+  List<Tenant> searchTenants(String query) {
+    if (_tenants.hasData) {
+      return _repository.searchTenants(query);
+    }
+    return [];
+  }
+
   void clearError() {
     if (_tenants.hasError) {
       _tenants = AsyncValue.success(_repository.getAllTenants());

@@ -591,6 +591,13 @@ class _HistoryScreenState extends State<HistoryScreen>
                                   const SizedBox(height: 8),
                               itemBuilder: (ctx, index) {
                                 final receipt = filteredReceipts[index];
+
+                                // Calculate staggered animation intervals with proper clamping
+                                final double begin =
+                                    (index * 0.05).clamp(0.0, 0.4);
+                                final double end =
+                                    ((index * 0.05) + 0.6).clamp(0.0, 1.0);
+
                                 return SlideTransition(
                                   position: Tween<Offset>(
                                     begin: const Offset(1, 0),
@@ -599,8 +606,8 @@ class _HistoryScreenState extends State<HistoryScreen>
                                     CurvedAnimation(
                                       parent: _animationController,
                                       curve: Interval(
-                                        index * 0.05,
-                                        (index * 0.05) + 0.6,
+                                        begin,
+                                        end,
                                         curve: Curves.easeOutCubic,
                                       ),
                                     ),

@@ -355,6 +355,11 @@ class _BuildingScreenState extends State<BuildingScreen>
           separatorBuilder: (context, index) => const SizedBox(height: 2),
           itemBuilder: (ctx, index) {
             final building = buildings[index];
+
+            // Calculate staggered animation intervals with proper clamping
+            final double begin = (index * 0.05).clamp(0.0, 0.4);
+            final double end = ((index * 0.05) + 0.6).clamp(0.0, 1.0);
+
             return SlideTransition(
               position: Tween<Offset>(
                 begin: const Offset(1, 0),
@@ -363,8 +368,8 @@ class _BuildingScreenState extends State<BuildingScreen>
                 CurvedAnimation(
                   parent: _animationController,
                   curve: Interval(
-                    index * 0.1,
-                    (index * 0.1) + 0.6,
+                    begin,
+                    end,
                     curve: Curves.easeOutCubic,
                   ),
                 ),

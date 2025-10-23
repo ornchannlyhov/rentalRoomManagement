@@ -3,7 +3,8 @@ import 'package:receipts_v2/data/models/tenant.dart';
 import 'package:receipts_v2/presentation/view/screen/tenant/widgets/tenant_card.dart';
 
 class TenantList extends StatelessWidget {
-  const TenantList({super.key, 
+  const TenantList({
+    super.key,
     required this.tenants,
     required this.theme,
     required this.animationController,
@@ -37,6 +38,11 @@ class TenantList extends StatelessWidget {
           separatorBuilder: (context, index) => const SizedBox(height: 4),
           itemBuilder: (ctx, index) {
             final tenant = tenants[index];
+
+            // Calculate staggered animation intervals with proper clamping
+            final double begin = (index * 0.05).clamp(0.0, 0.4);
+            final double end = ((index * 0.05) + 0.6).clamp(0.0, 1.0);
+
             return SlideTransition(
               position: Tween<Offset>(
                 begin: const Offset(1, 0),
@@ -45,8 +51,8 @@ class TenantList extends StatelessWidget {
                 CurvedAnimation(
                   parent: animationController,
                   curve: Interval(
-                    index * 0.1,
-                    (index * 0.1) + 0.6,
+                    begin,
+                    end,
                     curve: Curves.easeOutCubic,
                   ),
                 ),
@@ -89,7 +95,7 @@ class TenantList extends StatelessWidget {
                 child: TenantCard(
                   tenant: tenant,
                   onTap: () => onTapTenant(context, tenant),
-                  onMenuSelected: (option) => onMenuSelected(option , tenant),
+                  onMenuSelected: (option) => onMenuSelected(option, tenant),
                 ),
               ),
             );
