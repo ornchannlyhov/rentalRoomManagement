@@ -3,14 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:receipts_v2/helpers/asyn_value.dart';
 import 'package:receipts_v2/data/models/user.dart';
 import 'package:receipts_v2/data/repositories/auth_repository.dart';
+import 'package:receipts_v2/helpers/repository_manager.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthRepository _repository;
+  final RepositoryManager? _repositoryManager;
 
   late final StreamSubscription _unauthenticatedSubscription;
   late final StreamSubscription _noNetworkSubscription;
+  bool _disposed = false;
 
-  AuthProvider(this._repository) {
+  AuthProvider(this._repository, {RepositoryManager? repositoryManager})
+      : _repositoryManager = repositoryManager {
     _unauthenticatedSubscription = _repository.onUnauthenticated.listen(
       (_) => _handleSessionExpired(),
     );
@@ -89,8 +93,9 @@ class AuthProvider with ChangeNotifier {
       _user = AsyncValue.success(loggedInUser);
       _loginState = const AsyncValue.success(true);
     } catch (e) {
-      _user = const AsyncValue.success(null);
-      _loginState = AsyncValue.error(_mapExceptionToMessage(e));
+      _user = const AsyncValue.success(null); 
+      _loginState =
+          AsyncValue.error(_mapExceptionToMessage(e));
     }
 
     notifyListeners();
@@ -115,13 +120,20 @@ class AuthProvider with ChangeNotifier {
   Future<void> logout() async {
     try {
       await _repository.logout();
+
+      // Clear all cached data
+      if (_repositoryManager != null) {
+        await _repositoryManager.clearAll();
+      }
     } catch (e) {
       debugPrint('Logout error: $e');
     } finally {
-      _user = const AsyncValue.success(null);
-      _loginState = const AsyncValue.success(false);
-      _sessionHasExpired = false;
-      notifyListeners();
+      if (!_disposed) {
+        _user = const AsyncValue.success(null);
+        _loginState = const AsyncValue.success(false);
+        _sessionHasExpired = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -238,8 +250,16 @@ class AuthProvider with ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _unauthenticatedSubscription.cancel();
     _noNetworkSubscription.cancel();
     super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) {
+      super.notifyListeners();
+    }
   }
 }

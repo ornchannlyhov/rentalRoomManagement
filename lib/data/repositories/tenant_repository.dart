@@ -514,6 +514,14 @@ class TenantRepository {
     }
   }
 
+  Future<void> clear() async {
+    await _secureStorage.delete(key: storageKey);
+    await _secureStorage.delete(key: pendingChangesKey);
+    _tenantCache.clear();
+    _pendingChanges.clear();
+    _logger.i('Cleared tenant data from secure storage');
+  }
+
   Future<void> deleteTenant(String id) async {
     try {
       Tenant? deletedTenant = _tenantCache.firstWhere(

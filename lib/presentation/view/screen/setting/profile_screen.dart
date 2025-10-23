@@ -585,7 +585,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ColorScheme colorScheme, AuthProvider authProvider) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           backgroundColor: colorScheme.background,
           shape: RoundedRectangleBorder(
@@ -608,7 +608,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: Text(
                 'Cancel',
                 style: TextStyle(
@@ -619,42 +619,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             TextButton(
               onPressed: () async {
-                Navigator.of(context).pop(); // Close the dialog first
+                // Capture references BEFORE any async operations
+                final navigator = Navigator.of(context);
+                final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+                // Close the dialog
+                Navigator.of(dialogContext).pop();
 
                 try {
                   await authProvider.logout();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Signed out successfully!'),
-                        backgroundColor: Colors.green, // Indicate success
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+
+                  // Use captured references - no context lookup after await
+                  scaffoldMessenger.showSnackBar(
+                    SnackBar(
+                      content: const Text('Signed out successfully!'),
+                      backgroundColor: Colors.green,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    );
-                    // Navigate to login screen and clear navigation stack
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      '/login', // Or '/onboarding' if that's your first unauthenticated screen
-                      (route) => false,
-                    );
-                  }
+                    ),
+                  );
+
+                  // Navigate using captured navigator
+                  navigator.pushNamedAndRemoveUntil(
+                    '/login',
+                    (route) => false,
+                  );
                 } catch (e) {
-                  if (mounted) {
-                    // Show error message if logout failed
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                            'Failed to sign out: ${e.toString().contains("Exception:") ? e.toString().split("Exception:")[1].trim() : e.toString()}'),
-                        backgroundColor: Colors.red[600],
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                  // Use captured reference for error message too
+                  scaffoldMessenger.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Failed to sign out: ${e.toString().contains("Exception:") ? e.toString().split("Exception:")[1].trim() : e.toString()}',
                       ),
-                    );
-                  }
+                      backgroundColor: Colors.red[600],
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  );
                 }
               },
               child: const Text(

@@ -168,6 +168,14 @@ class ReceiptRepository {
     }
   }
 
+  Future<void> clear () async {
+    await _secureStorage.delete(key: storageKey);
+    await _secureStorage.delete(key: pendingChangesKey);
+    _receiptCache.clear();
+    _pendingChanges.clear();
+    _logger.i('Cleared receipt data from secure storage');
+  }
+
   Future<void> _addPendingChange(String type, Map<String, dynamic> data) async {
     _pendingChanges.add({
       'type': type,

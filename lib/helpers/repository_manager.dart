@@ -214,6 +214,28 @@ class RepositoryManager {
     }
   }
 
+  Future<void> clearAll() async {
+    _logger.i('Clearing all data...');
+
+    try {
+      await buildingRepository.clear();
+      await serviceRepository.clear();
+      await roomRepository.clear();
+      await tenantRepository.clear();
+      await receiptRepository.clear();
+      await reportRepository.clear();
+
+      _syncStatus = SyncStatus.idle;
+      _lastSyncTime = null;
+      _lastSyncError = null;
+
+      _logger.i('All data cleared successfully');
+    } catch (e) {
+      _logger.e('Error clearing data: $e');
+      rethrow;
+    }
+  }
+
   /// Check if any repository has pending changes
   bool hasPendingChanges() {
     return buildingRepository.hasPendingChanges() ||
@@ -289,24 +311,5 @@ class RepositoryManager {
       'reports_with_tenants': reports.where((r) => r.tenant != null).length,
       'reports_with_rooms': reports.where((r) => r.room != null).length,
     };
-  }
-
-  /// Clear all data (for logout or reset)
-  Future<void> clearAll() async {
-    _logger.i('Clearing all data...');
-
-    try {
-      // Clear caches in each repository
-      // This should be implemented in each repository
-
-      _syncStatus = SyncStatus.idle;
-      _lastSyncTime = null;
-      _lastSyncError = null;
-
-      _logger.i('All data cleared successfully');
-    } catch (e) {
-      _logger.e('Error clearing data: $e');
-      rethrow;
-    }
   }
 }

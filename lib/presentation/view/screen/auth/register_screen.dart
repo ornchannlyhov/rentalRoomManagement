@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:receipts_v2/data/repositories/auth_repository.dart';
+import 'package:receipts_v2/helpers/api_helper.dart';
+import 'package:receipts_v2/helpers/repository_manager.dart';
 import 'package:receipts_v2/presentation/providers/auth_provider.dart';
 import 'package:receipts_v2/presentation/view/screen/auth/widget/custom_text_feild.dart';
 
@@ -197,7 +199,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 16),
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, child) {
-                    return authProvider.user.when(
+                    return authProvider.registerState.when(
                       loading: () => const SizedBox.shrink(),
                       success: (user) => const SizedBox.shrink(),
                       error: (error) => Container(
@@ -255,6 +257,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _handleRegister(AuthProvider authProvider) async {
     if (_formKey.currentState!.validate()) {
+      final repositoryManager =
+          Provider.of<RepositoryManager>(context, listen: false);
+
       final request = RegisterRequest(
         username: _nameController.text.trim(),
         email: _emailController.text.trim(),
@@ -266,17 +271,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (mounted) {
         authProvider.user.when(
           loading: () {},
-          success: (user) {
+          success: (user) async {
             if (user != null && authProvider.isAuthenticated()) {
+              // Sync data for the new user
+              if (await ApiHelper.instance.hasNetwork()) {
+                await repositoryManager.syncAll();
+              }
+
               Navigator.pushNamedAndRemoveUntil(
+                // ignore: use_build_context_synchronously
                 context,
                 '/home',
                 (route) => false,
               );
             }
           },
-          error: (error) {
-          },
+          error: (error) {},
         );
       }
     }

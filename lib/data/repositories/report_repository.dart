@@ -90,6 +90,14 @@ class ReportRepository {
     await save();
   }
 
+  Future<void> clear() async {
+    await _secureStorage.delete(key: storageKey);
+    await _secureStorage.delete(key: pendingChangesKey);
+    _reportCache.clear();
+    _pendingChanges.clear();
+    _logger.i('Cleared report data from secure storage');
+  }
+
   Future<void> _syncPendingChanges() async {
     if (_pendingChanges.isEmpty) return;
 
