@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:receipts_v2/helpers/asyn_value.dart';
 import 'package:receipts_v2/data/models/tenant.dart';
 import 'package:receipts_v2/data/repositories/tenant_repository.dart';
+import 'package:receipts_v2/helpers/repository_manager.dart';
 
 class TenantProvider extends ChangeNotifier {
   final TenantRepository _repository;
+  final RepositoryManager? _repositoryManager;
 
-  TenantProvider(this._repository);
+  TenantProvider(this._repository, [this._repositoryManager]);
 
   AsyncValue<List<Tenant>> _tenants = const AsyncValue.loading();
   AsyncValue<List<Tenant>> get tenants => _tenants;
@@ -27,6 +29,12 @@ class TenantProvider extends ChangeNotifier {
 
     try {
       await _repository.load();
+
+      // Trigger hydration if repository manager is available
+      if (_repositoryManager != null) {
+        _repositoryManager.hydrateAllRelationships();
+      }
+
       final data = _repository.getAllTenants();
       _tenants = AsyncValue.success(data);
     } catch (e) {
@@ -41,6 +49,12 @@ class TenantProvider extends ChangeNotifier {
 
     try {
       await _repository.syncFromApi(roomId: roomId, search: search);
+
+      // Trigger hydration after sync
+      if (_repositoryManager != null) {
+        _repositoryManager.hydrateAllRelationships();
+      }
+
       final data = _repository.getAllTenants();
       _tenants = AsyncValue.success(data);
     } catch (e) {
@@ -57,7 +71,10 @@ class TenantProvider extends ChangeNotifier {
         gender: tenant.gender,
         roomId: tenant.room?.id,
       );
+
+      // Critical: Reload with hydration to get full building data
       await load();
+
       return created;
     } catch (e) {
       _tenants = AsyncValue.error(e);
@@ -75,7 +92,10 @@ class TenantProvider extends ChangeNotifier {
         gender: tenant.gender,
         roomId: tenant.room?.id,
       );
+
+      // Reload with hydration
       await load();
+
       return updated;
     } catch (e) {
       _tenants = AsyncValue.error(e);
@@ -98,6 +118,12 @@ class TenantProvider extends ChangeNotifier {
   Future<void> restoreTenant(int restoreIndex, Tenant tenant) async {
     try {
       await _repository.restoreTenant(restoreIndex, tenant);
+
+      // Trigger hydration
+      if (_repositoryManager != null) {
+        _repositoryManager.hydrateAllRelationships();
+      }
+
       final data = _repository.getAllTenants();
       _tenants = AsyncValue.success(data);
       notifyListeners();

@@ -199,6 +199,7 @@ class TenantRepository {
     String? roomId,
     String? search,
     bool skipHydration = false,
+    Function()? onHydrationNeeded,
   }) async {
     try {
       if (!await _apiHelper.hasNetwork()) {
@@ -212,7 +213,6 @@ class TenantRepository {
         return;
       }
 
-      // Sync pending changes first
       await _syncPendingChanges();
 
       _logger
@@ -254,6 +254,9 @@ class TenantRepository {
 
         if (!skipHydration) {
           await save();
+          if (onHydrationNeeded != null) {
+            onHydrationNeeded();
+          }
         }
         _logger.i('Synced ${_tenantCache.length} tenants from API');
       }
@@ -267,6 +270,7 @@ class TenantRepository {
     required String phoneNumber,
     required Gender gender,
     String? roomId,
+    Function()? onHydrationNeeded,
   }) async {
     try {
       Tenant createdTenant;
@@ -369,6 +373,11 @@ class TenantRepository {
       }
 
       await save();
+
+      if (onHydrationNeeded != null) {
+        onHydrationNeeded();
+      }
+
       return createdTenant;
     } catch (e) {
       _logger.e('Failed to create tenant: $e');
@@ -658,14 +667,6 @@ class TenantRepository {
       return tenant.name.toLowerCase().contains(lowerQuery) ||
           tenant.phoneNumber.contains(query);
     }).toList();
-  }
-
-  int getTenantCount() {
-    return _tenantCache.length;
-  }
-
-  int getTenantCountByBuilding(String buildingId) {
-    return getTenantsByBuilding(buildingId).length;
   }
 
   bool hasPendingChanges() {

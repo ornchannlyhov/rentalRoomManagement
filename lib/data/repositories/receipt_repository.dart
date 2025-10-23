@@ -772,20 +772,6 @@ class ReceiptRepository {
     }).toList();
   }
 
-  Future<String?> getReceiptImageUrl(String receiptId) async {
-    try {
-      if (await _apiHelper.hasNetwork()) {
-        final token = await _secureStorage.read(key: 'auth_token');
-        if (token != null) {
-          return '${_apiHelper.baseUrl}/receipts/$receiptId/image';
-        }
-      }
-      return null;
-    } catch (e) {
-      _logger.e('Failed to get receipt image URL: $e');
-      return null;
-    }
-  }
 
   bool hasPendingChanges() {
     return _pendingChanges.isNotEmpty;

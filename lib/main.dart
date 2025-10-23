@@ -156,7 +156,7 @@ Future<void> main() async {
 
   final roomProvider = RoomProvider(roomRepository);
   final serviceProvider = ServiceProvider(serviceRepository);
-  final tenantProvider = TenantProvider(tenantRepository);
+  final tenantProvider = TenantProvider(tenantRepository, repositoryManager);
   final receiptProvider = ReceiptProvider(receiptRepository);
   final reportProvider = ReportProvider(reportRepository);
   final buildingProvider = BuildingProvider(buildingRepository, roomProvider);

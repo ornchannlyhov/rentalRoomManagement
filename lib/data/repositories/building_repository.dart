@@ -4,7 +4,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:receipts_v2/helpers/api_helper.dart';
 import 'package:receipts_v2/data/models/building.dart';
 import 'package:receipts_v2/data/dtos/building_dto.dart';
-import 'package:receipts_v2/data/models/room.dart';
 import 'package:receipts_v2/data/repositories/room_repository.dart';
 import 'package:logger/logger.dart';
 
@@ -410,22 +409,6 @@ class BuildingRepository {
     }
 
     await save();
-  }
-
-  Future<void> updateRoom(String buildingId, Room room) async {
-    final building = _buildingCache.firstWhere(
-      (b) => b.id == buildingId,
-      orElse: () => throw Exception('Building not found'),
-    );
-    final roomIndex = building.rooms.indexWhere((r) => r.id == room.id);
-    if (roomIndex != -1) {
-      building.rooms[roomIndex] = room;
-      room.building = building;
-      await save();
-      await _roomRepository.updateRoom(room);
-    } else {
-      throw Exception('Room not found in building: ${room.id}');
-    }
   }
 
   List<Building> getAllBuildings() {
