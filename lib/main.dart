@@ -26,6 +26,7 @@ import 'package:receipts_v2/presentation/providers/theme_provider.dart';
 import 'package:receipts_v2/presentation/view/screen/auth/login_screen.dart';
 import 'package:receipts_v2/presentation/view/screen/auth/onboard_screen.dart';
 import 'package:receipts_v2/presentation/view/screen/auth/register_screen.dart';
+import 'package:receipts_v2/presentation/view/screen/splash/splash_screen.dart';
 import 'helpers/app_theme.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:logger/logger.dart';
@@ -182,7 +183,7 @@ Future<void> main() async {
   ));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final AuthProvider authProvider;
   final RepositoryManager repositoryManager;
   final RoomProvider roomProvider;
@@ -205,18 +206,38 @@ class MyApp extends StatelessWidget {
   });
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _showSplash = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Show splash for a minimum of 1 second to ensure smooth transition
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _showSplash = false;
+        });
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider.value(value: authProvider),
+        ChangeNotifierProvider.value(value: widget.authProvider),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        Provider.value(value: repositoryManager),
-        ChangeNotifierProvider.value(value: roomProvider),
-        ChangeNotifierProvider.value(value: serviceProvider),
-        ChangeNotifierProvider.value(value: tenantProvider),
-        ChangeNotifierProvider.value(value: buildingProvider),
-        ChangeNotifierProvider.value(value: receiptProvider),
-        ChangeNotifierProvider.value(value: reportProvider),
+        Provider.value(value: widget.repositoryManager),
+        ChangeNotifierProvider.value(value: widget.roomProvider),
+        ChangeNotifierProvider.value(value: widget.serviceProvider),
+        ChangeNotifierProvider.value(value: widget.tenantProvider),
+        ChangeNotifierProvider.value(value: widget.buildingProvider),
+        ChangeNotifierProvider.value(value: widget.receiptProvider),
+        ChangeNotifierProvider.value(value: widget.reportProvider),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
@@ -226,7 +247,7 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
-            home: const AuthWrapper(),
+            home: _showSplash ? const SplashScreen() : const AuthWrapper(),
             routes: {
               '/onboarding': (context) => const OnboardingScreen(),
               '/login': (context) => const LoginScreen(),
@@ -239,6 +260,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
 
 class SecureStorageHelper {
   static final FlutterSecureStorage _storage = const FlutterSecureStorage();

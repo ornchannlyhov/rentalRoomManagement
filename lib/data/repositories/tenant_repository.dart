@@ -645,10 +645,6 @@ class TenantRepository {
     return List.unmodifiable(_tenantCache);
   }
 
-  List<Tenant> getTenantsByRoom(String roomId) {
-    return _tenantCache.where((tenant) => tenant.room?.id == roomId).toList();
-  }
-
   List<Tenant> getTenantsByBuilding(String buildingId) {
     try {
       return _tenantCache.where((tenant) {
