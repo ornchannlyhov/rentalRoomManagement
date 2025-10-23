@@ -111,6 +111,14 @@ class RoomRepository {
     }
   }
 
+  Future<void> clear() async {
+    await _secureStorage.delete(key: storageKey);
+    await _secureStorage.delete(key: pendingChangesKey);
+    _roomCache.clear();
+    _pendingChanges.clear();
+    _logger.i('Cleared room data from secure storage');
+  }
+
   Future<void> _addPendingChange(String type, Map<String, dynamic> data) async {
     _pendingChanges.add({
       'type': type,

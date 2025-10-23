@@ -1,6 +1,10 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:receipts_v2/data/repositories/auth_repository.dart';
+import 'package:receipts_v2/helpers/api_helper.dart';
+import 'package:receipts_v2/helpers/repository_manager.dart';
 import 'package:receipts_v2/presentation/providers/auth_provider.dart';
 import 'package:receipts_v2/presentation/view/screen/auth/widget/custom_text_feild.dart';
 
@@ -149,9 +153,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 16),
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, child) {
-                    return authProvider.user.when(
+                    return authProvider.loginState.when(
                       loading: () => const SizedBox.shrink(),
-                      success: (user) => const SizedBox.shrink(),
+                      success: (isLoggedIn) => const SizedBox.shrink(),
                       error: (error) => Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
@@ -207,6 +211,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin(AuthProvider authProvider) async {
     if (_formKey.currentState!.validate()) {
+      final repositoryManager =
+          Provider.of<RepositoryManager>(context, listen: false);
+
       final request = LoginRequest(
         email: _emailController.text.trim(),
         password: _passwordController.text,
@@ -217,8 +224,13 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         authProvider.user.when(
           loading: () {},
-          success: (user) {
+          success: (user) async {
             if (user != null && authProvider.isAuthenticated()) {
+              // Sync data for the logged-in user
+              if (await ApiHelper.instance.hasNetwork()) {
+                await repositoryManager.syncAll();
+              }
+
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 '/home',

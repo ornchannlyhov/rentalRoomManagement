@@ -75,6 +75,14 @@ class ServiceRepository {
     }
   }
 
+  Future<void> clear() async {
+    await _secureStorage.delete(key: storageKey);
+    await _secureStorage.delete(key: pendingChangesKey);
+    _serviceCache.clear();
+    _pendingChanges.clear();
+    _logger.i('Cleared service data from secure storage');
+  }
+
   Future<void> _addPendingChange(String type, Map<String, dynamic> data) async {
     _pendingChanges.add({
       'type': type,

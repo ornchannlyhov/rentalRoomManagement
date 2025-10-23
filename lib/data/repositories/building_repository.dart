@@ -80,6 +80,14 @@ class BuildingRepository {
     }
   }
 
+  Future<void> clear() async {
+    await _secureStorage.delete(key: storageKey);
+    await _secureStorage.delete(key: pendingChangesKey);
+    _buildingCache.clear();
+    _pendingChanges.clear();
+    _logger.i('Cleared building data from secure storage');
+  }
+
   Future<void> syncFromApi({bool skipHydration = false}) async {
     try {
       if (!await _apiHelper.hasNetwork()) {
