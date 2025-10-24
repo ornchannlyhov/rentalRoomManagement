@@ -544,17 +544,10 @@ class _BuildingDetailState extends State<BuildingDetail> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.background,
         title: Text(widget.building.name),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refreshData,
-            tooltip: 'ផ្ទុកទិន្នន័យឡើងវិញ',
-          ),
-        ],
       ),
       body: Column(
         children: [

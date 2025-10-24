@@ -4,7 +4,6 @@ import 'package:receipts_v2/data/repositories/room_repository.dart';
 import 'package:receipts_v2/data/repositories/tenant_repository.dart';
 import 'package:receipts_v2/data/repositories/receipt_repository.dart';
 import 'package:receipts_v2/data/repositories/service_repository.dart';
-import 'package:logger/logger.dart';
 import 'package:receipts_v2/helpers/ata_hydration_helper.dart';
 
 enum SyncStatus {
@@ -23,8 +22,6 @@ class RepositoryManager {
   final ReceiptRepository receiptRepository;
   final ServiceRepository serviceRepository;
   final ReportRepository reportRepository;
-
-  final Logger _logger = Logger();
 
   SyncStatus _syncStatus = SyncStatus.idle;
   DateTime? _lastSyncTime;
@@ -45,8 +42,6 @@ class RepositoryManager {
 
   /// Load all data from secure storage on app startup
   Future<void> loadAll() async {
-    _logger.i('Loading all data from storage...');
-
     try {
       // Load in dependency order
       await buildingRepository.load();
@@ -56,17 +51,12 @@ class RepositoryManager {
       await receiptRepository.load();
       await reportRepository.load();
 
-      _logger.i('Raw data loaded from storage');
-
       // Hydrate relationships after loading
       await hydrateAllRelationships();
 
       // Save back the hydrated data
       await saveAll();
-
-      _logger.i('All data loaded and hydrated successfully');
     } catch (e) {
-      _logger.e('Error loading data: $e');
       rethrow;
     }
   }
@@ -74,12 +64,10 @@ class RepositoryManager {
   /// Sync all data from API with proper error handling
   Future<bool> syncAll({bool force = false}) async {
     if (_syncStatus == SyncStatus.syncing && !force) {
-      _logger.w('Sync already in progress, skipping');
       return false;
     }
 
     _syncStatus = SyncStatus.syncing;
-    _logger.i('Syncing all data from API...');
 
     try {
       // Sync in dependency order with skipHydration=true
@@ -89,8 +77,6 @@ class RepositoryManager {
       await tenantRepository.syncFromApi(skipHydration: true);
       await receiptRepository.syncFromApi(skipHydration: true);
       await reportRepository.syncFromApi(skipHydration: true);
-
-      _logger.i('Raw data synced from API');
 
       // Rebuild object references after API sync
       await hydrateAllRelationships();
@@ -102,10 +88,8 @@ class RepositoryManager {
       _syncStatus = SyncStatus.success;
       _lastSyncError = null;
 
-      _logger.i('All data synced and hydrated successfully');
       return true;
     } catch (e) {
-      _logger.e('Error syncing data: $e');
       _syncStatus = SyncStatus.error;
       _lastSyncError = e.toString();
       return false;
@@ -114,8 +98,6 @@ class RepositoryManager {
 
   /// Sync only pending changes without full sync
   Future<bool> syncPendingChanges() async {
-    _logger.i('Syncing pending changes...');
-
     try {
       // Each repository should have its own pending changes sync
       await buildingRepository.syncFromApi(skipHydration: true);
@@ -128,18 +110,14 @@ class RepositoryManager {
       await hydrateAllRelationships();
       await saveAll();
 
-      _logger.i('Pending changes synced successfully');
       return true;
     } catch (e) {
-      _logger.e('Error syncing pending changes: $e');
       return false;
     }
   }
 
   /// Rebuild all object relationships
   Future<void> hydrateAllRelationships() async {
-    _logger.i('Hydrating all relationships...');
-
     try {
       final buildings = buildingRepository.getAllBuildings();
       final rooms = roomRepository.getAllRooms();
@@ -147,11 +125,6 @@ class RepositoryManager {
       final services = serviceRepository.getAllServices();
       final receipts = receiptRepository.getAllReceipts();
       final reports = reportRepository.getAllReports();
-
-      _logger.d(
-          'Retrieved data: ${buildings.length} buildings, ${rooms.length} rooms, '
-          '${tenants.length} tenants, ${services.length} services, '
-          '${receipts.length} receipts, ${reports.length} reports');
 
       final hydrator = DataHydrationHelper(
         buildings: buildings,
@@ -164,39 +137,13 @@ class RepositoryManager {
         receipts: receipts,
         reports: reports,
       );
-
-      final validation = hydrator.validate(
-        receipts: receipts,
-        reports: reports,
-      );
-      _logger.i('Hydration complete: $validation');
-
-      _validateHydrationResults(validation);
     } catch (e) {
-      _logger.e('Error during hydration: $e');
       rethrow;
-    }
-  }
-
-  void _validateHydrationResults(Map<String, dynamic> validation) {
-    if (validation['receipts_with_buildings'] != null &&
-        validation['receipts_with_rooms'] != null) {
-      final receiptsWithBuildings =
-          validation['receipts_with_buildings'] as int;
-      final receiptsWithRooms = validation['receipts_with_rooms'] as int;
-
-      if (receiptsWithBuildings < receiptsWithRooms) {
-        _logger.w('WARNING: Some receipts have rooms but no buildings!');
-        _logger.w('Receipts with rooms: $receiptsWithRooms');
-        _logger.w('Receipts with buildings: $receiptsWithBuildings');
-      }
     }
   }
 
   /// Save all data to secure storage
   Future<void> saveAll() async {
-    _logger.i('Saving all data to storage...');
-
     try {
       await Future.wait([
         buildingRepository.save(),
@@ -206,17 +153,12 @@ class RepositoryManager {
         receiptRepository.save(),
         reportRepository.save(),
       ]);
-
-      _logger.i('All data saved successfully');
     } catch (e) {
-      _logger.e('Error saving data: $e');
       rethrow;
     }
   }
 
   Future<void> clearAll() async {
-    _logger.i('Clearing all data...');
-
     try {
       await buildingRepository.clear();
       await serviceRepository.clear();
@@ -228,10 +170,7 @@ class RepositoryManager {
       _syncStatus = SyncStatus.idle;
       _lastSyncTime = null;
       _lastSyncError = null;
-
-      _logger.i('All data cleared successfully');
     } catch (e) {
-      _logger.e('Error clearing data: $e');
       rethrow;
     }
   }

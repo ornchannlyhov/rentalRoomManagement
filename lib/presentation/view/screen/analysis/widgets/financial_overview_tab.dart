@@ -235,10 +235,13 @@ class _RevenueOverviewCard extends StatelessWidget {
                   ),
                 ),
                 isLoadingRates
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+                        ),
                       )
                     : DropdownButton<String>(
                         value: selectedCurrency,
@@ -264,7 +267,7 @@ class _RevenueOverviewCard extends StatelessWidget {
             const SizedBox(height: 8),
             LinearProgressIndicator(
               value: collectionRate / 100,
-              backgroundColor: Colors.grey[300],
+              backgroundColor: Theme.of(context).colorScheme.outline.withOpacity(0.2),
               valueColor: AlwaysStoppedAnimation<Color>(
                   Theme.of(context).colorScheme.primary),
             ),

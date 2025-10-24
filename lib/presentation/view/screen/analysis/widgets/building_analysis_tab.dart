@@ -111,7 +111,7 @@ class BuildingAnalysisTab extends StatelessWidget {
                           const SizedBox(height: 12),
                           LinearProgressIndicator(
                             value: collectionRate / 100,
-                            backgroundColor: Colors.grey[300],
+                            backgroundColor:  Theme.of(context).colorScheme.outline.withOpacity(0.2),
                             valueColor: AlwaysStoppedAnimation<Color>(
                                 Theme.of(context).colorScheme.primary),
                           ),
