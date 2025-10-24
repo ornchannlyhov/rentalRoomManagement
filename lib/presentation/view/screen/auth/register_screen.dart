@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:receipts_v2/data/repositories/auth_repository.dart';
@@ -278,12 +280,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 await repositoryManager.syncAll();
               }
 
-              Navigator.pushNamedAndRemoveUntil(
-                // ignore: use_build_context_synchronously
-                context,
-                '/home',
-                (route) => false,
-              );
+              Navigator.pushReplacementNamed(context, '/');
             }
           },
           error: (error) {},

@@ -5,7 +5,8 @@ import 'package:receipts_v2/presentation/view/screen/analysis/widgets/month_filt
 import 'package:receipts_v2/presentation/view/screen/analysis/widgets/utility_analysis_card.dart';
 
 class FinancialOverviewTab extends StatelessWidget {
-  const FinancialOverviewTab({super.key, 
+  const FinancialOverviewTab({
+    super.key,
     required this.selectedMonth,
     required this.onMonthChanged,
     required this.filteredReceipts,
@@ -39,7 +40,6 @@ class FinancialOverviewTab extends StatelessWidget {
     final totalPaid = getTotalPaidAmount(filteredReceipts);
     final totalPending = getTotalPendingAmount(filteredReceipts);
     final totalOverdue = getTotalOverdueAmount(filteredReceipts);
-    final totalRemaining = totalPending + totalOverdue;
     final collectionRate =
         totalExpected > 0 ? (totalPaid / totalExpected) * 100 : 0.0;
 
@@ -92,7 +92,11 @@ class FinancialOverviewTab extends StatelessWidget {
                   formatCurrency: formatCurrency,
                 ),
               ),
-              const SizedBox(width: 8),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
               Expanded(
                 child: _StatusCard(
                   title: 'មិនទាន់បង់',
@@ -102,27 +106,13 @@ class FinancialOverviewTab extends StatelessWidget {
                   formatCurrency: formatCurrency,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
+              const SizedBox(width: 8),
               Expanded(
                 child: _StatusCard(
                   title: 'ហួសកំណត់',
                   amount: totalOverdue,
                   color: Colors.red,
                   icon: Icons.warning,
-                  formatCurrency: formatCurrency,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _StatusCard(
-                  title: 'នៅសល់',
-                  amount: totalRemaining,
-                  color: Colors.blue,
-                  icon: Icons.account_balance,
                   formatCurrency: formatCurrency,
                 ),
               ),
@@ -142,6 +132,7 @@ class FinancialOverviewTab extends StatelessWidget {
     );
   }
 }
+
 class _StatusCard extends StatelessWidget {
   const _StatusCard({
     required this.title,
@@ -197,7 +188,6 @@ class _StatusCard extends StatelessWidget {
   }
 }
 
-
 class _RevenueOverviewCard extends StatelessWidget {
   const _RevenueOverviewCard({
     required this.totalExpected,
@@ -240,7 +230,10 @@ class _RevenueOverviewCard extends StatelessWidget {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .outline
+                              .withOpacity(0.1),
                         ),
                       )
                     : DropdownButton<String>(
@@ -267,7 +260,8 @@ class _RevenueOverviewCard extends StatelessWidget {
             const SizedBox(height: 8),
             LinearProgressIndicator(
               value: collectionRate / 100,
-              backgroundColor: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+              backgroundColor:
+                  Theme.of(context).colorScheme.outline.withOpacity(0.2),
               valueColor: AlwaysStoppedAnimation<Color>(
                   Theme.of(context).colorScheme.primary),
             ),

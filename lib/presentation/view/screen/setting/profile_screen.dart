@@ -619,48 +619,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             TextButton(
               onPressed: () async {
-                // Capture references BEFORE any async operations
-                final navigator = Navigator.of(context);
-                final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-                // Close the dialog
                 Navigator.of(dialogContext).pop();
-
-                try {
-                  await authProvider.logout();
-
-                  // Use captured references - no context lookup after await
-                  scaffoldMessenger.showSnackBar(
-                    SnackBar(
-                      content: const Text('Signed out successfully!'),
-                      backgroundColor: Colors.green,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  );
-
-                  // Navigate using captured navigator
-                  navigator.pushNamedAndRemoveUntil(
-                    '/login',
-                    (route) => false,
-                  );
-                } catch (e) {
-                  // Use captured reference for error message too
-                  scaffoldMessenger.showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Failed to sign out: ${e.toString().contains("Exception:") ? e.toString().split("Exception:")[1].trim() : e.toString()}',
-                      ),
-                      backgroundColor: Colors.red[600],
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  );
-                }
+                await authProvider.logout();
               },
               child: const Text(
                 'Sign Out',
