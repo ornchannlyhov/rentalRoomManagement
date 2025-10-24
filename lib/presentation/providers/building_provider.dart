@@ -118,6 +118,13 @@ class BuildingProvider extends ChangeNotifier {
     }
   }
 
+  List<Building> searchBuildings(String query) {
+    if (_buildings.hasData) {
+      return _repository.searchBuildings(query);
+    }
+    return [];
+  }
+
   bool isBuildingEmpty(String buildingId) {
     if (_buildings.hasData && _roomProvider.hasData) {
       final rooms = _roomProvider.getRoomsByBuilding(buildingId);

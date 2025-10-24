@@ -423,6 +423,13 @@ class BuildingRepository {
     return List.unmodifiable(_buildingCache);
   }
 
+  List<Building> searchBuildings(String query) {
+    final lowerQuery = query.toLowerCase();
+    return _buildingCache
+        .where((b) => b.name.toLowerCase().contains(lowerQuery))
+        .toList();
+  } 
+
   bool hasPendingChanges() {
     return _pendingChanges.isNotEmpty;
   }

@@ -17,14 +17,6 @@ class SplashScreen extends StatelessWidget {
               height: 140,
             ),
             const SizedBox(height: 10),
-            SizedBox(
-              width: 25,
-              height: 25,
-              child: CircularProgressIndicator(
-                valueColor:
-                    AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-              ),
-            ),
           ],
         ),
       ),

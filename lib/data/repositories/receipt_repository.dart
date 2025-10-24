@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:receipts_v2/data/repositories/service_repository.dart';
+import 'package:receipts_v2/data/repositories/building_repository.dart';
+import 'package:receipts_v2/data/repositories/room_repository.dart';
+import 'package:receipts_v2/data/repositories/tenant_repository.dart';
 import 'package:receipts_v2/helpers/api_helper.dart';
 import 'package:receipts_v2/data/models/enum/payment_status.dart';
 import 'package:receipts_v2/data/models/receipt.dart';
@@ -13,6 +16,8 @@ import 'package:logger/logger.dart';
 import 'package:receipts_v2/data/models/service.dart';
 import 'dart:typed_data';
 
+import 'package:receipts_v2/helpers/ata_hydration_helper.dart';
+
 class ReceiptRepository {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   final String storageKey = 'receipt_secure_data';
@@ -22,8 +27,34 @@ class ReceiptRepository {
 
   List<Receipt> _receiptCache = [];
   List<Map<String, dynamic>> _pendingChanges = [];
+
   final ServiceRepository _serviceRepository;
-  ReceiptRepository(this._serviceRepository);
+  final BuildingRepository _buildingRepository;
+  final RoomRepository _roomRepository;
+  final TenantRepository _tenantRepository;
+
+  ReceiptRepository(
+    this._serviceRepository,
+    this._buildingRepository,
+    this._roomRepository,
+    this._tenantRepository,
+  );
+
+  /// Hydrate all receipt relationships using DataHydrationHelper
+  void _hydrateReceipts() {
+    try {
+      final helper = DataHydrationHelper(
+        buildings: _buildingRepository.getAllBuildings(),
+        rooms: _roomRepository.getAllRooms(),
+        tenants: _tenantRepository.getAllTenants(),
+        services: _serviceRepository.getAllServices(),
+      );
+
+      helper.hydrateAll(receipts: _receiptCache);
+    } catch (e) {
+      _logger.e(' Error during receipt hydration: $e');
+    }
+  }
 
   Future<void> load() async {
     try {
@@ -40,33 +71,7 @@ class ReceiptRepository {
         _receiptCache = [];
       }
 
-      _logger.i('Hydrating receipt services from local data...');
-      final allServices = _serviceRepository.getAllServices();
-      if (allServices.isNotEmpty && _receiptCache.isNotEmpty) {
-        for (final receipt in _receiptCache) {
-          if (receipt.serviceIds.isNotEmpty && receipt.services.isEmpty) {
-            final List<Service> foundServices = [];
-            for (final serviceId in receipt.serviceIds) {
-              final service = allServices.firstWhere(
-                (s) => s.id == serviceId,
-                orElse: () => Service(
-                    id: 'not-found',
-                    name: 'Not Found',
-                    price: 0,
-                    buildingId: ''),
-              );
-              if (service.id != 'not-found') {
-                foundServices.add(service);
-              } else {
-                _logger.w(
-                    'Service with ID $serviceId not found for receipt ${receipt.id}');
-              }
-            }
-            receipt.services = foundServices;
-          }
-        }
-        _logger.i('Local receipt service hydration complete.');
-      }
+      _hydrateReceipts();
 
       final pendingString = await _secureStorage.read(key: pendingChangesKey);
       if (pendingString != null && pendingString.isNotEmpty) {
@@ -168,7 +173,7 @@ class ReceiptRepository {
     }
   }
 
-  Future<void> clear () async {
+  Future<void> clear() async {
     await _secureStorage.delete(key: storageKey);
     await _secureStorage.delete(key: pendingChangesKey);
     _receiptCache.clear();
@@ -315,8 +320,6 @@ class ReceiptRepository {
       if (response.statusCode == 200 && response.data['success'] == true) {
         final List<dynamic> receiptsJson = response.data['data'];
 
-        final allServices = _serviceRepository.getAllServices();
-
         _receiptCache = receiptsJson.map((json) {
           final receiptDto = ReceiptDto.fromJson(json);
           final receipt = receiptDto.toReceipt();
@@ -328,23 +331,11 @@ class ReceiptRepository {
             }
           }
 
-          if (receipt.serviceIds.isNotEmpty) {
-            final List<Service> foundServices = [];
-            for (final serviceId in receipt.serviceIds) {
-              try {
-                final service =
-                    allServices.firstWhere((s) => s.id == serviceId);
-                foundServices.add(service);
-              } catch (e) {
-                _logger.w(
-                    'During sync, could not find service with ID $serviceId for receipt ${receipt.id}');
-              }
-            }
-            receipt.services = foundServices;
-          }
-
           return receipt;
         }).toList();
+
+        // CRITICAL: Hydrate all relationships including room.tenant
+        _hydrateReceipts();
 
         if (!skipHydration) {
           await save();
@@ -508,32 +499,10 @@ class ReceiptRepository {
               final receiptDto = ReceiptDto.fromJson(response.data['data']);
               createdReceipt = receiptDto.toReceipt();
 
-              if (createdReceipt.serviceIds.isNotEmpty) {
-                _logger.i(
-                    'Hydrating services for new receipt ${createdReceipt.id}...');
-                final allServices = _serviceRepository.getAllServices();
-                final List<Service> foundServices = [];
-
-                for (final serviceId in createdReceipt.serviceIds) {
-                  try {
-                    final service =
-                        allServices.firstWhere((s) => s.id == serviceId);
-                    foundServices.add(service);
-                  } catch (e) {
-                    _logger.w(
-                        'Could not find service with ID $serviceId locally while creating receipt.');
-                  }
-                }
-                createdReceipt.services = foundServices;
-                _logger.i(
-                    'Hydrated ${foundServices.length} services for the new receipt.');
-              }
-
               createdReceipt.room = newReceipt.room;
 
               syncedOnline = true;
-              _logger.i(
-                  'Receipt created successfully via API and hydrated locally.');
+              _logger.i('Receipt created successfully via API');
             }
           } catch (e) {
             _logger.w('Failed to create receipt online, will sync later: $e');
@@ -563,6 +532,8 @@ class ReceiptRepository {
           'localId': newReceipt.id,
         });
       }
+
+      _hydrateReceipts();
 
       await save();
     } catch (e) {
@@ -668,6 +639,8 @@ class ReceiptRepository {
           });
         }
 
+        _hydrateReceipts();
+
         await save();
         _logger.i('Receipt updated in local cache');
       } else {
@@ -735,6 +708,9 @@ class ReceiptRepository {
   Future<void> restoreReceipt(int restoreIndex, Receipt receipt) async {
     if (restoreIndex >= 0 && restoreIndex <= _receiptCache.length) {
       _receiptCache.insert(restoreIndex, receipt);
+
+      _hydrateReceipts();
+
       await save();
     } else {
       throw Exception('Invalid index for restoring receipt.');
@@ -779,7 +755,6 @@ class ReceiptRepository {
       return receipt.room?.building?.id == buildingId;
     }).toList();
   }
-
 
   bool hasPendingChanges() {
     return _pendingChanges.isNotEmpty;

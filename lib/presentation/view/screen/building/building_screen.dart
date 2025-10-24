@@ -4,10 +4,83 @@ import 'package:receipts_v2/data/models/building.dart';
 import 'package:receipts_v2/data/models/enum/mode.dart';
 import 'package:receipts_v2/presentation/providers/building_provider.dart';
 import 'package:receipts_v2/presentation/providers/service_provider.dart';
-import 'package:receipts_v2/presentation/view/app_widgets/app_bar.dart';
 import 'package:receipts_v2/presentation/view/screen/building/widgets/building_card.dart';
 import 'package:receipts_v2/presentation/view/screen/building/widgets/building_detail.dart';
 import 'package:receipts_v2/presentation/view/screen/building/widgets/building_form.dart';
+
+/// Search bar widget for filtering buildings
+class BuildingSearchBar extends StatelessWidget {
+  const BuildingSearchBar({
+    super.key,
+    required this.isSearching,
+    required this.searchController,
+    required this.searchQuery,
+    required this.onSearchQueryChanged,
+    required this.onClearSearch,
+  });
+
+  final bool isSearching;
+  final TextEditingController searchController;
+  final String searchQuery;
+  final ValueChanged<String> onSearchQueryChanged;
+  final VoidCallback onClearSearch;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      height: isSearching ? 56 : 0,
+      child: isSearching
+          ? Container(
+              margin: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceVariant,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.shadowColor.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: searchController,
+                decoration: InputDecoration(
+                  hintText: 'ស្វែងរកអគារ...',
+                  hintStyle: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  suffixIcon: searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(
+                            Icons.clear,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          onPressed: onClearSearch,
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
+                ),
+                style: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                onChanged: onSearchQueryChanged,
+              ))
+          : const SizedBox.shrink(),
+    );
+  }
+}
 
 class BuildingScreen extends StatefulWidget {
   const BuildingScreen({super.key});
@@ -21,6 +94,10 @@ class _BuildingScreenState extends State<BuildingScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+
+  String _searchQuery = '';
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -48,6 +125,7 @@ class _BuildingScreenState extends State<BuildingScreen>
   @override
   void dispose() {
     _animationController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -61,6 +139,18 @@ class _BuildingScreenState extends State<BuildingScreen>
     ]);
 
     _animationController.forward();
+  }
+
+  /// Filters buildings based on search query
+  List<Building> _filterBuildings(List<Building> buildings) {
+    if (_searchQuery.isNotEmpty) {
+      return buildings.where((building) {
+        final nameLower = building.name.toLowerCase();
+        final queryLower = _searchQuery.toLowerCase();
+        return nameLower.contains(queryLower);
+      }).toList();
+    }
+    return buildings;
   }
 
   Future<void> _addBuilding(BuildContext context) async {
@@ -251,7 +341,9 @@ class _BuildingScreenState extends State<BuildingScreen>
               ),
               const SizedBox(height: 24),
               Text(
-                'មិនមានអគារ', // "No buildings available"
+                _searchQuery.isNotEmpty
+                    ? 'រកមិនឃើញអគារ'
+                    : 'មិនមានអគារ', // "No buildings found" or "No buildings available"
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
@@ -259,7 +351,9 @@ class _BuildingScreenState extends State<BuildingScreen>
               ),
               const SizedBox(height: 8),
               Text(
-                'សូមចុចប៊ូតុង + ដើម្បីបន្ថែមអគារថ្មី', // "Tap + to add a new building"
+                _searchQuery.isNotEmpty
+                    ? 'សូមព្យាយាមស្វែងរកជាមួយពាក្យគន្លឹះផ្សេង'
+                    : 'សូមចុចប៊ូតុង + ដើម្បីបន្ថែមអគារថ្មី',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
                 ),
@@ -477,23 +571,80 @@ class _BuildingScreenState extends State<BuildingScreen>
 
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
-      appBar: AppbarCustom(
-        header: 'អគារ', // "Buildings"
-        onAddPressed: () => _addBuilding(context),
-      ),
-      body: Consumer<BuildingProvider>(
-        builder: (context, buildingProvider, child) {
-          return buildingProvider.buildings.when(
-            loading: () => _buildLoadingState(theme),
-            error: (error) => _buildErrorState(theme, error),
-            success: (buildings) {
-              if (buildings.isEmpty) {
-                return _buildEmptyState(theme);
-              }
-              return _buildBuildingsList(theme, buildings);
+      appBar: AppBar(
+        title: Text(
+          'អគារ',
+          style: TextStyle(
+            color: theme.colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: theme.colorScheme.background,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(
+              _isSearching ? Icons.close : Icons.search,
+              color: theme.colorScheme.onSurface,
+            ),
+            onPressed: () {
+              setState(() {
+                _isSearching = !_isSearching;
+                if (!_isSearching) {
+                  _searchController.clear();
+                  _searchQuery = '';
+                }
+              });
             },
-          );
-        },
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.add,
+              color: theme.colorScheme.onSurface,
+            ),
+            onPressed: () => _addBuilding(context),
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Search Bar
+          BuildingSearchBar(
+            isSearching: _isSearching,
+            searchController: _searchController,
+            searchQuery: _searchQuery,
+            onSearchQueryChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
+            onClearSearch: () {
+              _searchController.clear();
+              setState(() {
+                _searchQuery = '';
+              });
+            },
+          ),
+          Expanded(
+            child: Consumer<BuildingProvider>(
+              builder: (context, buildingProvider, child) {
+                return buildingProvider.buildings.when(
+                  loading: () => _buildLoadingState(theme),
+                  error: (error) => _buildErrorState(theme, error),
+                  success: (allBuildings) {
+                    final filteredBuildings = _filterBuildings(allBuildings);
+
+                    if (filteredBuildings.isEmpty) {
+                      return _buildEmptyState(theme);
+                    }
+                    return _buildBuildingsList(theme, filteredBuildings);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

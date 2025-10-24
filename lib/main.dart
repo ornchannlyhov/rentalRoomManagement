@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:receipts_v2/data/repositories/report_repository.dart';
 import 'package:receipts_v2/helpers/api_helper.dart';
@@ -29,16 +30,12 @@ import 'package:receipts_v2/presentation/view/screen/auth/register_screen.dart';
 import 'package:receipts_v2/presentation/view/screen/splash/splash_screen.dart';
 import 'helpers/app_theme.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:logger/logger.dart';
 import 'dart:async';
 import 'package:workmanager/workmanager.dart';
 
 @pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
-    final Logger logger = Logger();
-    logger.i("Background task started: $task");
-
     if (task == "generate-monthly-receipts") {
       try {
         NotificationService.initialize();
@@ -47,7 +44,8 @@ void callbackDispatcher() {
         final buildingRepository = BuildingRepository(roomRepository);
         final serviceRepository = ServiceRepository();
         final tenantRepository = TenantRepository();
-        final receiptRepository = ReceiptRepository(serviceRepository);
+        final receiptRepository = ReceiptRepository(serviceRepository,
+            buildingRepository, roomRepository, tenantRepository);
         final reportRepository = ReportRepository();
 
         await serviceRepository.load();
@@ -64,9 +62,7 @@ void callbackDispatcher() {
           'New monthly receipts have been successfully created.',
         );
         return Future.value(true);
-      } catch (e, stacktrace) {
-        logger.e("Error in background task '$task': $e",
-            error: e, stackTrace: stacktrace);
+      } catch (e) {
         await NotificationService.showNotification(
           'Receipt Generation Failed',
           'There was an error creating new receipts.',
@@ -106,8 +102,9 @@ Future<void> main() async {
   final roomRepository = RoomRepository();
   final buildingRepository = BuildingRepository(roomRepository);
   final serviceRepository = ServiceRepository();
-  final receiptRepository = ReceiptRepository(serviceRepository);
   final tenantRepository = TenantRepository();
+  final receiptRepository = ReceiptRepository(
+      serviceRepository, buildingRepository, roomRepository, tenantRepository);
   final authRepository = AuthRepository();
   final reportRepository = ReportRepository();
 
@@ -126,11 +123,7 @@ Future<void> main() async {
 
   try {
     // Always load from storage first (works offline)
-    logger.i('Loading all data from storage...');
     await repositoryManager.loadAll();
-
-    final loadSummary = repositoryManager.getDataSummary();
-    logger.i('Data loaded from storage: $loadSummary');
 
     // Attempt to sync if authenticated and online
     if (authProvider.isAuthenticated()) {
@@ -141,11 +134,7 @@ Future<void> main() async {
         if (syncSuccess) {
           final syncSummary = repositoryManager.getDataSummary();
           logger.i('Data synced from API: $syncSummary');
-        } else {
-          logger.w('Sync failed, using cached data');
         }
-      } else {
-        logger.i('No network, using cached data');
       }
     } else {
       logger.i('User not authenticated, skipping sync');
@@ -260,7 +249,6 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
-
 
 class SecureStorageHelper {
   static final FlutterSecureStorage _storage = const FlutterSecureStorage();

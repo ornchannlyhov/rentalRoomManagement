@@ -88,13 +88,36 @@ class _ReceiptScreenState extends State<ReceiptScreen>
     );
   }
 
-  Future<void> _navigateToReceiptDetail(Receipt receipt) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (ctx) => ReceiptDetailScreen(receipt: receipt),
+Future<void> _navigateToReceiptDetail(Receipt receipt) async {
+  // Get fresh receipt from provider with all relationships hydrated
+  final receiptProvider = context.read<ReceiptProvider>();
+  final freshReceipt = receiptProvider.receipts.data?.firstWhere(
+    (r) => r.id == receipt.id,
+  );
+
+  if (freshReceipt == null) {
+    // Show error if receipt not found
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('មិនអាចរកឃើញវិក្កយបត្រ'),
+        backgroundColor: Theme.of(context).colorScheme.error,
       ),
     );
+    return;
   }
+
+  // Debug: Check if tenant is present
+  print('Navigating to receipt detail:');
+  print('  Room: ${freshReceipt.room?.roomNumber}');
+  print('  Tenant: ${freshReceipt.room?.tenant?.name ?? "NULL - MISSING!"}');
+
+  await Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (ctx) => ReceiptDetailScreen(receipt: freshReceipt),
+    ),
+  );
+}
+
 
   void _showMenuOptions(
       BuildContext context, Receipt receipt, List<Receipt> allReceipts) {
@@ -118,7 +141,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: theme.dividerColor,
+                    color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -164,7 +187,6 @@ class _ReceiptScreenState extends State<ReceiptScreen>
                     Navigator.pop(context);
                     final provider = context.read<ReceiptProvider>();
                     provider.deleteReceipt(receipt.id);
-                    
                   },
                   isDestructive: true,
                 ),
@@ -401,5 +423,3 @@ class _BackgroundGradient extends StatelessWidget {
     );
   }
 }
-
-
