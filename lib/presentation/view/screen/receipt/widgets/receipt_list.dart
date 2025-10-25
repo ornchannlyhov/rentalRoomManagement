@@ -63,12 +63,12 @@ class ReceiptList extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return receiptProvider.receipts.when(
+    return receiptProvider.receiptsState.when(
       loading: () => LoadingState(theme: theme),
       error: (error) =>
           ErrorState(theme: theme, error: error, onRetry: onRefresh),
       success: (allReceipts) {
-        return buildingProvider.buildings.when(
+        return buildingProvider.buildingsState.when(
           loading: () => LoadingState(theme: theme),
           error: (error) =>
               ErrorState(theme: theme, error: error, onRetry: onRefresh),

@@ -16,7 +16,9 @@ class BuildingFilterDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return buildingProvider.buildings.when(
+
+    // Fix 1: Access buildingsState instead of buildings
+    return buildingProvider.buildingsState.when(
       loading: () => const Padding(
         padding: EdgeInsets.all(16.0),
         child: LinearProgressIndicator(),
@@ -70,34 +72,36 @@ class BuildingFilterDropdown extends StatelessWidget {
             ),
           ),
           child: DropdownButtonHideUnderline(
-              child: DropdownButton<String?>(
-            isExpanded: true,
-            value: selectedBuildingId,
-            icon: Icon(
-              Icons.filter_list,
-              color: theme.colorScheme.primary,
-              size: 24,
+            child: DropdownButton<String?>(
+              isExpanded: true,
+              value: selectedBuildingId,
+              // Fix 2: Use neutral icon color to prevent glitching
+              icon: Icon(
+                Icons.filter_list,
+                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                size: 24,
+              ),
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.onSurface,
+                fontWeight: FontWeight.w500,
+              ),
+              dropdownColor: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              onChanged: onChanged,
+              items: dropdownItems,
+              selectedItemBuilder: (context) {
+                return dropdownItems.map((item) {
+                  return Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: item.child,
+                    ),
+                  );
+                }).toList();
+              },
             ),
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w500,
-            ),
-            dropdownColor: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(12),
-            onChanged: onChanged,
-            items: dropdownItems,
-            selectedItemBuilder: (context) {
-              return dropdownItems.map((item) {
-                return Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 8.0), 
-                    child: item.child,
-                  ),
-                );
-              }).toList();
-            },
-          )),
+          ),
         );
       },
     );

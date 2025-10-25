@@ -1,14 +1,10 @@
-// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:receipts_v2/data/repositories/report_repository.dart';
 import 'package:receipts_v2/helpers/api_helper.dart';
 import 'package:receipts_v2/helpers/auth_wraper.dart';
 import 'package:receipts_v2/helpers/notification_service.dart';
-import 'package:receipts_v2/helpers/receipt_image_generator.dart';
 import 'package:receipts_v2/helpers/repository_manager.dart';
 import 'package:receipts_v2/data/repositories/auth_repository.dart';
 import 'package:receipts_v2/data/repositories/building_repository.dart';
@@ -41,22 +37,26 @@ void callbackDispatcher() {
         NotificationService.initialize();
 
         final roomRepository = RoomRepository();
-        final buildingRepository = BuildingRepository(roomRepository);
+        final buildingRepository = BuildingRepository();
         final serviceRepository = ServiceRepository();
         final tenantRepository = TenantRepository();
-        final receiptRepository = ReceiptRepository(serviceRepository,
-            buildingRepository, roomRepository, tenantRepository);
+        final receiptRepository = ReceiptRepository(
+          serviceRepository,
+          buildingRepository,
+          roomRepository,
+          tenantRepository,
+        );
         final reportRepository = ReportRepository();
 
-        await serviceRepository.load();
-        await roomRepository.load();
-        await buildingRepository.load();
-        await tenantRepository.load();
-        await receiptRepository.load();
-        await reportRepository.load();
-        await receiptRepository.generateReceiptsFromUsage(
-          createImage: ReceiptImageGenerator.generateReceiptImage,
-        );
+        await Future.wait([
+          serviceRepository.load(),
+          roomRepository.load(),
+          buildingRepository.load(),
+          tenantRepository.load(),
+          receiptRepository.load(),
+          reportRepository.load(),
+        ]);
+
         await NotificationService.showNotification(
           'Receipts Generated',
           'New monthly receipts have been successfully created.',
@@ -74,22 +74,13 @@ void callbackDispatcher() {
   });
 }
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
-  await initializeDateFormatting();
-
-  final Logger logger = Logger();
-
-  NotificationService.initialize();
-
+Future<void> initializeBackgroundTasks() async {
   await Workmanager().initialize(
     callbackDispatcher,
-    isInDebugMode: true,
+    isInDebugMode: false,
   );
 
-  // Register the periodic task
-  Workmanager().registerPeriodicTask(
+  await Workmanager().registerPeriodicTask(
     "generate-receipts-task",
     "generate-monthly-receipts",
     frequency: const Duration(days: 30),
@@ -98,16 +89,30 @@ Future<void> main() async {
       networkType: NetworkType.connected,
     ),
   );
+}
 
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
+  await initializeDateFormatting();
+
+  NotificationService.initialize();
+
+  // STEP 1: Create repositories (no dependencies)
   final roomRepository = RoomRepository();
-  final buildingRepository = BuildingRepository(roomRepository);
+  final buildingRepository = BuildingRepository();
   final serviceRepository = ServiceRepository();
   final tenantRepository = TenantRepository();
   final receiptRepository = ReceiptRepository(
-      serviceRepository, buildingRepository, roomRepository, tenantRepository);
+    serviceRepository,
+    buildingRepository,
+    roomRepository,
+    tenantRepository,
+  );
   final authRepository = AuthRepository();
   final reportRepository = ReportRepository();
 
+  // STEP 2: Create RepositoryManager
   final repositoryManager = RepositoryManager(
     buildingRepository: buildingRepository,
     roomRepository: roomRepository,
@@ -117,48 +122,63 @@ Future<void> main() async {
     reportRepository: reportRepository,
   );
 
-  // Initialize auth provider
-  final authProvider = AuthProvider(authRepository);
+  // STEP 3: Create AuthProvider with RepositoryManager
+  final authProvider = AuthProvider(
+    authRepository,
+    repositoryManager: repositoryManager,
+  );
   await authProvider.load();
 
-  try {
-    // Always load from storage first (works offline)
-    await repositoryManager.loadAll();
+  // STEP 4: Load data in background
+  final loadDataFuture = _loadDataInBackground(
+    repositoryManager: repositoryManager,
+    authProvider: authProvider,
+  );
 
-    // Attempt to sync if authenticated and online
-    if (authProvider.isAuthenticated()) {
-      if (await ApiHelper.instance.hasNetwork()) {
-        logger.i('User authenticated and online, syncing from API...');
-        final syncSuccess = await repositoryManager.syncAll();
+  // STEP 5: Create providers WITH RepositoryManager
+  final roomProvider = RoomProvider(
+    roomRepository,
+    tenantRepository,
+    repositoryManager: repositoryManager,
+  );
 
-        if (syncSuccess) {
-          final syncSummary = repositoryManager.getDataSummary();
-          logger.i('Data synced from API: $syncSummary');
-        }
-      }
-    } else {
-      logger.i('User not authenticated, skipping sync');
-    }
-  } catch (e) {
-    logger.e('Error during initialization: $e');
-    // Continue with empty/cached data
-  }
+  final serviceProvider = ServiceProvider(
+    serviceRepository,
+    repositoryManager: repositoryManager,
+  );
 
-  final roomProvider = RoomProvider(roomRepository);
-  final serviceProvider = ServiceProvider(serviceRepository);
-  final tenantProvider = TenantProvider(tenantRepository, repositoryManager);
-  final receiptProvider = ReceiptProvider(receiptRepository);
-  final reportProvider = ReportProvider(reportRepository);
-  final buildingProvider = BuildingProvider(buildingRepository, roomProvider);
+  final tenantProvider = TenantProvider(
+    tenantRepository,
+    repositoryManager: repositoryManager,
+  );
 
-  await Future.wait([
-    roomProvider.load(),
-    serviceProvider.load(),
-    tenantProvider.load(),
-    receiptProvider.load(),
-    reportProvider.load(),
-    buildingProvider.load(),
-  ]);
+  final receiptProvider = ReceiptProvider(
+    receiptRepository,
+    repositoryManager: repositoryManager,
+  );
+
+  final reportProvider = ReportProvider(
+    reportRepository,
+    repositoryManager: repositoryManager,
+  );
+
+  final buildingProvider = BuildingProvider(
+    buildingRepository,
+    roomRepository,
+    repositoryManager: repositoryManager,
+  );
+
+  // STEP 6: Load providers in background
+  unawaited(_loadProvidersInBackground(
+    roomProvider: roomProvider,
+    serviceProvider: serviceProvider,
+    tenantProvider: tenantProvider,
+    receiptProvider: receiptProvider,
+    reportProvider: reportProvider,
+    buildingProvider: buildingProvider,
+  ));
+
+  unawaited(initializeBackgroundTasks());
 
   runApp(MyApp(
     authProvider: authProvider,
@@ -169,7 +189,49 @@ Future<void> main() async {
     serviceProvider: serviceProvider,
     tenantProvider: tenantProvider,
     reportProvider: reportProvider,
+    loadDataFuture: loadDataFuture,
   ));
+}
+
+Future<void> _loadDataInBackground({
+  required RepositoryManager repositoryManager,
+  required AuthProvider authProvider,
+}) async {
+  try {
+    // Always load from storage first (works offline)
+    await repositoryManager.loadAll();
+
+    // Attempt to sync if authenticated and online
+    if (authProvider.isAuthenticated()) {
+      if (await ApiHelper.instance.hasNetwork()) {
+        await repositoryManager.syncAll();
+      }
+    }
+  } catch (e) {
+    // Continue with cached data on error
+  }
+}
+
+Future<void> _loadProvidersInBackground({
+  required RoomProvider roomProvider,
+  required ServiceProvider serviceProvider,
+  required TenantProvider tenantProvider,
+  required ReceiptProvider receiptProvider,
+  required ReportProvider reportProvider,
+  required BuildingProvider buildingProvider,
+}) async {
+  try {
+    await Future.wait([
+      roomProvider.load(),
+      serviceProvider.load(),
+      tenantProvider.load(),
+      receiptProvider.load(),
+      reportProvider.load(),
+      buildingProvider.load(),
+    ]);
+  } catch (e) {
+    // Handle errors gracefully
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -181,6 +243,7 @@ class MyApp extends StatefulWidget {
   final ServiceProvider serviceProvider;
   final TenantProvider tenantProvider;
   final ReportProvider reportProvider;
+  final Future<void> loadDataFuture;
 
   const MyApp({
     super.key,
@@ -192,6 +255,7 @@ class MyApp extends StatefulWidget {
     required this.serviceProvider,
     required this.tenantProvider,
     required this.reportProvider,
+    required this.loadDataFuture,
   });
 
   @override
@@ -204,8 +268,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    // Show splash for a minimum of 1 second to ensure smooth transition
-    Future.delayed(const Duration(seconds: 1), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         setState(() {
           _showSplash = false;
@@ -246,13 +309,5 @@ class _MyAppState extends State<MyApp> {
         },
       ),
     );
-  }
-}
-
-class SecureStorageHelper {
-  static final FlutterSecureStorage _storage = const FlutterSecureStorage();
-
-  static Future<void> clearAll() async {
-    await _storage.deleteAll();
   }
 }

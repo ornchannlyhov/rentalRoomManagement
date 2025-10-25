@@ -7,6 +7,8 @@ import 'package:receipts_v2/data/models/enum/payment_status.dart';
 import 'package:receipts_v2/data/models/receipt.dart';
 import 'package:receipts_v2/presentation/providers/receipt_provider.dart';
 import 'package:receipts_v2/presentation/providers/building_provider.dart';
+import 'package:receipts_v2/presentation/providers/room_provider.dart';
+import 'package:receipts_v2/presentation/providers/service_provider.dart';
 import 'package:receipts_v2/presentation/view/screen/receipt/widgets/receipt_detail.dart';
 import 'package:receipts_v2/presentation/view/screen/receipt/widgets/receipt_form.dart';
 import 'package:receipts_v2/presentation/view/screen/receipt/widgets/receipt_list.dart';
@@ -55,13 +57,23 @@ class _ReceiptScreenState extends State<ReceiptScreen>
   }
 
   Future<void> _loadData() async {
+    // Use context.read inside a method as it's a one-time call
     final receiptProvider = context.read<ReceiptProvider>();
     final buildingProvider = context.read<BuildingProvider>();
+    final roomProvider = context.read<RoomProvider>(); 
+    final serviceProvider =
+        context.read<ServiceProvider>(); 
+
     await Future.wait([
       receiptProvider.load(),
       buildingProvider.load(),
+      roomProvider.load(), 
+      serviceProvider.load(),
     ]);
-    _animationController.forward();
+
+    if (mounted) {
+      _animationController.forward();
+    }
   }
 
   Future<void> _navigateToAddReceipt(List<Receipt> allReceipts) async {
@@ -88,31 +100,30 @@ class _ReceiptScreenState extends State<ReceiptScreen>
     );
   }
 
-Future<void> _navigateToReceiptDetail(Receipt receipt) async {
-  // Get fresh receipt from provider with all relationships hydrated
-  final receiptProvider = context.read<ReceiptProvider>();
-  final freshReceipt = receiptProvider.receipts.data?.firstWhere(
-    (r) => r.id == receipt.id,
-  );
+  Future<void> _navigateToReceiptDetail(Receipt receipt) async {
+    // Get fresh receipt from provider with all relationships hydrated
+    final receiptProvider = context.read<ReceiptProvider>();
+    final freshReceipt = receiptProvider.receiptsState.data?.firstWhere(
+      (r) => r.id == receipt.id,
+    );
 
-  if (freshReceipt == null) {
-    // Show error if receipt not found
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('មិនអាចរកឃើញវិក្កយបត្រ'),
-        backgroundColor: Theme.of(context).colorScheme.error,
+    if (freshReceipt == null) {
+      // Show error if receipt not found
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('មិនអាចរកឃើញវិក្កយបត្រ'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      return;
+    }
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (ctx) => ReceiptDetailScreen(receipt: freshReceipt),
       ),
     );
-    return;
   }
-
-  await Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (ctx) => ReceiptDetailScreen(receipt: freshReceipt),
-    ),
-  );
-}
-
 
   void _showMenuOptions(
       BuildContext context, Receipt receipt, List<Receipt> allReceipts) {
@@ -303,7 +314,7 @@ Future<void> _navigateToReceiptDetail(Receipt receipt) async {
       backgroundColor: theme.colorScheme.background,
       appBar: _ReceiptAppBar(
         onAddPressed: () {
-          receiptProvider.receipts.when(
+          receiptProvider.receiptsState.when(
             success: (allReceipts) => _navigateToAddReceipt(allReceipts),
             loading: () {},
             error: (_) {},

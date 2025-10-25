@@ -190,7 +190,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
   Future<void> _addBuilding(BuildContext context) async {
     final buildingProvider = context.read<BuildingProvider>();
     final roomProvider = context.read<RoomProvider>();
-    List<Building> buildings = buildingProvider.buildings.when(
+    List<Building> buildings = buildingProvider.buildingsState.when(
       success: (data) => data,
       loading: () => [],
       error: (Object error) => [],
@@ -227,7 +227,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
     List<Room> filteredRooms = [];
     List<Service> filteredServices = [];
 
-    roomProvider.rooms.when(
+    roomProvider.roomsState.when(
       success: (rooms) {
         // Filter by building and only show occupied rooms
         if (selectedBuildingId != null) {
@@ -262,7 +262,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
     );
 
     // Filter services based on selected building
-    serviceProvider.services.when(
+    serviceProvider.servicesState.when(
       success: (services) {
         if (selectedBuildingId != null) {
           filteredServices = services
@@ -290,7 +290,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: buildingProvider.buildings.when(
+        child: buildingProvider.buildingsState.when(
           success: (buildings) {
             if (buildings.isEmpty) {
               return Center(
@@ -506,7 +506,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
                   // Services Selection - Now filtered by building
                   Text('សេវាកម្ម', style: theme.textTheme.titleMedium),
                   const SizedBox(height: 8),
-                  serviceProvider.services.when(
+                  serviceProvider.servicesState.when(
                     success: (services) {
                       if (selectedBuildingId == null) {
                         return Padding(

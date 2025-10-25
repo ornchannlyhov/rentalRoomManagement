@@ -1,173 +1,159 @@
+// TenantProvider - With AsyncValue State Management
+
 import 'package:flutter/material.dart';
-import 'package:receipts_v2/helpers/asyn_value.dart';
 import 'package:receipts_v2/data/models/tenant.dart';
 import 'package:receipts_v2/data/repositories/tenant_repository.dart';
 import 'package:receipts_v2/helpers/repository_manager.dart';
+import 'package:receipts_v2/helpers/asyn_value.dart';
 
-class TenantProvider extends ChangeNotifier {
-  final TenantRepository _repository;
+class TenantProvider with ChangeNotifier {
+  final TenantRepository _tenantRepository;
   final RepositoryManager? _repositoryManager;
 
-  TenantProvider(this._repository, [this._repositoryManager]);
+  AsyncValue<List<Tenant>> _tenantsState = const AsyncValue.loading();
 
-  AsyncValue<List<Tenant>> _tenants = const AsyncValue.loading();
-  AsyncValue<List<Tenant>> get tenants => _tenants;
+  TenantProvider(
+    this._tenantRepository, {
+    RepositoryManager? repositoryManager,
+  }) : _repositoryManager = repositoryManager;
 
-  String? get errorMessage => _tenants.when(
-        loading: () => null,
-        success: (_) => null,
-        error: (error) => error.toString(),
+  AsyncValue<List<Tenant>> get tenantsState => _tenantsState;
+
+  // Convenience getters
+  List<Tenant> get tenants => _tenantsState.when(
+        loading: () => [],
+        error: (_) => [],
+        success: (data) => data,
       );
 
-  bool get isLoading => _tenants.isLoading;
-  bool get hasData => _tenants.hasData;
-  bool get hasError => _tenants.hasError;
+  bool get isLoading => _tenantsState.isLoading;
+  bool get hasError => _tenantsState.hasError;
+  Object? get error => _tenantsState.error;
 
   Future<void> load() async {
-    _tenants = const AsyncValue.loading();
-    notifyListeners();
-
     try {
-      await _repository.load();
+      _tenantsState = AsyncValue.loading(_tenantsState.data);
+      notifyListeners();
 
-      // Trigger hydration if repository manager is available
+      final tenants = _tenantRepository.getAllTenants();
+      _tenantsState = AsyncValue.success(tenants);
+    } catch (e) {
+      _tenantsState = AsyncValue.error(e, _tenantsState.data);
+    }
+    notifyListeners();
+  }
+
+  Future<void> createTenant(Tenant tenant) async {
+    try {
+      _tenantsState = AsyncValue.loading(_tenantsState.data);
+      notifyListeners();
+
+      await _tenantRepository.createTenant(tenant);
+
       if (_repositoryManager != null) {
-        _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
       }
 
-      final data = _repository.getAllTenants();
-      _tenants = AsyncValue.success(data);
+      final tenants = _tenantRepository.getAllTenants();
+      _tenantsState = AsyncValue.success(tenants);
     } catch (e) {
-      _tenants = AsyncValue.error(e);
+      _tenantsState = AsyncValue.error(e, _tenantsState.data);
     }
     notifyListeners();
   }
 
-  Future<void> syncFromApi({String? roomId, String? search}) async {
-    _tenants = const AsyncValue.loading();
-    notifyListeners();
-
+  Future<void> updateTenant(Tenant tenant) async {
     try {
-      await _repository.syncFromApi(roomId: roomId, search: search);
+      _tenantsState = AsyncValue.loading(_tenantsState.data);
+      notifyListeners();
 
-      // Trigger hydration after sync
+      await _tenantRepository.updateTenant(tenant);
+
       if (_repositoryManager != null) {
-        _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
       }
 
-      final data = _repository.getAllTenants();
-      _tenants = AsyncValue.success(data);
+      final tenants = _tenantRepository.getAllTenants();
+      _tenantsState = AsyncValue.success(tenants);
     } catch (e) {
-      _tenants = AsyncValue.error(e);
+      _tenantsState = AsyncValue.error(e, _tenantsState.data);
     }
     notifyListeners();
-  }
-
-  Future<Tenant> createTenant(Tenant tenant) async {
-    try {
-      final created = await _repository.createTenant(
-        name: tenant.name,
-        phoneNumber: tenant.phoneNumber,
-        gender: tenant.gender,
-        roomId: tenant.room?.id,
-      );
-
-      // Critical: Reload with hydration to get full building data
-      await load();
-
-      return created;
-    } catch (e) {
-      _tenants = AsyncValue.error(e);
-      notifyListeners();
-      rethrow;
-    }
-  }
-
-  Future<Tenant> updateTenant(Tenant tenant) async {
-    try {
-      final updated = await _repository.updateTenant(
-        id: tenant.id,
-        name: tenant.name,
-        phoneNumber: tenant.phoneNumber,
-        gender: tenant.gender,
-        roomId: tenant.room?.id,
-      );
-
-      // Reload with hydration
-      await load();
-
-      return updated;
-    } catch (e) {
-      _tenants = AsyncValue.error(e);
-      notifyListeners();
-      rethrow;
-    }
   }
 
   Future<void> deleteTenant(String tenantId) async {
     try {
-      await _repository.deleteTenant(tenantId);
-      await load();
-    } catch (e) {
-      _tenants = AsyncValue.error(e);
+      _tenantsState = AsyncValue.loading(_tenantsState.data);
       notifyListeners();
-      rethrow;
-    }
-  }
 
-  Future<void> restoreTenant(int restoreIndex, Tenant tenant) async {
-    try {
-      await _repository.restoreTenant(restoreIndex, tenant);
+      await _tenantRepository.deleteTenant(tenantId);
 
-      // Trigger hydration
       if (_repositoryManager != null) {
-        _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
       }
 
-      final data = _repository.getAllTenants();
-      _tenants = AsyncValue.success(data);
-      notifyListeners();
+      final tenants = _tenantRepository.getAllTenants();
+      _tenantsState = AsyncValue.success(tenants);
     } catch (e) {
-      _tenants = AsyncValue.error(e);
-      notifyListeners();
-      rethrow;
+      _tenantsState = AsyncValue.error(e, _tenantsState.data);
     }
+    notifyListeners();
+  }
+
+  Future<void> restoreTenant(int index, Tenant tenant) async {
+    try {
+      _tenantsState = AsyncValue.loading(_tenantsState.data);
+      notifyListeners();
+
+      await _tenantRepository.restoreTenant(index, tenant);
+
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      final tenants = _tenantRepository.getAllTenants();
+      _tenantsState = AsyncValue.success(tenants);
+    } catch (e) {
+      _tenantsState = AsyncValue.error(e, _tenantsState.data);
+    }
+    notifyListeners();
   }
 
   Future<void> removeRoom(String tenantId) async {
     try {
-      await _repository.removeRoom(tenantId);
-      await load();
-    } catch (e) {
-      _tenants = AsyncValue.error(e);
+      _tenantsState = AsyncValue.loading(_tenantsState.data);
       notifyListeners();
-      rethrow;
+
+      await _tenantRepository.removeRoom(tenantId);
+
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      final tenants = _tenantRepository.getAllTenants();
+      _tenantsState = AsyncValue.success(tenants);
+    } catch (e) {
+      _tenantsState = AsyncValue.error(e, _tenantsState.data);
     }
+    notifyListeners();
   }
 
   List<Tenant> getTenantsByBuilding(String buildingId) {
-    if (_tenants.hasData) {
-      return _repository.getTenantsByBuilding(buildingId);
-    }
-    return [];
-  }
-
-  int get tenantCount => _tenants.hasData ? _tenants.data!.length : 0;
-
-  Future<void> refresh({String? roomId, String? search}) async {
-    await syncFromApi(roomId: roomId, search: search);
+    return _tenantRepository.getTenantsByBuilding(buildingId);
   }
 
   List<Tenant> searchTenants(String query) {
-    if (_tenants.hasData) {
-      return _repository.searchTenants(query);
-    }
-    return [];
+    return _tenantRepository.searchTenants(query);
   }
 
   void clearError() {
-    if (_tenants.hasError) {
-      _tenants = AsyncValue.success(_repository.getAllTenants());
+    if (_tenantsState.hasError && _tenantsState.data != null) {
+      _tenantsState = AsyncValue.success(_tenantsState.data!);
       notifyListeners();
     }
   }

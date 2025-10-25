@@ -1,201 +1,222 @@
+// RoomProvider - With AsyncValue State Management
+
 import 'package:flutter/material.dart';
-import 'package:receipts_v2/helpers/asyn_value.dart';
-import 'package:receipts_v2/data/models/enum/room_status.dart';
 import 'package:receipts_v2/data/models/room.dart';
 import 'package:receipts_v2/data/models/tenant.dart';
+import 'package:receipts_v2/data/models/enum/room_status.dart';
 import 'package:receipts_v2/data/repositories/room_repository.dart';
+import 'package:receipts_v2/data/repositories/tenant_repository.dart';
+import 'package:receipts_v2/helpers/repository_manager.dart';
+import 'package:receipts_v2/helpers/asyn_value.dart';
 
-class RoomProvider extends ChangeNotifier {
-  final RoomRepository _repository;
+class RoomProvider with ChangeNotifier {
+  final RoomRepository _roomRepository;
+  final TenantRepository _tenantRepository;
+  final RepositoryManager? _repositoryManager;
 
-  RoomProvider(this._repository);
+  AsyncValue<List<Room>> _roomsState = const AsyncValue.loading();
 
-  AsyncValue<List<Room>> _rooms = const AsyncValue.loading();
-  AsyncValue<List<Room>> get rooms => _rooms;
+  RoomProvider(
+    this._roomRepository,
+    this._tenantRepository, {
+    RepositoryManager? repositoryManager,
+  }) : _repositoryManager = repositoryManager;
 
-  String? get errorMessage {
-    return _rooms.when(
-      loading: () => null,
-      success: (_) => null,
-      error: (error) => error.toString(),
-    );
-  }
+  AsyncValue<List<Room>> get roomsState => _roomsState;
 
-  bool get isLoading => _rooms.isLoading;
-  bool get hasData => _rooms.hasData;
-  bool get hasError => _rooms.hasError;
+  // Convenience getters
+  List<Room> get rooms => _roomsState.when(
+        loading: () => [],
+        error: (_) => [],
+        success: (data) => data,
+      );
+
+  bool get isLoading => _roomsState.isLoading;
+  bool get hasError => _roomsState.hasError;
+  Object? get error => _roomsState.error;
 
   Future<void> load() async {
-    _rooms = const AsyncValue.loading();
-    notifyListeners();
-
     try {
-      await _repository.load();
-      final data = _repository.getAllRooms();
-      _rooms = AsyncValue.success(data);
-    } catch (e) {
-      _rooms = AsyncValue.error(e);
-    }
-    notifyListeners();
-  }
+      _roomsState = AsyncValue.loading(_roomsState.data);
+      notifyListeners();
 
-  Future<void> syncFromApi() async {
-    _rooms = const AsyncValue.loading();
-    notifyListeners();
-
-    try {
-      await _repository.syncFromApi();
-      final data = _repository.getAllRooms();
-      _rooms = AsyncValue.success(data);
+      final rooms = _roomRepository.getAllRooms();
+      _roomsState = AsyncValue.success(rooms);
     } catch (e) {
-      _rooms = AsyncValue.error(e);
+      _roomsState = AsyncValue.error(e, _roomsState.data);
     }
     notifyListeners();
   }
 
   Future<void> createRoom(Room room) async {
     try {
-      await _repository.createRoom(room);
-      // Update the local state with the new data from repository
-      final data = _repository.getAllRooms();
-      _rooms = AsyncValue.success(data);
+      _roomsState = AsyncValue.loading(_roomsState.data);
       notifyListeners();
+
+      await _roomRepository.createRoom(room);
+
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      final rooms = _roomRepository.getAllRooms();
+      _roomsState = AsyncValue.success(rooms);
     } catch (e) {
-      _rooms = AsyncValue.error(e);
-      notifyListeners();
-      rethrow;
+      _roomsState = AsyncValue.error(e, _roomsState.data);
     }
+    notifyListeners();
   }
 
   Future<void> updateRoom(Room room) async {
     try {
-      await _repository.updateRoom(room);
-      // Update the local state with the updated data from repository
-      final data = _repository.getAllRooms();
-      _rooms = AsyncValue.success(data);
+      _roomsState = AsyncValue.loading(_roomsState.data);
       notifyListeners();
+
+      await _roomRepository.updateRoom(room);
+
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      final rooms = _roomRepository.getAllRooms();
+      _roomsState = AsyncValue.success(rooms);
     } catch (e) {
-      _rooms = AsyncValue.error(e);
-      notifyListeners();
-      rethrow;
+      _roomsState = AsyncValue.error(e, _roomsState.data);
     }
+    notifyListeners();
   }
 
   Future<void> deleteRoom(String roomId) async {
     try {
-      await _repository.deleteRoom(roomId);
-      // Update the local state with the updated data from repository
-      final data = _repository.getAllRooms();
-      _rooms = AsyncValue.success(data);
+      _roomsState = AsyncValue.loading(_roomsState.data);
       notifyListeners();
+
+      await _roomRepository.deleteRoom(roomId);
+
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      final rooms = _roomRepository.getAllRooms();
+      _roomsState = AsyncValue.success(rooms);
     } catch (e) {
-      _rooms = AsyncValue.error(e);
-      notifyListeners();
-      rethrow;
+      _roomsState = AsyncValue.error(e, _roomsState.data);
     }
+    notifyListeners();
   }
 
-  Future<void> restoreRoom(int restoreIndex, Room room) async {
+  Future<void> restoreRoom(int index, Room room) async {
     try {
-      await _repository.restoreRoom(restoreIndex, room);
-      // Update the local state with the updated data from repository
-      final data = _repository.getAllRooms();
-      _rooms = AsyncValue.success(data);
+      _roomsState = AsyncValue.loading(_roomsState.data);
       notifyListeners();
+
+      await _roomRepository.restoreRoom(index, room);
+
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      final rooms = _roomRepository.getAllRooms();
+      _roomsState = AsyncValue.success(rooms);
     } catch (e) {
-      _rooms = AsyncValue.error(e);
-      notifyListeners();
-      rethrow;
+      _roomsState = AsyncValue.error(e, _roomsState.data);
     }
+    notifyListeners();
+  }
+
+  /// Add tenant to room (cross-repository operation)
+  Future<void> addTenantToRoom(String roomId, Tenant tenant) async {
+    try {
+      _roomsState = AsyncValue.loading(_roomsState.data);
+      notifyListeners();
+
+      final room = rooms.firstWhere((r) => r.id == roomId);
+
+      tenant.room = room;
+      await _tenantRepository.updateTenant(tenant);
+
+      room.tenant = tenant;
+      room.roomStatus = RoomStatus.occupied;
+      await _roomRepository.updateRoom(room);
+
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      final updatedRooms = _roomRepository.getAllRooms();
+      _roomsState = AsyncValue.success(updatedRooms);
+    } catch (e) {
+      _roomsState = AsyncValue.error(e, _roomsState.data);
+    }
+    notifyListeners();
+  }
+
+  /// Remove tenant from room (cross-repository operation)
+  Future<void> removeTenantFromRoom(String roomId) async {
+    try {
+      _roomsState = AsyncValue.loading(_roomsState.data);
+      notifyListeners();
+
+      final room = rooms.firstWhere((r) => r.id == roomId);
+      final tenant = room.tenant;
+
+      if (tenant != null) {
+        await _tenantRepository.removeRoom(tenant.id);
+
+        room.tenant = null;
+        room.roomStatus = RoomStatus.available;
+        await _roomRepository.updateRoom(room);
+
+        if (_repositoryManager != null) {
+          await _repositoryManager.hydrateAllRelationships();
+          await _repositoryManager.saveAll();
+        }
+      }
+
+      final updatedRooms = _roomRepository.getAllRooms();
+      _roomsState = AsyncValue.success(updatedRooms);
+    } catch (e) {
+      _roomsState = AsyncValue.error(e, _roomsState.data);
+    }
+    notifyListeners();
   }
 
   Future<void> updateRoomStatus(String roomId, RoomStatus status) async {
     try {
-      await _repository.updateRoomStatus(roomId, status);
-      // Update the local state with the updated data from repository
-      final data = _repository.getAllRooms();
-      _rooms = AsyncValue.success(data);
+      _roomsState = AsyncValue.loading(_roomsState.data);
       notifyListeners();
-    } catch (e) {
-      _rooms = AsyncValue.error(e);
-      notifyListeners();
-      rethrow;
-    }
-  }
 
-  Future<void> addTenant(String roomId, Tenant tenant) async {
-    try {
-      await _repository.addTenant(roomId, tenant);
-      // Update the local state with the updated data from repository
-      final data = _repository.getAllRooms();
-      _rooms = AsyncValue.success(data);
-      notifyListeners();
-    } catch (e) {
-      _rooms = AsyncValue.error(e);
-      notifyListeners();
-      rethrow;
-    }
-  }
+      await _roomRepository.updateRoomStatus(roomId, status);
 
-  Future<void> removeTenant(String roomId) async {
-    try {
-      await _repository.removeTenant(roomId);
-      // Update the local state with the updated data from repository
-      final data = _repository.getAllRooms();
-      _rooms = AsyncValue.success(data);
-      notifyListeners();
-    } catch (e) {
-      _rooms = AsyncValue.error(e);
-      notifyListeners();
-      rethrow;
-    }
-  }
-
-  Room? getRoomById(String roomId) {
-    if (_rooms.hasData) {
-      try {
-        return _rooms.data!.firstWhere(
-          (room) => room.id == roomId,
-        );
-      } catch (e) {
-        return null;
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
       }
+
+      final updatedRooms = _roomRepository.getAllRooms();
+      _roomsState = AsyncValue.success(updatedRooms);
+    } catch (e) {
+      _roomsState = AsyncValue.error(e, _roomsState.data);
     }
-    return null;
+    notifyListeners();
   }
 
   List<Room> getAvailableRooms() {
-    if (_rooms.hasData) {
-      return _repository.getAvailableRooms();
-    }
-    return [];
+    return _roomRepository.getAvailableRooms();
   }
 
-  List<Room> getRoomsByBuilding(String buildingId) {
-    if (_rooms.hasData) {
-      return _repository.getThisBuildingRooms(buildingId);
-    }
-    return [];
-  }
-
-  int get roomCount {
-    if (_rooms.hasData) {
-      return _rooms.data!.length;
-    }
-    return 0;
-  }
-
-  int getAvailableRoomCount() {
-    return getAvailableRooms().length;
-  }
-
-  Future<void> refresh() async {
-    await load();
+  List<Room> getThisBuildingRooms(String buildingId) {
+    return _roomRepository.getThisBuildingRooms(buildingId);
   }
 
   void clearError() {
-    if (_rooms.hasError) {
-      _rooms = AsyncValue.success(_repository.getAllRooms());
+    if (_roomsState.hasError && _roomsState.data != null) {
+      _roomsState = AsyncValue.success(_roomsState.data!);
       notifyListeners();
     }
   }

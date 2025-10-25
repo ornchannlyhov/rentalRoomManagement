@@ -1,3 +1,4 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:receipts_v2/data/models/building.dart';
@@ -155,16 +156,16 @@ class _BuildingScreenState extends State<BuildingScreen>
 
   Future<void> _addBuilding(BuildContext context) async {
     final buildingProvider = context.read<BuildingProvider>();
-    final buildings = buildingProvider.buildings.when(
+    final buildings = buildingProvider.buildingsState.when(
       success: (data) => data,
-      loading: () {},
-      error: (Object error) {},
+      loading: () => <Building>[],
+      error: (_) => <Building>[],
     );
 
     final newBuilding = await Navigator.of(context).push<Building>(
       MaterialPageRoute(
         builder: (ctx) => BuildingForm(
-          buildings: buildings!,
+          buildings: buildings,
         ),
       ),
     );
@@ -176,9 +177,9 @@ class _BuildingScreenState extends State<BuildingScreen>
 
   Future<void> _editBuilding(BuildContext context, Building building) async {
     final buildingProvider = context.read<BuildingProvider>();
-    final buildings = buildingProvider.buildings.when(
+    final buildings = buildingProvider.buildingsState.when(
       loading: () => <Building>[],
-      error: (err) => <Building>[],
+      error: (_) => <Building>[],
       success: (data) => data,
     );
 
@@ -199,9 +200,9 @@ class _BuildingScreenState extends State<BuildingScreen>
 
   Future<void> _viewBuilding(BuildContext context, Building building) async {
     final serviceProvider = context.read<ServiceProvider>();
-    serviceProvider.services.when(
+    serviceProvider.servicesState.when(
       loading: () => [],
-      error: (err) => [],
+      error: (_) => [],
       success: (data) => data,
     );
 
@@ -627,9 +628,12 @@ class _BuildingScreenState extends State<BuildingScreen>
             },
           ),
           Expanded(
-            child: Consumer<BuildingProvider>(
-              builder: (context, buildingProvider, child) {
-                return buildingProvider.buildings.when(
+            // OPTIMIZED: Use Selector instead of Consumer
+            child: Selector<BuildingProvider, dynamic>(
+              selector: (_, provider) => provider.buildingsState,
+              builder: (context, buildingsState, _) {
+                // FIX: Use buildingsState directly instead of buildings
+                return buildingsState.when(
                   loading: () => _buildLoadingState(theme),
                   error: (error) => _buildErrorState(theme, error),
                   success: (allBuildings) {

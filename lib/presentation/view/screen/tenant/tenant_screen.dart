@@ -157,7 +157,7 @@ class _TenantScreenState extends State<TenantScreen>
   }
 
   /// Handles the process of adding a new tenant.
-  Future<void> _addTenant(BuildContext context) async {
+  Future<void> _addTenantToRoom(BuildContext context) async {
     final newTenant = await Navigator.of(context).push<Tenant>(
       MaterialPageRoute(
         builder: (ctx) => TenantForm(
@@ -174,7 +174,7 @@ class _TenantScreenState extends State<TenantScreen>
       try {
         await tenantProvider.createTenant(newTenant);
         if (newTenant.room != null) {
-          await roomProvider.addTenant(newTenant.room!.id, newTenant);
+          await roomProvider.addTenantToRoom(newTenant.room!.id, newTenant);
           await roomProvider.updateRoomStatus(
               newTenant.room!.id, RoomStatus.occupied);
         }
@@ -216,12 +216,13 @@ class _TenantScreenState extends State<TenantScreen>
         // Handle room change logic
         if (updatedTenant.room?.id != tenant.room?.id) {
           if (tenant.room != null) {
-            await roomProvider.removeTenant(tenant.room!.id);
+            await roomProvider.removeTenantFromRoom(tenant.room!.id);
             await roomProvider.updateRoomStatus(
                 tenant.room!.id, RoomStatus.available);
           }
           if (updatedTenant.room != null) {
-            await roomProvider.addTenant(updatedTenant.room!.id, updatedTenant);
+            await roomProvider.addTenantToRoom(
+                updatedTenant.room!.id, updatedTenant);
             await roomProvider.updateRoomStatus(
                 updatedTenant.room!.id, RoomStatus.occupied);
           }
@@ -291,11 +292,12 @@ class _TenantScreenState extends State<TenantScreen>
       final revertedTenant = originalTenant.copyWith(room: originalTenant.room);
       await tenantProvider.updateTenant(revertedTenant);
 
-      await roomProvider.removeTenant(newRoom.id);
+      await roomProvider.removeTenantFromRoom(newRoom.id);
       await roomProvider.updateRoomStatus(newRoom.id, RoomStatus.available);
 
       if (originalTenant.room != null) {
-        await roomProvider.addTenant(originalTenant.room!.id, revertedTenant);
+        await roomProvider.addTenantToRoom(
+            originalTenant.room!.id, revertedTenant);
         await roomProvider.updateRoomStatus(
             originalTenant.room!.id, RoomStatus.occupied);
       }
@@ -322,7 +324,7 @@ class _TenantScreenState extends State<TenantScreen>
       try {
         await tenantProvider.deleteTenant(tenant.id);
         if (originalRoomId != null) {
-          await roomProvider.removeTenant(originalRoomId);
+          await roomProvider.removeTenantFromRoom(originalRoomId);
           await roomProvider.updateRoomStatus(
               originalRoomId, RoomStatus.available);
         }
@@ -338,7 +340,8 @@ class _TenantScreenState extends State<TenantScreen>
             onPressed: () async {
               try {
                 if (originalRoomId != null) {
-                  await roomProvider.addTenant(originalRoomId, removedTenant);
+                  await roomProvider.addTenantToRoom(
+                      originalRoomId, removedTenant);
                   await roomProvider.updateRoomStatus(
                       originalRoomId, RoomStatus.occupied);
                 }
@@ -456,7 +459,7 @@ class _TenantScreenState extends State<TenantScreen>
               Icons.add,
               color: theme.colorScheme.onSurface,
             ),
-            onPressed: () => _addTenant(context),
+            onPressed: () => _addTenantToRoom(context),
           ),
           const SizedBox(width: 4),
         ],
@@ -505,7 +508,7 @@ class _TenantScreenState extends State<TenantScreen>
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: tenantProvider.tenants.when(
+              child: tenantProvider.tenantsState.when(
                 loading: () => LoadingState(theme: theme),
                 error: (error) =>
                     ErrorState(theme: theme, error: error, onRetry: _loadData),
@@ -550,7 +553,7 @@ class _TenantScreenState extends State<TenantScreen>
     try {
       await tenantProvider.deleteTenant(tenant.id);
       if (originalRoomId != null) {
-        await roomProvider.removeTenant(originalRoomId);
+        await roomProvider.removeTenantFromRoom(originalRoomId);
         await roomProvider.updateRoomStatus(
             originalRoomId, RoomStatus.available);
       }
@@ -566,7 +569,8 @@ class _TenantScreenState extends State<TenantScreen>
           onPressed: () async {
             try {
               if (originalRoomId != null) {
-                await roomProvider.addTenant(originalRoomId, removedTenant);
+                await roomProvider.addTenantToRoom(
+                    originalRoomId, removedTenant);
                 await roomProvider.updateRoomStatus(
                     originalRoomId, RoomStatus.occupied);
               }

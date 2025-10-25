@@ -73,7 +73,7 @@ class _TenantFormState extends State<TenantForm> {
     final roomProvider = context.read<RoomProvider>();
     
     setState(() {
-      allRooms = roomProvider.rooms.when(
+      allRooms = roomProvider.roomsState.when(
         success: (rooms) => rooms,
         loading: () => [],
         error: (_) => [],
@@ -176,9 +176,9 @@ class _TenantFormState extends State<TenantForm> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: buildingProvider.buildings.when(
+        child: buildingProvider.buildingsState.when(
           success: (buildings) {
-            return roomProvider.rooms.when(
+            return roomProvider.roomsState.when(
               success: (rooms) {
                 // Update rooms when provider data changes
                 if (allRooms.isEmpty || allRooms.length != rooms.length) {

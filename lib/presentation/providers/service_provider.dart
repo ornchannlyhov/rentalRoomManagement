@@ -1,125 +1,135 @@
+// ServiceProvider - With AsyncValue State Management
+
 import 'package:flutter/material.dart';
-import 'package:receipts_v2/helpers/asyn_value.dart';
 import 'package:receipts_v2/data/models/service.dart';
 import 'package:receipts_v2/data/repositories/service_repository.dart';
+import 'package:receipts_v2/helpers/repository_manager.dart';
+import 'package:receipts_v2/helpers/asyn_value.dart';
 
-class ServiceProvider extends ChangeNotifier {
-  final ServiceRepository _repository;
+class ServiceProvider with ChangeNotifier {
+  final ServiceRepository _serviceRepository;
+  final RepositoryManager? _repositoryManager;
 
-  ServiceProvider(this._repository);
+  AsyncValue<List<Service>> _servicesState = const AsyncValue.loading();
 
-  AsyncValue<List<Service>> _services = const AsyncValue.loading();
-  AsyncValue<List<Service>> get services => _services;
+  ServiceProvider(
+    this._serviceRepository, {
+    RepositoryManager? repositoryManager,
+  }) : _repositoryManager = repositoryManager;
 
-  String? get errorMessage {
-    return _services.when(
-      loading: () => null,
-      success: (_) => null,
-      error: (error) => error.toString(),
-    );
-  }
+  AsyncValue<List<Service>> get servicesState => _servicesState;
 
-  bool get isLoading => _services.isLoading;
-  bool get hasData => _services.hasData;
-  bool get hasError => _services.hasError;
+  // Convenience getters
+  List<Service> get services => _servicesState.when(
+        loading: () => [],
+        error: (_) => [],
+        success: (data) => data,
+      );
+
+  bool get isLoading => _servicesState.isLoading;
+  bool get hasError => _servicesState.hasError;
+  Object? get error => _servicesState.error;
 
   Future<void> load() async {
-    _services = const AsyncValue.loading();
-    notifyListeners();
-
     try {
-      await _repository.load();
-      final data = _repository.getAllServices();
-      _services = AsyncValue.success(data);
-    } catch (e) {
-      _services = AsyncValue.error(e);
-    }
-    notifyListeners();
-  }
-
-  Future<void> syncFromApi() async {
-    _services = const AsyncValue.loading();
-    notifyListeners();
-
-    try {
-      await _repository.syncFromApi();
-      final data = _repository.getAllServices();
-      _services = AsyncValue.success(data);
-    } catch (e) {
-      _services = AsyncValue.error(e);
-    }
-    notifyListeners();
-  }
-
-  Future<Service> createService(Service service) async {
-    try {
-      await _repository.createService(service);
-      await load();
-      return service;
-    } catch (e) {
-      _services = AsyncValue.error(e);
+      _servicesState = AsyncValue.loading(_servicesState.data);
       notifyListeners();
-      rethrow;
+
+      final services = _serviceRepository.getAllServices();
+      _servicesState = AsyncValue.success(services);
+    } catch (e) {
+      _servicesState = AsyncValue.error(e, _servicesState.data);
     }
+    notifyListeners();
   }
 
-  Future<Service> updateService(Service service) async {
+  Future<void> createService(Service service) async {
     try {
-      await _repository.updateService(service);
-      await load();
-      return service;
-    } catch (e) {
-      _services = AsyncValue.error(e);
+      _servicesState = AsyncValue.loading(_servicesState.data);
       notifyListeners();
-      rethrow;
+
+      await _serviceRepository.createService(service);
+
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      final services = _serviceRepository.getAllServices();
+      _servicesState = AsyncValue.success(services);
+    } catch (e) {
+      _servicesState = AsyncValue.error(e, _servicesState.data);
     }
+    notifyListeners();
+  }
+
+  Future<void> updateService(Service service) async {
+    try {
+      _servicesState = AsyncValue.loading(_servicesState.data);
+      notifyListeners();
+
+      await _serviceRepository.updateService(service);
+
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      final services = _serviceRepository.getAllServices();
+      _servicesState = AsyncValue.success(services);
+    } catch (e) {
+      _servicesState = AsyncValue.error(e, _servicesState.data);
+    }
+    notifyListeners();
   }
 
   Future<void> deleteService(String serviceId) async {
     try {
-      await _repository.deleteService(serviceId);
-      await load();
-    } catch (e) {
-      _services = AsyncValue.error(e);
+      _servicesState = AsyncValue.loading(_servicesState.data);
       notifyListeners();
-      rethrow;
+
+      await _serviceRepository.deleteService(serviceId);
+
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      final services = _serviceRepository.getAllServices();
+      _servicesState = AsyncValue.success(services);
+    } catch (e) {
+      _servicesState = AsyncValue.error(e, _servicesState.data);
     }
+    notifyListeners();
   }
 
-  Future<void> restoreService(int restoreIndex, Service service) async {
+  Future<void> restoreService(int index, Service service) async {
     try {
-      await _repository.restoreService(restoreIndex, service);
-      final data = _repository.getAllServices();
-      _services = AsyncValue.success(data);
+      _servicesState = AsyncValue.loading(_servicesState.data);
       notifyListeners();
+
+      await _serviceRepository.restoreService(index, service);
+
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      final services = _serviceRepository.getAllServices();
+      _servicesState = AsyncValue.success(services);
     } catch (e) {
-      _services = AsyncValue.error(e);
-      notifyListeners();
-      rethrow;
+      _servicesState = AsyncValue.error(e, _servicesState.data);
     }
+    notifyListeners();
   }
 
   List<Service> getServicesByBuilding(String buildingId) {
-    if (_services.hasData) {
-      return _repository.getServicesByBuilding(buildingId);
-    }
-    return [];
-  }
-
-  int get serviceCount {
-    if (_services.hasData) {
-      return _services.data!.length;
-    }
-    return 0;
-  }
-
-  Future<void> refresh() async {
-    await syncFromApi();
+    return _serviceRepository.getServicesByBuilding(buildingId);
   }
 
   void clearError() {
-    if (_services.hasError) {
-      _services = AsyncValue.success(_repository.getAllServices());
+    if (_servicesState.hasError && _servicesState.data != null) {
+      _servicesState = AsyncValue.success(_servicesState.data!);
       notifyListeners();
     }
   }

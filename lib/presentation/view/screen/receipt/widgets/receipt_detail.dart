@@ -29,11 +29,13 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
   bool _isSharing = false;
   double? _convertedTotalPrice;
   late ScreenshotController _screenshotController;
+  late ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
     _screenshotController = ScreenshotController();
+    _scrollController = ScrollController();
     _checkServiceAvailability();
 
     // Call _shareReceipt if onShareRequested is provided
@@ -42,6 +44,12 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
         _shareReceipt();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _checkServiceAvailability() async {
@@ -98,7 +106,14 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
     });
 
     try {
-      // Capture screenshot
+      // Scroll to top to ensure consistent rendering
+      await _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeIn,
+      );
+
+      // Capture screenshot with delay
       final Uint8List? imageBytes = await _screenshotController.capture(
         delay: const Duration(milliseconds: 100),
         pixelRatio: 3.0,
@@ -229,187 +244,191 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
           ),
         ],
       ),
-      body: Screenshot(
-        controller: _screenshotController,
-        child: Container(
-          color: theme.colorScheme.background,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Center(
-                  child: Column(
-                    children: [
-                      Text(
-                        'វិក្កយបត្របន្ទប់ ${widget.receipt.room?.roomNumber ?? "N/A"}',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        DateFormat.yMMMMd('km').format(widget.receipt.date),
-                        style: theme.textTheme.titleSmall,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Tenant Information
-                if (tenant != null) ...[
-                  _buildSectionHeader(theme, 'ព័ត៌មានអ្នកជួល'),
-                  _buildInfoRow(theme, 'ឈ្មោះ', tenant.name),
-                  _buildInfoRow(theme, 'លេខទូរស័ព្ទ', tenant.phoneNumber),
-                  const SizedBox(height: 8),
-                  _buildDividerSimple(theme),
-                  const SizedBox(height: 8),
-                ],
-
-                // Utility usage (only show if has usage)
-                if (hasWaterUsage || hasElectricUsage) ...[
-                  _buildSectionHeader(theme, 'ការប្រើប្រាស់'),
-                  if (hasWaterUsage) ...[
-                    _buildInfoRow(theme, 'ទឹកប្រើប្រាស់ខែមុន',
-                        '${widget.receipt.lastWaterUsed} m³'),
-                    _buildInfoRow(theme, 'ទឹកប្រើប្រាស់ខែនេះ',
-                        '${widget.receipt.thisWaterUsed} m³'),
-                  ],
-                  if (hasElectricUsage) ...[
-                    _buildInfoRow(theme, 'ភ្លើងប្រើប្រាស់ខែមុន',
-                        '${widget.receipt.lastElectricUsed} kWh'),
-                    _buildInfoRow(theme, 'ភ្លើងប្រើប្រាស់ខែនេះ',
-                        '${widget.receipt.thisElectricUsed} kWh'),
-                  ],
-                  const SizedBox(height: 8),
-                  _buildDividerSimple(theme),
-                  const SizedBox(height: 8),
-                ],
-
-                // Payment section (only show if has usage)
-                if (hasWaterUsage || hasElectricUsage) ...[
-                  _buildSectionHeader(theme, 'ទូទាត់ការប្រើប្រាស់'),
-                  if (hasWaterUsage) ...[
-                    _buildInfoRow(theme, 'ទឹកប្រើប្រាស់',
-                        '${widget.receipt.waterUsage} m³'),
-                    _buildPriceRow(
-                        theme, 'ថ្លៃទឹកសរុប', widget.receipt.waterPrice),
-                  ],
-                  if (hasElectricUsage) ...[
-                    _buildInfoRow(theme, 'ភ្លើងប្រើប្រាស់',
-                        '${widget.receipt.electricUsage} kWh'),
-                    _buildPriceRow(
-                        theme, 'ថ្លៃភ្លើងសរុប', widget.receipt.electricPrice),
-                  ],
-                  const SizedBox(height: 8),
-                  _buildDividerSimple(theme),
-                  const SizedBox(height: 8),
-                ],
-
-                // Services (only show if has services)
-                if (hasServices) ...[
-                  _buildSectionHeader(theme, 'សេវាកម្មបន្ថែម'),
-                  Column(
-                    children: widget.receipt.services
-                        .map((service) => _buildServiceItem(
-                            theme, service.name, service.price))
-                        .toList(),
-                  ),
-                  _buildPriceRow(
-                      theme, 'សរុបសេវាកម្ម', widget.receipt.totalServicePrice),
-                  const SizedBox(height: 8),
-                  _buildDividerSimple(theme),
-                  const SizedBox(height: 8),
-                ],
-
-                // Rent
-                _buildPriceRow(theme, 'ថ្លៃជួលបន្ទប់',
-                    widget.receipt.room?.building?.rentPrice ?? 0),
-
-                const SizedBox(height: 8),
-                _buildDividerThick(theme),
-                const SizedBox(height: 8),
-
-                // Grand total with currency selector
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'សរុបទឹកប្រាក់',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Row(
+      body: SingleChildScrollView(
+        controller: _scrollController,
+        child: Screenshot(
+          controller: _screenshotController,
+          child: Container(
+            width: double.infinity,
+            color: theme.colorScheme.background,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Center(
+                    child: Column(
                       children: [
-                        if (_isLoading) ...[
-                          const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
                         Text(
-                          _formatPrice(widget.receipt.totalPrice,
-                              isTotal: true),
+                          'វិក្កយបត្របន្ទប់ ${widget.receipt.room?.roomNumber ?? "N/A"}',
                           style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: theme.colorScheme.primary,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        _buildCurrencyDropdown(),
-                      ],
-                    ),
-                  ],
-                ),
-
-                // Service availability warning
-                if (!_isServiceAvailable) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: Colors.orange.withOpacity(0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.warning_amber,
-                            size: 16, color: Colors.orange),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'សេវាប្រាក់ប្តូរមានបញ្ហា - កំពុងបង្ហាញអត្រាមូលដ្ឋាន USD ជំនួសវិញ',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.orange.shade800,
-                            ),
-                          ),
+                        const SizedBox(height: 4),
+                        Text(
+                          DateFormat.yMMMMd('km').format(widget.receipt.date),
+                          style: theme.textTheme.titleSmall,
                         ),
                       ],
                     ),
                   ),
-                ],
+                  const SizedBox(height: 16),
 
-                // Footer note
-                const SizedBox(height: 16),
-                Center(
-                  child: Text(
-                    'សូមអរគុណសម្រាប់ការប្រើប្រាស់សេវាកម្មរបស់យើងខ្ញុំ!',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  // Tenant Information
+                  if (tenant != null) ...[
+                    _buildSectionHeader(theme, 'ព័ត៌មានអ្នកជួល'),
+                    _buildInfoRow(theme, 'ឈ្មោះ', tenant.name),
+                    _buildInfoRow(theme, 'លេខទូរស័ព្ទ', tenant.phoneNumber),
+                    const SizedBox(height: 8),
+                    _buildDividerSimple(theme),
+                    const SizedBox(height: 8),
+                  ],
+
+                  // Utility usage (only show if has usage)
+                  if (hasWaterUsage || hasElectricUsage) ...[
+                    _buildSectionHeader(theme, 'ការប្រើប្រាស់'),
+                    if (hasWaterUsage) ...[
+                      _buildInfoRow(theme, 'ទឹកប្រើប្រាស់ខែមុន',
+                          '${widget.receipt.lastWaterUsed} m³'),
+                      _buildInfoRow(theme, 'ទឹកប្រើប្រាស់ខែនេះ',
+                          '${widget.receipt.thisWaterUsed} m³'),
+                    ],
+                    if (hasElectricUsage) ...[
+                      _buildInfoRow(theme, 'ភ្លើងប្រើប្រាស់ខែមុន',
+                          '${widget.receipt.lastElectricUsed} kWh'),
+                      _buildInfoRow(theme, 'ភ្លើងប្រើប្រាស់ខែនេះ',
+                          '${widget.receipt.thisElectricUsed} kWh'),
+                    ],
+                    const SizedBox(height: 8),
+                    _buildDividerSimple(theme),
+                    const SizedBox(height: 8),
+                  ],
+
+                  // Payment section (only show if has usage)
+                  if (hasWaterUsage || hasElectricUsage) ...[
+                    _buildSectionHeader(theme, 'ទូទាត់ការប្រើប្រាស់'),
+                    if (hasWaterUsage) ...[
+                      _buildInfoRow(theme, 'ទឹកប្រើប្រាស់',
+                          '${widget.receipt.waterUsage} m³'),
+                      _buildPriceRow(
+                          theme, 'ថ្លៃទឹកសរុប', widget.receipt.waterPrice),
+                    ],
+                    if (hasElectricUsage) ...[
+                      _buildInfoRow(theme, 'ភ្លើងប្រើប្រាស់',
+                          '${widget.receipt.electricUsage} kWh'),
+                      _buildPriceRow(
+                          theme, 'ថ្លៃភ្លើងសរុប', widget.receipt.electricPrice),
+                    ],
+                    const SizedBox(height: 8),
+                    _buildDividerSimple(theme),
+                    const SizedBox(height: 8),
+                  ],
+
+                  // Services (only show if has services)
+                  if (hasServices) ...[
+                    _buildSectionHeader(theme, 'សេវាកម្មបន្ថែម'),
+                    Column(
+                      children: widget.receipt.services
+                          .map((service) => _buildServiceItem(
+                              theme, service.name, service.price))
+                          .toList(),
+                    ),
+                    _buildPriceRow(theme, 'សរុបសេវាកម្ម',
+                        widget.receipt.totalServicePrice),
+                    const SizedBox(height: 8),
+                    _buildDividerSimple(theme),
+                    const SizedBox(height: 8),
+                  ],
+
+                  // Rent
+                  _buildPriceRow(theme, 'ថ្លៃជួលបន្ទប់',
+                      widget.receipt.room?.building?.rentPrice ?? 0),
+
+                  const SizedBox(height: 8),
+                  _buildDividerThick(theme),
+                  const SizedBox(height: 8),
+
+                  // Grand total with currency selector
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'សរុបទឹកប្រាក់',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          if (_isLoading) ...[
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          Text(
+                            _formatPrice(widget.receipt.totalPrice,
+                                isTotal: true),
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildCurrencyDropdown(),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                  // Service availability warning
+                  if (!_isServiceAvailable) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: Colors.orange.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.warning_amber,
+                              size: 16, color: Colors.orange),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'សេវាប្រាក់ប្តូរមានបញ្ហា - កំពុងបង្ហាញអត្រាមូលដ្ឋាន USD ជំនួសវិញ',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.orange.shade800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  // Footer note
+                  const SizedBox(height: 16),
+                  Center(
+                    child: Text(
+                      'សូមអរគុណសម្រាប់ការប្រើប្រាស់សេវាកម្មរបស់យើងខ្ញុំ!',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

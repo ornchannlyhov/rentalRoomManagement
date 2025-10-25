@@ -32,7 +32,7 @@ class RoomChangeDialog extends StatelessWidget {
       ),
       content: SizedBox(
         width: double.maxFinite,
-        child: roomProvider.rooms.when(
+        child: roomProvider.roomsState.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error) => Text(
             'Error loading rooms: $error',
@@ -100,11 +100,11 @@ class RoomChangeDialog extends StatelessWidget {
 
                               if (originalRoom != null) {
                                 await roomProvider
-                                    .removeTenant(originalRoom.id);
+                                    .removeTenantFromRoom(originalRoom.id);
                                 await roomProvider.updateRoomStatus(
                                     originalRoom.id, RoomStatus.available);
                               }
-                              await roomProvider.addTenant(
+                              await roomProvider.addTenantToRoom(
                                   room.id, updatedTenant);
                               await roomProvider.updateRoomStatus(
                                   room.id, RoomStatus.occupied);

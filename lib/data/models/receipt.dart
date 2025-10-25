@@ -11,9 +11,11 @@ class Receipt {
   final int thisWaterUsed;
   final int thisElectricUsed;
   PaymentStatus paymentStatus;
-  List<Service> services;
   List<String> serviceIds;
   Room? room;
+
+  // Private field for services
+  List<Service> _services;
 
   Receipt({
     required this.id,
@@ -25,9 +27,17 @@ class Receipt {
     required this.thisElectricUsed,
     required this.paymentStatus,
     this.room,
-    this.services = const [],
-    this.serviceIds = const [],
-  });
+    List<Service> services = const [],
+    List<String>? serviceIds,
+  })  : _services = List<Service>.from(services),
+        serviceIds = serviceIds ?? services.map((s) => s.id).toList();
+
+  List<Service> get services => _services;
+
+  set services(List<Service> newServices) {
+    _services = List<Service>.from(newServices);
+    serviceIds = newServices.map((s) => s.id).toList();
+  }
 
   int get waterUsage {
     if (thisWaterUsed < lastWaterUsed) {

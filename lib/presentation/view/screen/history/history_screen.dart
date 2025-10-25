@@ -560,7 +560,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                 offset: const Offset(0, -12),
                 child: Consumer<ReceiptProvider>(
                   builder: (context, receiptProvider, child) {
-                    return receiptProvider.receipts.when(
+                    return receiptProvider.receiptsState.when(
                       loading: () => LoadingState(theme: theme),
                       error: (error) =>
                           ErrorState(error: error, onRetry: _loadData),

@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:receipts_v2/data/models/building.dart';
@@ -199,7 +197,6 @@ class _BuildingDetailState extends State<BuildingDetail> {
   }
 
   Future<void> _editBuilding() async {
-    // Assuming a BuildingForm widget exists for editing buildings
     final updatedBuilding = await Navigator.push<Building>(
       context,
       MaterialPageRoute(
@@ -250,16 +247,15 @@ class _BuildingDetailState extends State<BuildingDetail> {
       }
 
       // Remove associated rooms
-      final rooms = roomProvider.getRoomsByBuilding(widget.building.id);
+      final rooms = roomProvider.getThisBuildingRooms(widget.building.id);
       for (final room in rooms) {
         await roomProvider.deleteRoom(room.id);
       }
 
-      // Remove associated services
-      final services = serviceProvider.services.data
-              ?.where((s) => s.buildingId == widget.building.id)
-              .toList() ??
-          [];
+      // Remove associated services - FIX: Use servicesState instead of services
+      final services = serviceProvider.services
+          .where((s) => s.buildingId == widget.building.id)
+          .toList();
       for (final service in services) {
         await serviceProvider.deleteService(service.id);
       }
@@ -330,9 +326,11 @@ class _BuildingDetailState extends State<BuildingDetail> {
   }
 
   Widget _buildRoomContent() {
-    return Consumer<RoomProvider>(
-      builder: (context, provider, _) {
-        return provider.rooms.when(
+    // OPTIMIZED: Use Selector to only rebuild when roomsState changes
+    return Selector<RoomProvider, dynamic>(
+      selector: (_, provider) => provider.roomsState,
+      builder: (context, roomsState, _) {
+        return roomsState.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error) => RefreshIndicator(
             onRefresh: _refreshData,
@@ -413,9 +411,11 @@ class _BuildingDetailState extends State<BuildingDetail> {
   }
 
   Widget _buildServiceContent() {
-    return Consumer<ServiceProvider>(
-      builder: (context, provider, _) {
-        return provider.services.when(
+    // OPTIMIZED: Use Selector to only rebuild when servicesState changes
+    return Selector<ServiceProvider, dynamic>(
+      selector: (_, provider) => provider.servicesState,
+      builder: (context, servicesState, _) {
+        return servicesState.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error) => RefreshIndicator(
             onRefresh: _refreshData,
@@ -544,9 +544,9 @@ class _BuildingDetailState extends State<BuildingDetail> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.background,
+        backgroundColor: theme.colorScheme.background,
         title: Text(widget.building.name),
       ),
       body: Column(
@@ -576,7 +576,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
                   style: theme.textTheme.titleLarge,
                 ),
                 IconButton(
-                  icon: Icon(
+                  icon: const Icon(
                     Icons.add,
                     size: 20,
                   ),

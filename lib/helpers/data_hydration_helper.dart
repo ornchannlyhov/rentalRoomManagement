@@ -4,24 +4,34 @@ import 'package:receipts_v2/data/models/tenant.dart';
 import 'package:receipts_v2/data/models/receipt.dart';
 import 'package:receipts_v2/data/models/service.dart';
 import 'package:receipts_v2/data/models/report.dart';
-import 'package:collection/collection.dart';
 
 /// Helper class to rebuild object references after API sync
 ///
-/// SQL databases store relationships as IDs, but the app needs
-/// actual object references. This helper reconstructs those references.
 class DataHydrationHelper {
+  // Raw lists
   List<Building> buildings;
   List<Room> rooms;
   List<Tenant> tenants;
   List<Service> services;
+
+  // O(1) lookup maps - computed once, reused many times
+  late final Map<String, Building> _buildingMap;
+  late final Map<String, Room> _roomMap;
+  late final Map<String, Tenant> _tenantMap;
+  late final Map<String, Service> _serviceMap;
 
   DataHydrationHelper({
     required this.buildings,
     required this.rooms,
     required this.tenants,
     required this.services,
-  });
+  }) {
+    // Build lookup maps once during construction
+    _buildingMap = {for (var b in buildings) b.id: b};
+    _roomMap = {for (var r in rooms) r.id: r};
+    _tenantMap = {for (var t in tenants) t.id: t};
+    _serviceMap = {for (var s in services) s.id: s};
+  }
 
   /// Main method: Hydrate all relationships in correct order
   void hydrateAll({
@@ -43,19 +53,14 @@ class DataHydrationHelper {
     }
   }
 
-  /// Step 1: Link rooms to their buildings
+  /// Step 1: Link rooms to their buildings - O(n) instead of O(n²)
   void hydrateRoomsWithBuildings() {
     for (var room in rooms) {
-      String? buildingId = room.building?.id;
+      final buildingId = room.building?.id;
 
       if (buildingId != null && buildingId.isNotEmpty) {
-        final fullBuilding = buildings.firstWhereOrNull(
-          (b) => b.id == buildingId,
-        );
-
-        if (fullBuilding != null) {
-          room.building = fullBuilding;
-        }
+        final fullBuilding = _buildingMap[buildingId]; // O(1) lookup
+        room.building = fullBuilding;
       } else {
         room.building = null;
       }
@@ -64,34 +69,37 @@ class DataHydrationHelper {
 
   /// Step 2: Link buildings to their rooms (bidirectional)
   void hydrateBuildingsWithRooms() {
+    // Group rooms by building ID - O(n)
+    final roomsByBuilding = <String, List<Room>>{};
+    for (var room in rooms) {
+      final buildingId = room.building?.id;
+      if (buildingId != null) {
+        roomsByBuilding.putIfAbsent(buildingId, () => []).add(room);
+      }
+    }
+
+    // Assign rooms to buildings - O(n)
     for (var building in buildings) {
-      final buildingRooms =
-          rooms.where((r) => r.building?.id == building.id).toList();
+      final buildingRooms = roomsByBuilding[building.id] ?? [];
 
       building.rooms.clear();
       building.rooms.addAll(buildingRooms);
 
+      // Ensure bidirectional link
       for (var room in buildingRooms) {
         room.building = building;
       }
     }
   }
 
-  /// Step 3: Link tenants to their rooms (and transitively to buildings)
+  /// Step 3: Link tenants to their rooms - O(n) instead of O(n²)
   void hydrateTenantsWithRooms() {
     for (var tenant in tenants) {
-      if (tenant.room?.id != null) {
-        final roomId = tenant.room!.id;
+      final roomId = tenant.room?.id;
 
-        final fullRoom = rooms.firstWhereOrNull(
-          (r) => r.id == roomId,
-        );
-
-        if (fullRoom != null) {
-          tenant.room = fullRoom;
-        } else {
-          tenant.room = null;
-        }
+      if (roomId != null && roomId.isNotEmpty) {
+        final fullRoom = _roomMap[roomId]; // O(1) lookup
+        tenant.room = fullRoom;
       } else {
         tenant.room = null;
       }
@@ -100,55 +108,45 @@ class DataHydrationHelper {
 
   /// Step 4: Link rooms back to their tenants (bidirectional)
   void hydrateRoomsWithTenants() {
-    for (var room in rooms) {
-      final tenant = tenants.firstWhereOrNull(
-        (t) => t.room?.id == room.id,
-      );
+    // Build tenant-by-room map - O(n)
+    final tenantByRoom = <String, Tenant>{};
+    for (var tenant in tenants) {
+      final roomId = tenant.room?.id;
+      if (roomId != null) {
+        tenantByRoom[roomId] = tenant;
+      }
+    }
 
+    // Assign tenants to rooms - O(n)
+    for (var room in rooms) {
+      final tenant = tenantByRoom[room.id];
       room.tenant = tenant;
 
+      // Ensure bidirectional link
       if (tenant != null && tenant.room?.id != room.id) {
         tenant.room = room;
       }
     }
   }
 
-  /// Step 5: Hydrate receipts with full object graphs
+  /// Step 5: Hydrate receipts with full object graphs - O(n*m) where m is avg services
   void hydrateReceipts(List<Receipt> receipts) {
     for (var receipt in receipts) {
-      // FIX: Look up the fully hydrated room from the master list
-      // This room should already have building AND tenant attached
-      if (receipt.room?.id != null) {
-        final roomId = receipt.room!.id;
+      final roomId = receipt.room?.id;
 
-        final fullRoom = rooms.firstWhereOrNull(
-          (r) => r.id == roomId,
-        );
-
-        if (fullRoom != null) {
-          // Assign the FULLY hydrated room (with building and tenant)
-          receipt.room = fullRoom;
-
-          // DEBUG: Verify tenant is present
-          if (fullRoom.tenant == null) {
-            print(
-                'WARNING: Room ${fullRoom.roomNumber} has no tenant after hydration');
-          }
-        } else {
-          receipt.room = null;
-        }
+      if (roomId != null && roomId.isNotEmpty) {
+        final fullRoom = _roomMap[roomId]; // O(1) lookup
+        receipt.room = fullRoom;
       } else {
         receipt.room = null;
       }
 
-      // Hydrate services using serviceIds
+      // Hydrate services using serviceIds - O(k) where k is number of services
       if (receipt.serviceIds.isNotEmpty) {
         final hydratedServices = <Service>[];
 
         for (var serviceId in receipt.serviceIds) {
-          final fullService = services.firstWhereOrNull(
-            (s) => s.id == serviceId,
-          );
+          final fullService = _serviceMap[serviceId]; // O(1) lookup
           if (fullService != null) {
             hydratedServices.add(fullService);
           }
@@ -159,37 +157,23 @@ class DataHydrationHelper {
     }
   }
 
-  /// Step 6: Hydrate reports with full object graphs
+  /// Step 6: Hydrate reports with full object graphs - O(n)
   void hydrateReports(List<Report> reports) {
     for (var report in reports) {
-      // Hydrate tenant reference
-      if (report.tenant?.id != null) {
-        final tenantId = report.tenant!.id;
-
-        final fullTenant = tenants.firstWhereOrNull(
-          (t) => t.id == tenantId,
-        );
-
-        if (fullTenant != null) {
-          report.tenant = fullTenant;
-        } else {
-          report.tenant = null;
-        }
+      final tenantId = report.tenant?.id;
+      if (tenantId != null && tenantId.isNotEmpty) {
+        final fullTenant = _tenantMap[tenantId]; // O(1) lookup
+        report.tenant = fullTenant;
+      } else {
+        report.tenant = null;
       }
 
-      // Hydrate room reference
-      if (report.room?.id != null) {
-        final roomId = report.room!.id;
-
-        final fullRoom = rooms.firstWhereOrNull(
-          (r) => r.id == roomId,
-        );
-
-        if (fullRoom != null) {
-          report.room = fullRoom;
-        } else {
-          report.room = null;
-        }
+      final roomId = report.room?.id;
+      if (roomId != null && roomId.isNotEmpty) {
+        final fullRoom = _roomMap[roomId]; // O(1) lookup
+        report.room = fullRoom;
+      } else {
+        report.room = null;
       }
     }
   }

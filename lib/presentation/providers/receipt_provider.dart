@@ -1,177 +1,187 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:receipts_v2/helpers/asyn_value.dart';
 import 'package:receipts_v2/data/models/receipt.dart';
+import 'package:receipts_v2/data/models/enum/payment_status.dart';
 import 'package:receipts_v2/data/repositories/receipt_repository.dart';
+import 'package:receipts_v2/helpers/asyn_value.dart';
+import 'package:receipts_v2/helpers/repository_manager.dart';
 
-class ReceiptProvider extends ChangeNotifier {
-  final ReceiptRepository _repository;
+class ReceiptProvider with ChangeNotifier {
+  final ReceiptRepository _receiptRepository;
+  final RepositoryManager? _repositoryManager;
 
-  ReceiptProvider(this._repository);
+  AsyncValue<List<Receipt>> _receiptsState = const AsyncValue.loading();
 
-  AsyncValue<List<Receipt>> _receipts = const AsyncValue.loading();
-  AsyncValue<List<Receipt>> get receipts => _receipts;
+  ReceiptProvider(
+    this._receiptRepository, {
+    RepositoryManager? repositoryManager,
+  }) : _repositoryManager = repositoryManager;
 
-  String? get errorMessage {
-    return _receipts.when(
-      loading: () => null,
-      success: (_) => null,
-      error: (error) => error.toString(),
-    );
-  }
+  AsyncValue<List<Receipt>> get receiptsState => _receiptsState;
 
-  bool get isLoading => _receipts.isLoading;
-  bool get hasData => _receipts.hasData;
-  bool get hasError => _receipts.hasError;
+  // Convenience getters
+  List<Receipt> get receipts => _receiptsState.bestData ?? [];
+  bool get isLoading => _receiptsState.isLoading;
+  bool get hasError => _receiptsState.hasError;
+  Object? get error => _receiptsState.error;
 
   Future<void> load() async {
-    _receipts = const AsyncValue.loading();
-    notifyListeners();
-
     try {
-      await _repository.load();
-      final data = _repository.getAllReceipts();
-      _receipts = AsyncValue.success(data);
+      final receipts = _receiptRepository.getAllReceipts();
+      _receiptsState = AsyncValue.success(receipts);
     } catch (e) {
-      _receipts = AsyncValue.error(e);
-    }
-    notifyListeners();
-  }
-
-  Future<void> syncFromApi() async {
-    _receipts = const AsyncValue.loading();
-    notifyListeners();
-
-    try {
-      await _repository.syncFromApi();
-      final data = _repository.getAllReceipts();
-      _receipts = AsyncValue.success(data);
-    } catch (e) {
-      _receipts = AsyncValue.error(e);
-    }
-    notifyListeners();
-  }
-
-  Future<Receipt> createReceipt(Receipt receipt) async {
-    try {
-      await _repository.createReceipt(receipt);
-      final data = _repository.getAllReceipts();
-      _receipts = AsyncValue.success(data);
+      _receiptsState = AsyncValue.error(e, _receiptsState.bestData);
+    } finally {
       notifyListeners();
-      return receipt;
+    }
+  }
+
+  Future<void> createReceipt(Receipt receipt, {Uint8List? receiptImage}) async {
+    _receiptsState = AsyncValue.loading(_receiptsState.bestData);
+    notifyListeners();
+
+    try {
+      await _receiptRepository.createReceipt(receipt,
+          receiptImage: receiptImage);
+
+      // Hydrate relationships
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      await load();
     } catch (e) {
-      _receipts = AsyncValue.error(e);
+      _receiptsState = AsyncValue.error(e, _receiptsState.bestData);
       notifyListeners();
       rethrow;
     }
   }
 
-  Future<Receipt> updateReceipt(Receipt receipt) async {
+  Future<void> updateReceipt(Receipt receipt) async {
+    _receiptsState = AsyncValue.loading(_receiptsState.bestData);
+    notifyListeners();
+
     try {
-      await _repository.updateReceipt(receipt);
-      final data = _repository.getAllReceipts();
-      _receipts = AsyncValue.success(data);
-      notifyListeners();
-      return receipt;
+      await _receiptRepository.updateReceipt(receipt);
+
+      // Hydrate relationships
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      await load();
     } catch (e) {
-      _receipts = AsyncValue.error(e);
+      _receiptsState = AsyncValue.error(e, _receiptsState.bestData);
       notifyListeners();
       rethrow;
     }
   }
 
   Future<void> deleteReceipt(String receiptId) async {
+    _receiptsState = AsyncValue.loading(_receiptsState.bestData);
+    notifyListeners();
+
     try {
-      await _repository.deleteReceipt(receiptId);
-      final data = _repository.getAllReceipts();
-      _receipts = AsyncValue.success(data);
-      notifyListeners();
+      await _receiptRepository.deleteReceipt(receiptId);
+
+      // Hydrate relationships
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      await load();
     } catch (e) {
-      _receipts = AsyncValue.error(e);
+      _receiptsState = AsyncValue.error(e, _receiptsState.bestData);
       notifyListeners();
       rethrow;
     }
   }
 
-  Future<void> restoreReceipt(int restoreIndex, Receipt receipt) async {
+  Future<void> restoreReceipt(int index, Receipt receipt) async {
+    _receiptsState = AsyncValue.loading(_receiptsState.bestData);
+    notifyListeners();
+
     try {
-      await _repository.restoreReceipt(restoreIndex, receipt);
-      final data = _repository.getAllReceipts();
-      _receipts = AsyncValue.success(data);
-      notifyListeners();
+      await _receiptRepository.restoreReceipt(index, receipt);
+
+      // Hydrate relationships
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      await load();
     } catch (e) {
-      _receipts = AsyncValue.error(e);
+      _receiptsState = AsyncValue.error(e, _receiptsState.bestData);
       notifyListeners();
       rethrow;
     }
   }
 
   Future<void> deleteLastYearReceipts() async {
+    _receiptsState = AsyncValue.loading(_receiptsState.bestData);
+    notifyListeners();
+
     try {
-      await _repository.deleteLastYearReceipts();
-      final data = _repository.getAllReceipts();
-      _receipts = AsyncValue.success(data);
-      notifyListeners();
+      await _receiptRepository.deleteLastYearReceipts();
+
+      // Hydrate relationships
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      await load();
     } catch (e) {
-      _receipts = AsyncValue.error(e);
+      _receiptsState = AsyncValue.error(e, _receiptsState.bestData);
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> syncReceipts({
+    String? roomId,
+    String? tenantId,
+    String? buildingId,
+    PaymentStatus? paymentStatus,
+  }) async {
+    _receiptsState = AsyncValue.loading(_receiptsState.bestData);
+    notifyListeners();
+
+    try {
+      await _receiptRepository.syncFromApi(
+        roomId: roomId,
+        tenantId: tenantId,
+        buildingId: buildingId,
+        paymentStatus: paymentStatus,
+      );
+
+      // Hydrate relationships after sync
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      await load();
+    } catch (e) {
+      _receiptsState = AsyncValue.error(e, _receiptsState.bestData);
       notifyListeners();
       rethrow;
     }
   }
 
   List<Receipt> getReceiptsForCurrentMonth() {
-    try {
-      if (_receipts.hasData) {
-        return _repository.getReceiptsForCurrentMonth();
-      }
-      return [];
-    } catch (e) {
-      _receipts = AsyncValue.error(e);
-      notifyListeners();
-      return [];
-    }
+    return _receiptRepository.getReceiptsForCurrentMonth();
   }
 
   List<Receipt> getReceiptsByMonth(int year, int month) {
-    try {
-      if (_receipts.hasData) {
-        return _repository.getReceiptsByMonth(year, month);
-      }
-      return [];
-    } catch (e) {
-      _receipts = AsyncValue.error(e);
-      notifyListeners();
-      return [];
-    }
+    return _receiptRepository.getReceiptsByMonth(year, month);
   }
 
   List<Receipt> getReceiptsByBuilding(String buildingId) {
-    try {
-      if (_receipts.hasData) {
-        return _repository.getReceiptsByBuilding(buildingId);
-      }
-      return [];
-    } catch (e) {
-      _receipts = AsyncValue.error(e);
-      notifyListeners();
-      return [];
-    }
-  }
-
-  int get receiptCount {
-    if (_receipts.hasData) {
-      return _receipts.data!.length;
-    }
-    return 0;
-  }
-
-  Future<void> refresh() async {
-    await syncFromApi();
-  }
-
-  void clearError() {
-    if (_receipts.hasError) {
-      _receipts = AsyncValue.success(_repository.getAllReceipts());
-      notifyListeners();
-    }
+    return _receiptRepository.getReceiptsByBuilding(buildingId);
   }
 }

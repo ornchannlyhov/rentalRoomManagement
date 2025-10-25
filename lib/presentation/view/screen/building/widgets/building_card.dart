@@ -26,7 +26,7 @@ class BuildingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Room> rooms = context.select<RoomProvider, List<Room>>(
-      (provider) => provider.getRoomsByBuilding(building.id),
+      (provider) => provider.getThisBuildingRooms(building.id),
     );
 
     return _AnimatedCardContent(

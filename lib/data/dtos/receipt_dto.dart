@@ -3,38 +3,6 @@ import 'package:receipts_v2/data/models/enum/payment_status.dart';
 import 'package:receipts_v2/data/dtos/room_dto.dart';
 import 'package:receipts_v2/data/dtos/service_dto.dart';
 
-class ReceiptServiceDto {
-  final String id;
-  final String receiptId;
-  final String serviceId;
-  final ServiceDto service;
-
-  ReceiptServiceDto({
-    required this.id,
-    required this.receiptId,
-    required this.serviceId,
-    required this.service,
-  });
-
-  factory ReceiptServiceDto.fromJson(Map<String, dynamic> json) {
-    return ReceiptServiceDto(
-      id: json['id'] as String,
-      receiptId: json['receiptId'] as String,
-      serviceId: json['serviceId'] as String,
-      service: ServiceDto.fromJson(json['service'] as Map<String, dynamic>),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'receiptId': receiptId,
-      'serviceId': serviceId,
-      'service': service.toJson(),
-    };
-  }
-}
-
 class ReceiptDto {
   final String id;
   final DateTime date;
@@ -47,7 +15,7 @@ class ReceiptDto {
   final String? roomId;
   final String? roomNumber;
   final RoomDto? room;
-  final List<ReceiptServiceDto>? receiptServices;
+  final List<ServiceDto>? services;
   final List<String>? serviceIds;
 
   ReceiptDto({
@@ -62,16 +30,15 @@ class ReceiptDto {
     this.roomId,
     this.roomNumber,
     this.room,
-    this.receiptServices,
-    this.serviceIds, 
+    this.services,
+    this.serviceIds,
   });
 
   factory ReceiptDto.fromJson(Map<String, dynamic> json) {
-    List<ReceiptServiceDto>? receiptServices;
-    if (json['receiptServices'] != null) {
-      receiptServices = (json['receiptServices'] as List)
-          .map((item) =>
-              ReceiptServiceDto.fromJson(item as Map<String, dynamic>))
+    List<ServiceDto>? services;
+    if (json['services'] != null) {
+      services = (json['services'] as List)
+          .map((item) => ServiceDto.fromJson(item as Map<String, dynamic>))
           .toList();
     }
 
@@ -95,8 +62,8 @@ class ReceiptDto {
       room: json['room'] != null
           ? RoomDto.fromJson(json['room'] as Map<String, dynamic>)
           : null,
-      receiptServices: receiptServices,
-      serviceIds: serviceIds, 
+      services: services,
+      serviceIds: serviceIds,
     );
   }
 
@@ -113,8 +80,9 @@ class ReceiptDto {
       if (roomId != null) 'roomId': roomId,
       if (roomNumber != null) 'roomNumber': roomNumber,
       if (room != null) 'room': room!.toJson(),
-      if (receiptServices != null)
-        'receiptServices': receiptServices!.map((rs) => rs.toJson()).toList(),
+      if (services != null)
+        'services': services!.map((s) => s.toJson()).toList(),
+      if (serviceIds != null) 'serviceIds': serviceIds,
     };
   }
 
@@ -132,10 +100,9 @@ class ReceiptDto {
     }
 
     final finalServiceIds =
-        receiptServices?.map((rs) => rs.serviceId).toList() ?? serviceIds ?? [];
+        services?.map((s) => s.id).toList() ?? serviceIds ?? [];
 
-    final services =
-        receiptServices?.map((rs) => rs.service.toService()).toList() ?? [];
+    final serviceObjects = services?.map((s) => s.toService()).toList() ?? [];
 
     return Receipt(
       id: id,
@@ -147,8 +114,8 @@ class ReceiptDto {
       thisElectricUsed: thisElectricUsed,
       paymentStatus: status,
       room: room?.toRoom(),
-      services: services, 
-      serviceIds: finalServiceIds, 
+      services: serviceObjects,
+      serviceIds: finalServiceIds,
     );
   }
 }
