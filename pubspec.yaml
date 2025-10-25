@@ -57,6 +57,7 @@ dependencies:
   collection: ^1.19.1
   flutter_local_notifications: ^19.5.0
   workmanager: ^0.9.0+3
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
@@ -74,6 +75,7 @@ flutter_launcher_icons:
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
   json_serializable: ^6.9.0
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
@@ -104,10 +106,10 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
-    - family: niradei
+    - family: KantumruyPro
       fonts:
-        - asset: assets/fonts/Niradei-Regular.otf
-        - asset: assets/fonts/Niradei-Bold.otf
+        - asset: assets/fonts/KantumruyPro-VariableFont_wght.ttf
+        - asset: assets/fonts/KantumruyPro-VariableFont_wght.ttf
           weight: 700
   # fonts:
   #   - family: Schyler
@@ -121,5 +123,15 @@ flutter:
   #       - asset: fonts/TrajanPro_Bold.ttf
   #         weight: 700
   #
+
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/joul-logo.png
+  android_12:
+    image: assets/joul-logo.png
+    color: "#ffffff"
+  web: false
+
+
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package

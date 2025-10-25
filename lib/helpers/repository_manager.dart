@@ -4,7 +4,7 @@ import 'package:receipts_v2/data/repositories/room_repository.dart';
 import 'package:receipts_v2/data/repositories/tenant_repository.dart';
 import 'package:receipts_v2/data/repositories/receipt_repository.dart';
 import 'package:receipts_v2/data/repositories/service_repository.dart';
-import 'package:receipts_v2/helpers/ata_hydration_helper.dart';
+import 'package:receipts_v2/helpers/data_hydration_helper.dart';
 
 enum SyncStatus {
   idle,
