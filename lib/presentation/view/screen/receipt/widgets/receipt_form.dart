@@ -187,9 +187,13 @@ class _ReceiptFormState extends State<ReceiptForm> {
     }
   }
 
+  // This is the updated method
   Future<void> _addBuilding(BuildContext context) async {
     final buildingProvider = context.read<BuildingProvider>();
     final roomProvider = context.read<RoomProvider>();
+    final serviceProvider =
+        context.read<ServiceProvider>(); // Get ServiceProvider
+
     List<Building> buildings = buildingProvider.buildingsState.when(
       success: (data) => data,
       loading: () => [],
@@ -206,9 +210,11 @@ class _ReceiptFormState extends State<ReceiptForm> {
 
     if (newBuilding != null) {
       await buildingProvider.createBuilding(newBuilding);
+      // Reload all relevant providers
       await Future.wait([
         buildingProvider.load(),
         roomProvider.load(),
+        serviceProvider.load(), 
       ]);
       setState(() {
         selectedBuildingId = newBuilding.id;
