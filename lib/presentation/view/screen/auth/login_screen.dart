@@ -231,11 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 await repositoryManager.syncAll();
               }
 
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/home',
-                (route) => false,
-              );
+              Navigator.pushReplacementNamed(context, '/');
             }
           },
           error: (error) {

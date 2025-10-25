@@ -42,7 +42,7 @@ class AppTheme {
         background: backgroundColor,
         error: dangerColor,
       ),
-      textTheme: _buildNiradeiTextTheme(
+      textTheme: _buildKantumruyProTextTheme(
         base.textTheme,
       ).apply(bodyColor: Colors.black, displayColor: Colors.black),
       appBarTheme: const AppBarTheme(
@@ -50,9 +50,9 @@ class AppTheme {
         elevation: 0,
         shadowColor: Color.fromARGB(66, 50, 49, 49),
         titleTextStyle: TextStyle(
-          fontFamily: 'niradei',
+          fontFamily: 'KantumruyPro',
           fontSize: 20,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
           color: Colors.black,
         ),
         iconTheme: IconThemeData(color: Colors.black),
@@ -74,16 +74,16 @@ class AppTheme {
         background: backgroundColorDark,
         error: dangerColor,
       ),
-      textTheme: _buildNiradeiTextTheme(
+      textTheme: _buildKantumruyProTextTheme(
         base.textTheme,
       ).apply(bodyColor: Colors.white, displayColor: Colors.white),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         titleTextStyle: TextStyle(
-          fontFamily: 'niradei',
+          fontFamily: 'KantumruyPro',
           fontSize: 20,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
           color: Colors.white,
         ),
         iconTheme: IconThemeData(color: Colors.white),
@@ -91,32 +91,32 @@ class AppTheme {
     );
   }
 
-  static TextTheme _buildNiradeiTextTheme(TextTheme base) {
+  static TextTheme _buildKantumruyProTextTheme(TextTheme base) {
     return base.copyWith(
       headlineLarge: const TextStyle(
-        fontFamily: 'niradei',
-        fontWeight: FontWeight.w700,
+        fontFamily: 'KantumruyPro',
+        fontWeight: FontWeight.w800,
       ),
       headlineMedium: const TextStyle(
-        fontFamily: 'niradei',
-        fontWeight: FontWeight.w700,
+        fontFamily: 'KantumruyPro',
+        fontWeight: FontWeight.w800,
       ),
       headlineSmall: const TextStyle(
-        fontFamily: 'niradei',
-        fontWeight: FontWeight.w700,
+        fontFamily: 'KantumruyPro',
+        fontWeight: FontWeight.w800,
       ),
       titleLarge: const TextStyle(
-        fontFamily: 'niradei',
-        fontWeight: FontWeight.w700,
+        fontFamily: 'KantumruyPro',
+        fontWeight: FontWeight.w800,
       ),
-      titleMedium: const TextStyle(fontFamily: 'niradei'),
-      titleSmall: const TextStyle(fontFamily: 'niradei'),
-      bodyLarge: const TextStyle(fontFamily: 'niradei'),
-      bodyMedium: const TextStyle(fontFamily: 'niradei'),
-      bodySmall: const TextStyle(fontFamily: 'niradei'),
-      labelLarge: const TextStyle(fontFamily: 'niradei'),
-      labelMedium: const TextStyle(fontFamily: 'niradei'),
-      labelSmall: const TextStyle(fontFamily: 'niradei'),
+      titleMedium: const TextStyle(fontFamily: 'KantumruyPro'),
+      titleSmall: const TextStyle(fontFamily: 'KantumruyPro'),
+      bodyLarge: const TextStyle(fontFamily: 'KantumruyPro'),
+      bodyMedium: const TextStyle(fontFamily: 'KantumruyPro'),
+      bodySmall: const TextStyle(fontFamily: 'KantumruyPro'),
+      labelLarge: const TextStyle(fontFamily: 'KantumruyPro'),
+      labelMedium: const TextStyle(fontFamily: 'KantumruyPro'),
+      labelSmall: const TextStyle(fontFamily: 'KantumruyPro'),
     );
   }
 }

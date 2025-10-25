@@ -106,11 +106,6 @@ Future<void> _navigateToReceiptDetail(Receipt receipt) async {
     return;
   }
 
-  // Debug: Check if tenant is present
-  print('Navigating to receipt detail:');
-  print('  Room: ${freshReceipt.room?.roomNumber}');
-  print('  Tenant: ${freshReceipt.room?.tenant?.name ?? "NULL - MISSING!"}');
-
   await Navigator.of(context).push(
     MaterialPageRoute(
       builder: (ctx) => ReceiptDetailScreen(receipt: freshReceipt),

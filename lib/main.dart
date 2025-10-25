@@ -241,7 +241,6 @@ class _MyAppState extends State<MyApp> {
               '/onboarding': (context) => const OnboardingScreen(),
               '/login': (context) => const LoginScreen(),
               '/register': (context) => const RegisterScreen(),
-              '/home': (context) => const MainScreen(),
             },
           );
         },

@@ -16,7 +16,7 @@ import 'package:logger/logger.dart';
 import 'package:receipts_v2/data/models/service.dart';
 import 'dart:typed_data';
 
-import 'package:receipts_v2/helpers/ata_hydration_helper.dart';
+import 'package:receipts_v2/helpers/data_hydration_helper.dart';
 
 class ReceiptRepository {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
