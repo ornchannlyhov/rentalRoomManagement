@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:receipts_v2/data/models/receipt.dart';
 import 'package:receipts_v2/data/models/enum/payment_status.dart';
 import 'package:receipts_v2/data/repositories/receipt_repository.dart';
-import 'package:receipts_v2/helpers/asyn_value.dart';
-import 'package:receipts_v2/helpers/repository_manager.dart';
+import 'package:receipts_v2/core/helpers/asyn_value.dart';
+import 'package:receipts_v2/core/helpers/repository_manager.dart';
 
 class ReceiptProvider with ChangeNotifier {
   final ReceiptRepository _receiptRepository;

@@ -187,12 +187,11 @@ class _ReceiptFormState extends State<ReceiptForm> {
     }
   }
 
-  // This is the updated method
+  // FIXED: Added serviceProvider.load()
   Future<void> _addBuilding(BuildContext context) async {
     final buildingProvider = context.read<BuildingProvider>();
     final roomProvider = context.read<RoomProvider>();
-    final serviceProvider =
-        context.read<ServiceProvider>(); // Get ServiceProvider
+    final serviceProvider = context.read<ServiceProvider>();
 
     List<Building> buildings = buildingProvider.buildingsState.when(
       success: (data) => data,
@@ -210,11 +209,10 @@ class _ReceiptFormState extends State<ReceiptForm> {
 
     if (newBuilding != null) {
       await buildingProvider.createBuilding(newBuilding);
-      // Reload all relevant providers
       await Future.wait([
         buildingProvider.load(),
         roomProvider.load(),
-        serviceProvider.load(), 
+        serviceProvider.load(),
       ]);
       setState(() {
         selectedBuildingId = newBuilding.id;
@@ -232,6 +230,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
     Room? correctedSelectedRoom;
     List<Room> filteredRooms = [];
     List<Service> filteredServices = [];
+    String? validatedBuildingId = selectedBuildingId;
 
     roomProvider.roomsState.when(
       success: (rooms) {
@@ -298,6 +297,22 @@ class _ReceiptFormState extends State<ReceiptForm> {
         padding: const EdgeInsets.all(16.0),
         child: buildingProvider.buildingsState.when(
           success: (buildings) {
+            // FIXED: Validate that selectedBuildingId exists in buildings list
+            if (validatedBuildingId != null &&
+                !buildings.any((b) => b.id == validatedBuildingId)) {
+              // Building ID doesn't exist, reset it
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  setState(() {
+                    selectedBuildingId = null;
+                    selectedRoom = null;
+                    selectedServices.clear();
+                  });
+                }
+              });
+              validatedBuildingId = null;
+            }
+
             if (buildings.isEmpty) {
               return Center(
                 heightFactor: 4.5,
@@ -362,9 +377,9 @@ class _ReceiptFormState extends State<ReceiptForm> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Building Filter Bar
+                  // Building Filter Bar - FIXED: Use validatedBuildingId
                   DropdownButtonFormField<String?>(
-                    value: selectedBuildingId,
+                    value: validatedBuildingId,
                     items: [
                       DropdownMenuItem(
                         value: null,

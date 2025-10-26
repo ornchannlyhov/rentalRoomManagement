@@ -4,7 +4,7 @@ class AsyncValue<T> {
   final T? data;
   final Object? error;
   final AsyncValueState state;
-  final T? previousData; // Keep previous data during transitions
+  final T? previousData;
 
   const AsyncValue._({
     this.data,
@@ -44,7 +44,7 @@ class AsyncValue<T> {
     }
   }
 
-  /// NEW: Enhanced when that provides previous data during loading/error
+  /// Enhanced when that provides previous data during loading/error
   W whenWithPrevious<W>({
     required W Function(T? previousData) loading,
     required W Function(Object error, T? previousData) error,
@@ -60,7 +60,7 @@ class AsyncValue<T> {
     }
   }
 
-  /// NEW: Map data while preserving state
+  /// Map data while preserving state
   AsyncValue<R> map<R>(R Function(T data) transform) {
     switch (state) {
       case AsyncValueState.loading:

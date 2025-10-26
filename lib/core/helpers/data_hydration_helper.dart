@@ -6,8 +6,8 @@ import 'package:receipts_v2/data/models/service.dart';
 import 'package:receipts_v2/data/models/report.dart';
 
 /// Helper class to rebuild object references after API sync
-///
 class DataHydrationHelper {
+
   // Raw lists
   List<Building> buildings;
   List<Room> rooms;
@@ -53,13 +53,13 @@ class DataHydrationHelper {
     }
   }
 
-  /// Step 1: Link rooms to their buildings - O(n) instead of O(n²)
+  /// Step 1: Link rooms to their buildings
   void hydrateRoomsWithBuildings() {
     for (var room in rooms) {
       final buildingId = room.building?.id;
 
       if (buildingId != null && buildingId.isNotEmpty) {
-        final fullBuilding = _buildingMap[buildingId]; // O(1) lookup
+        final fullBuilding = _buildingMap[buildingId];
         room.building = fullBuilding;
       } else {
         room.building = null;
@@ -69,7 +69,7 @@ class DataHydrationHelper {
 
   /// Step 2: Link buildings to their rooms (bidirectional)
   void hydrateBuildingsWithRooms() {
-    // Group rooms by building ID - O(n)
+    // Group rooms by building ID
     final roomsByBuilding = <String, List<Room>>{};
     for (var room in rooms) {
       final buildingId = room.building?.id;
@@ -78,7 +78,7 @@ class DataHydrationHelper {
       }
     }
 
-    // Assign rooms to buildings - O(n)
+    // Assign rooms to buildings
     for (var building in buildings) {
       final buildingRooms = roomsByBuilding[building.id] ?? [];
 
@@ -92,13 +92,13 @@ class DataHydrationHelper {
     }
   }
 
-  /// Step 3: Link tenants to their rooms - O(n) instead of O(n²)
+  /// Step 3: Link tenants to their rooms
   void hydrateTenantsWithRooms() {
     for (var tenant in tenants) {
       final roomId = tenant.room?.id;
 
       if (roomId != null && roomId.isNotEmpty) {
-        final fullRoom = _roomMap[roomId]; // O(1) lookup
+        final fullRoom = _roomMap[roomId];
         tenant.room = fullRoom;
       } else {
         tenant.room = null;
@@ -108,7 +108,7 @@ class DataHydrationHelper {
 
   /// Step 4: Link rooms back to their tenants (bidirectional)
   void hydrateRoomsWithTenants() {
-    // Build tenant-by-room map - O(n)
+    // Build tenant-by-room map
     final tenantByRoom = <String, Tenant>{};
     for (var tenant in tenants) {
       final roomId = tenant.room?.id;
@@ -117,7 +117,7 @@ class DataHydrationHelper {
       }
     }
 
-    // Assign tenants to rooms - O(n)
+    // Assign tenants to rooms
     for (var room in rooms) {
       final tenant = tenantByRoom[room.id];
       room.tenant = tenant;
@@ -129,24 +129,24 @@ class DataHydrationHelper {
     }
   }
 
-  /// Step 5: Hydrate receipts with full object graphs - O(n*m) where m is avg services
+  /// Step 5: Hydrate receipts with full object graphs 
   void hydrateReceipts(List<Receipt> receipts) {
     for (var receipt in receipts) {
       final roomId = receipt.room?.id;
 
       if (roomId != null && roomId.isNotEmpty) {
-        final fullRoom = _roomMap[roomId]; // O(1) lookup
+        final fullRoom = _roomMap[roomId];
         receipt.room = fullRoom;
       } else {
         receipt.room = null;
       }
 
-      // Hydrate services using serviceIds - O(k) where k is number of services
+      // Hydrate services using serviceIds
       if (receipt.serviceIds.isNotEmpty) {
         final hydratedServices = <Service>[];
 
         for (var serviceId in receipt.serviceIds) {
-          final fullService = _serviceMap[serviceId]; // O(1) lookup
+          final fullService = _serviceMap[serviceId];
           if (fullService != null) {
             hydratedServices.add(fullService);
           }
@@ -157,12 +157,12 @@ class DataHydrationHelper {
     }
   }
 
-  /// Step 6: Hydrate reports with full object graphs - O(n)
+  /// Step 6: Hydrate reports with full object graphs
   void hydrateReports(List<Report> reports) {
     for (var report in reports) {
       final tenantId = report.tenant?.id;
       if (tenantId != null && tenantId.isNotEmpty) {
-        final fullTenant = _tenantMap[tenantId]; // O(1) lookup
+        final fullTenant = _tenantMap[tenantId]; 
         report.tenant = fullTenant;
       } else {
         report.tenant = null;
@@ -170,7 +170,7 @@ class DataHydrationHelper {
 
       final roomId = report.room?.id;
       if (roomId != null && roomId.isNotEmpty) {
-        final fullRoom = _roomMap[roomId]; // O(1) lookup
+        final fullRoom = _roomMap[roomId]; 
         report.room = fullRoom;
       } else {
         report.room = null;

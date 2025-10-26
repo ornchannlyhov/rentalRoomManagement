@@ -3,8 +3,8 @@ import 'package:receipts_v2/data/models/report.dart';
 import 'package:receipts_v2/data/models/enum/report_status.dart';
 import 'package:receipts_v2/data/models/enum/report_priority.dart';
 import 'package:receipts_v2/data/repositories/report_repository.dart';
-import 'package:receipts_v2/helpers/asyn_value.dart';
-import 'package:receipts_v2/helpers/repository_manager.dart';
+import 'package:receipts_v2/core/helpers/asyn_value.dart';
+import 'package:receipts_v2/core/helpers/repository_manager.dart';
 
 class ReportProvider with ChangeNotifier {
   final ReportRepository _reportRepository;

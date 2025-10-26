@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:receipts_v2/data/models/building.dart';
 import 'package:receipts_v2/data/repositories/building_repository.dart';
 import 'package:receipts_v2/data/repositories/room_repository.dart';
-import 'package:receipts_v2/helpers/repository_manager.dart';
-import 'package:receipts_v2/helpers/asyn_value.dart';
+import 'package:receipts_v2/core/helpers/repository_manager.dart';
+import 'package:receipts_v2/core/helpers/asyn_value.dart';
 
 class BuildingProvider with ChangeNotifier {
   final BuildingRepository _buildingRepository;

@@ -7,7 +7,7 @@ import 'package:receipts_v2/data/repositories/service_repository.dart';
 import 'package:receipts_v2/data/repositories/building_repository.dart';
 import 'package:receipts_v2/data/repositories/room_repository.dart';
 import 'package:receipts_v2/data/repositories/tenant_repository.dart';
-import 'package:receipts_v2/helpers/api_helper.dart';
+import 'package:receipts_v2/core/helpers/api_helper.dart';
 import 'package:receipts_v2/data/models/enum/payment_status.dart';
 import 'package:receipts_v2/data/models/receipt.dart';
 import 'package:receipts_v2/data/dtos/receipt_dto.dart';
@@ -16,7 +16,7 @@ import 'package:receipts_v2/data/dtos/building_dto.dart';
 import 'package:receipts_v2/data/dtos/service_dto.dart';
 import 'package:dio/dio.dart';
 import 'package:receipts_v2/data/models/service.dart';
-import 'package:receipts_v2/helpers/sync_operation_helper.dart';
+import 'package:receipts_v2/core/helpers/sync_operation_helper.dart';
 
 // --- Top-level compute helpers ---
 List<Receipt> _parseReceipts(String jsonString) {
@@ -250,7 +250,6 @@ class ReceiptRepository {
       throw Exception('Room must have a building reference');
     }
 
-    // CRITICAL FIX: Extract serviceIds and convert to JSON string
     final serviceIds = newReceipt.services.isNotEmpty
         ? newReceipt.services.map((s) => s.id).toList()
         : newReceipt.serviceIds;

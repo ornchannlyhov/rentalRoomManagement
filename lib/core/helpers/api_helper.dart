@@ -8,12 +8,12 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class ApiHelper {
   CancelToken _cancelToken = CancelToken();
 
-  /// Public getter for cancel token (so other classes can use it)
+  /// Public getter for cancel token 
   CancelToken get cancelToken => _cancelToken;
 
   void cancelRequests() {
     _cancelToken.cancel('Network connection lost');
-    _cancelToken = CancelToken(); // reset so new requests can use a fresh token
+    _cancelToken = CancelToken(); 
   }
 
   // Singleton instance

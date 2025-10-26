@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:receipts_v2/helpers/api_helper.dart';
-import 'package:receipts_v2/helpers/sync_operation_helper.dart';
+import 'package:receipts_v2/core/helpers/api_helper.dart';
+import 'package:receipts_v2/core/helpers/sync_operation_helper.dart';
 import 'package:receipts_v2/data/models/room.dart';
 import 'package:receipts_v2/data/models/enum/room_status.dart';
 import 'package:receipts_v2/data/dtos/room_dto.dart';
@@ -317,7 +317,6 @@ class RoomRepository {
     await updateRoom(room);
   }
 
-  // REMOVED: addTenant() and removeTenant() - these will be handled by provider
 
   List<Room> getAllRooms() {
     return List.unmodifiable(_roomCache);

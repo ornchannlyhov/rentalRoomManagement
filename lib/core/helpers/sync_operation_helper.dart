@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:receipts_v2/helpers/api_helper.dart';
+import 'package:receipts_v2/core/helpers/api_helper.dart';
 
 /// Result of a sync operation
 class SyncResult<T> {

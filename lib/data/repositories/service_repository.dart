@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:receipts_v2/helpers/api_helper.dart';
-import 'package:receipts_v2/helpers/sync_operation_helper.dart';
+import 'package:receipts_v2/core/helpers/api_helper.dart';
+import 'package:receipts_v2/core/helpers/sync_operation_helper.dart';
 import 'package:receipts_v2/data/models/service.dart';
 import 'package:receipts_v2/data/dtos/service_dto.dart';
 
@@ -37,7 +37,6 @@ class ServiceRepository {
 
   ServiceRepository();
 
-  /// OPTIMIZED: Uses compute() to parse JSON off the main thread
   Future<void> load() async {
     try {
       // Load services with compute() for better performance
@@ -61,7 +60,6 @@ class ServiceRepository {
     }
   }
 
-  /// OPTIMIZED: Uses compute() to encode JSON off the main thread
   Future<void> save() async {
     try {
       // Only save if there's actual data
@@ -125,7 +123,6 @@ class ServiceRepository {
       }
     }
 
-    // Remove successful changes in reverse order
     for (int i = successfulChanges.length - 1; i >= 0; i--) {
       _pendingChanges.removeAt(successfulChanges[i]);
     }
@@ -149,7 +146,6 @@ class ServiceRepository {
       'endpoint': endpoint,
       'timestamp': DateTime.now().toIso8601String(),
     });
-    // Don't await save here - batch it later
   }
 
   Future<void> createService(Service newService) async {

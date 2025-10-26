@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
-import 'package:receipts_v2/helpers/api_helper.dart';
+import 'package:receipts_v2/core/helpers/api_helper.dart';
 import 'package:receipts_v2/data/dtos/user_dto.dart';
 import 'package:receipts_v2/data/models/user.dart';
 

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:receipts_v2/helpers/app_theme.dart';
+import 'package:receipts_v2/core/theme/app_theme.dart';
 import 'package:receipts_v2/data/models/room.dart';
 
 enum RoomMenuOption {

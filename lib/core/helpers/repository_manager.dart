@@ -4,7 +4,7 @@ import 'package:receipts_v2/data/repositories/room_repository.dart';
 import 'package:receipts_v2/data/repositories/tenant_repository.dart';
 import 'package:receipts_v2/data/repositories/receipt_repository.dart';
 import 'package:receipts_v2/data/repositories/service_repository.dart';
-import 'package:receipts_v2/helpers/data_hydration_helper.dart';
+import 'package:receipts_v2/core/helpers/data_hydration_helper.dart';
 
 enum SyncStatus {
   idle,
@@ -175,26 +175,6 @@ class RepositoryManager {
     } catch (e) {
       rethrow;
     }
-  }
-
-  /// Check if any repository has pending changes
-  bool hasPendingChanges() {
-    return buildingRepository.hasPendingChanges() ||
-        roomRepository.hasPendingChanges() ||
-        serviceRepository.hasPendingChanges() ||
-        tenantRepository.hasPendingChanges() ||
-        receiptRepository.hasPendingChanges() ||
-        reportRepository.hasPendingChanges();
-  }
-
-  /// Get count of pending changes across all repositories
-  int getPendingChangesCount() {
-    return buildingRepository.getPendingChangesCount() +
-        roomRepository.getPendingChangesCount() +
-        serviceRepository.getPendingChangesCount() +
-        tenantRepository.getPendingChangesCount() +
-        receiptRepository.getPendingChangesCount() +
-        reportRepository.getPendingChangesCount();
   }
 
 }

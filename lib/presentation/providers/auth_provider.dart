@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:receipts_v2/helpers/asyn_value.dart';
+import 'package:receipts_v2/core/helpers/asyn_value.dart';
 import 'package:receipts_v2/data/models/user.dart';
 import 'package:receipts_v2/data/repositories/auth_repository.dart';
-import 'package:receipts_v2/helpers/repository_manager.dart';
+import 'package:receipts_v2/core/helpers/repository_manager.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthRepository _repository;

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:receipts_v2/helpers/api_helper.dart';
-import 'package:receipts_v2/helpers/sync_operation_helper.dart';
+import 'package:receipts_v2/core/helpers/api_helper.dart';
+import 'package:receipts_v2/core/helpers/sync_operation_helper.dart';
 import 'package:receipts_v2/data/models/tenant.dart';
 import 'package:receipts_v2/data/models/enum/gender.dart';
 import 'package:receipts_v2/data/dtos/tenant_dto.dart';
@@ -84,7 +84,6 @@ class TenantRepository {
   List<Tenant> _tenantCache = [];
   List<Map<String, dynamic>> _pendingChanges = [];
 
-  /// OPTIMIZED: Uses compute() to parse JSON off the main thread
   Future<void> load() async {
     try {
       // Load tenants with compute() for better performance
@@ -108,7 +107,6 @@ class TenantRepository {
     }
   }
 
-  /// OPTIMIZED: Uses compute() to encode JSON off the main thread
   Future<void> save() async {
     try {
       // Only save if there's actual data
@@ -229,7 +227,6 @@ class TenantRepository {
       'endpoint': endpoint,
       'timestamp': DateTime.now().toIso8601String(),
     });
-    // Don't await save here - batch it later
   }
 
   Future<void> createTenant(Tenant newTenant) async {
@@ -317,7 +314,6 @@ class TenantRepository {
         if (index != -1) {
           final tenant = _tenantCache[index];
           if (tenant.room != null) {
-            // Note: Back reference update would require RoomRepository access
           }
           _tenantCache.removeAt(index);
         }

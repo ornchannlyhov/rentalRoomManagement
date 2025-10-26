@@ -6,8 +6,8 @@ import 'package:receipts_v2/data/models/tenant.dart';
 import 'package:receipts_v2/data/models/enum/room_status.dart';
 import 'package:receipts_v2/data/repositories/room_repository.dart';
 import 'package:receipts_v2/data/repositories/tenant_repository.dart';
-import 'package:receipts_v2/helpers/repository_manager.dart';
-import 'package:receipts_v2/helpers/asyn_value.dart';
+import 'package:receipts_v2/core/helpers/repository_manager.dart';
+import 'package:receipts_v2/core/helpers/asyn_value.dart';
 
 class RoomProvider with ChangeNotifier {
   final RoomRepository _roomRepository;

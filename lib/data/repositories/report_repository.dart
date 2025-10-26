@@ -4,8 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:receipts_v2/data/models/enum/report_priority.dart';
 import 'package:receipts_v2/data/models/enum/report_status.dart';
-import 'package:receipts_v2/helpers/api_helper.dart';
-import 'package:receipts_v2/helpers/sync_operation_helper.dart';
+import 'package:receipts_v2/core/helpers/api_helper.dart';
+import 'package:receipts_v2/core/helpers/sync_operation_helper.dart';
 import 'package:receipts_v2/data/models/report.dart';
 import 'package:receipts_v2/data/dtos/report_dto.dart';
 
@@ -46,10 +46,8 @@ class ReportRepository {
 
   ReportRepository();
 
-  /// OPTIMIZED: Uses compute() to parse JSON off the main thread
   Future<void> load() async {
     try {
-      // Load reports with compute() for better performance
       final jsonString = await _apiHelper.storage.read(key: storageKey);
       if (jsonString != null && jsonString.isNotEmpty) {
         _reportCache = await compute(_parseReports, jsonString);
@@ -57,7 +55,6 @@ class ReportRepository {
         _reportCache = [];
       }
 
-      // Load pending changes with compute()
       final pendingString =
           await _apiHelper.storage.read(key: pendingChangesKey);
       if (pendingString != null && pendingString.isNotEmpty) {
@@ -70,7 +67,6 @@ class ReportRepository {
     }
   }
 
-  /// OPTIMIZED: Uses compute() to encode JSON off the main thread
   Future<void> save() async {
     try {
       // Only save if there's actual data
@@ -133,7 +129,6 @@ class ReportRepository {
       }
     }
 
-    // Remove successful changes in reverse order
     for (int i = successfulChanges.length - 1; i >= 0; i--) {
       _pendingChanges.removeAt(successfulChanges[i]);
     }
@@ -157,7 +152,6 @@ class ReportRepository {
       'endpoint': endpoint,
       'timestamp': DateTime.now().toIso8601String(),
     });
-    // Don't await save here - batch it later
   }
 
   Future<Report> createReport(Report newReport) async {

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:receipts_v2/helpers/api_helper.dart';
-import 'package:receipts_v2/helpers/sync_operation_helper.dart';
+import 'package:receipts_v2/core/helpers/api_helper.dart';
+import 'package:receipts_v2/core/helpers/sync_operation_helper.dart';
 import 'package:receipts_v2/data/models/building.dart';
 import 'package:receipts_v2/data/dtos/building_dto.dart';
 
@@ -147,7 +147,6 @@ class BuildingRepository {
     });
   }
 
-  // UPDATED: Only creates the building, no room creation logic
   Future<Building> createBuilding(Building newBuilding) async {
     final requestData = {
       'name': newBuilding.name,
@@ -210,7 +209,6 @@ class BuildingRepository {
     await save();
   }
 
-  // UPDATED: Only deletes building from cache
   Future<void> deleteBuilding(String buildingId) async {
     await _syncHelper.delete(
       endpoint: '/buildings/$buildingId',
@@ -228,7 +226,6 @@ class BuildingRepository {
     await save();
   }
 
-  // UPDATED: Only restores building to cache
   Future<void> restoreBuilding(int restoreIndex, Building building) async {
     _buildingCache.insert(restoreIndex, building);
     await save();

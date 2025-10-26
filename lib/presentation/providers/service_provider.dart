@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:receipts_v2/data/models/service.dart';
 import 'package:receipts_v2/data/repositories/service_repository.dart';
-import 'package:receipts_v2/helpers/repository_manager.dart';
-import 'package:receipts_v2/helpers/asyn_value.dart';
+import 'package:receipts_v2/core/helpers/repository_manager.dart';
+import 'package:receipts_v2/core/helpers/asyn_value.dart';
 
 class ServiceProvider with ChangeNotifier {
   final ServiceRepository _serviceRepository;

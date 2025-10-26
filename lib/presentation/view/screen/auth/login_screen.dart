@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:receipts_v2/data/repositories/auth_repository.dart';
-import 'package:receipts_v2/helpers/api_helper.dart';
-import 'package:receipts_v2/helpers/repository_manager.dart';
+import 'package:receipts_v2/core/helpers/api_helper.dart';
+import 'package:receipts_v2/core/helpers/repository_manager.dart';
 import 'package:receipts_v2/presentation/providers/auth_provider.dart';
 import 'package:receipts_v2/presentation/view/screen/auth/widget/custom_text_feild.dart';
 
