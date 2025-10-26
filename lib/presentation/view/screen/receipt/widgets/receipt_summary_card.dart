@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:receipts_v2/data/models/enum/payment_status.dart';
@@ -7,7 +6,8 @@ import 'package:receipts_v2/presentation/providers/building_provider.dart';
 import 'package:receipts_v2/presentation/view/app_widgets/building_filter_dropdown.dart';
 
 class ReceiptSummaryCard extends StatelessWidget {
-  const ReceiptSummaryCard({super.key, 
+  const ReceiptSummaryCard({
+    super.key,
     required this.receipts,
     required this.buildings,
     required this.selectedBuildingId,
@@ -38,6 +38,14 @@ class ReceiptSummaryCard extends StatelessWidget {
     return receipts.where((receipt) => receipt.paymentStatus == status).length;
   }
 
+  // Helper method to filter receipts for current month
+  List<Receipt> _filterReceiptsForCurrentMonth(List<Receipt> receipts) {
+    final now = DateTime.now();
+    return receipts.where((receipt) {
+      return receipt.date.year == now.year && receipt.date.month == now.month;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -45,12 +53,14 @@ class ReceiptSummaryCard extends StatelessWidget {
     final currentMonth = DateTime.now().month;
     final thisMonth = getKhmerMonth(currentMonth);
 
-    // Filter receipts by selected building if _selectedBuildingId is not null
+    // First filter by current month, then by selected building if needed
+    final currentMonthReceipts = _filterReceiptsForCurrentMonth(receipts);
+
     final filteredReceipts = selectedBuildingId != null
-        ? receipts
+        ? currentMonthReceipts
             .where((r) => r.room?.building?.id == selectedBuildingId)
             .toList()
-        : receipts;
+        : currentMonthReceipts;
 
     final totalRooms = selectedBuildingId != null
         ? _countRoomsInBuilding(
@@ -210,7 +220,8 @@ class ReceiptSummaryCard extends StatelessWidget {
                                   child: CircularProgressIndicator(
                                     value: progress.clamp(0.0, 1.0),
                                     strokeWidth: 3,
-                                    backgroundColor: theme.colorScheme.outline.withOpacity(0.1),
+                                    backgroundColor: theme.colorScheme.outline
+                                        .withOpacity(0.1),
                                     valueColor: AlwaysStoppedAnimation<Color>(
                                       colorScheme.primary,
                                     ),

@@ -104,7 +104,7 @@ class ReceiptRepository {
     this._tenantRepository,
   );
 
-  // UPDATED: Remove hydration from load()
+  // Remove hydration from load()
   Future<void> load() async {
     final jsonString = await _secureStorage.read(key: storageKey);
     if (jsonString != null && jsonString.isNotEmpty) {
@@ -239,6 +239,130 @@ class ReceiptRepository {
       'endpoint': endpoint,
       'timestamp': DateTime.now().toIso8601String(),
     });
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchCurrentMonthUsage() async {
+    final token = await _secureStorage.read(key: 'auth_token');
+    if (token == null) return [];
+
+    try {
+      final response = await _apiHelper.dio.get(
+        '${_apiHelper.baseUrl}/usage/current-month',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+        cancelToken: _apiHelper.cancelToken,
+      );
+
+      if (response.data['cancelled'] == true) return [];
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return List<Map<String, dynamic>>.from(response.data['data']);
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<int> generateReceiptsFromUsage({
+    Future<Uint8List?> Function(Receipt)? createImage,
+  }) async {
+    final usageData = await _fetchCurrentMonthUsage();
+    if (usageData.isEmpty) return 0;
+
+    int generatedCount = 0;
+    final now = DateTime.now();
+    final lastMonth = now.month == 1 ? 12 : now.month - 1;
+    final yearOfLastMonth = now.month == 1 ? now.year - 1 : now.year;
+    final lastMonthReceipts = getReceiptsByMonth(yearOfLastMonth, lastMonth);
+
+    // Track rooms that already have receipts for current month
+    final currentMonthReceipts = getReceiptsForCurrentMonth();
+    final roomsWithReceipts = currentMonthReceipts
+        .map((r) => r.room?.roomNumber)
+        .where((rn) => rn != null)
+        .toSet();
+
+    for (var usage in usageData) {
+      try {
+        final String roomNumber = usage['roomNumber']?.toString() ?? '';
+        if (roomNumber.isEmpty) continue;
+
+        // Skip if receipt already exists for this room this month
+        if (roomsWithReceipts.contains(roomNumber)) continue;
+
+        final room = _roomRepository.getAllRooms().firstWhere(
+              (r) => r.roomNumber == roomNumber,
+              orElse: () => throw Exception('Room $roomNumber not found'),
+            );
+
+        final lastReceipt = lastMonthReceipts.firstWhere(
+          (r) => r.room?.roomNumber == roomNumber,
+          orElse: () => Receipt(
+            id: '',
+            date: DateTime.now(),
+            dueDate: DateTime.now(),
+            lastWaterUsed: 0,
+            lastElectricUsed: 0,
+            thisWaterUsed: 0,
+            thisElectricUsed: 0,
+            paymentStatus: PaymentStatus.pending,
+          ),
+        );
+
+        // Use services from last month's receipt
+        List<Service> servicesForReceipt;
+
+        if (lastReceipt.id.isNotEmpty && lastReceipt.services.isNotEmpty) {
+          // Use services from last month's receipt
+          servicesForReceipt = List<Service>.from(lastReceipt.services);
+        } else {
+          // Fallback: If no last receipt, get all building services
+          servicesForReceipt = [];
+        }
+
+        int parseUsage(dynamic value) {
+          if (value == null) return 0;
+          if (value is int) return value;
+          if (value is double) return value.toInt();
+          if (value is String) {
+            return double.tryParse(value)?.toInt() ?? 0;
+          }
+          return 0;
+        }
+
+        final int thisWater = parseUsage(usage['waterUsage']);
+        final int thisElectric = parseUsage(usage['electricityUsage']);
+
+        final newReceipt = Receipt(
+          id: 'temp_${DateTime.now().millisecondsSinceEpoch}_$roomNumber',
+          date: now,
+          dueDate: DateTime(now.year, now.month + 1, 5),
+          lastWaterUsed: lastReceipt.thisWaterUsed,
+          lastElectricUsed: lastReceipt.thisElectricUsed,
+          thisWaterUsed: thisWater,
+          thisElectricUsed: thisElectric,
+          paymentStatus: PaymentStatus.pending,
+          room: room,
+          services: servicesForReceipt,
+        );
+
+        Uint8List? imageBytes;
+        if (createImage != null) {
+          try {
+            imageBytes = await createImage(newReceipt);
+          } catch (e) {
+            imageBytes = null;
+          }
+        }
+
+        await createReceipt(newReceipt, receiptImage: imageBytes);
+        generatedCount++;
+      } catch (e) {
+        continue;
+      }
+    }
+
+    return generatedCount;
   }
 
   Future<void> createReceipt(Receipt newReceipt,

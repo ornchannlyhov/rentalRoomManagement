@@ -34,6 +34,7 @@ void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     if (task == "generate-monthly-receipts") {
       try {
+        await dotenv.load(fileName: ".env");
         NotificationService.initialize();
 
         final roomRepository = RoomRepository();
@@ -48,6 +49,7 @@ void callbackDispatcher() {
         );
         final reportRepository = ReportRepository();
 
+        // Load all data
         await Future.wait([
           serviceRepository.load(),
           roomRepository.load(),
@@ -57,15 +59,32 @@ void callbackDispatcher() {
           reportRepository.load(),
         ]);
 
-        await NotificationService.showNotification(
-          'Receipts Generated',
-          'New monthly receipts have been successfully created.',
-        );
+        // Generate receipts without images (background mode)
+        final generatedCount =
+            await receiptRepository.generateReceiptsFromUsage();
+
+        // Save all changes
+        await Future.wait([
+          receiptRepository.save(),
+          serviceRepository.save(),
+          roomRepository.save(),
+          buildingRepository.save(),
+          tenantRepository.save(),
+          reportRepository.save(),
+        ]);
+
+        if (generatedCount > 0) {
+          await NotificationService.showNotification(
+            'Receipts Generated',
+            '$generatedCount new receipts created.',
+          );
+        }
+
         return Future.value(true);
       } catch (e) {
         await NotificationService.showNotification(
           'Receipt Generation Failed',
-          'There was an error creating new receipts.',
+          'Error: ${e.toString()}',
         );
         return Future.value(false);
       }
@@ -80,15 +99,58 @@ Future<void> initializeBackgroundTasks() async {
     isInDebugMode: false,
   );
 
+  // Cancel any existing tasks first
+  await Workmanager().cancelAll();
+
+  // Schedule 9 AM task
   await Workmanager().registerPeriodicTask(
-    "generate-receipts-task",
+    "generate-receipts-9am",
     "generate-monthly-receipts",
-    frequency: const Duration(days: 30),
-    initialDelay: const Duration(minutes: 15),
+    frequency: const Duration(hours: 12),
+    initialDelay: _calculateNextScheduledTime(9),
     constraints: Constraints(
       networkType: NetworkType.connected,
     ),
+    tag: "morning-receipts",
   );
+
+  // Schedule 4 PM task
+  await Workmanager().registerPeriodicTask(
+    "generate-receipts-4pm",
+    "generate-monthly-receipts",
+    frequency: const Duration(hours: 12),
+    initialDelay: _calculateNextScheduledTime(16),
+    constraints: Constraints(
+      networkType: NetworkType.connected,
+    ),
+    tag: "afternoon-receipts",
+  );
+}
+
+/// Calculate delay until next scheduled hour
+Duration _calculateNextScheduledTime(int targetHour) {
+  final now = DateTime.now();
+  DateTime scheduledTime = DateTime(
+    now.year,
+    now.month,
+    now.day,
+    targetHour,
+    0,
+  );
+
+  // If target time has passed today, schedule for tomorrow
+  if (now.hour >= targetHour) {
+    scheduledTime = scheduledTime.add(const Duration(days: 1));
+  }
+
+  final delay = scheduledTime.difference(now);
+
+  //If the delay is negative push it to tomorrow.
+  if (delay.isNegative) {
+    scheduledTime = scheduledTime.add(const Duration(days: 1));
+    return scheduledTime.difference(now);
+  }
+  return delay;
 }
 
 Future<void> main() async {

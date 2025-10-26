@@ -60,14 +60,13 @@ class _ReceiptScreenState extends State<ReceiptScreen>
     // Use context.read inside a method as it's a one-time call
     final receiptProvider = context.read<ReceiptProvider>();
     final buildingProvider = context.read<BuildingProvider>();
-    final roomProvider = context.read<RoomProvider>(); 
-    final serviceProvider =
-        context.read<ServiceProvider>(); 
+    final roomProvider = context.read<RoomProvider>();
+    final serviceProvider = context.read<ServiceProvider>();
 
     await Future.wait([
       receiptProvider.load(),
       buildingProvider.load(),
-      roomProvider.load(), 
+      roomProvider.load(),
       serviceProvider.load(),
     ]);
 
@@ -397,8 +396,22 @@ class _ReceiptAppBar extends StatelessWidget implements PreferredSizeWidget {
       iconTheme: IconThemeData(color: iconColor),
       actions: [
         IconButton(
+          icon: Icon(Icons.autorenew, color: iconColor),
+          tooltip: 'Generate Monthly Receipts',
+          onPressed: () async {
+            final provider = context.read<ReceiptProvider>();
+            await provider.generateMonthlyReceipts();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Receipts generated!'),
+              ),
+            );
+          },
+        ),
+        IconButton(
           icon: Icon(Icons.add, color: iconColor),
           onPressed: onAddPressed,
+          tooltip: 'Add Receipt',
         ),
         const SizedBox(width: 8),
       ],
