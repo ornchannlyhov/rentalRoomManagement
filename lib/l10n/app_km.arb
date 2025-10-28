@@ -1,0 +1,141 @@
+{
+  "@@locale": "km",
+  "receiptTab": "វិក្កយបត្រ",
+  "historyTab": "ទិន្នន័យចាស់",
+  "buildingTab": "អគារ",
+  "tenantTab": "អ្នកជួល",
+  "settingsTab": "ការកំណត់",
+  "detailedAnalysis": "ការវិភាគលម្អិត",
+  "moneyTab": "ប្រាក់",
+  "buildingAnalysisTab": "អគារ",
+  "welcomeBack": "Welcome Back",
+  "signInPrompt": "Sign in to your account",
+  "emailLabel": "Email",
+  "emailHint": "Enter your email",
+  "passwordLabel": "Password",
+  "passwordHint": "Enter your password",
+  "loginButton": "Login",
+  "noAccount": "Don't have an account?",
+  "registerLink": "Register",
+  "createAccount": "Create Account",
+  "signUpPrompt": "Sign up to get started",
+  "fullNameLabel": "Full Name",
+  "fullNameHint": "Enter your full name",
+  "registerButton": "Register",
+  "haveAccount": "Already have an account?",
+  "loginLink": "Login",
+  "buildingsTitle": "អគារ",
+  "searchBuildingHint": "ស្វែងរកអគារ...",
+  "confirmDelete": "បញ្ជាក់ការលុប",
+  "deleteConfirmMsg": "តើអ្នកពិតជាចង់លុបអគារ {building} មែនទេ?",
+  "cancel": "បោះបង់",
+  "delete": "លុប",
+  "buildingDeleted": "អគារ {building} ត្រូវបានលុបជោគជ័យ",
+  "deleteFailed": "បរាជ័យក្នុងការលុបអគារ: {error}",
+  "noBuildings": "មិនមានអគារ",
+  "noBuildingsSearch": "រកមិនឃើញអគារ",
+  "addNewBuildingHint": "សូមចុចប៊ូតុង + ដើម្បីបន្ថែមអគារថ្មី",
+  "tryDifferentKeyword": "សូមព្យាយាមស្វែងរកជាមួយពាក្យគន្លឹះផ្សេង",
+  "oldDataTitle": "ទិន្នន័យចាស់",
+  "searchReceiptHint": "ស្វែងរកបង្កាន់ដៃ...",
+  "paidStatus": "បានបង់ប្រាក់",
+  "pendingStatus": "មិនទាន់បង់ប្រាក់",
+  "overdueStatus": "ហួសកំណត់",
+  "viewDetail": "មើលលម្អិត",
+  "share": "ចែករំលែក",
+  "edit": "កែប្រែ",
+  "deleteOption": "លុប",
+  "undo": "មិនធ្វើវិញ",
+  "receiptTitle": "វិក្កយបត្រ",
+  "noReceipts": "មិនមានវិក្កយបត្រ",
+  "loading": "កំពុងដំណើការ...",
+  "settingsTitle": "ការកំណត់",
+  "accountSettings": "Account Settings",
+  "privacySecurity": "Privacy, security, change password",
+  "subscriptions": "Subscriptions",
+  "plansPayments": "Plans, payment methods",
+  "appearance": "Appearance",
+  "darkMode": "Dark mode",
+  "lightMode": "Light mode",
+  "systemDefault": "System default",
+  "language": "Language",
+  "helpSupport": "Help & Support",
+  "faqContact": "FAQs, contact us",
+  "about": "About",
+  "version": "Version 1.2.3",
+  "signOut": "Sign Out",
+  "signOutConfirm": "Are you sure you want to sign out?",
+  "selectLanguage": "Select Language",
+  "premiumMember": "Premium Member",
+  "tenantsTitle": "អ្នកជួល",
+  "searchTenantHint": "ស្វែងរកអ្នកជួល...",
+  "tenantAdded": "បានបន្ថែមអ្នកជួល {tenant} ដោយជោគជ័យ",
+  "tenantAddFailed": "មានបញ្ហាក្នុងការបន្ថែមអ្នកជួល",
+  "tenantUpdated": "បានកែប្រែព័ត៌មានអ្នកជួល {tenant} ដោយជោគជ័យ",
+  "tenantUpdateFailed": "មានបញ្ហាក្នុងការកែប្រែព័ត៌មាន",
+  "tenantDeleted": "បានលុបអ្នកជួល {tenant}",
+  "tenantDeleteFailed": "មានបញ្ហាក្នុងការលុបអ្នកជួល",
+  "roomChanged": "បានផ្លាស់ប្តូរបន្ទប់សម្រាប់ {tenant} ទៅបន្ទប់ {room}",
+  "roomChangeFailed": "មានបញ្ហាក្នុងការត្រឡប់វិញ",
+  "retryLoadingProfile": "ព្យាយាមផ្ទុកប្រវត្តិឡើងវិញ",
+  "noLoggedIn": "អ្នកមិនបានចូលគណនីទេ។",
+  "goToOnboarding": "ទៅកាន់ទំព័រណែនាំ",
+  "unknownUser": "អ្នកប្រើដែលមិនស្គាល់",
+  "noEmailProvided": "មិនមានអ៊ីមែលផ្តល់ឱ្យ",
+  "editProfileTapped": "បានចុចកែប្រែប្រវត្តិ",
+  "signOutSuccess": "ចេញពីប្រព័ន្ធដោយជោគជ័យ!",
+  "signOutFailed": "បរាជ័យក្នុងការចេញពីប្រព័ន្ធ",
+  "confirmPasswordLabel": "បញ្ជាក់លេខសម្ងាត់",
+  "confirmPasswordHint": "បញ្ជាក់លេខសម្ងាត់របស់អ្នក",
+  "manageBuildings": "គ្រប់គ្រងអគារ និងបន្ទប់",
+  "manageBuildingsDesc": "គ្រប់គ្រងអគារ បន្ទប់ និងសេវាកម្មរបស់អ្នកយ៉ាងងាយស្រួលជាមួយផ្ទាំងគ្រប់គ្រងរបស់យើង។",
+  "tenantManagement": "ការគ្រប់គ្រងអ្នកជួល",
+  "tenantManagementDesc": "ចាត់ចែងអ្នកជួល និងធ្វើឱ្យស្វ័យប្រវត្តិវិក្កយបត្រដោយការប៉ះប៉ះបន្តិចប៉ុណ្ណោះ។",
+  "paymentTracking": "ការតាមដានការទូទាត់",
+  "paymentTrackingDesc": "តាមដានការទូទាត់យ៉ាងងាយស្រួល - ស្ថានភាពរង់ចាំ បានបង់ និងហួសកំណត់ក្នុងពេលឡើង។",
+  "automationTools": "ឧបករណ៍ធ្វើឱ្យស្វ័យប្រវត្តិ",
+  "automationToolsDesc": "ធ្វើឱ្យការងារស្វ័យប្រវត្តិជាមួយការរំលឹកប៊ូត Telegram និងការបញ្ចូលឧបករណ៍។",
+  "@deleteConfirmMsg": {
+    "description": "Confirmation message for deleting a building",
+    "placeholders": {
+      "building": {}
+    }
+  },
+  "@buildingDeleted": {
+    "description": "Success message after deleting a building",
+    "placeholders": {
+      "building": {}
+    }
+  },
+  "@deleteFailed": {
+    "description": "Error message when building deletion fails",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@tenantAdded": {
+    "description": "Success message after adding a tenant",
+    "placeholders": {
+      "tenant": {}
+    }
+  },
+  "@tenantUpdated": {
+    "description": "Success message after updating a tenant",
+    "placeholders": {
+      "tenant": {}
+    }
+  },
+  "@tenantDeleted": {
+    "description": "Success message after deleting a tenant",
+    "placeholders": {
+      "tenant": {}
+    }
+  },
+  "@roomChanged": {
+    "description": "Message when a tenant's room is changed",
+    "placeholders": {
+      "tenant": {},
+      "room": {}
+    }
+  }
+}

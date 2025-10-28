@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/data/repositories/report_repository.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
@@ -26,6 +27,9 @@ import 'package:joul_v2/core/helper_widgets/splash_screen.dart';
 import 'core/theme/app_theme.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'dart:async';
+
+// Localization
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -228,12 +232,30 @@ class _MyAppState extends State<MyApp> {
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
+          // Wait for locale + theme to load before showing the app
+          if (!themeProvider.isInitialized) {
+            return const MaterialApp(
+              debugShowCheckedModeBanner: false,
+              home: Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              ),
+            );
+          }
+
           return MaterialApp(
             title: 'Receipts',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
+            locale: themeProvider.locale,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
             home: _showSplash ? const SplashScreen() : const AuthWrapper(),
             routes: {
               '/onboarding': (context) => const OnboardingScreen(),

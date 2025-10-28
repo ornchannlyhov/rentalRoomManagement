@@ -1,0 +1,141 @@
+{
+  "@@locale": "en",
+  "receiptTab": "Receipts",
+  "historyTab": "Old Data",
+  "buildingTab": "Buildings",
+  "tenantTab": "Tenants",
+  "settingsTab": "Settings",
+  "detailedAnalysis": "Detailed Analysis",
+  "moneyTab": "Money",
+  "buildingAnalysisTab": "Building",
+  "welcomeBack": "Welcome Back",
+  "signInPrompt": "Sign in to your account",
+  "emailLabel": "Email",
+  "emailHint": "Enter your email",
+  "passwordLabel": "Password",
+  "passwordHint": "Enter your password",
+  "loginButton": "Login",
+  "noAccount": "Don't have an account?",
+  "registerLink": "Register",
+  "createAccount": "Create Account",
+  "signUpPrompt": "Sign up to get started",
+  "fullNameLabel": "Full Name",
+  "fullNameHint": "Enter your full name",
+  "registerButton": "Register",
+  "haveAccount": "Already have an account?",
+  "loginLink": "Login",
+  "buildingsTitle": "Buildings",
+  "searchBuildingHint": "Search building...",
+  "confirmDelete": "Confirm Delete",
+  "deleteConfirmMsg": "Are you sure you want to delete building {building}?",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "buildingDeleted": "Building {building} deleted successfully",
+  "deleteFailed": "Failed to delete building: {error}",
+  "noBuildings": "No buildings",
+  "noBuildingsSearch": "No buildings found",
+  "addNewBuildingHint": "Tap + to add a new building",
+  "tryDifferentKeyword": "Try a different keyword",
+  "oldDataTitle": "Old Data",
+  "searchReceiptHint": "Search receipts...",
+  "paidStatus": "Paid",
+  "pendingStatus": "Pending",
+  "overdueStatus": "Overdue",
+  "viewDetail": "View Details",
+  "share": "Share",
+  "edit": "Edit",
+  "deleteOption": "Delete",
+  "undo": "Undo",
+  "receiptTitle": "Receipts",
+  "noReceipts": "No receipts",
+  "loading": "Loading...",
+  "settingsTitle": "Settings",
+  "accountSettings": "Account Settings",
+  "privacySecurity": "Privacy, security, change password",
+  "subscriptions": "Subscriptions",
+  "plansPayments": "Plans, payment methods",
+  "appearance": "Appearance",
+  "darkMode": "Dark mode",
+  "lightMode": "Light mode",
+  "systemDefault": "System default",
+  "language": "Language",
+  "helpSupport": "Help & Support",
+  "faqContact": "FAQs, contact us",
+  "about": "About",
+  "version": "Version 1.2.3",
+  "signOut": "Sign Out",
+  "signOutConfirm": "Are you sure you want to sign out?",
+  "selectLanguage": "Select Language",
+  "premiumMember": "Premium Member",
+  "tenantsTitle": "Tenants",
+  "searchTenantHint": "Search tenant...",
+  "tenantAdded": "Tenant {tenant} added successfully",
+  "tenantAddFailed": "Error adding tenant",
+  "tenantUpdated": "Tenant {tenant} updated successfully",
+  "tenantUpdateFailed": "Error updating tenant",
+  "tenantDeleted": "Tenant {tenant} deleted",
+  "tenantDeleteFailed": "Error deleting tenant",
+  "roomChanged": "Room for {tenant} changed to {room}",
+  "roomChangeFailed": "Error undoing room change",
+  "retryLoadingProfile": "Retry Loading Profile",
+  "noLoggedIn": "You are not logged in.",
+  "goToOnboarding": "Go to Onboarding",
+  "unknownUser": "Unknown User",
+  "noEmailProvided": "No Email Provided",
+  "editProfileTapped": "Edit profile tapped",
+  "signOutSuccess": "Signed out successfully!",
+  "signOutFailed": "Failed to sign out",
+  "confirmPasswordLabel": "Confirm Password",
+  "confirmPasswordHint": "Confirm your password",
+  "manageBuildings": "Manage Buildings & Rooms",
+  "manageBuildingsDesc": "Manage your buildings, rooms, and services easily with our intuitive interface.",
+  "tenantManagement": "Tenant Management",
+  "tenantManagementDesc": "Assign tenants and automate receipts with just a few taps.",
+  "paymentTracking": "Payment Tracking",
+  "paymentTrackingDesc": "Track payments easily - Pending, Paid, and Overdue status at a glance.",
+  "automationTools": "Automation Tools",
+  "automationToolsDesc": "Automate work with Telegram bot reminders and utilities input.",
+  "@deleteConfirmMsg": {
+    "description": "Confirmation message for deleting a building",
+    "placeholders": {
+      "building": {}
+    }
+  },
+  "@buildingDeleted": {
+    "description": "Success message after deleting a building",
+    "placeholders": {
+      "building": {}
+    }
+  },
+  "@deleteFailed": {
+    "description": "Error message when building deletion fails",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@tenantAdded": {
+    "description": "Success message after adding a tenant",
+    "placeholders": {
+      "tenant": {}
+    }
+  },
+  "@tenantUpdated": {
+    "description": "Success message after updating a tenant",
+    "placeholders": {
+      "tenant": {}
+    }
+  },
+  "@tenantDeleted": {
+    "description": "Success message after deleting a tenant",
+    "placeholders": {
+      "tenant": {}
+    }
+  },
+  "@roomChanged": {
+    "description": "Message when a tenant's room is changed",
+    "placeholders": {
+      "tenant": {},
+      "room": {}
+    }
+  }
+}
