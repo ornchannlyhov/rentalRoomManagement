@@ -1,0 +1,1 @@
+enum RoomStatus { available, occupied }

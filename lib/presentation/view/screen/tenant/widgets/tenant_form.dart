@@ -1,0 +1,428 @@
+// ignore_for_file: use_build_context_synchronously
+
+import 'package:flutter/material.dart';
+import 'package:intl_phone_field/country_picker_dialog.dart';
+import 'package:provider/provider.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:joul_v2/data/models/enum/gender.dart';
+import 'package:joul_v2/data/models/room.dart';
+import 'package:joul_v2/data/models/tenant.dart';
+import 'package:joul_v2/data/models/enum/mode.dart';
+import 'package:joul_v2/presentation/providers/building_provider.dart';
+import 'package:joul_v2/presentation/providers/room_provider.dart';
+
+class TenantForm extends StatefulWidget {
+  final Mode mode;
+  final Tenant? tenant;
+  final String? selectedBuildingId;
+
+  const TenantForm({
+    super.key,
+    this.mode = Mode.creating,
+    this.tenant,
+    this.selectedBuildingId,
+  });
+
+  @override
+  State<TenantForm> createState() => _TenantFormState();
+}
+
+class _TenantFormState extends State<TenantForm> {
+  final _formKey = GlobalKey<FormState>();
+
+  List<Room> availableRooms = [];
+  List<Room> allRooms = [];
+
+  late String id;
+  late String name;
+  late String phoneNumber;
+  String? selectedRoomId;
+  late Gender gender;
+  String? selectedBuildingId;
+
+  bool get isEditing => widget.mode == Mode.editing;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedBuildingId = widget.selectedBuildingId;
+
+    if (isEditing && widget.tenant != null) {
+      final tenant = widget.tenant!;
+      id = tenant.id;
+      name = tenant.name;
+      phoneNumber = tenant.phoneNumber;
+      selectedRoomId = tenant.room?.id;
+      gender = tenant.gender;
+      if (tenant.room?.building != null) {
+        selectedBuildingId = tenant.room!.building!.id;
+      }
+    } else {
+      id = '';
+      name = '';
+      phoneNumber = '';
+      selectedRoomId = null;
+      gender = Gender.male;
+    }
+
+    // Load rooms after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadRooms();
+    });
+  }
+
+  void _loadRooms() {
+    final roomProvider = context.read<RoomProvider>();
+
+    setState(() {
+      allRooms = roomProvider.roomsState.when(
+        success: (rooms) => rooms,
+        loading: () => [],
+        error: (_) => [],
+      );
+
+      availableRooms = roomProvider.getAvailableRooms();
+
+      // Include the current room in availableRooms if editing
+      if (isEditing && widget.tenant?.room != null) {
+        final currentRoom = allRooms.firstWhere(
+          (room) => room.id == widget.tenant!.room!.id,
+          orElse: () => widget.tenant!.room!,
+        );
+        if (!availableRooms.any((room) => room.id == currentRoom.id)) {
+          availableRooms.add(currentRoom);
+        }
+      }
+
+      // Filter rooms by selected building if provided
+      _filterRoomsByBuilding();
+
+      // Ensure selectedRoomId is valid for the current building filter
+      if (selectedRoomId != null &&
+          selectedBuildingId != null &&
+          !availableRooms.any((room) =>
+              room.id == selectedRoomId &&
+              room.building?.id == selectedBuildingId)) {
+        selectedRoomId = null;
+      }
+    });
+  }
+
+  void _filterRoomsByBuilding() {
+    final roomProvider = context.read<RoomProvider>();
+
+    if (selectedBuildingId != null) {
+      availableRooms = roomProvider
+          .getAvailableRooms()
+          .where((room) => room.building?.id == selectedBuildingId)
+          .toList();
+    } else {
+      availableRooms = roomProvider.getAvailableRooms();
+    }
+
+    // Include current room if editing
+    if (isEditing && widget.tenant?.room != null) {
+      final currentRoom = allRooms.firstWhere(
+        (room) => room.id == widget.tenant!.room!.id,
+        orElse: () => widget.tenant!.room!,
+      );
+      if (!availableRooms.any((room) => room.id == currentRoom.id)) {
+        availableRooms.add(currentRoom);
+      }
+    }
+  }
+
+  void _save() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+
+      // Find the selected room object from the ID
+      Room? selectedRoom;
+      if (selectedRoomId != null) {
+        selectedRoom = allRooms.firstWhere(
+          (room) => room.id == selectedRoomId,
+          orElse: () => availableRooms.firstWhere(
+            (room) => room.id == selectedRoomId,
+          ),
+        );
+      }
+
+      final newTenant = Tenant(
+        id: isEditing ? widget.tenant!.id : DateTime.now().toString(),
+        name: name,
+        phoneNumber: phoneNumber,
+        room: selectedRoom,
+        gender: gender,
+      );
+      Navigator.pop(context, newTenant);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    const fieldSpacing = SizedBox(height: 12);
+    final buildingProvider = context.watch<BuildingProvider>();
+    final roomProvider = context.watch<RoomProvider>();
+
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: theme.colorScheme.surface,
+        title: Text(isEditing ? 'កែប្រែអ្នកជួល' : 'បង្កើតអ្នកជួលថ្មី'),
+        actions: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.cancel),
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: buildingProvider.buildingsState.when(
+          success: (buildings) {
+            return roomProvider.roomsState.when(
+              success: (rooms) {
+                // Update rooms when provider data changes
+                if (allRooms.isEmpty || allRooms.length != rooms.length) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _loadRooms();
+                  });
+                }
+
+                return Form(
+                  key: _formKey,
+                  child: ListView(
+                    children: [
+                      // Building Filter
+                      DropdownButtonFormField<String?>(
+                        value: selectedBuildingId,
+                        items: [
+                          DropdownMenuItem(
+                            value: null,
+                            child: Text(
+                              'ទាំងអស់',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          ...buildings.map((building) => DropdownMenuItem(
+                                value: building.id,
+                                child: Text(
+                                  building.name,
+                                  style: theme.textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              )),
+                        ],
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            selectedBuildingId = newValue;
+                            _filterRoomsByBuilding();
+
+                            // Clear room selection if it doesn't match the new building
+                            if (selectedRoomId != null &&
+                                !availableRooms
+                                    .any((room) => room.id == selectedRoomId)) {
+                              selectedRoomId = null;
+                            }
+                          });
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'ជ្រើសរើសអគារ',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.4),
+                              width: 0.1,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: theme.colorScheme.surface,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                        ),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        dropdownColor: theme.colorScheme.surface,
+                        icon: Icon(
+                          Icons.filter_list,
+                          color: theme.colorScheme.primary,
+                          size: 24,
+                        ),
+                        validator: (value) => null,
+                      ),
+                      fieldSpacing,
+                      // Name Field
+                      TextFormField(
+                        initialValue: name,
+                        decoration: InputDecoration(
+                          labelText: 'ឈ្មោះអ្នកជួល',
+                          labelStyle: theme.textTheme.bodyMedium,
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'សូមបញ្ចូលឈ្មោះអ្នកជួល';
+                          }
+                          return null;
+                        },
+                        onSaved: (value) => name = value!,
+                      ),
+                      fieldSpacing,
+                      // Phone Number Field with Country Picker
+                      IntlPhoneField(
+                        decoration: InputDecoration(
+                          labelText: 'លេខទូរស័ព្ទ',
+                          labelStyle: theme.textTheme.bodyMedium,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                        ),
+                        initialCountryCode: 'KH',
+                        initialValue: phoneNumber.startsWith('+')
+                            ? phoneNumber
+                                .substring(phoneNumber.indexOf(' ') + 1)
+                                .replaceAll(' ', '')
+                            : phoneNumber,
+                        onChanged: (phone) {
+                          phoneNumber = phone.completeNumber;
+                        },
+                        onSaved: (phone) {
+                          if (phone != null) {
+                            phoneNumber = phone.completeNumber;
+                          }
+                        },
+                        validator: (phone) {
+                          if (phone == null || phone.number.isEmpty) {
+                            return 'សូមបញ្ចូលលេខទូរស័ព្ទ';
+                          }
+                          return null;
+                        },
+                        invalidNumberMessage: 'លេខទូរស័ព្ទមិនត្រឹមត្រូវ',
+                        searchText: 'ស្វែងរកប្រទេស',
+                        disableLengthCheck: true,
+                        pickerDialogStyle: PickerDialogStyle(
+                          backgroundColor: theme.colorScheme.surface,
+                          searchFieldInputDecoration: InputDecoration(
+                            labelText: 'ស្វែងរកប្រទេស',
+                            labelStyle: theme.textTheme.bodyMedium,
+                          ),
+                          countryCodeStyle: theme.textTheme.bodyMedium,
+                          countryNameStyle: theme.textTheme.bodyMedium,
+                          listTileDivider: Divider(
+                            color: theme.colorScheme.onSurface.withOpacity(0.1),
+                            height: 1,
+                            thickness: 0.5,
+                          ),
+                          listTilePadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
+                          padding: const EdgeInsets.all(16),
+                          
+                        ),
+                      ),
+                      fieldSpacing,
+                      // Room Dropdown
+                      DropdownButtonFormField<String?>(
+                        value: selectedRoomId,
+                        items: availableRooms.map((room) {
+                          return DropdownMenuItem<String?>(
+                            value: room.id,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('បន្ទប់: ${room.roomNumber}'),
+                                Text('- ${room.building?.name ?? ''}'),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (String? value) {
+                          setState(() {
+                            selectedRoomId = value;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'បន្ទប់',
+                          labelStyle: theme.textTheme.bodyMedium,
+                        ),
+                        validator: (value) =>
+                            value == null ? 'សូមជ្រើសរើសបន្ទប់' : null,
+                      ),
+                      fieldSpacing,
+                      // Gender Selection
+                      DropdownButtonFormField<Gender>(
+                        value: gender,
+                        decoration: InputDecoration(
+                          labelText: 'ភេទ',
+                          labelStyle: theme.textTheme.bodyMedium,
+                        ),
+                        items: Gender.values
+                            .map(
+                              (g) => DropdownMenuItem(
+                                value: g,
+                                child: Text(
+                                  {
+                                    Gender.male: 'បុរស',
+                                    Gender.female: 'នារី',
+                                    Gender.other: 'ផ្សេងៗ',
+                                  }[g]!,
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) => setState(() => gender = value!),
+                        onSaved: (value) => gender = value!,
+                      ),
+                      const SizedBox(height: 24),
+                      // Save Button
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          ElevatedButton(
+                            onPressed: _save,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.colorScheme.primary,
+                              foregroundColor: theme.colorScheme.onPrimary,
+                            ),
+                            child: Text(
+                              isEditing ? 'កែប្រអ្នកជួល' : 'បង្កើតអ្នកជួល',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error) => Center(
+                child: Text(
+                  'មានបញ្ហាក្នុងការផ្ទុកបន្ទប់: $error',
+                  style: theme.textTheme.titleMedium,
+                ),
+              ),
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error) => Center(
+            child: Text(
+              'មានបញ្ហាក្នុងការផ្ទុកអគារ: $error',
+              style: theme.textTheme.titleMedium,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
