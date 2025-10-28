@@ -5,9 +5,10 @@ import 'package:receipts_v2/helpers/api_helper.dart';
 import 'package:receipts_v2/helpers/repository_manager.dart';
 import 'package:receipts_v2/presentation/providers/auth_provider.dart';
 import 'package:receipts_v2/presentation/view/screen/auth/widget/custom_text_feild.dart';
+import 'package:receipts_v2/l10n/app_localizations.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  const RegisterScreen({super.key}); // REMOVED setLocale parameter
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -33,6 +34,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -51,9 +53,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Create Account',
-                  style: TextStyle(
+                Text(
+                  localizations.createAccount,
+                  style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1F2937),
@@ -61,7 +63,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sign up to get started',
+                  localizations.signUpPrompt,
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey.shade600,
@@ -70,12 +72,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 48),
                 CustomTextField(
                   controller: _nameController,
-                  label: 'Full Name',
-                  hintText: 'Enter your full name',
+                  label: localizations.fullNameLabel,
+                  hintText: localizations.fullNameHint,
                   prefixIcon: Icons.person_outline,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your name';
+                      return localizations.fullNameHint;
                     }
                     return null;
                   },
@@ -83,13 +85,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _emailController,
-                  label: 'Email',
-                  hintText: 'Enter your email',
+                  label: localizations.emailLabel,
+                  hintText: localizations.emailHint,
                   prefixIcon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
+                      return localizations.emailHint;
                     }
                     if (!value.contains('@')) {
                       return 'Please enter a valid email';
@@ -100,8 +102,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _passwordController,
-                  label: 'Password',
-                  hintText: 'Enter your password',
+                  label: localizations.passwordLabel,
+                  hintText: localizations.passwordHint,
                   prefixIcon: Icons.lock_outline,
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
@@ -119,7 +121,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
+                      return localizations.passwordHint;
                     }
                     if (value.length < 6) {
                       return 'Password must be at least 6 characters';
@@ -130,8 +132,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _confirmPasswordController,
-                  label: 'Confirm Password',
-                  hintText: 'Confirm your password',
+                  label: localizations.confirmPasswordLabel, 
+                  hintText: localizations.confirmPasswordHint, 
                   prefixIcon: Icons.lock_outline,
                   obscureText: _obscureConfirmPassword,
                   suffixIcon: IconButton(
@@ -149,10 +151,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
+                      return 'Please confirm your password'; // TODO: Add to .arb if needed
                     }
                     if (value != _passwordController.text) {
-                      return 'Passwords do not match';
+                      return 'Passwords do not match'; // TODO: Add to .arb if needed
                     }
                     return null;
                   },
@@ -185,9 +187,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       Colors.white),
                                 ),
                               )
-                            : const Text(
-                                'Register',
-                                style: TextStyle(
+                            : Text(
+                                localizations.registerButton,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -226,7 +228,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Already have an account? ",
+                      localizations.haveAccount,
                       style: TextStyle(
                         color: Colors.grey.shade600,
                         fontSize: 14,
@@ -236,9 +238,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onTap: () {
                         Navigator.pushReplacementNamed(context, '/login');
                       },
-                      child: const Text(
-                        'Login',
-                        style: TextStyle(
+                      child: Text(
+                        localizations.loginLink,
+                        style: const TextStyle(
                           color: Color(0xFF10B981),
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -273,13 +275,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           loading: () {},
           success: (user) async {
             if (user != null && authProvider.isAuthenticated()) {
-              // Sync data for the new user
               if (await ApiHelper.instance.hasNetwork()) {
                 await repositoryManager.syncAll();
               }
 
               Navigator.pushNamedAndRemoveUntil(
-                // ignore: use_build_context_synchronously
                 context,
                 '/home',
                 (route) => false,

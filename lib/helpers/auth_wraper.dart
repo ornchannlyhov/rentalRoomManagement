@@ -1,7 +1,5 @@
-// ignore_for_file: use_build_context_synchronously
 
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
@@ -22,7 +20,7 @@ import 'package:receipts_v2/presentation/view/screen/setting/profile_screen.dart
 import 'package:receipts_v2/presentation/view/screen/tenant/tenant_screen.dart';
 
 class AuthWrapper extends StatefulWidget {
-  const AuthWrapper({super.key});
+  const AuthWrapper({super.key}); 
 
   @override
   State<AuthWrapper> createState() => _AuthWrapperState();
@@ -49,28 +47,24 @@ class _AuthWrapperState extends State<AuthWrapper> {
   void _setupNetworkListeners() {
     final apiHelper = ApiHelper.instance;
 
-    // Listen for unauthenticated events
     apiHelper.onUnauthenticated.listen((_) {
       if (mounted) {
         _showSessionExpiredDialog();
       }
     });
 
-    // Listen for network loss
     apiHelper.onNoNetwork.listen((_) {
       if (mounted) {
         _showNetworkErrorDialog();
       }
     });
 
-    // Listen for network restoration
     apiHelper.onNetworkStatusChanged.listen((hasNetwork) {
       if (mounted && hasNetwork) {
         _syncDataWhenNetworkRestored();
       }
     });
 
-    // Check for existing session expiry
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       if (authProvider.sessionHasExpired) {
@@ -80,7 +74,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
   }
 
   void _startPeriodicSync() {
-    // Sync every 5 minutes if authenticated and online
     _syncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
       _performBackgroundSync();
     });
@@ -90,8 +83,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     if (_isSyncing) return;
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final repositoryManager =
-        Provider.of<RepositoryManager>(context, listen: false);
+    final repositoryManager = Provider.of<RepositoryManager>(context, listen: false);
 
     if (!authProvider.isAuthenticated()) return;
     if (!await ApiHelper.instance.hasNetwork()) return;
@@ -112,8 +104,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     if (_isSyncing) return;
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final repositoryManager =
-        Provider.of<RepositoryManager>(context, listen: false);
+    final repositoryManager = Provider.of<RepositoryManager>(context, listen: false);
 
     if (!authProvider.isAuthenticated()) return;
 
@@ -124,7 +115,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
       final success = await repositoryManager.syncAll();
 
       if (success && mounted) {
-        // Refresh all providers
         Provider.of<BuildingProvider>(context, listen: false).load();
         Provider.of<ServiceProvider>(context, listen: false).load();
         Provider.of<TenantProvider>(context, listen: false).load();
@@ -175,8 +165,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
         actions: [
           TextButton(
             onPressed: () async {
-              final authProvider =
-                  Provider.of<AuthProvider>(context, listen: false);
+              final authProvider = Provider.of<AuthProvider>(context, listen: false);
               await authProvider.logout();
               authProvider.acknowledgeSessionExpired();
               if (mounted) {
@@ -202,8 +191,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
         actions: [
           TextButton(
             onPressed: () {
-              final authProvider =
-                  Provider.of<AuthProvider>(context, listen: false);
+              final authProvider = Provider.of<AuthProvider>(context, listen: false);
               authProvider.acknowledgeNetworkError();
               Navigator.of(context).pop();
             },
@@ -218,7 +206,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
-        // Show dialogs if needed
         if (authProvider.showNetworkError) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _showNetworkErrorDialog();
@@ -231,22 +218,15 @@ class _AuthWrapperState extends State<AuthWrapper> {
           });
         }
 
-        // Check authentication
         if (authProvider.isAuthenticated()) {
-          return const MainScreen();
+          return const MainScreen(); 
         }
 
         return authProvider.user.when(
           loading: () => const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           ),
-          success: (user) {
-            if (user != null) {
-              return const MainScreen();
-            } else {
-              return const OnboardingScreen();
-            }
-          },
+          success: (user) => user != null ? const MainScreen() : const OnboardingScreen(),
           error: (error) => const OnboardingScreen(),
         );
       },
@@ -255,7 +235,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
 }
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  const MainScreen({super.key}); 
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -264,17 +244,17 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const ReceiptScreen(),
-    const HistoryScreen(),
-    const BuildingScreen(),
-    const TenantScreen(),
-    const ProfileScreen(),
+  final List<Widget> _screens = const [
+    ReceiptScreen(),
+    HistoryScreen(),
+    BuildingScreen(),
+    TenantScreen(),
+    ProfileScreen(), 
   ];
 
   void _onTabSelected(int index) {
     setState(() {
-      _currentIndex = index;
+      _currentIndex = index.clamp(0, _screens.length - 1);
     });
   }
 
@@ -287,6 +267,7 @@ class _MainScreenState extends State<MainScreen> {
           AppMenu(
             selectedIndex: _currentIndex,
             onTap: _onTabSelected,
+            itemCount: _screens.length,
           ),
         ],
       ),

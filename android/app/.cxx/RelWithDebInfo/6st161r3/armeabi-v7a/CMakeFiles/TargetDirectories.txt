@@ -1,0 +1,2 @@
+C:/capstone/room_managerment/rentalRoomManagement/android/app/.cxx/RelWithDebInfo/6st161r3/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/capstone/room_managerment/rentalRoomManagement/android/app/.cxx/RelWithDebInfo/6st161r3/armeabi-v7a/CMakeFiles/rebuild_cache.dir

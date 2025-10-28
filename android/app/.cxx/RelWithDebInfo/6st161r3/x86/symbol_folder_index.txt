@@ -1,0 +1,1 @@
+C:\capstone\room_managerment\rentalRoomManagement\build\app\intermediates\cxx\RelWithDebInfo\6st161r3\obj\x86

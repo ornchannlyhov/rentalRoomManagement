@@ -4,7 +4,7 @@ class AppMenu extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onTap;
 
-  const AppMenu({super.key, required this.selectedIndex, required this.onTap});
+  const AppMenu({super.key, required this.selectedIndex, required this.onTap, required int itemCount});
 
   @override
   Widget build(BuildContext context) {

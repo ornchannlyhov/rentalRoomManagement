@@ -1,4 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -7,9 +6,10 @@ import 'package:receipts_v2/helpers/api_helper.dart';
 import 'package:receipts_v2/helpers/repository_manager.dart';
 import 'package:receipts_v2/presentation/providers/auth_provider.dart';
 import 'package:receipts_v2/presentation/view/screen/auth/widget/custom_text_feild.dart';
+import 'package:receipts_v2/l10n/app_localizations.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key}); 
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -30,6 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -48,9 +49,9 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Welcome Back',
-                  style: TextStyle(
+                Text(
+                  localizations.welcomeBack,
+                  style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1F2937),
@@ -58,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sign in to your account',
+                  localizations.signInPrompt,
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey.shade600,
@@ -67,13 +68,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 48),
                 CustomTextField(
                   controller: _emailController,
-                  label: 'Email',
-                  hintText: 'Enter your email',
+                  label: localizations.emailLabel,
+                  hintText: localizations.emailHint,
                   prefixIcon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
+                      return localizations.emailHint;
                     }
                     if (!value.contains('@')) {
                       return 'Please enter a valid email';
@@ -84,8 +85,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _passwordController,
-                  label: 'Password',
-                  hintText: 'Enter your password',
+                  label: localizations.passwordLabel,
+                  hintText: localizations.passwordHint,
                   prefixIcon: Icons.lock_outline,
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
@@ -103,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
+                      return localizations.passwordHint;
                     }
                     if (value.length < 6) {
                       return 'Password must be at least 6 characters';
@@ -139,9 +140,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                       Colors.white),
                                 ),
                               )
-                            : const Text(
-                                'Login',
-                                style: TextStyle(
+                            : Text(
+                                localizations.loginButton,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -180,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Don't have an account? ",
+                      localizations.noAccount,
                       style: TextStyle(
                         color: Colors.grey.shade600,
                         fontSize: 14,
@@ -190,9 +191,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () {
                         Navigator.pushReplacementNamed(context, '/register');
                       },
-                      child: const Text(
-                        'Register',
-                        style: TextStyle(
+                      child: Text(
+                        localizations.registerLink,
+                        style: const TextStyle(
                           color: Color(0xFF10B981),
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -226,7 +227,6 @@ class _LoginScreenState extends State<LoginScreen> {
           loading: () {},
           success: (user) async {
             if (user != null && authProvider.isAuthenticated()) {
-              // Sync data for the logged-in user
               if (await ApiHelper.instance.hasNetwork()) {
                 await repositoryManager.syncAll();
               }
@@ -238,9 +238,7 @@ class _LoginScreenState extends State<LoginScreen> {
               );
             }
           },
-          error: (error) {
-            // Error is already shown in the UI through Consumer
-          },
+          error: (error) {},
         );
       }
     }

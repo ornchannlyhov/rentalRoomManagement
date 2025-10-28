@@ -1,0 +1,1 @@
+C:\capstone\room_managerment\rentalRoomManagement\build\app\intermediates\cxx\Debug\3d353r1b\obj\x86_64

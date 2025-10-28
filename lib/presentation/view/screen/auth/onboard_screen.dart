@@ -1,7 +1,9 @@
+
 import 'package:flutter/material.dart';
+import 'package:receipts_v2/l10n/app_localizations.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+  const OnboardingScreen({super.key}); // REMOVED setLocale
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -13,32 +15,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingData> _onboardingData = [
     OnboardingData(
-      title: "Manage Buildings & Rooms",
-      description:
-          "Manage your buildings, rooms, and services easily with our intuitive interface.",
+      titleKey: 'manageBuildings',
+      descriptionKey: 'manageBuildingsDesc',
       icon: Icons.apartment_rounded,
     ),
     OnboardingData(
-      title: "Tenant Management",
-      description: "Assign tenants and automate receipts with just a few taps.",
+      titleKey: 'tenantManagement',
+      descriptionKey: 'tenantManagementDesc',
       icon: Icons.people_rounded,
     ),
     OnboardingData(
-      title: "Payment Tracking",
-      description:
-          "Track payments easily - Pending, Paid, and Overdue status at a glance.",
+      titleKey: 'paymentTracking',
+      descriptionKey: 'paymentTrackingDesc',
       icon: Icons.payment_rounded,
     ),
     OnboardingData(
-      title: "Automation Tools",
-      description:
-          "Automate work with Telegram bot reminders and utilities input.",
+      titleKey: 'automationTools',
+      descriptionKey: 'automationToolsDesc',
       icon: Icons.smart_toy_rounded,
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -57,11 +57,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 itemBuilder: (context, index) {
                   return OnboardingPage(
                     data: _onboardingData[index],
+                    localizations: localizations,
                   );
                 },
               ),
             ),
-            // Page Indicators
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: Row(
@@ -83,7 +83,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
             ),
-            // Buttons
             Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -103,9 +102,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         elevation: 2,
                       ),
-                      child: const Text(
-                        'Login',
-                        style: TextStyle(
+                      child: Text(
+                        localizations.loginButton,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -128,9 +127,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Register',
-                        style: TextStyle(
+                      child: Text(
+                        localizations.registerLink,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -148,23 +147,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 }
 
 class OnboardingData {
-  final String title;
-  final String description;
+  final String titleKey;
+  final String descriptionKey;
   final IconData icon;
 
   OnboardingData({
-    required this.title,
-    required this.description,
+    required this.titleKey,
+    required this.descriptionKey,
     required this.icon,
   });
 }
 
 class OnboardingPage extends StatelessWidget {
   final OnboardingData data;
+  final AppLocalizations localizations;
 
   const OnboardingPage({
     super.key,
     required this.data,
+    required this.localizations,
   });
 
   @override
@@ -189,7 +190,7 @@ class OnboardingPage extends StatelessWidget {
           ),
           const SizedBox(height: 48),
           Text(
-            data.title,
+            _getLocalizedText(localizations, data.titleKey),
             style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -199,7 +200,7 @@ class OnboardingPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            data.description,
+            _getLocalizedText(localizations, data.descriptionKey),
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey.shade600,
@@ -210,5 +211,28 @@ class OnboardingPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _getLocalizedText(AppLocalizations localizations, String key) {
+    switch (key) {
+      case 'manageBuildings':
+        return localizations.manageBuildings;
+      case 'manageBuildingsDesc':
+        return localizations.manageBuildingsDesc;
+      case 'tenantManagement':
+        return localizations.tenantManagement;
+      case 'tenantManagementDesc':
+        return localizations.tenantManagementDesc;
+      case 'paymentTracking':
+        return localizations.paymentTracking;
+      case 'paymentTrackingDesc':
+        return localizations.paymentTrackingDesc;
+      case 'automationTools':
+        return localizations.automationTools;
+      case 'automationToolsDesc':
+        return localizations.automationToolsDesc;
+      default:
+        return key;
+    }
   }
 }

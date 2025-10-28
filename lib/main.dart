@@ -1,21 +1,31 @@
-// ignore_for_file: use_build_context_synchronously
+import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
+import 'package:workmanager/workmanager.dart';
+
+// Repositories
+import 'package:receipts_v2/data/repositories/auth_repository.dart';
+import 'package:receipts_v2/data/repositories/building_repository.dart';
+import 'package:receipts_v2/data/repositories/receipt_repository.dart';
 import 'package:receipts_v2/data/repositories/report_repository.dart';
+import 'package:receipts_v2/data/repositories/room_repository.dart';
+import 'package:receipts_v2/data/repositories/service_repository.dart';
+import 'package:receipts_v2/data/repositories/tenant_repository.dart';
+
+// Helpers
 import 'package:receipts_v2/helpers/api_helper.dart';
 import 'package:receipts_v2/helpers/auth_wraper.dart';
 import 'package:receipts_v2/helpers/notification_service.dart';
 import 'package:receipts_v2/helpers/receipt_image_generator.dart';
 import 'package:receipts_v2/helpers/repository_manager.dart';
-import 'package:receipts_v2/data/repositories/auth_repository.dart';
-import 'package:receipts_v2/data/repositories/building_repository.dart';
-import 'package:receipts_v2/data/repositories/receipt_repository.dart';
-import 'package:receipts_v2/data/repositories/room_repository.dart';
-import 'package:receipts_v2/data/repositories/service_repository.dart';
-import 'package:receipts_v2/data/repositories/tenant_repository.dart';
+import 'package:receipts_v2/helpers/app_theme.dart';
+
+// Providers
 import 'package:receipts_v2/presentation/providers/auth_provider.dart';
 import 'package:receipts_v2/presentation/providers/building_provider.dart';
 import 'package:receipts_v2/presentation/providers/receipt_provider.dart';
@@ -24,14 +34,15 @@ import 'package:receipts_v2/presentation/providers/room_provider.dart';
 import 'package:receipts_v2/presentation/providers/service_provider.dart';
 import 'package:receipts_v2/presentation/providers/tenant_provider.dart';
 import 'package:receipts_v2/presentation/providers/theme_provider.dart';
+
+// Screens
 import 'package:receipts_v2/presentation/view/screen/auth/login_screen.dart';
 import 'package:receipts_v2/presentation/view/screen/auth/onboard_screen.dart';
 import 'package:receipts_v2/presentation/view/screen/auth/register_screen.dart';
 import 'package:receipts_v2/presentation/view/screen/splash/splash_screen.dart';
-import 'helpers/app_theme.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'dart:async';
-import 'package:workmanager/workmanager.dart';
+
+// Localization
+import 'package:receipts_v2/l10n/app_localizations.dart';
 
 @pragma('vm:entry-point')
 void callbackDispatcher() {
@@ -39,28 +50,31 @@ void callbackDispatcher() {
     if (task == "generate-monthly-receipts") {
       try {
         NotificationService.initialize();
+        final roomRepo = RoomRepository();
+        final buildingRepo = BuildingRepository(roomRepo);
+        final serviceRepo = ServiceRepository();
+        final tenantRepo = TenantRepository();
+        final receiptRepo = ReceiptRepository(serviceRepo, buildingRepo, roomRepo, tenantRepo);
+        final reportRepo = ReportRepository();
 
-        final roomRepository = RoomRepository();
-        final buildingRepository = BuildingRepository(roomRepository);
-        final serviceRepository = ServiceRepository();
-        final tenantRepository = TenantRepository();
-        final receiptRepository = ReceiptRepository(serviceRepository,
-            buildingRepository, roomRepository, tenantRepository);
-        final reportRepository = ReportRepository();
+        await Future.wait([
+          serviceRepo.load(),
+          roomRepo.load(),
+          buildingRepo.load(),
+          tenantRepo.load(),
+          receiptRepo.load(),
+          reportRepo.load(),
+        ]);
 
-        await serviceRepository.load();
-        await roomRepository.load();
-        await buildingRepository.load();
-        await tenantRepository.load();
-        await receiptRepository.load();
-        await reportRepository.load();
-        await receiptRepository.generateReceiptsFromUsage(
+        await receiptRepo.generateReceiptsFromUsage(
           createImage: ReceiptImageGenerator.generateReceiptImage,
         );
+
         await NotificationService.showNotification(
           'Receipts Generated',
           'New monthly receipts have been successfully created.',
         );
+
         return Future.value(true);
       } catch (e) {
         await NotificationService.showNotification(
@@ -78,78 +92,65 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await initializeDateFormatting();
-
-  final Logger logger = Logger();
+  final logger = Logger();
 
   NotificationService.initialize();
 
-  await Workmanager().initialize(
-    callbackDispatcher,
-    isInDebugMode: true,
-  );
+  // WorkManager initialization
+  if (Platform.isAndroid || Platform.isIOS) {
+    await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+    Workmanager().registerPeriodicTask(
+      "generate-receipts-task",
+      "generate-monthly-receipts",
+      frequency: const Duration(days: 30),
+      initialDelay: const Duration(minutes: 15),
+      constraints: Constraints(networkType: NetworkType.connected),
+    );
+  } else {
+    logger.i('Workmanager not supported on ${Platform.operatingSystem}');
+  }
 
-  // Register the periodic task
-  Workmanager().registerPeriodicTask(
-    "generate-receipts-task",
-    "generate-monthly-receipts",
-    frequency: const Duration(days: 30),
-    initialDelay: const Duration(minutes: 15),
-    constraints: Constraints(
-      networkType: NetworkType.connected,
-    ),
-  );
-
-  final roomRepository = RoomRepository();
-  final buildingRepository = BuildingRepository(roomRepository);
-  final serviceRepository = ServiceRepository();
-  final tenantRepository = TenantRepository();
-  final receiptRepository = ReceiptRepository(
-      serviceRepository, buildingRepository, roomRepository, tenantRepository);
-  final authRepository = AuthRepository();
-  final reportRepository = ReportRepository();
+  // Repositories
+  final roomRepo = RoomRepository();
+  final buildingRepo = BuildingRepository(roomRepo);
+  final serviceRepo = ServiceRepository();
+  final tenantRepo = TenantRepository();
+  final receiptRepo = ReceiptRepository(serviceRepo, buildingRepo, roomRepo, tenantRepo);
+  final authRepo = AuthRepository();
+  final reportRepo = ReportRepository();
 
   final repositoryManager = RepositoryManager(
-    buildingRepository: buildingRepository,
-    roomRepository: roomRepository,
-    tenantRepository: tenantRepository,
-    receiptRepository: receiptRepository,
-    serviceRepository: serviceRepository,
-    reportRepository: reportRepository,
+    buildingRepository: buildingRepo,
+    roomRepository: roomRepo,
+    tenantRepository: tenantRepo,
+    receiptRepository: receiptRepo,
+    serviceRepository: serviceRepo,
+    reportRepository: reportRepo,
   );
 
-  // Initialize auth provider
-  final authProvider = AuthProvider(authRepository);
+  // Auth + Theme
+  final authProvider = AuthProvider(authRepo, repositoryManager: repositoryManager);
+  final themeProvider = ThemeProvider();
+
   await authProvider.load();
 
   try {
-    // Always load from storage first (works offline)
     await repositoryManager.loadAll();
-
-    // Attempt to sync if authenticated and online
-    if (authProvider.isAuthenticated()) {
-      if (await ApiHelper.instance.hasNetwork()) {
-        logger.i('User authenticated and online, syncing from API...');
-        final syncSuccess = await repositoryManager.syncAll();
-
-        if (syncSuccess) {
-          final syncSummary = repositoryManager.getDataSummary();
-          logger.i('Data synced from API: $syncSummary');
-        }
-      }
-    } else {
-      logger.i('User not authenticated, skipping sync');
+    if (authProvider.isAuthenticated() && await ApiHelper.instance.hasNetwork()) {
+      logger.i('Syncing data from API...');
+      await repositoryManager.syncAll();
     }
   } catch (e) {
     logger.e('Error during initialization: $e');
-    // Continue with empty/cached data
   }
 
-  final roomProvider = RoomProvider(roomRepository);
-  final serviceProvider = ServiceProvider(serviceRepository);
-  final tenantProvider = TenantProvider(tenantRepository, repositoryManager);
-  final receiptProvider = ReceiptProvider(receiptRepository);
-  final reportProvider = ReportProvider(reportRepository);
-  final buildingProvider = BuildingProvider(buildingRepository, roomProvider);
+  // Providers
+  final roomProvider = RoomProvider(roomRepo);
+  final serviceProvider = ServiceProvider(serviceRepo);
+  final tenantProvider = TenantProvider(tenantRepo, repositoryManager);
+  final receiptProvider = ReceiptProvider(receiptRepo);
+  final reportProvider = ReportProvider(reportRepo);
+  final buildingProvider = BuildingProvider(buildingRepo, roomProvider);
 
   await Future.wait([
     roomProvider.load(),
@@ -169,6 +170,7 @@ Future<void> main() async {
     serviceProvider: serviceProvider,
     tenantProvider: tenantProvider,
     reportProvider: reportProvider,
+    themeProvider: themeProvider,
   ));
 }
 
@@ -181,6 +183,7 @@ class MyApp extends StatefulWidget {
   final ServiceProvider serviceProvider;
   final TenantProvider tenantProvider;
   final ReportProvider reportProvider;
+  final ThemeProvider themeProvider;
 
   const MyApp({
     super.key,
@@ -192,6 +195,7 @@ class MyApp extends StatefulWidget {
     required this.serviceProvider,
     required this.tenantProvider,
     required this.reportProvider,
+    required this.themeProvider,
   });
 
   @override
@@ -204,12 +208,9 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    // Show splash for a minimum of 1 second to ensure smooth transition
     Future.delayed(const Duration(seconds: 1), () {
       if (mounted) {
-        setState(() {
-          _showSplash = false;
-        });
+        setState(() => _showSplash = false);
       }
     });
   }
@@ -219,41 +220,52 @@ class _MyAppState extends State<MyApp> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: widget.authProvider),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider.value(value: widget.themeProvider),
         Provider.value(value: widget.repositoryManager),
         ChangeNotifierProvider.value(value: widget.roomProvider),
-        ChangeNotifierProvider.value(value: widget.serviceProvider),
-        ChangeNotifierProvider.value(value: widget.tenantProvider),
         ChangeNotifierProvider.value(value: widget.buildingProvider),
         ChangeNotifierProvider.value(value: widget.receiptProvider),
+        ChangeNotifierProvider.value(value: widget.serviceProvider),
+        ChangeNotifierProvider.value(value: widget.tenantProvider),
         ChangeNotifierProvider.value(value: widget.reportProvider),
       ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, child) {
-          return MaterialApp(
-            title: 'Receipts',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeProvider.themeMode,
-            home: _showSplash ? const SplashScreen() : const AuthWrapper(),
-            routes: {
-              '/onboarding': (context) => const OnboardingScreen(),
-              '/login': (context) => const LoginScreen(),
-              '/register': (context) => const RegisterScreen(),
-              '/home': (context) => const MainScreen(),
-            },
-          );
-        },
-      ),
+     child: Consumer<ThemeProvider>(
+  builder: (context, themeProvider, _) {
+    // Wait for locale + theme to load before showing the app
+    if (!themeProvider.isInitialized) {
+      return const MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
+    return MaterialApp(
+      title: 'Receipts',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeProvider.themeMode,
+      locale: themeProvider.locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: _showSplash ? const SplashScreen() : const AuthWrapper(),
+      routes: {
+        '/onboarding': (context) => const OnboardingScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/home': (context) => const MainScreen(),
+      },
     );
-  }
-}
+  },
+),
 
-class SecureStorageHelper {
-  static final FlutterSecureStorage _storage = const FlutterSecureStorage();
-
-  static Future<void> clearAll() async {
-    await _storage.deleteAll();
+    );
   }
 }
