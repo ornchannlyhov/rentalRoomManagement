@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/data/repositories/auth_repository.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
@@ -35,8 +36,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Color.fromARGB(255, 245, 245, 245),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -53,9 +55,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Create Account',
-                  style: TextStyle(
+                Text(
+                  localizations.createAccount,
+                  style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1F2937),
@@ -63,7 +65,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sign up to get started',
+                  localizations.signUpPrompt,
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey.shade600,
@@ -72,12 +74,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 48),
                 CustomTextField(
                   controller: _nameController,
-                  label: 'Full Name',
-                  hintText: 'Enter your full name',
+                  label: localizations.fullNameLabel,
+                  hintText: localizations.fullNameHint,
                   prefixIcon: Icons.person_outline,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your name';
+                      return localizations.fullNameHint;
                     }
                     return null;
                   },
@@ -85,16 +87,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _emailController,
-                  label: 'Email',
-                  hintText: 'Enter your email',
+                  label: localizations.emailLabel,
+                  hintText: localizations.emailHint,
                   prefixIcon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
+                      return localizations.emailHint;
                     }
                     if (!value.contains('@')) {
-                      return 'Please enter a valid email';
+                      return localizations.emailValidationInvalid;
                     }
                     return null;
                   },
@@ -102,8 +104,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _passwordController,
-                  label: 'Password',
-                  hintText: 'Enter your password',
+                  label: localizations.passwordLabel,
+                  hintText: localizations.passwordHint,
                   prefixIcon: Icons.lock_outline,
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
@@ -121,10 +123,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
+                      return localizations.passwordHint;
                     }
                     if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                      return localizations.passwordValidationLength;
                     }
                     return null;
                   },
@@ -132,8 +134,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _confirmPasswordController,
-                  label: 'Confirm Password',
-                  hintText: 'Confirm your password',
+                  label: localizations.confirmPasswordLabel,
+                  hintText: localizations.confirmPasswordHint,
                   prefixIcon: Icons.lock_outline,
                   obscureText: _obscureConfirmPassword,
                   suffixIcon: IconButton(
@@ -151,10 +153,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
+                      return localizations.confirmPasswordHint;
                     }
                     if (value != _passwordController.text) {
-                      return 'Passwords do not match';
+                      return localizations.passwordsDoNotMatch;
                     }
                     return null;
                   },
@@ -171,7 +173,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             : () => _handleRegister(authProvider),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF10B981),
-                          foregroundColor: Colors.white,
+                          foregroundColor: Color.fromARGB(255, 245, 245, 245),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -184,12 +186,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
+                                      Color.fromARGB(255, 245, 245, 245)),
                                 ),
                               )
-                            : const Text(
-                                'Register',
-                                style: TextStyle(
+                            : Text(
+                                localizations.registerButton,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -228,7 +230,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Already have an account? ",
+                      '${localizations.haveAccount} ',
                       style: TextStyle(
                         color: Colors.grey.shade600,
                         fontSize: 14,
@@ -238,9 +240,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onTap: () {
                         Navigator.pushReplacementNamed(context, '/login');
                       },
-                      child: const Text(
-                        'Login',
-                        style: TextStyle(
+                      child: Text(
+                        localizations.loginLink,
+                        style: const TextStyle(
                           color: Color(0xFF10B981),
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -275,11 +277,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           loading: () {},
           success: (user) async {
             if (user != null && authProvider.isAuthenticated()) {
-              // Sync data for the new user
               if (await ApiHelper.instance.hasNetwork()) {
                 await repositoryManager.syncAll();
               }
-
               Navigator.pushReplacementNamed(context, '/');
             }
           },

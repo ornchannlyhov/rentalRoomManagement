@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/presentation/providers/theme_provider.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
@@ -14,17 +15,11 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String _selectedLanguage = 'ខ្មែរ'; // Default language
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
+    final localizations = AppLocalizations.of(context)!;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -34,7 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: colorScheme.surface,
         centerTitle: true,
         title: Text(
-          'ការកំណត់', // Settings
+          localizations.settings,
           style: TextStyle(
             color: colorScheme.onSurface,
             fontWeight: FontWeight.w600,
@@ -49,10 +44,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
                 const SizedBox(height: 16),
                 Text(
-                  'Failed to load profile.',
+                  localizations.failedToLoadProfile,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       color: colorScheme.onSurface,
@@ -70,7 +65,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ElevatedButton.icon(
                   onPressed: () => authProvider.getProfile(),
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Retry Loading Profile'),
+                  label: Text(localizations.retryLoadingProfile),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colorScheme.primary,
                     foregroundColor: colorScheme.onPrimary,
@@ -86,8 +81,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onPressed: () => _showLogoutDialog(
                       context, isDarkMode, colorScheme, authProvider),
                   child: Text(
-                    'Or Sign Out',
-                    style: TextStyle(color: Colors.red, fontSize: 16),
+                    localizations.orSignOut,
+                    style: const TextStyle(color: Colors.red, fontSize: 16),
                   ),
                 )
               ],
@@ -107,7 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: colorScheme.onSurface.withOpacity(0.6)),
                     const SizedBox(height: 16),
                     Text(
-                      'You are not logged in.',
+                      localizations.notLoggedIn,
                       style: TextStyle(
                         color: colorScheme.onSurface,
                         fontSize: 16,
@@ -120,7 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Navigator.of(context).pushNamedAndRemoveUntil(
                             '/onboarding', (route) => false);
                       },
-                      child: const Text('Go to Onboarding'),
+                      child: Text(localizations.goToOnboarding),
                     ),
                   ],
                 ),
@@ -148,15 +143,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ColorScheme colorScheme,
     User user,
   ) {
+    final localizations = AppLocalizations.of(context)!;
+
+    // This function is now perfect for the new logic.
+    String getAppearanceSubtitle() {
+      if (themeProvider.themeMode == ThemeMode.dark) {
+        return localizations.darkMode;
+      } else {
+        return localizations.lightMode;
+      }
+    }
+
+    String getLanguageSubtitle() {
+      switch (themeProvider.locale.languageCode) {
+        case 'km':
+          return localizations.khmer;
+        case 'zh':
+          return localizations.chinese;
+        default: // 'en' and any other fallback
+          return localizations.english;
+      }
+    }
+
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
           child: Column(
             children: [
-              // Profile Header
               _buildModernProfileHeader(context, isDarkMode, colorScheme, user),
-
-              // Settings Sections
               _buildSettingsSection(
                 context,
                 isDarkMode,
@@ -167,34 +181,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     isDarkMode: isDarkMode,
                     colorScheme: colorScheme,
                     icon: Icons.person_outline,
-                    title: 'Account Settings',
-                    subtitle: 'Privacy, security, change password',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: const Text('Account Settings tapped'),
-                            backgroundColor: colorScheme.primary),
-                      );
-                    },
+                    title: localizations.accountSettings,
+                    subtitle: localizations.accountSettingsSubtitle,
+                    onTap: () {},
                   ),
                   _buildSettingsItem(
                     context: context,
                     isDarkMode: isDarkMode,
                     colorScheme: colorScheme,
                     icon: Icons.payment,
-                    title: 'Subscriptions',
-                    subtitle: 'Plans, payment methods',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: const Text('Subscriptions tapped'),
-                            backgroundColor: colorScheme.primary),
-                      );
-                    },
+                    title: localizations.subscriptions,
+                    subtitle: localizations.subscriptionsSubtitle,
+                    onTap: () {},
                   ),
                 ],
               ),
-
               _buildSettingsSection(
                 context,
                 isDarkMode,
@@ -205,12 +206,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     isDarkMode: isDarkMode,
                     colorScheme: colorScheme,
                     icon: Icons.palette_outlined,
-                    title: 'Appearance',
-                    subtitle: themeProvider.themeMode == ThemeMode.dark
-                        ? 'Dark mode'
-                        : themeProvider.themeMode == ThemeMode.light
-                            ? 'Light mode'
-                            : 'System default',
+                    title: localizations.appearance,
+                    subtitle: getAppearanceSubtitle(),
                     trailing: Switch(
                       value: themeProvider.themeMode == ThemeMode.dark,
                       onChanged: (value) {
@@ -227,14 +224,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     isDarkMode: isDarkMode,
                     colorScheme: colorScheme,
                     icon: Icons.language_outlined,
-                    title: 'Language',
-                    subtitle: _selectedLanguage,
-                    onTap: () =>
-                        _showLanguageDialog(context, isDarkMode, colorScheme),
+                    title: localizations.language,
+                    subtitle: getLanguageSubtitle(),
+                    onTap: () => _showLanguageDialog(
+                        context, isDarkMode, colorScheme, themeProvider),
                   ),
                 ],
               ),
-
               _buildSettingsSection(
                 context,
                 isDarkMode,
@@ -245,40 +241,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     isDarkMode: isDarkMode,
                     colorScheme: colorScheme,
                     icon: Icons.help_outline,
-                    title: 'Help & Support',
-                    subtitle: 'FAQs, contact us',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: const Text('Help & Support tapped'),
-                            backgroundColor: colorScheme.primary),
-                      );
-                    },
+                    title: localizations.helpAndSupport,
+                    subtitle: localizations.helpAndSupportSubtitle,
+                    onTap: () {},
                   ),
                   _buildSettingsItem(
                     context: context,
                     isDarkMode: isDarkMode,
                     colorScheme: colorScheme,
                     icon: Icons.info_outline,
-                    title: 'About',
-                    subtitle: 'Version 1.2.3',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: const Text('About tapped'),
-                            backgroundColor: colorScheme.primary),
-                      );
-                    },
+                    title: localizations.about,
+                    subtitle: localizations.version("1.2.3"),
+                    onTap: () {},
                   ),
                 ],
               ),
-
               const SizedBox(height: 30),
-
-              // Logout Button
               _buildLogoutButton(
                   context, isDarkMode, colorScheme, authProvider),
-
               const SizedBox(height: 50),
             ],
           ),
@@ -289,6 +269,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildModernProfileHeader(BuildContext context, bool isDarkMode,
       ColorScheme colorScheme, User user) {
+    final localizations = AppLocalizations.of(context)!;
     return Container(
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(24),
@@ -307,7 +288,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Row(
         children: [
-          // Profile Picture
           Container(
             width: 70,
             height: 70,
@@ -322,14 +302,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(width: 16),
-
-          // User Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  user.username ?? 'Unknown User', // Handle nullable username
+                  user.username ?? localizations.unknownUser,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
@@ -338,7 +316,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  user.email ?? 'No Email Provided', // Handle nullable email
+                  user.email ?? localizations.noEmailProvided,
                   style: TextStyle(
                     fontSize: 14,
                     color: colorScheme.onSurface.withOpacity(0.6),
@@ -353,7 +331,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    'Premium Member', // This can be dynamic based on user.
+                    localizations.premiumMember,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -364,16 +342,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-
-          // Edit Button
           IconButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: const Text('Edit profile tapped'),
-                    backgroundColor: colorScheme.primary),
-              );
-            },
+            onPressed: () {},
             icon: Icon(
               Icons.edit_outlined,
               color: colorScheme.onSurface.withOpacity(0.6),
@@ -475,6 +445,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildLogoutButton(BuildContext context, bool isDarkMode,
       ColorScheme colorScheme, AuthProvider authProvider) {
+    final localizations = AppLocalizations.of(context)!;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       width: double.infinity,
@@ -492,9 +463,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             width: 1,
           ),
         ),
-        child: const Text(
-          'Sign Out',
-          style: TextStyle(
+        child: Text(
+          localizations.signOut,
+          style: const TextStyle(
             color: Colors.red,
             fontSize: 16,
             fontWeight: FontWeight.w500,
@@ -504,8 +475,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showLanguageDialog(
-      BuildContext context, bool isDarkMode, ColorScheme colorScheme) {
+  void _showLanguageDialog(BuildContext context, bool isDarkMode,
+      ColorScheme colorScheme, ThemeProvider themeProvider) {
+    final localizations = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -533,7 +505,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
-                  'Select Language',
+                  localizations.selectLanguage,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -542,9 +514,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              _buildLanguageOption('ខ្មែរ', 'ខ្មែរ', colorScheme),
-              _buildLanguageOption('English', 'English', colorScheme),
-              _buildLanguageOption('中文', '中文', colorScheme),
+              _buildLanguageOption('km', '🇰🇭 ${localizations.khmer}',
+                  colorScheme, themeProvider),
+              _buildLanguageOption('en', '🇺🇸 ${localizations.english}',
+                  colorScheme, themeProvider),
+              _buildLanguageOption('zh', '🇨🇳 ${localizations.chinese}',
+                  colorScheme, themeProvider),
               const SizedBox(height: 30),
             ],
           ),
@@ -553,15 +528,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildLanguageOption(
-      String language, String displayName, ColorScheme colorScheme) {
-    bool isSelected = language == _selectedLanguage;
+  Widget _buildLanguageOption(String languageCode, String displayName,
+      ColorScheme colorScheme, ThemeProvider themeProvider) {
+    bool isSelected = languageCode == themeProvider.locale.languageCode;
 
     return ListTile(
       onTap: () {
-        setState(() {
-          _selectedLanguage = language;
-        });
+        themeProvider.setLocale(Locale(languageCode));
         Navigator.of(context).pop();
       },
       contentPadding: const EdgeInsets.symmetric(horizontal: 20),
@@ -585,6 +558,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _showLogoutDialog(BuildContext context, bool isDarkMode,
       ColorScheme colorScheme, AuthProvider authProvider) {
+    final localizations = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -594,7 +568,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
           title: Text(
-            'Sign Out',
+            localizations.signOut,
             style: TextStyle(
               color: colorScheme.onSurface,
               fontSize: 18,
@@ -602,7 +576,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           content: Text(
-            'Are you sure you want to sign out?',
+            localizations.signOutConfirmation,
             style: TextStyle(
               color: colorScheme.onSurface.withOpacity(0.6),
               fontSize: 16,
@@ -612,7 +586,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
               child: Text(
-                'Cancel',
+                localizations.cancel,
                 style: TextStyle(
                   color: colorScheme.onSurface.withOpacity(0.6),
                   fontWeight: FontWeight.w500,
@@ -624,9 +598,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Navigator.of(dialogContext).pop();
                 await authProvider.logout();
               },
-              child: const Text(
-                'Sign Out',
-                style: TextStyle(
+              child: Text(
+                localizations.signOut,
+                style: const TextStyle(
                   color: Colors.red,
                   fontWeight: FontWeight.w600,
                 ),

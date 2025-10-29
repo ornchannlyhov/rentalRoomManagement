@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:joul_v2/l10n/app_localizations.dart'; // Import localizations
 
 class AppMenu extends StatelessWidget {
   final int selectedIndex;
@@ -10,6 +11,7 @@ class AppMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final localizations = AppLocalizations.of(context)!; // Get localizations
 
     return SizedBox(
       child: BottomNavigationBar(
@@ -24,11 +26,15 @@ class AppMenu extends StatelessWidget {
         showSelectedLabels: false,
         showUnselectedLabels: false,
         items: [
-          _buildBottomNavItem(context, Icons.receipt, 'វិក្កយបត្រ', 0),
-          _buildBottomNavItem(context, Icons.history, 'ទិន្នន័យចាស់', 1),
-          _buildBottomNavItem(context, Icons.apartment, 'អគារ', 2),
-          _buildBottomNavItem(context, Icons.person, 'អ្នកជួល', 3),
-          _buildBottomNavItem(context, Icons.settings, 'ការកំណត់', 4)
+          // Use localized strings
+          _buildBottomNavItem(
+              context, Icons.receipt, localizations.receiptTab, 0),
+          _buildBottomNavItem(context, Icons.history, localizations.historyTab, 1),
+          _buildBottomNavItem(
+              context, Icons.apartment, localizations.buildingTab, 2),
+          _buildBottomNavItem(context, Icons.person, localizations.tenantTab, 3),
+          _buildBottomNavItem(
+              context, Icons.settings, localizations.settings, 4)
         ],
       ),
     );
@@ -50,16 +56,16 @@ class AppMenu extends StatelessWidget {
         children: [
           Icon(
             icon,
-            size: 20, 
+            size: 20,
             color: isSelected
                 ? colorScheme.primary
                 : colorScheme.onSurface.withOpacity(0.6),
           ),
-          const SizedBox(height: 2), // Less spacing
+          const SizedBox(height: 2),
           Text(
             label,
             style: theme.textTheme.labelSmall?.copyWith(
-              fontSize: 10, // Smaller font
+              fontSize: 10,
               color: isSelected
                   ? colorScheme.primary
                   : colorScheme.onSurface.withOpacity(0.6),

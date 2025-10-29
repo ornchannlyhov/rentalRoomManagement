@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -11,36 +12,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<OnboardingData> _onboardingData = [
-    OnboardingData(
-      title: "Manage Buildings & Rooms",
-      description:
-          "Manage your buildings, rooms, and services easily with our intuitive interface.",
-      icon: Icons.apartment_rounded,
-    ),
-    OnboardingData(
-      title: "Tenant Management",
-      description: "Assign tenants and automate receipts with just a few taps.",
-      icon: Icons.people_rounded,
-    ),
-    OnboardingData(
-      title: "Payment Tracking",
-      description:
-          "Track payments easily - Pending, Paid, and Overdue status at a glance.",
-      icon: Icons.payment_rounded,
-    ),
-    OnboardingData(
-      title: "Automation Tools",
-      description:
-          "Automate work with Telegram bot reminders and utilities input.",
-      icon: Icons.smart_toy_rounded,
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+    final List<OnboardingData> onboardingData = [
+      OnboardingData(
+        title: localizations.manageBuildings,
+        description: localizations.manageBuildingsDesc,
+        icon: Icons.apartment_rounded,
+      ),
+      OnboardingData(
+        title: localizations.tenantManagement,
+        description: localizations.tenantManagementDesc,
+        icon: Icons.people_rounded,
+      ),
+      OnboardingData(
+        title: localizations.paymentTracking,
+        description: localizations.paymentTrackingDesc,
+        icon: Icons.payment_rounded,
+      ),
+      OnboardingData(
+        title: localizations.automationTools,
+        description: localizations.automationToolsDesc,
+        icon: Icons.smart_toy_rounded,
+      ),
+    ];
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Color.fromARGB(255, 245, 245, 245),
       body: SafeArea(
         child: Column(
           children: [
@@ -53,21 +52,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     _currentPage = index;
                   });
                 },
-                itemCount: _onboardingData.length,
+                itemCount: onboardingData.length,
                 itemBuilder: (context, index) {
                   return OnboardingPage(
-                    data: _onboardingData[index],
+                    data: onboardingData[index],
                   );
                 },
               ),
             ),
-            // Page Indicators
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
-                  _onboardingData.length,
+                  onboardingData.length,
                   (index) => AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -83,7 +81,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
             ),
-            // Buttons
             Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -97,15 +94,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF10B981),
-                        foregroundColor: Colors.white,
+                        foregroundColor: Color.fromARGB(255, 245, 245, 245),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                         elevation: 2,
                       ),
-                      child: const Text(
-                        'Login',
-                        style: TextStyle(
+                      child: Text(
+                        localizations.loginButton,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -128,9 +125,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Register',
-                        style: TextStyle(
+                      child: Text(
+                        localizations.registerButton,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
