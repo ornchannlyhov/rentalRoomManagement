@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/receipt.dart';
 import 'package:joul_v2/data/repositories/currency_repositoy.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:joul_v2/presentation/view/screen/analysis/widgets/month_filter_bar.dart';
 import 'package:joul_v2/presentation/view/screen/analysis/widgets/utility_analysis_card.dart';
 
@@ -36,6 +37,7 @@ class FinancialOverviewTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     final totalExpected = getTotalExpectedRevenue(filteredReceipts);
     final totalPaid = getTotalPaidAmount(filteredReceipts);
     final totalPending = getTotalPendingAmount(filteredReceipts);
@@ -85,7 +87,7 @@ class FinancialOverviewTab extends StatelessWidget {
             children: [
               Expanded(
                 child: _StatusCard(
-                  title: 'បានបង់ប្រាក់',
+                  title: localizations.paid,
                   amount: totalPaid,
                   color: Theme.of(context).colorScheme.primary,
                   icon: Icons.check_circle,
@@ -99,7 +101,7 @@ class FinancialOverviewTab extends StatelessWidget {
             children: [
               Expanded(
                 child: _StatusCard(
-                  title: 'មិនទាន់បង់',
+                  title: localizations.pending,
                   amount: totalPending,
                   color: Colors.orange,
                   icon: Icons.pending,
@@ -109,7 +111,7 @@ class FinancialOverviewTab extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _StatusCard(
-                  title: 'ហួសកំណត់',
+                  title: localizations.overdue,
                   amount: totalOverdue,
                   color: Colors.red,
                   icon: Icons.warning,
@@ -120,7 +122,7 @@ class FinancialOverviewTab extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           UtilityAnalysisCard(
-            title: 'ការវិភាគតម្លៃ',
+            title: localizations.utilityAnalysis,
             icon: Icons.analytics,
             color: Colors.blue,
             utilityData: overallUtilityData,
@@ -207,6 +209,7 @@ class _RevenueOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -220,7 +223,7 @@ class _RevenueOverviewCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'ប្រាក់ចំណូលសរុប',
+                    localizations.totalRevenue,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
@@ -267,7 +270,7 @@ class _RevenueOverviewCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'អត្រាប្រមូល: ${collectionRate.toStringAsFixed(1)}%',
+              localizations.collectionRate(collectionRate.toStringAsFixed(1)),
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],

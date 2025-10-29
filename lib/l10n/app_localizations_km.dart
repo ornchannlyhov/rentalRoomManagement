@@ -33,10 +33,10 @@ class AppLocalizationsKm extends AppLocalizations {
   String get buildingAnalysisTab => 'អគារ';
 
   @override
-  String get welcomeBack => 'សូមស្វាគមន៍ត្រឡប់មកវិញ';
+  String get welcomeBack => 'សូមស្វាគមន័យការត្រឡប់មកវិញ';
 
   @override
-  String get signInPrompt => 'ចូលទៅកាន់គណនីរបស់អ្នក';
+  String get signInPrompt => 'ចូលទៅក្នុងគណនីរបស់អ្នក';
 
   @override
   String get emailLabel => 'អ៊ីមែល';
@@ -51,19 +51,19 @@ class AppLocalizationsKm extends AppLocalizations {
   String get passwordHint => 'បញ្ចូលពាក្យសម្ងាត់របស់អ្នក';
 
   @override
-  String get loginButton => 'ចូល';
+  String get loginButton => 'ចូលប្រើ';
 
   @override
-  String get noAccount => 'មិនមានគណនីមែនទេ?';
+  String get noAccount => 'មិនមានគណនីទេ?';
 
   @override
   String get registerLink => 'ចុះឈ្មោះ';
 
   @override
-  String get createAccount => 'បង្កើតគណនី';
+  String get createAccount => 'បង្កើតគណនីថ្មី';
 
   @override
-  String get signUpPrompt => 'ចុះឈ្មោះដើម្បីចាប់ផ្តើម';
+  String get signUpPrompt => 'ចុះឈ្មោះដើម្បីចាប់ផ្តើមប្រើប្រាស់';
 
   @override
   String get fullNameLabel => 'ឈ្មោះពេញ';
@@ -75,10 +75,10 @@ class AppLocalizationsKm extends AppLocalizations {
   String get registerButton => 'ចុះឈ្មោះ';
 
   @override
-  String get haveAccount => 'មានគណនីរួចហើយមែនទេ?';
+  String get haveAccount => 'មានគណនីរួចហើយ?';
 
   @override
-  String get loginLink => 'ចូល';
+  String get loginLink => 'ចូលប្រើ';
 
   @override
   String get buildingsTitle => 'អគារ';
@@ -102,7 +102,7 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String buildingDeleted(Object building) {
-    return 'អគារ $building ត្រូវបានលុបជោគជ័យ';
+    return 'អគារ $building ត្រូវបានលុបដោយជោគជ័យ';
   }
 
   @override
@@ -120,13 +120,13 @@ class AppLocalizationsKm extends AppLocalizations {
   String get addNewBuildingHint => 'សូមចុចប៊ូតុង + ដើម្បីបន្ថែមអគារថ្មី';
 
   @override
-  String get tryDifferentKeyword => 'សូមព្យាយាមស្វែងរកជាមួយពាក្យគន្លឹះផ្សេង';
+  String get tryDifferentKeyword => 'សូមព្យាយាមប្រើពាក្យគន្លឹះផ្សេងទៀត';
 
   @override
   String get oldDataTitle => 'ទិន្នន័យចាស់';
 
   @override
-  String get searchReceiptHint => 'ស្វែងរកបង្កាន់ដៃ...';
+  String get searchReceiptHint => 'ស្វែងរកវិក្កយបត្រ...';
 
   @override
   String get paidStatus => 'បានបង់ប្រាក់';
@@ -159,49 +159,72 @@ class AppLocalizationsKm extends AppLocalizations {
   String get noReceipts => 'មិនមានវិក្កយបត្រ';
 
   @override
-  String get loading => 'កំពុងដំណើការ...';
+  String get loading => 'កំពុងដំណើរការ...';
 
   @override
   String get settingsTitle => 'ការកំណត់';
 
   @override
+  String get settings => 'ការកំណត់';
+
+  @override
   String get accountSettings => 'ការកំណត់គណនី';
 
   @override
-  String get privacySecurity => 'ភាពឯកជន សុវត្ថិភាព កែប្រែលេខសម្ងាត់';
+  String get accountSettingsSubtitle => 'ឯកជនភាព, សុវត្ថិភាព, ប្តូរពាក្យសម្ងាត់';
 
   @override
-  String get subscriptions => 'ការជាវ';
+  String get privacySecurity => 'ភាពឯកជន សុវត្ថិភាព និងការផ្លាស់ប្តូរពាក្យសម្ងាត់';
 
   @override
-  String get plansPayments => 'ផែនការនិងវិធីសាស្ត្រទូទាត់';
+  String get subscriptions => 'ការជាវសេវាកម្ម';
 
   @override
-  String get appearance => 'រូបរាងកម្មវិធី';
+  String get subscriptionsSubtitle => 'គម្រោង, វិធីសាស្រ្តទូទាត់';
 
   @override
-  String get darkMode => 'ម៉ូដងងឹត';
+  String get plansPayments => 'គម្រោង និងវិធីទូទាត់ប្រាក់';
 
   @override
-  String get lightMode => 'ម៉ូដពន្លឺ';
+  String get appearance => 'រូបរាង';
 
   @override
-  String get systemDefault => 'លំនាំប្រព័ន្ធ';
+  String get darkMode => 'Theme ងងឹត';
+
+  @override
+  String get lightMode => 'Theme ភ្លឺ';
+
+  @override
+  String get systemDefault => 'លំនាំដើមប្រព័ន្ធ';
 
   @override
   String get language => 'ភាសា';
 
   @override
-  String get helpSupport => 'ជំនួយ';
+  String get khmer => 'ខ្មែរ';
 
   @override
-  String get faqContact => 'សំណួរញឹកញាប់, ទំនាក់ទំនងយើងខ្ញុំ'; 
+  String get english => 'English';
+
+  @override
+  String get chinese => 'ចិន';
+
+  @override
+  String get helpAndSupport => 'ជំនួយ';
+
+  @override
+  String get helpAndSupportSubtitle => 'សំណួរញឹកញាប់ និងទំនាក់ទំនងមកយើង';
+
+  @override
+  String get faqContact => 'សំណួរញឹកញាប់ និងទំនាក់ទំនងមកយើង';
 
   @override
   String get about => 'អំពីកម្មវិធី';
 
   @override
-  String get version => 'កំណែ 1.2.3';
+  String version(String versionNumber) {
+    return 'ជំនាន់ $versionNumber';
+  }
 
   @override
   String get signOut => 'ចាកចេញ';
@@ -210,10 +233,13 @@ class AppLocalizationsKm extends AppLocalizations {
   String get signOutConfirm => 'តើអ្នកពិតជាចង់ចេញពីប្រព័ន្ធមែនទេ?';
 
   @override
+  String get signOutConfirmation => 'តើអ្នកប្រាកដថាចង់ចាកចេញ?';
+
+  @override
   String get selectLanguage => 'ជ្រើសរើសភាសា';
 
   @override
-  String get premiumMember => 'សមាជិកព្រីម្យូម';
+  String get premiumMember => 'សមាជិក Premium';
 
   @override
   String get tenantsTitle => 'អ្នកជួល';
@@ -227,7 +253,7 @@ class AppLocalizationsKm extends AppLocalizations {
   }
 
   @override
-  String get tenantAddFailed => 'មានបញ្ហាក្នុងការបន្ថែមអ្នកជួល';
+  String get tenantAddFailed => 'បរាជ័យក្នុងការបន្ថែមអ្នកជួល';
 
   @override
   String tenantUpdated(Object tenant) {
@@ -235,7 +261,7 @@ class AppLocalizationsKm extends AppLocalizations {
   }
 
   @override
-  String get tenantUpdateFailed => 'មានបញ្ហាក្នុងការកែប្រែព័ត៌មាន';
+  String get tenantUpdateFailed => 'បរាជ័យក្នុងការកែប្រែព័ត៌មាន';
 
   @override
   String tenantDeleted(Object tenant) {
@@ -243,7 +269,7 @@ class AppLocalizationsKm extends AppLocalizations {
   }
 
   @override
-  String get tenantDeleteFailed => 'មានបញ្ហាក្នុងការលុបអ្នកជួល';
+  String get tenantDeleteFailed => 'បរាជ័យក្នុងការលុបអ្នកជួល';
 
   @override
   String roomChanged(Object tenant, Object room) {
@@ -251,22 +277,28 @@ class AppLocalizationsKm extends AppLocalizations {
   }
 
   @override
-  String get roomChangeFailed => 'មានបញ្ហាក្នុងការត្រឡប់វិញ';
+  String get roomChangeFailed => 'មានបញ្ហាក្នុងការផ្លាស់ប្តូរបន្ទប់';
 
   @override
-  String get retryLoadingProfile => 'ព្យាយាមផ្ទុកប្រវត្តិឡើងវិញ';
+  String get retryLoadingProfile => 'ព្យាយាមម្តងទៀត';
 
   @override
-  String get noLoggedIn => 'អ្នកមិនបានចូលគណនីទេ។';
+  String get failedToLoadProfile => 'ការទាញយកព័ត៌មាន Profile បានបរាជ័យ';
 
   @override
-  String get goToOnboarding => 'ទៅកាន់ទំព័រណែនាំ';
+  String get noLoggedIn => 'អ្នកមិនទាន់បានចូលគណនីទេ។';
 
   @override
-  String get unknownUser => 'អ្នកប្រើដែលមិនស្គាល់';
+  String get notLoggedIn => 'អ្នកមិនទាន់បានចូលគណនីទេ។';
 
   @override
-  String get noEmailProvided => 'មិនមានអ៊ីមែលផ្តល់ឱ្យ';
+  String get goToOnboarding => 'ទៅកាន់ទំព័រណែនាំប្រើប្រាស់';
+
+  @override
+  String get unknownUser => 'អ្នកប្រើប្រាស់មិនស្គាល់';
+
+  @override
+  String get noEmailProvided => 'គ្មានអ៊ីមែល';
 
   @override
   String get editProfileTapped => 'បានចុចកែប្រែប្រវត្តិ';
@@ -278,10 +310,10 @@ class AppLocalizationsKm extends AppLocalizations {
   String get signOutFailed => 'បរាជ័យក្នុងការចេញពីប្រព័ន្ធ';
 
   @override
-  String get confirmPasswordLabel => 'បញ្ជាក់លេខសម្ងាត់';
+  String get confirmPasswordLabel => 'បញ្ជាក់ពាក្យសម្ងាត់';
 
   @override
-  String get confirmPasswordHint => 'បញ្ជាក់លេខសម្ងាត់របស់អ្នក';
+  String get confirmPasswordHint => 'បញ្ចាក់ពាក្យសម្ងាត់របស់អ្នក';
 
   @override
   String get manageBuildings => 'គ្រប់គ្រងអគារ និងបន្ទប់';
@@ -293,17 +325,147 @@ class AppLocalizationsKm extends AppLocalizations {
   String get tenantManagement => 'ការគ្រប់គ្រងអ្នកជួល';
 
   @override
-  String get tenantManagementDesc => 'ចាត់ចែងអ្នកជួល និងធ្វើឱ្យស្វ័យប្រវត្តិវិក្កយបត្រដោយការប៉ះប៉ះបន្តិចប៉ុណ្ណោះ។';
+  String get tenantManagementDesc => 'ចាត់ចែងអ្នកជួល និងបង្កើតវិក្កយបត្រស្វ័យប្រវត្តិបានយ៉ាងងាយស្រួល។';
 
   @override
-  String get paymentTracking => 'ការតាមដានការទូទាត់';
+  String get paymentTracking => 'ការតាមដានការទូទាត់ប្រាក់';
 
   @override
-  String get paymentTrackingDesc => 'តាមដានការទូទាត់យ៉ាងងាយស្រួល - ស្ថានភាពរង់ចាំ បានបង់ និងហួសកំណត់ក្នុងពេលឡើង។';
+  String get paymentTrackingDesc => 'តាមដានស្ថានភាពការទូទាត់បានយ៉ាងងាយស្រួល - រង់ចាំ បង់រួច និងហួសកំណត់។';
 
   @override
-  String get automationTools => 'ឧបករណ៍ធ្វើឱ្យស្វ័យប្រវត្តិ';
+  String get automationTools => 'ឧបករណ៍ស្វ័យប្រវត្តិ';
 
   @override
-  String get automationToolsDesc => 'ធ្វើឱ្យការងារស្វ័យប្រវត្តិជាមួយការរំលឹកប៊ូត Telegram និងការបញ្ចូលឧបករណ៍។';
+  String get automationToolsDesc => 'ធ្វើឱ្យការងារស្វ័យប្រវត្តិជាមួយការរំលឹកតាម Telegram និងការបញ្ចូលឧបករណ៍ជាច្រើន។';
+
+  @override
+  String get advancedAnalysis => 'ការវិភាគកម្រិតខ្ពស់';
+
+  @override
+  String get financial => 'ហិរញ្ញវត្ថុ';
+
+  @override
+  String get building => 'អគារ';
+
+  @override
+  String get errorLoadingCurrencyRate => 'មានបញ្ហាក្នុងការទាញយកអត្រាប្តូរប្រាក់';
+
+  @override
+  String get january => 'មករា';
+
+  @override
+  String get february => 'កុម្ភៈ';
+
+  @override
+  String get march => 'មីនា';
+
+  @override
+  String get april => 'មេសា';
+
+  @override
+  String get may => 'ឧសភា';
+
+  @override
+  String get june => 'មិថុនា';
+
+  @override
+  String get july => 'កក្កដា';
+
+  @override
+  String get august => 'សីហា';
+
+  @override
+  String get september => 'កញ្ញា';
+
+  @override
+  String get october => 'តុលា';
+
+  @override
+  String get november => 'វិច្ឆិកា';
+
+  @override
+  String get december => 'ធ្នូ';
+
+  @override
+  String get orSignOut => 'ឬ ចាកចេញ';
+
+  @override
+  String get all => 'ទាំងអស់';
+
+  @override
+  String get errorLoadingBuildings => 'មានបញ្ហាក្នុងការទាញយកអគារ';
+
+  @override
+  String get pleaseEnterValue => 'សូមបញ្ចូលតម្លៃ';
+
+  @override
+  String get pleaseEnterValidNumber => 'សូមបញ្ចូលលេខត្រឹមត្រូវ';
+
+  @override
+  String receiptsCount(num count) {
+    return '$count វិក្កយបត្រ';
+  }
+
+  @override
+  String get totalRevenue => 'ប្រាក់ចំណូលសរុប';
+
+  @override
+  String get paid => 'បានបង់ប្រាក់';
+
+  @override
+  String get remaining => 'នៅសល់';
+
+  @override
+  String collectionRate(Object rate) {
+    return 'អត្រាប្រមូល: $rate%';
+  }
+
+  @override
+  String get tapToSeeDetails => 'ចុចដើម្បីមើលលម្អិត';
+
+  @override
+  String get utilityAnalysis => 'ការវិភាគតម្លៃ';
+
+  @override
+  String get pending => 'មិនទាន់បង់';
+
+  @override
+  String get overdue => 'ហួសកំណត់';
+
+  @override
+  String get selectMonth => 'ជ្រើសរើសខែ';
+
+  @override
+  String get year => 'ឆ្នាំ: ';
+
+  @override
+  String get month => 'ខែ:';
+
+  @override
+  String get previousMonth => 'ខែមុន';
+
+  @override
+  String get nextMonth => 'ខែបន្ទាប់';
+
+  @override
+  String get water => 'ទឹក';
+
+  @override
+  String get electricity => 'អគ្គិសនី';
+
+  @override
+  String get room => 'បន្ទប់';
+
+  @override
+  String get service => 'សេវាកម្ម';
+
+  @override
+  String get emailValidationInvalid => 'សូមបញ្ចូលអ៊ីមែលដែលត្រឹមត្រូវ';
+
+  @override
+  String get passwordValidationLength => 'ពាក្យសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ 6 តួអក្សរ';
+
+  @override
+  String get passwordsDoNotMatch => 'ពាក្យសម្ងាត់មិនตรงគ្នាទេ';
 }

@@ -12,7 +12,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receiptTab => 'Receipts';
 
   @override
-  String get historyTab => 'Old Data';
+  String get historyTab => 'History';
 
   @override
   String get buildingTab => 'Buildings';
@@ -165,13 +165,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTitle => 'Settings';
 
   @override
+  String get settings => 'Settings';
+
+  @override
   String get accountSettings => 'Account Settings';
+
+  @override
+  String get accountSettingsSubtitle => 'Privacy, security, change password';
 
   @override
   String get privacySecurity => 'Privacy, security, change password';
 
   @override
   String get subscriptions => 'Subscriptions';
+
+  @override
+  String get subscriptionsSubtitle => 'Plans, payment methods';
 
   @override
   String get plansPayments => 'Plans, payment methods';
@@ -192,7 +201,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get language => 'Language';
 
   @override
-  String get helpSupport => 'Help & Support';
+  String get khmer => 'Khmer';
+
+  @override
+  String get english => 'English';
+
+  @override
+  String get chinese => 'Chinese';
+
+  @override
+  String get helpAndSupport => 'Help & Support';
+
+  @override
+  String get helpAndSupportSubtitle => 'FAQs, contact us';
 
   @override
   String get faqContact => 'FAQs, contact us';
@@ -201,13 +222,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get about => 'About';
 
   @override
-  String get version => 'Version 1.2.3';
+  String version(String versionNumber) {
+    return 'Version $versionNumber';
+  }
 
   @override
   String get signOut => 'Sign Out';
 
   @override
   String get signOutConfirm => 'Are you sure you want to sign out?';
+
+  @override
+  String get signOutConfirmation => 'Are you sure you want to sign out?';
 
   @override
   String get selectLanguage => 'Select Language';
@@ -257,7 +283,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retryLoadingProfile => 'Retry Loading Profile';
 
   @override
+  String get failedToLoadProfile => 'Failed to load profile.';
+
+  @override
   String get noLoggedIn => 'You are not logged in.';
+
+  @override
+  String get notLoggedIn => 'You are not logged in.';
 
   @override
   String get goToOnboarding => 'Go to Onboarding';
@@ -306,4 +338,140 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get automationToolsDesc => 'Automate work with Telegram bot reminders and utilities input.';
+
+  @override
+  String get advancedAnalysis => 'Advanced Analysis';
+
+  @override
+  String get financial => 'Financial';
+
+  @override
+  String get building => 'Building';
+
+  @override
+  String get errorLoadingCurrencyRate => 'Error loading currency rate';
+
+  @override
+  String get january => 'January';
+
+  @override
+  String get february => 'February';
+
+  @override
+  String get march => 'March';
+
+  @override
+  String get april => 'April';
+
+  @override
+  String get may => 'May';
+
+  @override
+  String get june => 'June';
+
+  @override
+  String get july => 'July';
+
+  @override
+  String get august => 'August';
+
+  @override
+  String get september => 'September';
+
+  @override
+  String get october => 'October';
+
+  @override
+  String get november => 'November';
+
+  @override
+  String get december => 'December';
+
+  @override
+  String get orSignOut => 'Or Sign Out';
+
+  @override
+  String get all => 'All';
+
+  @override
+  String get errorLoadingBuildings => 'Error loading buildings';
+
+  @override
+  String get pleaseEnterValue => 'Please enter a value';
+
+  @override
+  String get pleaseEnterValidNumber => 'Please enter a valid number';
+
+  @override
+  String receiptsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count receipts',
+      one: '$count receipt',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get totalRevenue => 'Total Revenue';
+
+  @override
+  String get paid => 'Paid';
+
+  @override
+  String get remaining => 'Remaining';
+
+  @override
+  String collectionRate(Object rate) {
+    return 'Collection Rate: $rate%';
+  }
+
+  @override
+  String get tapToSeeDetails => 'Tap to see details';
+
+  @override
+  String get utilityAnalysis => 'Utility Analysis';
+
+  @override
+  String get pending => 'Pending';
+
+  @override
+  String get overdue => 'Overdue';
+
+  @override
+  String get selectMonth => 'Select Month';
+
+  @override
+  String get year => 'Year: ';
+
+  @override
+  String get month => 'Month:';
+
+  @override
+  String get previousMonth => 'Previous Month';
+
+  @override
+  String get nextMonth => 'Next Month';
+
+  @override
+  String get water => 'Water';
+
+  @override
+  String get electricity => 'Electricity';
+
+  @override
+  String get room => 'Room';
+
+  @override
+  String get service => 'Service';
+
+  @override
+  String get emailValidationInvalid => 'Please enter a valid email';
+
+  @override
+  String get passwordValidationLength => 'Password must be at least 6 characters';
+
+  @override
+  String get passwordsDoNotMatch => 'Passwords do not match';
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 class MonthFilterBar extends StatelessWidget {
   const MonthFilterBar({super.key, 
@@ -20,6 +21,7 @@ class MonthFilterBar extends StatelessWidget {
   }
 
   Future<void> _selectMonth(BuildContext context) async {
+    final localizations = AppLocalizations.of(context)!;
     DateTime tempSelectedMonth = selectedMonth;
 
     await showDialog(
@@ -28,7 +30,7 @@ class MonthFilterBar extends StatelessWidget {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('ជ្រើសរើសខែ'),
+              title: Text(localizations.selectMonth),
               content: SizedBox(
                 width: double.minPositive,
                 child: Column(
@@ -36,8 +38,8 @@ class MonthFilterBar extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Text('ឆ្នាំ: ',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(localizations.year,
+                            style: const TextStyle(fontWeight: FontWeight.bold)),
                         Expanded(
                           child: DropdownButton<int>(
                             value: tempSelectedMonth.year,
@@ -62,8 +64,8 @@ class MonthFilterBar extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    const Text('ខែ:',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(localizations.month,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     GridView.builder(
                       shrinkWrap: true,
@@ -121,7 +123,7 @@ class MonthFilterBar extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('បោះបង់'),
+                  child: Text(localizations.cancel),
                 ),
               ],
             );
@@ -133,6 +135,7 @@ class MonthFilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(4),
@@ -141,7 +144,7 @@ class MonthFilterBar extends StatelessWidget {
             IconButton(
               onPressed: _previousMonth,
               icon: const Icon(Icons.chevron_left),
-              tooltip: 'ខែមុន',
+              tooltip: localizations.previousMonth,
             ),
             Expanded(
               child: InkWell(
@@ -181,7 +184,7 @@ class MonthFilterBar extends StatelessWidget {
             IconButton(
               onPressed: _nextMonth,
               icon: const Icon(Icons.chevron_right),
-              tooltip: 'ខែបន្ទាប់',
+              tooltip: localizations.nextMonth,
             ),
           ],
         ),

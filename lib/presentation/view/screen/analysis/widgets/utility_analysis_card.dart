@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 class UtilityAnalysisCard extends StatelessWidget {
   const UtilityAnalysisCard({
@@ -22,6 +23,7 @@ class UtilityAnalysisCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Card(
       margin: isBuildingSpecific ? const EdgeInsets.only(top: 8) : null,
       elevation: 3,
@@ -48,7 +50,7 @@ class UtilityAnalysisCard extends StatelessWidget {
             ),
             SizedBox(height: isBuildingSpecific ? 12 : 16),
             _UtilityRow(
-              title: 'ទឹក',
+              title: localizations.water,
               amount: utilityData['water']!,
               icon: Icons.water_drop,
               color: Colors.lightBlue.shade400,
@@ -57,7 +59,7 @@ class UtilityAnalysisCard extends StatelessWidget {
               isBuildingSpecific: isBuildingSpecific,
             ),
             _UtilityRow(
-              title: 'អគ្គិសនី',
+              title: localizations.electricity,
               amount: utilityData['electric']!,
               icon: Icons.electrical_services,
               color: Colors.amber.shade600,
@@ -66,7 +68,7 @@ class UtilityAnalysisCard extends StatelessWidget {
               isBuildingSpecific: isBuildingSpecific,
             ),
             _UtilityRow(
-              title: 'បន្ទប់',
+              title: localizations.room,
               amount: utilityData['room']!,
               icon: Icons.home,
               color: Colors.teal.shade400,
@@ -75,7 +77,7 @@ class UtilityAnalysisCard extends StatelessWidget {
               isBuildingSpecific: isBuildingSpecific,
             ),
             _UtilityRow(
-              title: 'សេវាកម្ម',
+              title: localizations.service,
               amount: utilityData['service']!,
               icon: Icons.miscellaneous_services,
               color: Colors.deepPurple.shade400,

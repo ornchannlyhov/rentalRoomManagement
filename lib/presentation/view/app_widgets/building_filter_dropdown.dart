@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:joul_v2/presentation/providers/building_provider.dart';
+import 'package:joul_v2/l10n/app_localizations.dart'; // Import localizations
 
 class BuildingFilterDropdown extends StatelessWidget {
   const BuildingFilterDropdown({
@@ -16,8 +17,8 @@ class BuildingFilterDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final localizations = AppLocalizations.of(context)!;
 
-    // Fix 1: Access buildingsState instead of buildings
     return buildingProvider.buildingsState.when(
       loading: () => const Padding(
         padding: EdgeInsets.all(16.0),
@@ -26,7 +27,8 @@ class BuildingFilterDropdown extends StatelessWidget {
       error: (error) => Padding(
         padding: const EdgeInsets.all(16.0),
         child: Text(
-          'Error loading buildings: $error',
+          // Use localized error string
+          '${localizations.errorLoadingBuildings}: $error',
           style: TextStyle(color: theme.colorScheme.error),
         ),
       ),
@@ -35,7 +37,7 @@ class BuildingFilterDropdown extends StatelessWidget {
           DropdownMenuItem(
             value: null,
             child: Text(
-              'ទាំងអស់', // "All"
+              localizations.all,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w500,
               ),
@@ -75,7 +77,6 @@ class BuildingFilterDropdown extends StatelessWidget {
             child: DropdownButton<String?>(
               isExpanded: true,
               value: selectedBuildingId,
-              // Fix 2: Use neutral icon color to prevent glitching
               icon: Icon(
                 Icons.filter_list,
                 color: theme.colorScheme.onSurface.withOpacity(0.6),

@@ -1,11 +1,12 @@
-
 import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/receipt.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:joul_v2/presentation/view/screen/analysis/widgets/month_filter_bar.dart';
 import 'package:joul_v2/presentation/view/screen/analysis/widgets/utility_analysis_card.dart';
 
 class BuildingAnalysisTab extends StatelessWidget {
-  const BuildingAnalysisTab({super.key, 
+  const BuildingAnalysisTab({
+    super.key,
     required this.selectedMonth,
     required this.onMonthChanged,
     required this.buildings,
@@ -33,6 +34,8 @@ class BuildingAnalysisTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -78,7 +81,8 @@ class BuildingAnalysisTab extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                '${analysis['receiptsCount']!.toInt()} វិក្កយបត្រ',
+                                localizations.receiptsCount(
+                                    analysis['receiptsCount']!.toInt()),
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
                               const SizedBox(width: 8),
@@ -92,18 +96,18 @@ class BuildingAnalysisTab extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
                           _BuildingSummaryRow(
-                            label: 'ប្រាក់ចំណូលសរុប:',
+                            label: '${localizations.totalRevenue}:',
                             amount: analysis['total']!,
                             formatCurrency: formatCurrency,
                           ),
                           _BuildingSummaryRow(
-                            label: 'បានបង់ប្រាក់:',
+                            label: '${localizations.paid}:',
                             amount: analysis['paid']!,
                             formatCurrency: formatCurrency,
                             color: Theme.of(context).colorScheme.primary,
                           ),
                           _BuildingSummaryRow(
-                            label: 'នៅសល់:',
+                            label: '${localizations.remaining}:',
                             amount: analysis['pending']! + analysis['overdue']!,
                             formatCurrency: formatCurrency,
                             color: Colors.orange,
@@ -111,7 +115,10 @@ class BuildingAnalysisTab extends StatelessWidget {
                           const SizedBox(height: 12),
                           LinearProgressIndicator(
                             value: collectionRate / 100,
-                            backgroundColor:  Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                            backgroundColor: Theme.of(context)
+                                .colorScheme
+                                .outline
+                                .withOpacity(0.2),
                             valueColor: AlwaysStoppedAnimation<Color>(
                                 Theme.of(context).colorScheme.primary),
                           ),
@@ -120,11 +127,12 @@ class BuildingAnalysisTab extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'អត្រាប្រមូល: ${collectionRate.toStringAsFixed(1)}%',
+                                localizations.collectionRate(
+                                    collectionRate.toStringAsFixed(1)),
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
                               Text(
-                                'ចុចដើម្បីមើលលម្អិត',
+                                localizations.tapToSeeDetails,
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodySmall
@@ -143,7 +151,7 @@ class BuildingAnalysisTab extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       child: UtilityAnalysisCard(
-                        title: 'ការវិភាគតម្លៃ',
+                        title: localizations.utilityAnalysis,
                         icon: Icons.analytics,
                         color: Colors.blue,
                         utilityData: getBuildingUtilityAnalysis(building.id),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/receipt.dart';
 import 'package:joul_v2/data/models/enum/payment_status.dart';
 import 'package:joul_v2/data/repositories/currency_repositoy.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
 import 'package:joul_v2/presentation/view/screen/analysis/widgets/building_analysis_tab.dart';
 import 'package:joul_v2/presentation/view/screen/analysis/widgets/financial_overview_tab.dart';
@@ -34,20 +35,23 @@ class _AdvancedAnalysisScreenState extends State<AdvancedAnalysisScreen>
 
   final Set<String> _expandedBuildings = <String>{};
 
-  final List<String> _monthNames = const [
-    'មករា',
-    'កុម្ភៈ',
-    'មីនា',
-    'មេសា',
-    'ឧសភា',
-    'មិថុនា',
-    'កក្កដា',
-    'សីហា',
-    'កញ្ញា',
-    'តុលា',
-    'វិច្ឆិកា',
-    'ធ្នូ'
-  ];
+  List<String> _getMonthNames(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+    return [
+      localizations.january,
+      localizations.february,
+      localizations.march,
+      localizations.april,
+      localizations.may,
+      localizations.june,
+      localizations.july,
+      localizations.august,
+      localizations.september,
+      localizations.october,
+      localizations.november,
+      localizations.december,
+    ];
+  }
 
   @override
   void initState() {
@@ -73,7 +77,9 @@ class _AdvancedAnalysisScreenState extends State<AdvancedAnalysisScreen>
     } catch (e) {
       GlobalSnackBar.show(
           // ignore: use_build_context_synchronously
-          message: 'Error Loaiding currency rate', isError: true, context: context);
+          message: AppLocalizations.of(context)!.errorLoadingCurrencyRate,
+          isError: true,
+          context: context);
       setState(() {
         _isLoadingRates = false;
       });
@@ -157,23 +163,27 @@ class _AdvancedAnalysisScreenState extends State<AdvancedAnalysisScreen>
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+    final monthNames = _getMonthNames(context);
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        title: const Text('ការវិភាគលម្អិត'),
+        title: Text(localizations.advancedAnalysis),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(40),
           child: TabBar(
             controller: _tabController,
-            tabs: const [
+            tabs: [
               Tab(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.account_balance_wallet, size: 18),
-                    SizedBox(width: 6),
-                    Text('ប្រាក់', style: TextStyle(fontSize: 14)),
+                    const Icon(Icons.account_balance_wallet, size: 18),
+                    const SizedBox(width: 6),
+                    Text(localizations.financial,
+                        style: const TextStyle(fontSize: 14)),
                   ],
                 ),
               ),
@@ -181,9 +191,10 @@ class _AdvancedAnalysisScreenState extends State<AdvancedAnalysisScreen>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.apartment, size: 18),
-                    SizedBox(width: 6),
-                    Text('អគារ', style: TextStyle(fontSize: 14)),
+                    const Icon(Icons.apartment, size: 18),
+                    const SizedBox(width: 6),
+                    Text(localizations.building,
+                        style: const TextStyle(fontSize: 14)),
                   ],
                 ),
               ),
@@ -203,7 +214,7 @@ class _AdvancedAnalysisScreenState extends State<AdvancedAnalysisScreen>
                 setState(() => _selectedCurrency = value!),
             isLoadingRates: _isLoadingRates,
             formatCurrency: _formatCurrency,
-            monthNames: _monthNames,
+            monthNames: monthNames,
             getTotalExpectedRevenue: (receipts) =>
                 _getSumOfReceiptsByStatus(receipts, null),
             getTotalPaidAmount: (receipts) =>
@@ -231,7 +242,7 @@ class _AdvancedAnalysisScreenState extends State<AdvancedAnalysisScreen>
             getBuildingFinancialAnalysis: _getBuildingFinancialAnalysis,
             getBuildingUtilityAnalysis: _getBuildingUtilityAnalysis,
             formatCurrency: _formatCurrency,
-            monthNames: _monthNames,
+            monthNames: monthNames,
             getTotalExpectedRevenue: (receipts) =>
                 _getSumOfReceiptsByStatus(receipts, null),
           ),

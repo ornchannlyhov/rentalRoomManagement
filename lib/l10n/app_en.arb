@@ -1,7 +1,7 @@
 {
   "@@locale": "en",
   "receiptTab": "Receipts",
-  "historyTab": "Old Data",
+  "historyTab": "History",
   "buildingTab": "Buildings",
   "tenantTab": "Tenants",
   "settingsTab": "Settings",
@@ -27,10 +27,28 @@
   "buildingsTitle": "Buildings",
   "searchBuildingHint": "Search building...",
   "confirmDelete": "Confirm Delete",
+  "@deleteConfirmMsg": {
+    "description": "Confirmation message for deleting a building",
+    "placeholders": {
+      "building": {}
+    }
+  },
   "deleteConfirmMsg": "Are you sure you want to delete building {building}?",
   "cancel": "Cancel",
   "delete": "Delete",
+  "@buildingDeleted": {
+    "description": "Success message after deleting a building",
+    "placeholders": {
+      "building": {}
+    }
+  },
   "buildingDeleted": "Building {building} deleted successfully",
+  "@deleteFailed": {
+    "description": "Error message when building deletion fails",
+    "placeholders": {
+      "error": {}
+    }
+  },
   "deleteFailed": "Failed to delete building: {error}",
   "noBuildings": "No buildings",
   "noBuildingsSearch": "No buildings found",
@@ -50,35 +68,79 @@
   "noReceipts": "No receipts",
   "loading": "Loading...",
   "settingsTitle": "Settings",
+  "settings": "Settings",
   "accountSettings": "Account Settings",
+  "accountSettingsSubtitle": "Privacy, security, change password",
   "privacySecurity": "Privacy, security, change password",
   "subscriptions": "Subscriptions",
+  "subscriptionsSubtitle": "Plans, payment methods",
   "plansPayments": "Plans, payment methods",
   "appearance": "Appearance",
   "darkMode": "Dark mode",
   "lightMode": "Light mode",
   "systemDefault": "System default",
   "language": "Language",
-  "helpSupport": "Help & Support",
+  "khmer": "Khmer",
+  "english": "English",
+  "chinese": "Chinese",
+  "helpAndSupport": "Help & Support",
+  "helpAndSupportSubtitle": "FAQs, contact us",
   "faqContact": "FAQs, contact us",
   "about": "About",
-  "version": "Version 1.2.3",
+  "@version": {
+    "description": "The application version number",
+    "placeholders": {
+      "versionNumber": {
+        "type": "String",
+        "example": "1.2.3"
+      }
+    }
+  },
+  "version": "Version {versionNumber}",
   "signOut": "Sign Out",
   "signOutConfirm": "Are you sure you want to sign out?",
+  "signOutConfirmation": "Are you sure you want to sign out?",
   "selectLanguage": "Select Language",
   "premiumMember": "Premium Member",
   "tenantsTitle": "Tenants",
   "searchTenantHint": "Search tenant...",
+  "@tenantAdded": {
+    "description": "Success message after adding a tenant",
+    "placeholders": {
+      "tenant": {}
+    }
+  },
   "tenantAdded": "Tenant {tenant} added successfully",
   "tenantAddFailed": "Error adding tenant",
+  "@tenantUpdated": {
+    "description": "Success message after updating a tenant",
+    "placeholders": {
+      "tenant": {}
+    }
+  },
   "tenantUpdated": "Tenant {tenant} updated successfully",
   "tenantUpdateFailed": "Error updating tenant",
+  "@tenantDeleted": {
+    "description": "Success message after deleting a tenant",
+    "placeholders": {
+      "tenant": {}
+    }
+  },
   "tenantDeleted": "Tenant {tenant} deleted",
   "tenantDeleteFailed": "Error deleting tenant",
+  "@roomChanged": {
+    "description": "Message when a tenant's room is changed",
+    "placeholders": {
+      "tenant": {},
+      "room": {}
+    }
+  },
   "roomChanged": "Room for {tenant} changed to {room}",
   "roomChangeFailed": "Error undoing room change",
   "retryLoadingProfile": "Retry Loading Profile",
+  "failedToLoadProfile": "Failed to load profile.",
   "noLoggedIn": "You are not logged in.",
+  "notLoggedIn": "You are not logged in.",
   "goToOnboarding": "Go to Onboarding",
   "unknownUser": "Unknown User",
   "noEmailProvided": "No Email Provided",
@@ -95,47 +157,46 @@
   "paymentTrackingDesc": "Track payments easily - Pending, Paid, and Overdue status at a glance.",
   "automationTools": "Automation Tools",
   "automationToolsDesc": "Automate work with Telegram bot reminders and utilities input.",
-  "@deleteConfirmMsg": {
-    "description": "Confirmation message for deleting a building",
-    "placeholders": {
-      "building": {}
-    }
-  },
-  "@buildingDeleted": {
-    "description": "Success message after deleting a building",
-    "placeholders": {
-      "building": {}
-    }
-  },
-  "@deleteFailed": {
-    "description": "Error message when building deletion fails",
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@tenantAdded": {
-    "description": "Success message after adding a tenant",
-    "placeholders": {
-      "tenant": {}
-    }
-  },
-  "@tenantUpdated": {
-    "description": "Success message after updating a tenant",
-    "placeholders": {
-      "tenant": {}
-    }
-  },
-  "@tenantDeleted": {
-    "description": "Success message after deleting a tenant",
-    "placeholders": {
-      "tenant": {}
-    }
-  },
-  "@roomChanged": {
-    "description": "Message when a tenant's room is changed",
-    "placeholders": {
-      "tenant": {},
-      "room": {}
-    }
-  }
+  "advancedAnalysis": "Advanced Analysis",
+  "financial": "Financial",
+  "building": "Building",
+  "errorLoadingCurrencyRate": "Error loading currency rate",
+  "january": "January",
+  "february": "February",
+  "march": "March",
+  "april": "April",
+  "may": "May",
+  "june": "June",
+  "july": "July",
+  "august": "August",
+  "september": "September",
+  "october": "October",
+  "november": "November",
+  "december": "December",
+  "orSignOut": "Or Sign Out",
+  "all": "All",
+  "errorLoadingBuildings": "Error loading buildings",
+  "pleaseEnterValue": "Please enter a value",
+  "pleaseEnterValidNumber": "Please enter a valid number",
+  "receiptsCount": "{count,plural, =1{{count} receipt}other{{count} receipts}}",
+  "totalRevenue": "Total Revenue",
+  "paid": "Paid",
+  "remaining": "Remaining",
+  "collectionRate": "Collection Rate: {rate}%",
+  "tapToSeeDetails": "Tap to see details",
+  "utilityAnalysis": "Utility Analysis",
+  "pending": "Pending",
+  "overdue": "Overdue",
+  "selectMonth": "Select Month",
+  "year": "Year: ",
+  "month": "Month:",
+  "previousMonth": "Previous Month",
+  "nextMonth": "Next Month",
+  "water": "Water",
+  "electricity": "Electricity",
+  "room": "Room",
+  "service": "Service",
+  "emailValidationInvalid": "Please enter a valid email",
+  "passwordValidationLength": "Password must be at least 6 characters",
+  "passwordsDoNotMatch": "Passwords do not match"
 }

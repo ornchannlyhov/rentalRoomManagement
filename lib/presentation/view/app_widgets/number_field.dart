@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 class NumberTextFormField extends StatelessWidget {
   final TextEditingController? controller;
@@ -23,6 +24,7 @@ class NumberTextFormField extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final baseColor = theme.colorScheme.onSurface;
+    final localizations = AppLocalizations.of(context)!; 
 
     return TextFormField(
       controller: controller,
@@ -31,15 +33,13 @@ class NumberTextFormField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(
-          color: enabled
-              ? baseColor
-              : baseColor.withOpacity(0.5), // faded label when disabled
+          color: enabled ? baseColor : baseColor.withOpacity(0.5),
         ),
         enabledBorder: UnderlineInputBorder(
           borderSide: BorderSide(
             color: enabled
                 ? theme.colorScheme.outline
-                : theme.colorScheme.outline.withOpacity(0.5), // faded border
+                : theme.colorScheme.outline.withOpacity(0.5),
           ),
         ),
         focusedBorder: UnderlineInputBorder(
@@ -47,9 +47,7 @@ class NumberTextFormField extends StatelessWidget {
         ),
       ),
       style: TextStyle(
-        color: enabled
-            ? baseColor
-            : baseColor.withOpacity(0.5), // faded text when disabled
+        color: enabled ? baseColor : baseColor.withOpacity(0.5),
       ),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
@@ -58,10 +56,12 @@ class NumberTextFormField extends StatelessWidget {
       validator: validator ??
           (value) {
             if (value == null || value.isEmpty) {
-              return 'សូមបញ្ចូលតម្លៃ។';
+              // Use localized validation string
+              return localizations.pleaseEnterValue;
             }
             if (double.tryParse(value) == null) {
-              return 'សូមបញ្ចូលលេខត្រឹមត្រូវ។';
+              // Use localized validation string
+              return localizations.pleaseEnterValidNumber;
             }
             return null;
           },

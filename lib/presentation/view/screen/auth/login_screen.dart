@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/data/repositories/auth_repository.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
@@ -30,8 +31,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Color.fromARGB(255, 245, 245, 245),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -48,9 +51,9 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Welcome Back',
-                  style: TextStyle(
+                Text(
+                  localizations.welcomeBack,
+                  style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1F2937),
@@ -58,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sign in to your account',
+                  localizations.signInPrompt,
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey.shade600,
@@ -67,16 +70,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 48),
                 CustomTextField(
                   controller: _emailController,
-                  label: 'Email',
-                  hintText: 'Enter your email',
+                  label: localizations.emailLabel,
+                  hintText: localizations.emailHint,
                   prefixIcon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
+                      return localizations.emailHint;
                     }
                     if (!value.contains('@')) {
-                      return 'Please enter a valid email';
+                      return localizations.emailValidationInvalid;
                     }
                     return null;
                   },
@@ -84,8 +87,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _passwordController,
-                  label: 'Password',
-                  hintText: 'Enter your password',
+                  label: localizations.passwordLabel,
+                  hintText: localizations.passwordHint,
                   prefixIcon: Icons.lock_outline,
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
@@ -103,10 +106,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
+                      return localizations.passwordHint;
                     }
                     if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                      return localizations.passwordValidationLength;
                     }
                     return null;
                   },
@@ -123,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             : () => _handleLogin(authProvider),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF10B981),
-                          foregroundColor: Colors.white,
+                          foregroundColor: Color.fromARGB(255, 245, 245, 245),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -136,12 +139,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
+                                      Color.fromARGB(255, 245, 245, 245)),
                                 ),
                               )
-                            : const Text(
-                                'Login',
-                                style: TextStyle(
+                            : Text(
+                                localizations.loginButton,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -180,7 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Don't have an account? ",
+                      '${localizations.noAccount} ',
                       style: TextStyle(
                         color: Colors.grey.shade600,
                         fontSize: 14,
@@ -190,9 +193,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () {
                         Navigator.pushReplacementNamed(context, '/register');
                       },
-                      child: const Text(
-                        'Register',
-                        style: TextStyle(
+                      child: Text(
+                        localizations.registerLink,
+                        style: const TextStyle(
                           color: Color(0xFF10B981),
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -226,11 +229,9 @@ class _LoginScreenState extends State<LoginScreen> {
           loading: () {},
           success: (user) async {
             if (user != null && authProvider.isAuthenticated()) {
-              // Sync data for the logged-in user
               if (await ApiHelper.instance.hasNetwork()) {
                 await repositoryManager.syncAll();
               }
-
               Navigator.pushReplacementNamed(context, '/');
             }
           },

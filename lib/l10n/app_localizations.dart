@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
 import 'app_localizations_km.dart';
+import 'app_localizations_zh.dart';
 
 // ignore_for_file: type=lint
 
@@ -92,7 +93,8 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
-    Locale('km')
+    Locale('km'),
+    Locale('zh')
   ];
 
   /// No description provided for @receiptTab.
@@ -104,7 +106,7 @@ abstract class AppLocalizations {
   /// No description provided for @historyTab.
   ///
   /// In en, this message translates to:
-  /// **'Old Data'**
+  /// **'History'**
   String get historyTab;
 
   /// No description provided for @buildingTab.
@@ -395,11 +397,23 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settingsTitle;
 
+  /// No description provided for @settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
   /// No description provided for @accountSettings.
   ///
   /// In en, this message translates to:
   /// **'Account Settings'**
   String get accountSettings;
+
+  /// No description provided for @accountSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy, security, change password'**
+  String get accountSettingsSubtitle;
 
   /// No description provided for @privacySecurity.
   ///
@@ -412,6 +426,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Subscriptions'**
   String get subscriptions;
+
+  /// No description provided for @subscriptionsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans, payment methods'**
+  String get subscriptionsSubtitle;
 
   /// No description provided for @plansPayments.
   ///
@@ -449,11 +469,35 @@ abstract class AppLocalizations {
   /// **'Language'**
   String get language;
 
-  /// No description provided for @helpSupport.
+  /// No description provided for @khmer.
+  ///
+  /// In en, this message translates to:
+  /// **'Khmer'**
+  String get khmer;
+
+  /// No description provided for @english.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get english;
+
+  /// No description provided for @chinese.
+  ///
+  /// In en, this message translates to:
+  /// **'Chinese'**
+  String get chinese;
+
+  /// No description provided for @helpAndSupport.
   ///
   /// In en, this message translates to:
   /// **'Help & Support'**
-  String get helpSupport;
+  String get helpAndSupport;
+
+  /// No description provided for @helpAndSupportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FAQs, contact us'**
+  String get helpAndSupportSubtitle;
 
   /// No description provided for @faqContact.
   ///
@@ -467,11 +511,11 @@ abstract class AppLocalizations {
   /// **'About'**
   String get about;
 
-  /// No description provided for @version.
+  /// The application version number
   ///
   /// In en, this message translates to:
-  /// **'Version 1.2.3'**
-  String get version;
+  /// **'Version {versionNumber}'**
+  String version(String versionNumber);
 
   /// No description provided for @signOut.
   ///
@@ -484,6 +528,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to sign out?'**
   String get signOutConfirm;
+
+  /// No description provided for @signOutConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to sign out?'**
+  String get signOutConfirmation;
 
   /// No description provided for @selectLanguage.
   ///
@@ -563,11 +613,23 @@ abstract class AppLocalizations {
   /// **'Retry Loading Profile'**
   String get retryLoadingProfile;
 
+  /// No description provided for @failedToLoadProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load profile.'**
+  String get failedToLoadProfile;
+
   /// No description provided for @noLoggedIn.
   ///
   /// In en, this message translates to:
   /// **'You are not logged in.'**
   String get noLoggedIn;
+
+  /// No description provided for @notLoggedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'You are not logged in.'**
+  String get notLoggedIn;
 
   /// No description provided for @goToOnboarding.
   ///
@@ -664,6 +726,258 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Automate work with Telegram bot reminders and utilities input.'**
   String get automationToolsDesc;
+
+  /// No description provided for @advancedAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced Analysis'**
+  String get advancedAnalysis;
+
+  /// No description provided for @financial.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial'**
+  String get financial;
+
+  /// No description provided for @building.
+  ///
+  /// In en, this message translates to:
+  /// **'Building'**
+  String get building;
+
+  /// No description provided for @errorLoadingCurrencyRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading currency rate'**
+  String get errorLoadingCurrencyRate;
+
+  /// No description provided for @january.
+  ///
+  /// In en, this message translates to:
+  /// **'January'**
+  String get january;
+
+  /// No description provided for @february.
+  ///
+  /// In en, this message translates to:
+  /// **'February'**
+  String get february;
+
+  /// No description provided for @march.
+  ///
+  /// In en, this message translates to:
+  /// **'March'**
+  String get march;
+
+  /// No description provided for @april.
+  ///
+  /// In en, this message translates to:
+  /// **'April'**
+  String get april;
+
+  /// No description provided for @may.
+  ///
+  /// In en, this message translates to:
+  /// **'May'**
+  String get may;
+
+  /// No description provided for @june.
+  ///
+  /// In en, this message translates to:
+  /// **'June'**
+  String get june;
+
+  /// No description provided for @july.
+  ///
+  /// In en, this message translates to:
+  /// **'July'**
+  String get july;
+
+  /// No description provided for @august.
+  ///
+  /// In en, this message translates to:
+  /// **'August'**
+  String get august;
+
+  /// No description provided for @september.
+  ///
+  /// In en, this message translates to:
+  /// **'September'**
+  String get september;
+
+  /// No description provided for @october.
+  ///
+  /// In en, this message translates to:
+  /// **'October'**
+  String get october;
+
+  /// No description provided for @november.
+  ///
+  /// In en, this message translates to:
+  /// **'November'**
+  String get november;
+
+  /// No description provided for @december.
+  ///
+  /// In en, this message translates to:
+  /// **'December'**
+  String get december;
+
+  /// No description provided for @orSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Or Sign Out'**
+  String get orSignOut;
+
+  /// No description provided for @all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get all;
+
+  /// No description provided for @errorLoadingBuildings.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading buildings'**
+  String get errorLoadingBuildings;
+
+  /// No description provided for @pleaseEnterValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a value'**
+  String get pleaseEnterValue;
+
+  /// No description provided for @pleaseEnterValidNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid number'**
+  String get pleaseEnterValidNumber;
+
+  /// No description provided for @receiptsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count,plural, =1{{count} receipt}other{{count} receipts}}'**
+  String receiptsCount(num count);
+
+  /// No description provided for @totalRevenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Revenue'**
+  String get totalRevenue;
+
+  /// No description provided for @paid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get paid;
+
+  /// No description provided for @remaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining'**
+  String get remaining;
+
+  /// No description provided for @collectionRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection Rate: {rate}%'**
+  String collectionRate(Object rate);
+
+  /// No description provided for @tapToSeeDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to see details'**
+  String get tapToSeeDetails;
+
+  /// No description provided for @utilityAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Utility Analysis'**
+  String get utilityAnalysis;
+
+  /// No description provided for @pending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get pending;
+
+  /// No description provided for @overdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get overdue;
+
+  /// No description provided for @selectMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Month'**
+  String get selectMonth;
+
+  /// No description provided for @year.
+  ///
+  /// In en, this message translates to:
+  /// **'Year: '**
+  String get year;
+
+  /// No description provided for @month.
+  ///
+  /// In en, this message translates to:
+  /// **'Month:'**
+  String get month;
+
+  /// No description provided for @previousMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Month'**
+  String get previousMonth;
+
+  /// No description provided for @nextMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Month'**
+  String get nextMonth;
+
+  /// No description provided for @water.
+  ///
+  /// In en, this message translates to:
+  /// **'Water'**
+  String get water;
+
+  /// No description provided for @electricity.
+  ///
+  /// In en, this message translates to:
+  /// **'Electricity'**
+  String get electricity;
+
+  /// No description provided for @room.
+  ///
+  /// In en, this message translates to:
+  /// **'Room'**
+  String get room;
+
+  /// No description provided for @service.
+  ///
+  /// In en, this message translates to:
+  /// **'Service'**
+  String get service;
+
+  /// No description provided for @emailValidationInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid email'**
+  String get emailValidationInvalid;
+
+  /// No description provided for @passwordValidationLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 6 characters'**
+  String get passwordValidationLength;
+
+  /// No description provided for @passwordsDoNotMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwordsDoNotMatch;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
@@ -675,7 +989,7 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['en', 'km'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>['en', 'km', 'zh'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -688,6 +1002,7 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   switch (locale.languageCode) {
     case 'en': return AppLocalizationsEn();
     case 'km': return AppLocalizationsKm();
+    case 'zh': return AppLocalizationsZh();
   }
 
   throw FlutterError(
