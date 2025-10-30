@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/data/models/receipt.dart';
 import 'package:joul_v2/data/models/enum/mode.dart';
@@ -35,6 +36,8 @@ class ReceiptSearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       height: isSearching ? 56 : 0,
@@ -55,7 +58,7 @@ class ReceiptSearchBar extends StatelessWidget {
               child: TextField(
                 controller: searchController,
                 decoration: InputDecoration(
-                  hintText: 'ស្វែងរកបង្កាន់ដៃ...',
+                  hintText: l10n.searchReceiptHint,
                   hintStyle: TextStyle(
                     color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
                   ),
@@ -100,24 +103,29 @@ class MonthFilterChips extends StatelessWidget {
   final int selectedMonth;
   final ValueChanged<int> onMonthSelected;
 
-  static const List<String> _khmerMonths = [
-    'មករា',
-    'កុម្ភៈ',
-    'មីនា',
-    'មេសា',
-    'ឧសភា',
-    'មិថុនា',
-    'កក្កដា',
-    'សីហា',
-    'កញ្ញា',
-    'តុលា',
-    'វិច្ឆិកា',
-    'ធ្នូ'
-  ];
+  List<String> _getMonthNames(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return [
+      l10n.january,
+      l10n.february,
+      l10n.march,
+      l10n.april,
+      l10n.may,
+      l10n.june,
+      l10n.july,
+      l10n.august,
+      l10n.september,
+      l10n.october,
+      l10n.november,
+      l10n.december,
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final monthNames = _getMonthNames(context);
+    
     return Container(
       height: 48,
       margin: const EdgeInsets.only(bottom: 8),
@@ -137,7 +145,7 @@ class MonthFilterChips extends StatelessWidget {
                 if (selected) onMonthSelected(month);
               },
               label: Text(
-                _khmerMonths[index],
+                monthNames[index],
                 style: TextStyle(
                   color: isSelected
                       ? Colors.white
@@ -183,21 +191,6 @@ class _HistoryScreenState extends State<HistoryScreen>
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String? _selectedBuildingId;
-
-  static const List<String> _khmerMonths = [
-    'មករា',
-    'កុម្ភៈ',
-    'មីនា',
-    'មេសា',
-    'ឧសភា',
-    'មិថុនា',
-    'កក្កដា',
-    'សីហា',
-    'កញ្ញា',
-    'តុលា',
-    'វិច្ឆិកា',
-    'ធ្នូ'
-  ];
 
   @override
   void initState() {
@@ -273,19 +266,25 @@ class _HistoryScreenState extends State<HistoryScreen>
 
   void _deleteReceipt(int index, Receipt receipt) {
     final provider = context.read<ReceiptProvider>();
+    final l10n = AppLocalizations.of(context)!;
     final receiptData = receipt;
+    final roomNumber = receipt.room?.roomNumber ?? l10n.noRoom;
 
     provider.deleteReceipt(receipt.id);
 
+    // Create localized delete message
+    final deleteMessage = '${l10n.room} $roomNumber ${l10n.delete.toLowerCase()}';
+    final restoreMessage = '${l10n.room} $roomNumber ${l10n.undo.toLowerCase()}';
+
     GlobalSnackBar.show(
       context: context,
-      message: 'បានលុបវិក្កយបត្រជោគជ័យ',
+      message: deleteMessage,
       onRestore: () async {
         await provider.restoreReceipt(index, receiptData);
         if (mounted) {
           GlobalSnackBar.show(
             context: context,
-            message: 'បានស្ដារវិក្កយបត្រជោគជ័យ',
+            message: restoreMessage,
           );
         }
       },
@@ -295,6 +294,7 @@ class _HistoryScreenState extends State<HistoryScreen>
   void _showMenuOptions(BuildContext context, int index, Receipt receipt,
       List<Receipt> allReceipts) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     showModalBottomSheet(
       context: context,
@@ -314,7 +314,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                   context,
                   theme,
                   Icons.visibility,
-                  'មើលលម្អិត',
+                  l10n.viewDetails,
                   () {
                     Navigator.pop(context);
                     _viewDetail(context, receipt);
@@ -324,7 +324,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                   context,
                   theme,
                   Icons.share,
-                  'ចែករំលែក',
+                  l10n.share,
                   () {
                     Navigator.pop(context);
                     Navigator.of(context).push(
@@ -341,7 +341,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                   context,
                   theme,
                   Icons.edit,
-                  'កែប្រែ',
+                  l10n.edit,
                   () {
                     Navigator.pop(context);
                     _editReceipt(context, receipt, allReceipts);
@@ -351,7 +351,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                   context,
                   theme,
                   Icons.delete_outline,
-                  'លុប',
+                  l10n.delete,
                   () {
                     Navigator.pop(context);
                     _deleteReceipt(index, receipt);
@@ -420,13 +420,14 @@ class _HistoryScreenState extends State<HistoryScreen>
   }
 
   String _translatePaymentStatus(PaymentStatus status) {
+    final l10n = AppLocalizations.of(context)!;
     switch (status) {
       case PaymentStatus.paid:
-        return 'បានបង់ប្រាក់';
+        return l10n.paidStatus;
       case PaymentStatus.pending:
-        return 'មិនទាន់បង់ប្រាក់';
+        return l10n.pendingStatus;
       case PaymentStatus.overdue:
-        return 'ហួសកំណត់';
+        return l10n.overdueStatus;
     }
   }
 
@@ -444,7 +445,7 @@ class _HistoryScreenState extends State<HistoryScreen>
   void _handleReceiptDismissed(
       int index, Receipt receipt, DismissDirection direction) {
     final provider = context.read<ReceiptProvider>();
-    final roomNumber = receipt.room?.roomNumber ?? 'ទរទេ';
+    final roomNumber = receipt.room?.roomNumber ?? AppLocalizations.of(context)!.noRoom;
 
     if (direction == DismissDirection.startToEnd) {
       _togglePaymentStatus(receipt, roomNumber, provider);
@@ -462,10 +463,11 @@ class _HistoryScreenState extends State<HistoryScreen>
 
     provider.updateReceipt(receipt.copyWith(paymentStatus: newStatus));
 
+    final l10n = AppLocalizations.of(context)!;
     GlobalSnackBar.show(
       context: context,
       message:
-          "បន្ទប់ $roomNumber បានផ្លាស់ប្តូរទៅជា ${_translatePaymentStatus(newStatus)}",
+          "${l10n.room} $roomNumber ${_translatePaymentStatus(newStatus)}",
       onRestore: () {
         provider.updateReceipt(receipt.copyWith(paymentStatus: originalStatus));
       },
@@ -518,6 +520,8 @@ class _HistoryScreenState extends State<HistoryScreen>
   }
 
   Widget _buildDismissEndBackground(ThemeData theme) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.error,
@@ -535,7 +539,7 @@ class _HistoryScreenState extends State<HistoryScreen>
           ),
           const SizedBox(height: 4),
           Text(
-            'លុប',
+            l10n.delete,
             style: TextStyle(
               color: theme.colorScheme.onError,
               fontSize: 12,
@@ -584,15 +588,34 @@ class _HistoryScreenState extends State<HistoryScreen>
     );
   }
 
+  List<String> _getMonthNames() {
+    final l10n = AppLocalizations.of(context)!;
+    return [
+      l10n.january,
+      l10n.february,
+      l10n.march,
+      l10n.april,
+      l10n.may,
+      l10n.june,
+      l10n.july,
+      l10n.august,
+      l10n.september,
+      l10n.october,
+      l10n.november,
+      l10n.december,
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: Text(
-          'ទិន្នន័យចាស់',
+          l10n.oldDataTitle,
           style: TextStyle(
             color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w600,
@@ -686,7 +709,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                             fadeAnimation: _fadeAnimation,
                             searchQuery: _searchQuery,
                             selectedBuildingId: _selectedBuildingId,
-                            khmerMonths: _khmerMonths,
+                            khmerMonths: _getMonthNames(),
                             selectedMonth: _selectedMonth,
                             theme: theme,
                           );

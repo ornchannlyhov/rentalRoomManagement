@@ -157,6 +157,162 @@ abstract class AppLocalizations {
   /// **'Sign in to your account'**
   String get signInPrompt;
 
+  /// No description provided for @tenantInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Tenant Information'**
+  String get tenantInformation;
+
+  /// No description provided for @deleteTenantConfirmMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete tenant {tenant}?'**
+  String deleteTenantConfirmMsg(String tenant);
+
+  /// No description provided for @noTenants.
+  ///
+  /// In en, this message translates to:
+  /// **'No tenants'**
+  String get noTenants;
+
+  /// No description provided for @tapToAddNewTenant.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + to add a new tenant'**
+  String get tapToAddNewTenant;
+
+  /// No description provided for @errorLoadingData.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading data'**
+  String get errorLoadingData;
+
+  /// No description provided for @tryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get tryAgain;
+
+  /// No description provided for @male.
+  ///
+  /// In en, this message translates to:
+  /// **'Male'**
+  String get male;
+
+  /// No description provided for @female.
+  ///
+  /// In en, this message translates to:
+  /// **'Female'**
+  String get female;
+
+  /// No description provided for @other.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get other;
+
+  /// No description provided for @contactInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Information'**
+  String get contactInformation;
+
+  /// No description provided for @roomInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Room Information'**
+  String get roomInformation;
+
+  /// No description provided for @notAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'N/A'**
+  String get notAvailable;
+
+  /// No description provided for @rentalPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Rental Price'**
+  String get rentalPrice;
+
+  /// No description provided for @editTenant.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Tenant'**
+  String get editTenant;
+
+  /// No description provided for @createNewTenant.
+  ///
+  /// In en, this message translates to:
+  /// **'Create New Tenant'**
+  String get createNewTenant;
+
+  /// No description provided for @selectBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Building'**
+  String get selectBuilding;
+
+  /// No description provided for @tenantName.
+  ///
+  /// In en, this message translates to:
+  /// **'Tenant Name'**
+  String get tenantName;
+
+  /// No description provided for @pleaseEnterTenantName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter tenant name'**
+  String get pleaseEnterTenantName;
+
+  /// No description provided for @pleaseEnterPhoneNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter phone number'**
+  String get pleaseEnterPhoneNumber;
+
+  /// No description provided for @invalidPhoneNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid phone number'**
+  String get invalidPhoneNumber;
+
+  /// No description provided for @searchCountry.
+  ///
+  /// In en, this message translates to:
+  /// **'Search country'**
+  String get searchCountry;
+
+  /// No description provided for @pleaseSelectRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select room'**
+  String get pleaseSelectRoom;
+
+  /// No description provided for @gender.
+  ///
+  /// In en, this message translates to:
+  /// **'Gender'**
+  String get gender;
+
+  /// No description provided for @updateTenant.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Tenant'**
+  String get updateTenant;
+
+  /// No description provided for @createTenant.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Tenant'**
+  String get createTenant;
+
+  /// No description provided for @errorLoadingRooms.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading rooms'**
+  String get errorLoadingRooms;
+
   /// No description provided for @emailLabel.
   ///
   /// In en, this message translates to:
@@ -263,7 +419,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Are you sure you want to delete building {building}?'**
-  String deleteConfirmMsg(Object building);
+  String deleteConfirmMsg(String building);
 
   /// No description provided for @cancel.
   ///
@@ -281,13 +437,13 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Building {building} deleted successfully'**
-  String buildingDeleted(Object building);
+  String buildingDeleted(String building);
 
   /// Error message when building deletion fails
   ///
   /// In en, this message translates to:
   /// **'Failed to delete building: {error}'**
-  String deleteFailed(Object error);
+  String deleteFailed(String error);
 
   /// No description provided for @noBuildings.
   ///
@@ -403,6 +559,48 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settings;
 
+  /// No description provided for @changeRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Room'**
+  String get changeRoom;
+
+  /// No description provided for @viewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View Details'**
+  String get viewDetails;
+
+  /// No description provided for @building.
+  ///
+  /// In en, this message translates to:
+  /// **'Building'**
+  String get building;
+
+  /// No description provided for @roomNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Room Number'**
+  String get roomNumber;
+
+  /// No description provided for @phoneNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone Number'**
+  String get phoneNumber;
+
+  /// No description provided for @noRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'No Room'**
+  String get noRoom;
+
+  /// No description provided for @unknownRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Room'**
+  String get unknownRoom;
+
   /// No description provided for @accountSettings.
   ///
   /// In en, this message translates to:
@@ -511,6 +709,42 @@ abstract class AppLocalizations {
   /// **'About'**
   String get about;
 
+  /// No description provided for @receiptDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt deleted successfully'**
+  String get receiptDeleted;
+
+  /// No description provided for @receiptRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt restored successfully'**
+  String get receiptRestored;
+
+  /// No description provided for @noReceiptsForMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'No receipts for {month}'**
+  String noReceiptsForMonth(String month);
+
+  /// No description provided for @noReceiptsForBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'No receipts for this building'**
+  String get noReceiptsForBuilding;
+
+  /// No description provided for @noSearchResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No search results for \"{query}\"'**
+  String noSearchResults(String query);
+
+  /// No description provided for @receiptStatusChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt status changed to {status}'**
+  String receiptStatusChanged(String status);
+
   /// The application version number
   ///
   /// In en, this message translates to:
@@ -563,7 +797,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Tenant {tenant} added successfully'**
-  String tenantAdded(Object tenant);
+  String tenantAdded(String tenant);
 
   /// No description provided for @tenantAddFailed.
   ///
@@ -575,7 +809,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Tenant {tenant} updated successfully'**
-  String tenantUpdated(Object tenant);
+  String tenantUpdated(String tenant);
 
   /// No description provided for @tenantUpdateFailed.
   ///
@@ -587,7 +821,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Tenant {tenant} deleted'**
-  String tenantDeleted(Object tenant);
+  String tenantDeleted(String tenant);
 
   /// No description provided for @tenantDeleteFailed.
   ///
@@ -599,7 +833,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Room for {tenant} changed to {room}'**
-  String roomChanged(Object tenant, Object room);
+  String roomChanged(String tenant, String room);
 
   /// No description provided for @roomChangeFailed.
   ///
@@ -739,12 +973,6 @@ abstract class AppLocalizations {
   /// **'Financial'**
   String get financial;
 
-  /// No description provided for @building.
-  ///
-  /// In en, this message translates to:
-  /// **'Building'**
-  String get building;
-
   /// No description provided for @errorLoadingCurrencyRate.
   ///
   /// In en, this message translates to:
@@ -881,7 +1109,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Collection Rate: {rate}%'**
-  String collectionRate(Object rate);
+  String collectionRate(String rate);
 
   /// No description provided for @tapToSeeDetails.
   ///

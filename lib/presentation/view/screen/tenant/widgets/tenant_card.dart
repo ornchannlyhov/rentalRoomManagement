@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/tenant.dart';
 import 'package:joul_v2/data/models/enum/gender.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 // Enum for menu options
 enum TenantMenuOption {
@@ -35,16 +36,17 @@ class TenantCard extends StatelessWidget {
     }
   }
 
-  String _getMenuOptionText(TenantMenuOption option) {
+  String _getMenuOptionText(BuildContext context, TenantMenuOption option) {
+    final localizations = AppLocalizations.of(context)!;
     switch (option) {
       case TenantMenuOption.edit:
-        return 'កែប្រែ';
+        return localizations.edit;
       case TenantMenuOption.delete:
-        return 'លុប';
+        return localizations.deleteOption;
       case TenantMenuOption.viewDetails:
-        return 'មើលព័ត៌មានលម្អិត';
+        return localizations.viewDetails;
       case TenantMenuOption.changeRoom:
-        return 'ផ្លាស់ប្តូរបន្ទប់';
+        return localizations.changeRoom;
     }
   }
 
@@ -72,6 +74,7 @@ class TenantCard extends StatelessWidget {
 
   void _showOptionsBottomSheet(BuildContext context) {
     final theme = Theme.of(context);
+    final localizations = AppLocalizations.of(context)!;
 
     showModalBottomSheet(
       context: context,
@@ -128,7 +131,7 @@ class TenantCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'បន្ទប់: ${tenant.room?.roomNumber ?? "មិនមានបន្ទប់"}',
+                            '${localizations.room}: ${tenant.room?.roomNumber ?? localizations.noRoom}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -190,7 +193,7 @@ class TenantCard extends StatelessWidget {
         size: 20,
       ),
       title: Text(
-        _getMenuOptionText(option),
+        _getMenuOptionText(context, option),
         style: theme.textTheme.titleMedium?.copyWith(
           color: color ?? theme.colorScheme.onSurface,
           fontWeight: FontWeight.w500,
@@ -207,12 +210,13 @@ class TenantCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final localizations = AppLocalizations.of(context)!;
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
     return GestureDetector(
       onTap: onTap,
-      onLongPress: onLongPress, // FIXED: Added onLongPress here
+      onLongPress: onLongPress,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
         padding: const EdgeInsets.all(16),
@@ -253,21 +257,21 @@ class TenantCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'អគារ: ${tenant.room?.building?.name ?? "មិនស្គាល់បន្ទប់"}',
+                    '${localizations.building}: ${tenant.room?.building?.name ?? localizations.unknownRoom}',
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurface.withOpacity(0.7),
                       fontSize: 12,
                     ),
                   ),
                   Text(
-                    'លេខបន្ទប់: ${tenant.room?.roomNumber ?? "មិនមានបន្ទប់"}',
+                    '${localizations.roomNumber}: ${tenant.room?.roomNumber ?? localizations.noRoom}',
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurface.withOpacity(0.7),
                       fontSize: 12,
                     ),
                   ),
                   Text(
-                    'លេខទូរស័ព្ទ: ${tenant.phoneNumber}',
+                    '${localizations.phoneNumber}: ${tenant.phoneNumber}',
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurface.withOpacity(0.7),
                       fontSize: 12,

@@ -13,6 +13,7 @@ import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_detail.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_form.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_list.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 class ReceiptScreen extends StatefulWidget {
   const ReceiptScreen({super.key});
@@ -101,6 +102,8 @@ class _ReceiptScreenState extends State<ReceiptScreen>
   }
 
   Future<void> _navigateToReceiptDetail(Receipt receipt) async {
+    final l10n = AppLocalizations.of(context)!;
+    
     // Get fresh receipt from provider with all relationships hydrated
     final receiptProvider = context.read<ReceiptProvider>();
     final freshReceipt = receiptProvider.receiptsState.data?.firstWhere(
@@ -108,7 +111,11 @@ class _ReceiptScreenState extends State<ReceiptScreen>
     );
 
     if (freshReceipt == null) {
-      GlobalSnackBar.show(message: 'មិនអាចរកឃើញវិក្កយបត្រ', isError: true, context: context);
+      GlobalSnackBar.show(
+        message: l10n.errorLoadingData,
+        isError: true,
+        context: context,
+      );
       return;
     }
 
@@ -134,6 +141,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
   void _showMenuOptions(BuildContext context, int index, Receipt receipt,
       List<Receipt> allReceipts) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     showModalBottomSheet(
       context: context,
@@ -160,7 +168,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
                 _buildMenuOption(
                   context,
                   Icons.visibility,
-                  'មើលលម្អិត',
+                  l10n.viewDetail,
                   () {
                     Navigator.pop(context);
                     _navigateToReceiptDetail(receipt);
@@ -169,7 +177,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
                 _buildMenuOption(
                   context,
                   Icons.share,
-                  'ចែករំលែក',
+                  l10n.share,
                   () {
                     Navigator.pop(context);
                     Navigator.of(context).push(
@@ -185,7 +193,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
                 _buildMenuOption(
                   context,
                   Icons.edit,
-                  'កែប្រែ',
+                  l10n.edit,
                   () {
                     Navigator.pop(context);
                     _navigateToEditReceipt(receipt, allReceipts);
@@ -194,7 +202,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
                 _buildMenuOption(
                   context,
                   Icons.delete_outline,
-                  'លុប',
+                  l10n.delete,
                   () {
                     Navigator.pop(context);
                     final provider = context.read<ReceiptProvider>();
@@ -231,19 +239,20 @@ class _ReceiptScreenState extends State<ReceiptScreen>
   }
 
   String getKhmerMonth(int month) {
-    const months = [
-      'មករា',
-      'កុម្ភៈ',
-      'មីនា',
-      'មេសា',
-      'ឧសភា',
-      'មិថុនា',
-      'កក្កដា',
-      'សីហា',
-      'កញ្ញា',
-      'តុលា',
-      'វិច្ឆិកា',
-      'ធ្នូ'
+    final l10n = AppLocalizations.of(context)!;
+    final months = [
+      l10n.january,
+      l10n.february,
+      l10n.march,
+      l10n.april,
+      l10n.may,
+      l10n.june,
+      l10n.july,
+      l10n.august,
+      l10n.september,
+      l10n.october,
+      l10n.november,
+      l10n.december,
     ];
     return months[month - 1];
   }
@@ -262,6 +271,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final receiptProvider = context.watch<ReceiptProvider>();
     final buildingProvider = context.watch<BuildingProvider>();
 
@@ -334,6 +344,7 @@ class _ReceiptAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final isLight = theme.brightness == Brightness.light;
     final iconColor = isLight ? Colors.white : theme.colorScheme.onSurface;
     final backgroundColor =
@@ -341,7 +352,7 @@ class _ReceiptAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     return AppBar(
       title: Text(
-        'វិក្កយបត្រ',
+        l10n.receiptTitle,
         style: TextStyle(
           color: iconColor,
           fontWeight: FontWeight.w600,
@@ -357,7 +368,10 @@ class _ReceiptAppBar extends StatelessWidget implements PreferredSizeWidget {
           onPressed: () async {
             final provider = context.read<ReceiptProvider>();
             await provider.generateMonthlyReceipts();
-            GlobalSnackBar.show(message: 'Receipt Generated', context: context);
+            GlobalSnackBar.show(
+              message: l10n.receiptRestored,
+              context: context,
+            );
           },
         ),
         IconButton(

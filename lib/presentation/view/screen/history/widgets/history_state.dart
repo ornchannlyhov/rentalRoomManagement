@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 class LoadingState extends StatelessWidget {
   const LoadingState({
@@ -10,6 +11,8 @@ class LoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -21,7 +24,7 @@ class LoadingState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'កំពុងដំណើការ...',
+            l10n.loading,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -59,6 +62,8 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return SlideTransition(
       position: _slideAnimation,
       child: FadeTransition(
@@ -81,7 +86,7 @@ class EmptyState extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                'មិនមានបង្កាន់ដៃ',
+                l10n.noReceipts,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
@@ -89,11 +94,7 @@ class EmptyState extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                _searchQuery.isNotEmpty
-                    ? 'មិនមានលទ្ធផលស្វែងរក "$_searchQuery"'
-                    : _selectedBuildingId != null
-                        ? 'មិនមានបង្កាន់ដៃសម្រាប់អគារ'
-                        : 'មិនមានបង្កាន់ដៃសម្រាប់ខែ ${_khmerMonths[_selectedMonth - 1]}',
+                _getEmptyMessage(l10n),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
                 ),
@@ -104,6 +105,16 @@ class EmptyState extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getEmptyMessage(AppLocalizations l10n) {
+    if (_searchQuery.isNotEmpty) {
+      return '${l10n.noBuildingsSearch} "$_searchQuery"';
+    } else if (_selectedBuildingId != null) {
+      return '${l10n.noReceipts} ${l10n.building.toLowerCase()}';
+    } else {
+      return '${l10n.noReceipts} ${_khmerMonths[_selectedMonth - 1]}';
+    }
   }
 }
 
@@ -120,6 +131,7 @@ class ErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Center(
       child: Column(
@@ -139,7 +151,7 @@ class ErrorState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'មានបញ្ហាក្នុងការផ្ទុកទិន្នន័យ',
+            l10n.errorLoadingData,
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.onErrorContainer,
               fontWeight: FontWeight.w600,
@@ -149,7 +161,7 @@ class ErrorState extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: const Text('ព្យាយាមម្តងទៀត'),
+            label: Text(l10n.tryAgain),
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: theme.colorScheme.onPrimary,

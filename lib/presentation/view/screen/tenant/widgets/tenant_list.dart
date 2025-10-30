@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/tenant.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:joul_v2/presentation/view/screen/tenant/widgets/tenant_card.dart';
 
 class TenantList extends StatelessWidget {
@@ -28,6 +29,8 @@ class TenantList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+    
     return FadeTransition(
       opacity: fadeAnimation,
       child: RefreshIndicator(
@@ -78,7 +81,7 @@ class TenantList extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'លុប', // "Delete"
+                        localizations.delete,
                         style: TextStyle(
                           color: theme.colorScheme.onError,
                           fontSize: 12,
@@ -113,30 +116,42 @@ class TenantList extends StatelessWidget {
   Future<bool?> _showConfirmDeleteDialog(
       BuildContext context, String tenantName) {
     final theme = Theme.of(context);
+    final localizations = AppLocalizations.of(context)!;
+    
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: theme.colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('បញ្ជាក់ការលុប', // "Confirm Delete"
-            style: theme.textTheme.titleLarge),
+        title: Text(
+          localizations.confirmDelete,
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: theme.colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         content: Text(
-          'តើអ្នកពិតជាចង់លុបអ្នកជួល "$tenantName" មែនទេ?',
-          style: theme.textTheme.bodyMedium,
+          localizations.deleteTenantConfirmMsg(tenantName),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text('បោះបង់',
-                style: TextStyle(
-                    color: theme.colorScheme.onSurfaceVariant)), // "Cancel"
+            child: Text(
+              localizations.cancel,
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: FilledButton.styleFrom(
                 backgroundColor: theme.colorScheme.error),
-            child: Text('លុប',
-                style: TextStyle(color: theme.colorScheme.onError)), // "Delete"
+            child: Text(
+              localizations.delete,
+              style: TextStyle(color: theme.colorScheme.onError),
+            ),
           ),
         ],
       ),

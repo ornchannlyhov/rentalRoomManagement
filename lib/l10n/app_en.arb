@@ -10,6 +10,39 @@
   "buildingAnalysisTab": "Building",
   "welcomeBack": "Welcome Back",
   "signInPrompt": "Sign in to your account",
+  "tenantInformation": "Tenant Information",
+  "deleteTenantConfirmMsg": "Are you sure you want to delete tenant {tenant}?",
+  "@deleteTenantConfirmMsg": {
+    "placeholders": {
+      "tenant": {
+        "type": "String"
+      }
+    }
+  },
+  "noTenants": "No tenants",
+  "tapToAddNewTenant": "Tap + to add a new tenant",
+  "errorLoadingData": "Error loading data",
+  "tryAgain": "Try again",
+  "male": "Male",
+  "female": "Female",
+  "other": "Other",
+  "contactInformation": "Contact Information",
+  "roomInformation": "Room Information",
+  "notAvailable": "N/A",
+  "rentalPrice": "Rental Price",
+  "editTenant": "Edit Tenant",
+  "createNewTenant": "Create New Tenant",
+  "selectBuilding": "Select Building",
+  "tenantName": "Tenant Name",
+  "pleaseEnterTenantName": "Please enter tenant name",
+  "pleaseEnterPhoneNumber": "Please enter phone number",
+  "invalidPhoneNumber": "Invalid phone number",
+  "searchCountry": "Search country",
+  "pleaseSelectRoom": "Please select room",
+  "gender": "Gender",
+  "updateTenant": "Update Tenant",
+  "createTenant": "Create Tenant",
+  "errorLoadingRooms": "Error loading rooms",
   "emailLabel": "Email",
   "emailHint": "Enter your email",
   "passwordLabel": "Password",
@@ -27,29 +60,35 @@
   "buildingsTitle": "Buildings",
   "searchBuildingHint": "Search building...",
   "confirmDelete": "Confirm Delete",
+  "deleteConfirmMsg": "Are you sure you want to delete building {building}?",
   "@deleteConfirmMsg": {
     "description": "Confirmation message for deleting a building",
     "placeholders": {
-      "building": {}
+      "building": {
+        "type": "String"
+      }
     }
   },
-  "deleteConfirmMsg": "Are you sure you want to delete building {building}?",
   "cancel": "Cancel",
   "delete": "Delete",
+  "buildingDeleted": "Building {building} deleted successfully",
   "@buildingDeleted": {
     "description": "Success message after deleting a building",
     "placeholders": {
-      "building": {}
-    }
-  },
-  "buildingDeleted": "Building {building} deleted successfully",
-  "@deleteFailed": {
-    "description": "Error message when building deletion fails",
-    "placeholders": {
-      "error": {}
+      "building": {
+        "type": "String"
+      }
     }
   },
   "deleteFailed": "Failed to delete building: {error}",
+  "@deleteFailed": {
+    "description": "Error message when building deletion fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "noBuildings": "No buildings",
   "noBuildingsSearch": "No buildings found",
   "addNewBuildingHint": "Tap + to add a new building",
@@ -69,6 +108,13 @@
   "loading": "Loading...",
   "settingsTitle": "Settings",
   "settings": "Settings",
+  "changeRoom": "Change Room",
+  "viewDetails": "View Details",
+  "building": "Building",
+  "roomNumber": "Room Number",
+  "phoneNumber": "Phone Number",
+  "noRoom": "No Room",
+  "unknownRoom": "Unknown Room",
   "accountSettings": "Account Settings",
   "accountSettingsSubtitle": "Privacy, security, change password",
   "privacySecurity": "Privacy, security, change password",
@@ -87,6 +133,34 @@
   "helpAndSupportSubtitle": "FAQs, contact us",
   "faqContact": "FAQs, contact us",
   "about": "About",
+  "receiptDeleted": "Receipt deleted successfully",
+  "receiptRestored": "Receipt restored successfully",
+  "noReceiptsForMonth": "No receipts for {month}",
+  "@noReceiptsForMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "noReceiptsForBuilding": "No receipts for this building",
+  "noSearchResults": "No search results for \"{query}\"",
+  "@noSearchResults": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "receiptStatusChanged": "Receipt status changed to {status}",
+  "@receiptStatusChanged": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "version": "Version {versionNumber}",
   "@version": {
     "description": "The application version number",
     "placeholders": {
@@ -96,7 +170,6 @@
       }
     }
   },
-  "version": "Version {versionNumber}",
   "signOut": "Sign Out",
   "signOutConfirm": "Are you sure you want to sign out?",
   "signOutConfirmation": "Are you sure you want to sign out?",
@@ -104,38 +177,48 @@
   "premiumMember": "Premium Member",
   "tenantsTitle": "Tenants",
   "searchTenantHint": "Search tenant...",
+  "tenantAdded": "Tenant {tenant} added successfully",
   "@tenantAdded": {
     "description": "Success message after adding a tenant",
     "placeholders": {
-      "tenant": {}
+      "tenant": {
+        "type": "String"
+      }
     }
   },
-  "tenantAdded": "Tenant {tenant} added successfully",
   "tenantAddFailed": "Error adding tenant",
+  "tenantUpdated": "Tenant {tenant} updated successfully",
   "@tenantUpdated": {
     "description": "Success message after updating a tenant",
     "placeholders": {
-      "tenant": {}
+      "tenant": {
+        "type": "String"
+      }
     }
   },
-  "tenantUpdated": "Tenant {tenant} updated successfully",
   "tenantUpdateFailed": "Error updating tenant",
+  "tenantDeleted": "Tenant {tenant} deleted",
   "@tenantDeleted": {
     "description": "Success message after deleting a tenant",
     "placeholders": {
-      "tenant": {}
+      "tenant": {
+        "type": "String"
+      }
     }
   },
-  "tenantDeleted": "Tenant {tenant} deleted",
   "tenantDeleteFailed": "Error deleting tenant",
+  "roomChanged": "Room for {tenant} changed to {room}",
   "@roomChanged": {
     "description": "Message when a tenant's room is changed",
     "placeholders": {
-      "tenant": {},
-      "room": {}
+      "tenant": {
+        "type": "String"
+      },
+      "room": {
+        "type": "String"
+      }
     }
   },
-  "roomChanged": "Room for {tenant} changed to {room}",
   "roomChangeFailed": "Error undoing room change",
   "retryLoadingProfile": "Retry Loading Profile",
   "failedToLoadProfile": "Failed to load profile.",
@@ -159,7 +242,6 @@
   "automationToolsDesc": "Automate work with Telegram bot reminders and utilities input.",
   "advancedAnalysis": "Advanced Analysis",
   "financial": "Financial",
-  "building": "Building",
   "errorLoadingCurrencyRate": "Error loading currency rate",
   "january": "January",
   "february": "February",
@@ -179,10 +261,24 @@
   "pleaseEnterValue": "Please enter a value",
   "pleaseEnterValidNumber": "Please enter a valid number",
   "receiptsCount": "{count,plural, =1{{count} receipt}other{{count} receipts}}",
+  "@receiptsCount": {
+  "placeholders": {
+    "count": {
+      "type": "num"
+    }
+  }
+},
   "totalRevenue": "Total Revenue",
   "paid": "Paid",
   "remaining": "Remaining",
   "collectionRate": "Collection Rate: {rate}%",
+  "@collectionRate": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
   "tapToSeeDetails": "Tap to see details",
   "utilityAnalysis": "Utility Analysis",
   "pending": "Pending",

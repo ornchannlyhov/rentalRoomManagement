@@ -39,6 +39,86 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signInPrompt => 'Sign in to your account';
 
   @override
+  String get tenantInformation => 'Tenant Information';
+
+  @override
+  String deleteTenantConfirmMsg(String tenant) {
+    return 'Are you sure you want to delete tenant $tenant?';
+  }
+
+  @override
+  String get noTenants => 'No tenants';
+
+  @override
+  String get tapToAddNewTenant => 'Tap + to add a new tenant';
+
+  @override
+  String get errorLoadingData => 'Error loading data';
+
+  @override
+  String get tryAgain => 'Try again';
+
+  @override
+  String get male => 'Male';
+
+  @override
+  String get female => 'Female';
+
+  @override
+  String get other => 'Other';
+
+  @override
+  String get contactInformation => 'Contact Information';
+
+  @override
+  String get roomInformation => 'Room Information';
+
+  @override
+  String get notAvailable => 'N/A';
+
+  @override
+  String get rentalPrice => 'Rental Price';
+
+  @override
+  String get editTenant => 'Edit Tenant';
+
+  @override
+  String get createNewTenant => 'Create New Tenant';
+
+  @override
+  String get selectBuilding => 'Select Building';
+
+  @override
+  String get tenantName => 'Tenant Name';
+
+  @override
+  String get pleaseEnterTenantName => 'Please enter tenant name';
+
+  @override
+  String get pleaseEnterPhoneNumber => 'Please enter phone number';
+
+  @override
+  String get invalidPhoneNumber => 'Invalid phone number';
+
+  @override
+  String get searchCountry => 'Search country';
+
+  @override
+  String get pleaseSelectRoom => 'Please select room';
+
+  @override
+  String get gender => 'Gender';
+
+  @override
+  String get updateTenant => 'Update Tenant';
+
+  @override
+  String get createTenant => 'Create Tenant';
+
+  @override
+  String get errorLoadingRooms => 'Error loading rooms';
+
+  @override
   String get emailLabel => 'Email';
 
   @override
@@ -90,7 +170,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmDelete => 'Confirm Delete';
 
   @override
-  String deleteConfirmMsg(Object building) {
+  String deleteConfirmMsg(String building) {
     return 'Are you sure you want to delete building $building?';
   }
 
@@ -101,12 +181,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get delete => 'Delete';
 
   @override
-  String buildingDeleted(Object building) {
+  String buildingDeleted(String building) {
     return 'Building $building deleted successfully';
   }
 
   @override
-  String deleteFailed(Object error) {
+  String deleteFailed(String error) {
     return 'Failed to delete building: $error';
   }
 
@@ -168,6 +248,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings => 'Settings';
 
   @override
+  String get changeRoom => 'Change Room';
+
+  @override
+  String get viewDetails => 'View Details';
+
+  @override
+  String get building => 'Building';
+
+  @override
+  String get roomNumber => 'Room Number';
+
+  @override
+  String get phoneNumber => 'Phone Number';
+
+  @override
+  String get noRoom => 'No Room';
+
+  @override
+  String get unknownRoom => 'Unknown Room';
+
+  @override
   String get accountSettings => 'Account Settings';
 
   @override
@@ -222,6 +323,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get about => 'About';
 
   @override
+  String get receiptDeleted => 'Receipt deleted successfully';
+
+  @override
+  String get receiptRestored => 'Receipt restored successfully';
+
+  @override
+  String noReceiptsForMonth(String month) {
+    return 'No receipts for $month';
+  }
+
+  @override
+  String get noReceiptsForBuilding => 'No receipts for this building';
+
+  @override
+  String noSearchResults(String query) {
+    return 'No search results for \"$query\"';
+  }
+
+  @override
+  String receiptStatusChanged(String status) {
+    return 'Receipt status changed to $status';
+  }
+
+  @override
   String version(String versionNumber) {
     return 'Version $versionNumber';
   }
@@ -248,7 +373,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchTenantHint => 'Search tenant...';
 
   @override
-  String tenantAdded(Object tenant) {
+  String tenantAdded(String tenant) {
     return 'Tenant $tenant added successfully';
   }
 
@@ -256,7 +381,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tenantAddFailed => 'Error adding tenant';
 
   @override
-  String tenantUpdated(Object tenant) {
+  String tenantUpdated(String tenant) {
     return 'Tenant $tenant updated successfully';
   }
 
@@ -264,7 +389,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tenantUpdateFailed => 'Error updating tenant';
 
   @override
-  String tenantDeleted(Object tenant) {
+  String tenantDeleted(String tenant) {
     return 'Tenant $tenant deleted';
   }
 
@@ -272,7 +397,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tenantDeleteFailed => 'Error deleting tenant';
 
   @override
-  String roomChanged(Object tenant, Object room) {
+  String roomChanged(String tenant, String room) {
     return 'Room for $tenant changed to $room';
   }
 
@@ -344,9 +469,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get financial => 'Financial';
-
-  @override
-  String get building => 'Building';
 
   @override
   String get errorLoadingCurrencyRate => 'Error loading currency rate';
@@ -423,7 +545,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get remaining => 'Remaining';
 
   @override
-  String collectionRate(Object rate) {
+  String collectionRate(String rate) {
     return 'Collection Rate: $rate%';
   }
 
