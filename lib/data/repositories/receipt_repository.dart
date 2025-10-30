@@ -102,7 +102,6 @@ class ReceiptRepository {
     this._tenantRepository,
   );
 
-  // Remove hydration from load()
   Future<void> load() async {
     final jsonString = await _apiHelper.storage.read(key: storageKey);
     if (jsonString != null && jsonString.isNotEmpty) {
@@ -508,48 +507,6 @@ class ReceiptRepository {
           _addPendingChange(type, data, '/receipts/$receiptId'),
     );
     await save();
-  }
-
-  Future<Receipt> restoreReceipt(int restoreIndex, Receipt receipt) async {
-    _receiptCache.insert(restoreIndex, receipt);
-
-    if (receipt.room == null) {
-      throw Exception('Receipt must have a room reference');
-    }
-
-    final requestData = {
-      'roomId': receipt.room!.id,
-      'date': receipt.date.toIso8601String(),
-      'dueDate': receipt.dueDate.toIso8601String(),
-      'lastWaterUsed': receipt.lastWaterUsed,
-      'lastElectricUsed': receipt.lastElectricUsed,
-      'thisWaterUsed': receipt.thisWaterUsed,
-      'thisElectricUsed': receipt.thisElectricUsed,
-      'paymentStatus': receipt.paymentStatus.name,
-      'serviceIds': receipt.serviceIds,
-    };
-
-    final result = await _syncHelper.create<Receipt>(
-      endpoint: '/receipts',
-      data: requestData,
-      fromJson: (json) {
-        final receiptDto = ReceiptDto.fromJson(json);
-        return receiptDto.toReceipt();
-      },
-      addToCache: (createdReceipt) async {
-        _receiptCache.removeAt(restoreIndex);
-        _receiptCache.insert(restoreIndex, createdReceipt);
-      },
-      addPendingChange: (type, data) => _addPendingChange(
-        type,
-        {...data, 'localId': receipt.id},
-        '/receipts',
-      ),
-      offlineModel: receipt,
-    );
-
-    await save();
-    return result.data ?? receipt;
   }
 
   Future<void> deleteLastYearReceipts() async {

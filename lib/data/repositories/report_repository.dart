@@ -290,39 +290,6 @@ class ReportRepository {
     await save();
   }
 
-  Future<Report> restoreReport(int restoreIndex, Report report) async {
-    _reportCache.insert(restoreIndex, report);
-
-    final requestData = {
-      'problemDescription': report.problemDescription,
-      'status': report.status.name,
-      'priority': report.priority.name,
-      'language': report.language.name,
-      'notes': report.notes,
-      'tenantId': report.tenant?.id,
-      'roomId': report.room?.id,
-    };
-
-    final result = await _syncHelper.create<Report>(
-      endpoint: '/reports',
-      data: requestData,
-      fromJson: (json) => ReportDto.fromJson(json).toReport(),
-      addToCache: (createdReport) async {
-        _reportCache.removeAt(restoreIndex);
-        _reportCache.insert(restoreIndex, createdReport);
-      },
-      addPendingChange: (type, data) => _addPendingChange(
-        type,
-        {...data, 'localId': report.id},
-        '/reports',
-      ),
-      offlineModel: report,
-    );
-
-    await save();
-    return result.data ?? report;
-  }
-
   List<Report> getAllReports() {
     return List.unmodifiable(_reportCache);
   }

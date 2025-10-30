@@ -327,36 +327,6 @@ class TenantRepository {
     await save();
   }
 
-  Future<Tenant> restoreTenant(int restoreIndex, Tenant tenant) async {
-    _tenantCache.insert(restoreIndex, tenant);
-
-    final requestData = {
-      'name': tenant.name,
-      'phoneNumber': tenant.phoneNumber,
-      'gender': tenant.gender.name,
-      'roomId': tenant.room?.id,
-    };
-
-    final result = await _syncHelper.create<Tenant>(
-      endpoint: '/tenants',
-      data: requestData,
-      fromJson: (json) => TenantDto.fromJson(json).toTenant(),
-      addToCache: (createdTenant) async {
-        _tenantCache.removeAt(restoreIndex);
-        _tenantCache.insert(restoreIndex, createdTenant);
-      },
-      addPendingChange: (type, data) => _addPendingChange(
-        type,
-        {...data, 'localId': tenant.id},
-        '/tenants',
-      ),
-      offlineModel: tenant,
-    );
-
-    await save();
-    return result.data ?? tenant;
-  }
-
   Future<void> removeRoom(String tenantId) async {
     final index = _tenantCache.indexWhere((t) => t.id == tenantId);
     if (index == -1) {

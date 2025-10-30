@@ -80,7 +80,7 @@ class TenantCard extends StatelessWidget {
       builder: (BuildContext context) {
         return Container(
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
+            color: theme.colorScheme.background,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),

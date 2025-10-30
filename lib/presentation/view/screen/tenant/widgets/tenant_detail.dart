@@ -13,11 +13,11 @@ class TenantDetail extends StatelessWidget {
   String _getAvatar() {
     switch (tenant.gender) {
       case Gender.female:
-        return 'assets/avatar/female_avatar.png';
+        return 'assets/placeholder/female_avatar.png';
       case Gender.male:
-        return 'assets/avatar/male_avatar.png';
+        return 'assets/placeholder/male_avatar.png';
       case Gender.other:
-        return 'assets/avatar/lgbtq+_avatar.png';
+        return 'assets/placeholder/lgbtq+_avatar.png';
     }
   }
 
@@ -37,7 +37,6 @@ class TenantDetail extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
         title: const Text('ព័ត៌មានអ្នកជួល'),

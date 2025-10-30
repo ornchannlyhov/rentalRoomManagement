@@ -226,36 +226,6 @@ class BuildingRepository {
     await save();
   }
 
-  Future<Building> restoreBuilding(int restoreIndex, Building building) async {
-    _buildingCache.insert(restoreIndex, building);
-
-    final requestData = {
-      'name': building.name,
-      'rentPrice': building.rentPrice,
-      'electricPrice': building.electricPrice,
-      'waterPrice': building.waterPrice,
-    };
-
-    final result = await _syncHelper.create<Building>(
-      endpoint: '/buildings',
-      data: requestData,
-      fromJson: (json) => BuildingDto.fromJson(json).toBuilding(),
-      addToCache: (createdBuilding) async {
-        _buildingCache.removeAt(restoreIndex);
-        _buildingCache.insert(restoreIndex, createdBuilding);
-      },
-      addPendingChange: (type, data) => _addPendingChange(
-        type,
-        {...data, 'localId': building.id},
-        '/buildings',
-      ),
-      offlineModel: building,
-    );
-
-    await save();
-    return result.data ?? building;
-  }
-
   List<Building> getAllBuildings() {
     return List.unmodifiable(_buildingCache);
   }
