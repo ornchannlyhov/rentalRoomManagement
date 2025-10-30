@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_state.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/data/models/enum/payment_status.dart';
 import 'package:joul_v2/data/models/receipt.dart';
@@ -11,7 +12,6 @@ import 'package:joul_v2/presentation/view/screen/analysis/advanced_analysis.dart
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/filler_by_payment_button.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_card.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_summary_card.dart';
-import 'package:joul_v2/presentation/view/screen/tenant/widgets/tenant_state.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 
 class ReceiptList extends StatelessWidget {
