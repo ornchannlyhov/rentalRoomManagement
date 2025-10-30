@@ -39,6 +39,238 @@ class AppLocalizationsKm extends AppLocalizations {
   String get signInPrompt => 'ចូលទៅក្នុងគណនីរបស់អ្នក';
 
   @override
+  String get tenantInformation => 'ព័ត៌មានអ្នកជួល';
+
+  @override
+  String deleteTenantConfirmMsg(String tenant) {
+    return 'តើអ្នកពិតជាចង់លុបអ្នកជួល $tenant មែនទេ?';
+  }
+
+  @override
+  String get editReceipt => 'កែប្រែវិក្កយបត្រ';
+
+  @override
+  String get createNewReceipt => 'បង្កើតវិក្កយបត្រថ្មី';
+
+  @override
+  String get noBuildingsPrompt => 'មិនមានអគារទេ។ សូមបង្កើតអគារមុននឹងបង្កើតវិក្កយបត្រ។';
+
+  @override
+  String get createNewBuilding => 'បង្កើតអគារថ្មី';
+
+  @override
+  String get selectBuilding => 'ជ្រើសរើសអគារ';
+
+  @override
+  String get all => 'ទាំងអស់';
+
+  @override
+  String get selectRoom => 'ជ្រើសរើសបន្ទប់';
+
+  @override
+  String get noOccupiedRooms => 'មិនមានបន្ទប់ដែលមានអ្នកជួលទេ';
+
+  @override
+  String get pleaseSelectRoom => 'សូមជ្រើសរើសបន្ទប់';
+
+  @override
+  String get previousMonthUsage => 'ការប្រើប្រាស់ខែមុន';
+
+  @override
+  String get currentMonthUsage => 'ការប្រើប្រាស់ខែនេះ';
+
+  @override
+  String get waterM3 => 'ទឹក (m³)';
+
+  @override
+  String get electricityKWh => 'ភ្លើង (kWh)';
+
+  @override
+  String get services => 'សេវាកម្ម';
+
+  @override
+  String get selectBuildingFirst => 'សូមជ្រើសរើសអគារមុនសិន';
+
+  @override
+  String get noServicesForBuilding => 'មិនមានសេវាកម្មសម្រាប់អគារនេះទេ';
+
+  @override
+  String get errorLoadingServices => 'មានបញ្ហាក្នុងការផ្ទុកសេវាកម្ម';
+
+  @override
+  String get receiptDetailTitle => 'វិក្កយបត្របន្ទប់ជួល';
+
+  @override
+  String get shareReceipt => 'ចែករំលែកវិក្កយបត្រ';
+
+  @override
+  String receiptForRoom(Object room) {
+    return 'វិក្កយបត្របន្ទប់ $room';
+  }
+
+  @override
+  String get tenantInfo => 'ព័ត៌មានអ្នកជួល';
+
+  @override
+  String get tenantName => 'ឈ្មោះអ្នកជួល';
+
+  @override
+  String get phoneNumber => 'លេខទូរស័ព្ទ';
+
+  @override
+  String get utilityUsage => 'ការប្រើប្រាស់';
+
+  @override
+  String get waterPreviousMonth => 'ទឹកប្រើប្រាស់ខែមុន';
+
+  @override
+  String get waterCurrentMonth => 'ទឹកប្រើប្រាស់ខែនេះ';
+
+  @override
+  String get electricPreviousMonth => 'ភ្លើងប្រើប្រាស់ខែមុន';
+
+  @override
+  String get electricCurrentMonth => 'ភ្លើងប្រើប្រាស់ខែនេះ';
+
+  @override
+  String get paymentBreakdown => 'ទូទាត់ការប្រើប្រាស់';
+
+  @override
+  String get waterUsage => 'ទឹកប្រើប្រាស់';
+
+  @override
+  String get totalWaterPrice => 'ថ្លៃទឹកសរុប';
+
+  @override
+  String get electricUsage => 'ភ្លើងប្រើប្រាស់';
+
+  @override
+  String get totalElectricPrice => 'ថ្លៃភ្លើងសរុប';
+
+  @override
+  String get additionalServices => 'សេវាកម្មបន្ថែម';
+
+  @override
+  String get totalServicePrice => 'សរុបសេវាកម្ម';
+
+  @override
+  String get roomRent => 'ថ្លៃជួលបន្ទប់';
+
+  @override
+  String get grandTotal => 'សរុបទឹកប្រាក់';
+
+  @override
+  String get currencyServiceUnavailable => 'សេវាប្រាក់ប្តូរមានបញ្ហា - កំពុងបង្ហាញអត្រាមូលដ្ឋាន USD ជំនួសវិញ';
+
+  @override
+  String get thankYouForUsingOurService => 'សូមអរគុណសម្រាប់ការប្រើប្រាស់សេវាកម្មរបស់យើងខ្ញុំ!';
+
+  @override
+  String get currencyConversionFailed => 'បរាជ័យក្នុងការប្តូរប្រាក់';
+
+  @override
+  String get shareReceiptFailed => 'មានបញ្ហាក្នុងការចែករំលែក';
+
+  @override
+  String get save => 'រក្សាទុក';
+
+  @override
+  String get errorLoadingBuildings => 'មានបញ្ហាក្នុងការទាញយកអគារ';
+
+  @override
+  String get unknown => 'មិនស្គាល់';
+
+  @override
+  String get menu => 'ម៉ឺនុយ';
+
+  @override
+  String get dueDate => 'កាលបរិច្ឆេទផុតកំណត់';
+
+  @override
+  String get paidStatus => 'បានបង់ប្រាក់';
+
+  @override
+  String get pendingStatus => 'មិនទាន់បង់ប្រាក់';
+
+  @override
+  String get overdueStatus => 'ហួសកំណត់';
+
+  @override
+  String get delete => 'លុប';
+
+  @override
+  String get unknownRoom => 'មិនស្គាល់បន្ទប់';
+
+  @override
+  String get room => 'បន្ទប់';
+
+  @override
+  String get changedTo => 'បានផ្លាស់ប្តូរទៅជា';
+
+  @override
+  String get noTenants => 'មិនមានអ្នកជួល';
+
+  @override
+  String get tapToAddNewTenant => 'សូមចុចប៊ូតុង + ដើម្បីបន្ថែមអ្នកជួលថ្មី';
+
+  @override
+  String get errorLoadingData => 'មានបញ្ហាក្នុងការផ្ទុកទិន្នន័យ';
+
+  @override
+  String get tryAgain => 'ព្យាយាមម្តងទៀត';
+
+  @override
+  String get male => 'បុរស';
+
+  @override
+  String get female => 'នារី';
+
+  @override
+  String get other => 'ផ្សេងៗ';
+
+  @override
+  String get contactInformation => 'ព័ត៌មានទំនាក់ទំនង';
+
+  @override
+  String get roomInformation => 'ព័ត៌មានបន្ទប់';
+
+  @override
+  String get notAvailable => 'មិនមាន';
+
+  @override
+  String get rentalPrice => 'ថ្លៃជួល';
+
+  @override
+  String get editTenant => 'កែប្រែអ្នកជួល';
+
+  @override
+  String get createNewTenant => 'បង្កើតអ្នកជួលថ្មី';
+
+  @override
+  String get pleaseEnterTenantName => 'សូមបញ្ចូលឈ្មោះអ្នកជួល';
+
+  @override
+  String get pleaseEnterPhoneNumber => 'សូមបញ្ចូលលេខទូរស័ព្ទ';
+
+  @override
+  String get invalidPhoneNumber => 'លេខទូរស័ព្ទមិនត្រឹមត្រូវ';
+
+  @override
+  String get searchCountry => 'ស្វែងរកប្រទេស';
+
+  @override
+  String get gender => 'ភេទ';
+
+  @override
+  String get updateTenant => 'កែប្រអ្នកជួល';
+
+  @override
+  String get createTenant => 'បង្កើតអ្នកជួល';
+
+  @override
+  String get errorLoadingRooms => 'មានបញ្ហាក្នុងការផ្ទុកបន្ទប់';
+
+  @override
   String get emailLabel => 'អ៊ីមែល';
 
   @override
@@ -90,7 +322,7 @@ class AppLocalizationsKm extends AppLocalizations {
   String get confirmDelete => 'បញ្ជាក់ការលុប';
 
   @override
-  String deleteConfirmMsg(Object building) {
+  String deleteConfirmMsg(String building) {
     return 'តើអ្នកពិតជាចង់លុបអគារ $building មែនទេ?';
   }
 
@@ -98,15 +330,12 @@ class AppLocalizationsKm extends AppLocalizations {
   String get cancel => 'បោះបង់';
 
   @override
-  String get delete => 'លុប';
-
-  @override
-  String buildingDeleted(Object building) {
+  String buildingDeleted(String building) {
     return 'អគារ $building ត្រូវបានលុបដោយជោគជ័យ';
   }
 
   @override
-  String deleteFailed(Object error) {
+  String deleteFailed(String error) {
     return 'បរាជ័យក្នុងការលុបអគារ: $error';
   }
 
@@ -127,15 +356,6 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get searchReceiptHint => 'ស្វែងរកវិក្កយបត្រ...';
-
-  @override
-  String get paidStatus => 'បានបង់ប្រាក់';
-
-  @override
-  String get pendingStatus => 'មិនទាន់បង់ប្រាក់';
-
-  @override
-  String get overdueStatus => 'ហួសកំណត់';
 
   @override
   String get viewDetail => 'មើលលម្អិត';
@@ -166,6 +386,21 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get settings => 'ការកំណត់';
+
+  @override
+  String get changeRoom => 'ផ្លាស់ប្តូរបន្ទប់';
+
+  @override
+  String get viewDetails => 'មើលព័ត៌មានលម្អិត';
+
+  @override
+  String get building => 'អគារ';
+
+  @override
+  String get roomNumber => 'លេខបន្ទប់';
+
+  @override
+  String get noRoom => 'មិនមានបន្ទប់';
 
   @override
   String get accountSettings => 'ការកំណត់គណនី';
@@ -222,6 +457,30 @@ class AppLocalizationsKm extends AppLocalizations {
   String get about => 'អំពីកម្មវិធី';
 
   @override
+  String get receiptDeleted => 'បានលុបវិក្កយបត្រដោយជោគជ័យ';
+
+  @override
+  String get receiptRestored => 'បានស្ដារវិក្កយបត្រដោយជោគជ័យ';
+
+  @override
+  String noReceiptsForMonth(String month) {
+    return 'មិនមានវិក្កយបត្រសម្រាប់ខែ $month';
+  }
+
+  @override
+  String get noReceiptsForBuilding => 'មិនមានវិក្កយបត្រសម្រាប់អគារនេះ';
+
+  @override
+  String noSearchResults(String query) {
+    return 'មិនមានលទ្ធផលស្វែងរកសម្រាប់ \"$query\"';
+  }
+
+  @override
+  String receiptStatusChanged(String status) {
+    return 'ស្ថានភាពវិក្កយបត្របានផ្លាស់ប្តូរទៅជា $status';
+  }
+
+  @override
   String version(String versionNumber) {
     return 'ជំនាន់ $versionNumber';
   }
@@ -248,7 +507,7 @@ class AppLocalizationsKm extends AppLocalizations {
   String get searchTenantHint => 'ស្វែងរកអ្នកជួល...';
 
   @override
-  String tenantAdded(Object tenant) {
+  String tenantAdded(String tenant) {
     return 'បានបន្ថែមអ្នកជួល $tenant ដោយជោគជ័យ';
   }
 
@@ -256,7 +515,7 @@ class AppLocalizationsKm extends AppLocalizations {
   String get tenantAddFailed => 'បរាជ័យក្នុងការបន្ថែមអ្នកជួល';
 
   @override
-  String tenantUpdated(Object tenant) {
+  String tenantUpdated(String tenant) {
     return 'បានកែប្រែព័ត៌មានអ្នកជួល $tenant ដោយជោគជ័យ';
   }
 
@@ -264,7 +523,7 @@ class AppLocalizationsKm extends AppLocalizations {
   String get tenantUpdateFailed => 'បរាជ័យក្នុងការកែប្រែព័ត៌មាន';
 
   @override
-  String tenantDeleted(Object tenant) {
+  String tenantDeleted(String tenant) {
     return 'បានលុបអ្នកជួល $tenant';
   }
 
@@ -272,7 +531,7 @@ class AppLocalizationsKm extends AppLocalizations {
   String get tenantDeleteFailed => 'បរាជ័យក្នុងការលុបអ្នកជួល';
 
   @override
-  String roomChanged(Object tenant, Object room) {
+  String roomChanged(String tenant, String room) {
     return 'បានផ្លាស់ប្តូរបន្ទប់សម្រាប់ $tenant ទៅបន្ទប់ $room';
   }
 
@@ -346,9 +605,6 @@ class AppLocalizationsKm extends AppLocalizations {
   String get financial => 'ហិរញ្ញវត្ថុ';
 
   @override
-  String get building => 'អគារ';
-
-  @override
   String get errorLoadingCurrencyRate => 'មានបញ្ហាក្នុងការទាញយកអត្រាប្តូរប្រាក់';
 
   @override
@@ -391,12 +647,6 @@ class AppLocalizationsKm extends AppLocalizations {
   String get orSignOut => 'ឬ ចាកចេញ';
 
   @override
-  String get all => 'ទាំងអស់';
-
-  @override
-  String get errorLoadingBuildings => 'មានបញ្ហាក្នុងការទាញយកអគារ';
-
-  @override
   String get pleaseEnterValue => 'សូមបញ្ចូលតម្លៃ';
 
   @override
@@ -405,6 +655,22 @@ class AppLocalizationsKm extends AppLocalizations {
   @override
   String receiptsCount(num count) {
     return '$count វិក្កយបត្រ';
+  }
+
+  @override
+  String receiptDeletedRoom(String room) {
+    return 'បានលុបវិក្កយបត្របន្ទប់ $room';
+  }
+
+  @override
+  String get receiptNotFound => 'រកមិនឃើញវិក្កយបត្រ';
+
+  @override
+  String get addReceipt => 'បន្ថែមវិក្កយបត្រ';
+
+  @override
+  String deleteReceiptConfirmMsg(String room) {
+    return 'តើអ្នកប្រាកដជាចង់លុបវិក្កយបត្រសម្រាប់បន្ទប់ $room មែនទេ?';
   }
 
   @override
@@ -417,7 +683,7 @@ class AppLocalizationsKm extends AppLocalizations {
   String get remaining => 'នៅសល់';
 
   @override
-  String collectionRate(Object rate) {
+  String collectionRate(String rate) {
     return 'អត្រាប្រមូល: $rate%';
   }
 
@@ -455,9 +721,6 @@ class AppLocalizationsKm extends AppLocalizations {
   String get electricity => 'អគ្គិសនី';
 
   @override
-  String get room => 'បន្ទប់';
-
-  @override
   String get service => 'សេវាកម្ម';
 
   @override
@@ -467,5 +730,5 @@ class AppLocalizationsKm extends AppLocalizations {
   String get passwordValidationLength => 'ពាក្យសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ 6 តួអក្សរ';
 
   @override
-  String get passwordsDoNotMatch => 'ពាក្យសម្ងាត់មិនตรงគ្នាទេ';
+  String get passwordsDoNotMatch => 'ពាក្យសម្ងាត់មិនតរងគ្នាទេ';
 }

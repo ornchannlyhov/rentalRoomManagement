@@ -7,6 +7,46 @@
   "settingsTab": "设置",
   "detailedAnalysis": "详细分析",
   "moneyTab": "金钱",
+  "changeRoom": "更换房间",
+  "viewDetails": "查看详情",
+  "building": "建筑物",
+  "tenantInformation": "租户信息",
+  "male": "男性",
+  "female": "女性",
+  "other": "其他",
+  "contactInformation": "联系信息",
+  "roomInformation": "房间信息",
+  "notAvailable": "不可用",
+  "rentalPrice": "租金",
+  "editTenant": "编辑租户",
+  "createNewTenant": "创建新租户",
+  "selectBuilding": "选择建筑物",
+  "tenantName": "租户姓名",
+  "pleaseEnterTenantName": "请输入租户姓名",
+  "pleaseEnterPhoneNumber": "请输入电话号码",
+  "invalidPhoneNumber": "电话号码无效",
+  "searchCountry": "搜索国家",
+  "pleaseSelectRoom": "请选择房间",
+  "gender": "性别",
+  "updateTenant": "更新租户",
+  "createTenant": "创建租户",
+  "errorLoadingRooms": "加载房间时出错",
+  "deleteTenantConfirmMsg": "您确定要删除租户 {tenant} 吗？",
+  "@deleteTenantConfirmMsg": {
+    "placeholders": {
+      "tenant": {
+        "type": "String"
+      }
+    }
+  },
+  "noTenants": "没有租户",
+  "tapToAddNewTenant": "点击 + 添加新租户",
+  "errorLoadingData": "加载数据时出错",
+  "tryAgain": "重试",
+  "roomNumber": "房间号",
+  "phoneNumber": "电话号码",
+  "noRoom": "没有房间",
+  "unknownRoom": "未知房间",
   "buildingAnalysisTab": "建筑物",
   "welcomeBack": "欢迎回来",
   "signInPrompt": "登录您的帐户",
@@ -27,29 +67,35 @@
   "buildingsTitle": "建筑物",
   "searchBuildingHint": "搜索建筑物...",
   "confirmDelete": "确认删除",
+  "deleteConfirmMsg": "您确定要删除建筑物 {building} 吗？",
   "@deleteConfirmMsg": {
     "description": "删除建筑物的确认消息",
     "placeholders": {
-      "building": {}
+      "building": {
+        "type": "String"
+      }
     }
   },
-  "deleteConfirmMsg": "您确定要删除建筑物 {building} 吗？",
   "cancel": "取消",
   "delete": "删除",
+  "buildingDeleted": "建筑物 {building} 删除成功",
   "@buildingDeleted": {
     "description": "删除建筑物后的成功消息",
     "placeholders": {
-      "building": {}
-    }
-  },
-  "buildingDeleted": "建筑物 {building} 删除成功",
-  "@deleteFailed": {
-    "description": "建筑物删除失败时的错误消息",
-    "placeholders": {
-      "error": {}
+      "building": {
+        "type": "String"
+      }
     }
   },
   "deleteFailed": "删除建筑物失败：{error}",
+  "@deleteFailed": {
+    "description": "建筑物删除失败时的错误消息",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "noBuildings": "没有建筑物",
   "noBuildingsSearch": "未找到建筑物",
   "addNewBuildingHint": "点击 + 添加新建筑物",
@@ -63,7 +109,7 @@
   "share": "分享",
   "edit": "编辑",
   "deleteOption": "删除",
-  "undo": "撤消",
+  "undo": "撤销",
   "receiptTitle": "收据",
   "noReceipts": "没有收据",
   "loading": "加载中...",
@@ -74,7 +120,7 @@
   "privacySecurity": "隐私、安全、更改密码",
   "subscriptions": "订阅",
   "subscriptionsSubtitle": "计划、支付方式",
-  "plansPayments": "计划、支付方式",
+  "plansPayments": "计划和支付方式",
   "appearance": "外观",
   "darkMode": "深色模式",
   "lightMode": "浅色模式",
@@ -83,10 +129,91 @@
   "khmer": "高棉语",
   "english": "英语",
   "chinese": "中文",
+  "editReceipt": "编辑收据",
+"createNewReceipt": "创建新收据",
+"noBuildingsPrompt": "没有建筑。请先创建建筑再创建收据。",
+"createNewBuilding": "创建新建筑",
+"selectBuilding": "选择建筑",
+"all": "全部",
+"selectRoom": "选择房间",
+"noOccupiedRooms": "没有已入住的房间",
+"pleaseSelectRoom": "请选择房间",
+"previousMonthUsage": "上月使用量",
+"currentMonthUsage": "本月使用量",
+"waterM3": "水 (m³)",
+"electricityKWh": "电 (kWh)",
+"services": "服务",
+"unknown": "未知",
+"selectBuildingFirst": "请先选择建筑",
+"noServicesForBuilding": "此建筑无可用服务",
+"errorLoadingServices": "加载服务出错",
+"save": "保存",
+"receiptDetailTitle": "收据详情",
+"shareReceipt": "分享收据",
+"receiptForRoom": "房间 {room} 的收据",
+"tenantInfo": "租户信息",
+"tenantName": "姓名",
+"phoneNumber": "电话号码",
+"utilityUsage": "公用事业使用",
+"waterPreviousMonth": "水（上月）",
+"waterCurrentMonth": "水（本月）",
+"electricPreviousMonth": "电（上月）",
+"electricCurrentMonth": "电（本月）",
+"paymentBreakdown": "付款明细",
+"waterUsage": "用水量",
+"totalWaterPrice": "总水费",
+"electricUsage": "用电量",
+"totalElectricPrice": "总电费",
+"additionalServices": "附加服务",
+"totalServicePrice": "服务总计",
+"roomRent": "房租",
+"grandTotal": "总计",
+"currencyServiceUnavailable": "货币服务不可用 – 显示基础美元汇率",
+"thankYouForUsingOurService": "感谢使用我们的服务！",
+"currencyConversionFailed": "货币转换失败",
+"shareReceiptFailed": "分享收据失败",
+"errorLoadingBuildings": "加载建筑出错",
+  "paidStatus": "已支付",
+"pendingStatus": "待处理",
+"overdueStatus": "已逾期",
+"dueDate": "到期日期",
+"delete": "删除",
+"menu": "菜单",
+"unknownRoom": "未知房间",
+"room": "房间",
+"changedTo": "已更改为",
   "helpAndSupport": "帮助与支持",
-  "helpAndSupportSubtitle": "常见问题、联系我们",
-  "faqContact": "常见问题、联系我们",
+  "helpAndSupportSubtitle": "常见问题与联系我们",
+  "faqContact": "常见问题与联系我们",
   "about": "关于",
+  "receiptDeleted": "收据删除成功",
+  "receiptRestored": "收据恢复成功",
+  "noReceiptsForMonth": "{month} 没有收据",
+  "@noReceiptsForMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "noReceiptsForBuilding": "此建筑物没有收据",
+  "noSearchResults": "未找到 \"{query}\" 的搜索结果",
+  "@noSearchResults": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "receiptStatusChanged": "收据状态已更改为 {status}",
+  "@receiptStatusChanged": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "version": "版本 {versionNumber}",
   "@version": {
     "description": "应用程序版本号",
     "placeholders": {
@@ -96,7 +223,6 @@
       }
     }
   },
-  "version": "版本 {versionNumber}",
   "signOut": "退出登录",
   "signOutConfirm": "您确定要退出登录吗？",
   "signOutConfirmation": "您确定要退出登录吗？",
@@ -104,44 +230,80 @@
   "premiumMember": "高级会员",
   "tenantsTitle": "租户",
   "searchTenantHint": "搜索租户...",
+  "tenantAdded": "租户 {tenant} 添加成功",
   "@tenantAdded": {
     "description": "添加租户后的成功消息",
     "placeholders": {
-      "tenant": {}
+      "tenant": {
+        "type": "String"
+      }
     }
   },
-  "tenantAdded": "租户 {tenant} 添加成功",
-  "tenantAddFailed": "添加租户出错",
+  "tenantAddFailed": "添加租户失败",
+  "tenantUpdated": "租户 {tenant} 更新成功",
   "@tenantUpdated": {
     "description": "更新租户后的成功消息",
     "placeholders": {
-      "tenant": {}
+      "tenant": {
+        "type": "String"
+      }
     }
   },
-  "tenantUpdated": "租户 {tenant} 更新成功",
-  "tenantUpdateFailed": "更新租户出错",
+  "tenantUpdateFailed": "更新租户失败",
+  "tenantDeleted": "租户 {tenant} 已删除",
   "@tenantDeleted": {
     "description": "删除租户后的成功消息",
     "placeholders": {
-      "tenant": {}
+      "tenant": {
+        "type": "String"
+      }
     }
   },
-  "tenantDeleted": "租户 {tenant} 已删除",
-  "tenantDeleteFailed": "删除租户出错",
+  "tenantDeleteFailed": "删除租户失败",
+  "roomChanged": "{tenant} 的房间已更改为 {room}",
   "@roomChanged": {
     "description": "更改租户房间时的消息",
     "placeholders": {
-      "tenant": {},
-      "room": {}
+      "tenant": {
+        "type": "String"
+      },
+      "room": {
+        "type": "String"
+      }
     }
   },
-  "roomChanged": "{tenant} 的房间已更改为 {room}",
-  "roomChangeFailed": "撤消房间更改出错",
+  "addReceipt": "添加收据",
+"@addReceipt": {
+  "description": "Tooltip for the add-receipt button"
+},
+"deleteReceiptConfirmMsg": "您确定要删除房间 {room} 的收据吗？",
+"@deleteReceiptConfirmMsg": {
+  "description": "Confirmation dialog when deleting a receipt",
+  "placeholders": {
+    "room": { "type": "String" }
+  }
+},
+"receiptDeletedRoom": "已删除房间 {room} 的收据",
+"@receiptDeletedRoom": {
+  "description": "Success message after a receipt is deleted",
+  "placeholders": {
+    "room": { "type": "String" }
+  }
+},
+"receiptNotFound": "未找到收据",
+"@receiptNotFound": {
+  "description": "Error message when a receipt cannot be found in the provider"
+},
+"unknownRoom": "未知房间",
+"@unknownRoom": {
+  "description": "Displayed when the room number is not available"
+},
+  "roomChangeFailed": "更改房间失败",
   "retryLoadingProfile": "重试加载资料",
-  "failedToLoadProfile": "加载资料失败。",
+  "failedToLoadProfile": "加载资料失败",
   "noLoggedIn": "您尚未登录。",
   "notLoggedIn": "您尚未登录。",
-  "goToOnboarding": "转到入门指南",
+  "goToOnboarding": "前往使用指南",
   "unknownUser": "未知用户",
   "noEmailProvided": "未提供电子邮件",
   "editProfileTapped": "点击编辑资料",
@@ -152,15 +314,14 @@
   "manageBuildings": "管理建筑物和房间",
   "manageBuildingsDesc": "使用我们的直观界面轻松管理您的建筑物、房间和服务。",
   "tenantManagement": "租户管理",
-  "tenantManagementDesc": "只需几次点击即可分配租户并自动生成收据。",
+  "tenantManagementDesc": "轻松分配租户并自动生成收据。",
   "paymentTracking": "支付跟踪",
-  "paymentTrackingDesc": "轻松跟踪支付 - 待处理、已支付和逾期状态一目了然。",
+  "paymentTrackingDesc": "轻松跟踪支付状态 - 待处理、已支付和逾期。",
   "automationTools": "自动化工具",
-  "automationToolsDesc": "使用 Telegram 机器人提醒和实用程序输入自动化工作。",
+  "automationToolsDesc": "使用 Telegram 提醒和实用工具实现自动化工作。",
   "advancedAnalysis": "高级分析",
   "financial": "财务",
-  "building": "建筑物",
-  "errorLoadingCurrencyRate": "加载汇率出错",
+  "errorLoadingCurrencyRate": "加载汇率时出错",
   "january": "一月",
   "february": "二月",
   "march": "三月",
@@ -175,14 +336,28 @@
   "december": "十二月",
   "orSignOut": "或退出登录",
   "all": "全部",
-  "errorLoadingBuildings": "加载建筑时出错",
-  "pleaseEnterValue": "请输入一个值。",
-  "pleaseEnterValidNumber": "请输入一个有效的号码。",
+  "errorLoadingBuildings": "加载建筑物时出错",
+  "pleaseEnterValue": "请输入一个值",
+  "pleaseEnterValidNumber": "请输入有效的数字",
   "receiptsCount": "{count} 张收据",
+  "@receiptsCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
   "totalRevenue": "总收入",
   "paid": "已支付",
   "remaining": "剩余",
   "collectionRate": "收款率: {rate}%",
+  "@collectionRate": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
   "tapToSeeDetails": "点击查看详情",
   "utilityAnalysis": "水电费分析",
   "pending": "待处理",
@@ -194,9 +369,9 @@
   "nextMonth": "下个月",
   "water": "水费",
   "electricity": "电费",
-  "room": "房租",
+  "room": "房间",
   "service": "服务费",
   "emailValidationInvalid": "请输入有效的电子邮件",
-  "passwordValidationLength": "密码必须至少为6个字符",
+  "passwordValidationLength": "密码长度至少为 6 个字符",
   "passwordsDoNotMatch": "密码不匹配"
 }

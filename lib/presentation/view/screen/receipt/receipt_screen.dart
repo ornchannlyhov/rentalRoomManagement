@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/data/models/enum/mode.dart';
@@ -13,6 +14,7 @@ import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_detail.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_form.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_list.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 class ReceiptScreen extends StatefulWidget {
   const ReceiptScreen({super.key});
@@ -46,9 +48,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
     );
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadData();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
   }
 
   @override
@@ -58,7 +58,6 @@ class _ReceiptScreenState extends State<ReceiptScreen>
   }
 
   Future<void> _loadData() async {
-    // Use context.read inside a method as it's a one-time call
     final receiptProvider = context.read<ReceiptProvider>();
     final buildingProvider = context.read<BuildingProvider>();
     final roomProvider = context.read<RoomProvider>();
@@ -71,15 +70,13 @@ class _ReceiptScreenState extends State<ReceiptScreen>
       serviceProvider.load(),
     ]);
 
-    if (mounted) {
-      _animationController.forward();
-    }
+    if (mounted) _animationController.forward();
   }
 
   Future<void> _navigateToAddReceipt(List<Receipt> allReceipts) async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
-        builder: (ctx) => ReceiptForm(
+        builder: (_) => ReceiptForm(
           receipts: allReceipts,
           selectedBuildingId: _selectedBuildingId,
         ),
@@ -91,7 +88,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
       Receipt receipt, List<Receipt> allReceipts) async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
-        builder: (ctx) => ReceiptForm(
+        builder: (_) => ReceiptForm(
           mode: Mode.editing,
           receipt: receipt,
           receipts: allReceipts,
@@ -101,110 +98,110 @@ class _ReceiptScreenState extends State<ReceiptScreen>
   }
 
   Future<void> _navigateToReceiptDetail(Receipt receipt) async {
-    // Get fresh receipt from provider with all relationships hydrated
-    final receiptProvider = context.read<ReceiptProvider>();
-    final freshReceipt = receiptProvider.receiptsState.data?.firstWhere(
-      (r) => r.id == receipt.id,
-    );
+    final l10n = AppLocalizations.of(context)!;
+
+    final freshReceipt = context
+        .read<ReceiptProvider>()
+        .receiptsState
+        .data
+        ?.firstWhereOrNull((r) => r.id == receipt.id);
 
     if (freshReceipt == null) {
       GlobalSnackBar.show(
-          message: 'មិនអាចរកឃើញវិក្កយបត្រ', isError: true, context: context);
+        message: l10n.errorLoadingData, // fallback
+        isError: true,
+        context: context,
+      );
       return;
     }
 
-    Navigator.push(
-      context,
+    Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => ReceiptDetailScreen(receipt: receipt),
+        builder: (_) => ReceiptDetailScreen(receipt: receipt),
       ),
     );
   }
 
   Future<bool> _confirmDeleteReceipt(
       BuildContext context, Receipt receipt) async {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.warning_amber_rounded,
-                color: theme.colorScheme.error,
-                size: 28,
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'លុបវិក្កយបត្រ',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: const Text(
-            'តើអ្នកប្រាកដជាចង់លុបវិក្កយបត្រនេះមែនទេ?',
-            style: TextStyle(height: 1.5),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded,
+                color: theme.colorScheme.error, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
               child: Text(
-                'បោះបង់',
-                style: TextStyle(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.colorScheme.error,
-                foregroundColor: theme.colorScheme.onError,
-              ),
-              child: const Text(
-                'លុប',
-                style: TextStyle(fontWeight: FontWeight.w600),
+                l10n.confirmDelete, // "Confirm Delete"
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ],
-        );
-      },
+        ),
+        content: Text(
+          // You need a key like "deleteReceiptConfirmMsg"
+          // For now using a generic placeholder – add the key below.
+          l10n.deleteReceiptConfirmMsg(
+              receipt.room?.roomNumber ?? l10n.unknown),
+          style: const TextStyle(height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
+            child: Text(
+              l10n.cancel,
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.error,
+              foregroundColor: theme.colorScheme.onError,
+            ),
+            child: Text(
+              l10n.delete,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
     );
-
     return confirmed ?? false;
   }
 
   Future<void> _handleDeleteReceipt(Receipt receipt, int index) async {
+    final l10n = AppLocalizations.of(context)!; // Add this line
     final confirmed = await _confirmDeleteReceipt(context, receipt);
+    if (!confirmed || !mounted) return;
 
-    if (confirmed && mounted) {
-      final provider = context.read<ReceiptProvider>();
-      await provider.deleteReceipt(receipt.id);
+    final provider = context.read<ReceiptProvider>();
+    await provider.deleteReceipt(receipt.id);
 
-      if (mounted) {
-        final roomNumber = receipt.room?.roomNumber ?? 'ទរទេ';
-        GlobalSnackBar.show(
-          message: 'បានលុបវិក្កយបត្របន្ទប់ $roomNumber',
-          context: context,
-        );
-      }
+    if (mounted) {
+      GlobalSnackBar.show(
+        message: l10n.receiptDeleted,
+        context: context,
+      );
     }
   }
 
   void _showMenuOptions(BuildContext context, int index, Receipt receipt,
       List<Receipt> allReceipts) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     showModalBottomSheet(
       context: context,
@@ -212,77 +209,80 @@ class _ReceiptScreenState extends State<ReceiptScreen>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (BuildContext context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // drag handle
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                _buildMenuOption(
-                  context,
-                  Icons.visibility,
-                  'មើលលម្អិត',
-                  () {
-                    Navigator.pop(context);
-                    _navigateToReceiptDetail(receipt);
-                  },
-                ),
-                _buildMenuOption(
-                  context,
-                  Icons.share,
-                  'ចែករំលែក',
-                  () {
-                    Navigator.pop(context);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (ctx) => ReceiptDetailScreen(
-                          receipt: receipt,
-                          onShareRequested: () {},
-                        ),
+              ),
+              _buildMenuOption(
+                context,
+                Icons.visibility,
+                l10n.viewDetail,
+                () {
+                  Navigator.pop(context);
+                  _navigateToReceiptDetail(receipt);
+                },
+              ),
+              _buildMenuOption(
+                context,
+                Icons.share,
+                l10n.share,
+                () {
+                  Navigator.pop(context);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ReceiptDetailScreen(
+                        receipt: receipt,
+                        onShareRequested: () {},
                       ),
-                    );
-                  },
-                ),
-                _buildMenuOption(
-                  context,
-                  Icons.edit,
-                  'កែប្រែ',
-                  () {
-                    Navigator.pop(context);
-                    _navigateToEditReceipt(receipt, allReceipts);
-                  },
-                ),
-                _buildMenuOption(
-                  context,
-                  Icons.delete_outline,
-                  'លុប',
-                  () {
-                    Navigator.pop(context);
-                    _handleDeleteReceipt(receipt, index);
-                  },
-                  isDestructive: true,
-                ),
-              ],
-            ),
+                    ),
+                  );
+                },
+              ),
+              _buildMenuOption(
+                context,
+                Icons.edit,
+                l10n.edit,
+                () {
+                  Navigator.pop(context);
+                  _navigateToEditReceipt(receipt, allReceipts);
+                },
+              ),
+              _buildMenuOption(
+                context,
+                Icons.delete_outline,
+                l10n.delete,
+                () {
+                  Navigator.pop(context);
+                  _handleDeleteReceipt(receipt, index);
+                },
+                isDestructive: true,
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
   Widget _buildMenuOption(
-      BuildContext context, IconData icon, String title, VoidCallback onTap,
-      {bool isDestructive = false}) {
+    BuildContext context,
+    IconData icon,
+    String title,
+    VoidCallback onTap, {
+    bool isDestructive = false,
+  }) {
     final theme = Theme.of(context);
     final textColor =
         isDestructive ? theme.colorScheme.error : theme.colorScheme.primary;
@@ -301,19 +301,20 @@ class _ReceiptScreenState extends State<ReceiptScreen>
   }
 
   String getKhmerMonth(int month) {
-    const months = [
-      'មករា',
-      'កុម្ភៈ',
-      'មីនា',
-      'មេសា',
-      'ឧសភា',
-      'មិថុនា',
-      'កក្កដា',
-      'សីហា',
-      'កញ្ញា',
-      'តុលា',
-      'វិច្ឆិកា',
-      'ធ្នូ'
+    final l10n = AppLocalizations.of(context)!;
+    final months = [
+      l10n.january,
+      l10n.february,
+      l10n.march,
+      l10n.april,
+      l10n.may,
+      l10n.june,
+      l10n.july,
+      l10n.august,
+      l10n.september,
+      l10n.october,
+      l10n.november,
+      l10n.december,
     ];
     return months[month - 1];
   }
@@ -332,26 +333,26 @@ class _ReceiptScreenState extends State<ReceiptScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // final l10n = AppLocalizations.of(context)!;
     final receiptProvider = context.watch<ReceiptProvider>();
     final buildingProvider = context.watch<BuildingProvider>();
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: _ReceiptAppBar(
-        onAddPressed: () {
-          receiptProvider.receiptsState.when(
-            success: (allReceipts) => _navigateToAddReceipt(allReceipts),
-            loading: () {},
-            error: (_) {},
-          );
-        },
+        onAddPressed: () => receiptProvider.receiptsState.when(
+          success: (allReceipts) => _navigateToAddReceipt(allReceipts),
+          loading: () {},
+          error: (_) {},
+        ),
       ),
       body: Stack(
         children: [
           if (theme.brightness == Brightness.light)
             _BackgroundGradient(
-                height: _calculateBackgroundHeight(context),
-                color: theme.colorScheme.primary),
+              height: _calculateBackgroundHeight(context),
+              color: theme.colorScheme.primary,
+            ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: ReceiptList(
@@ -362,16 +363,8 @@ class _ReceiptScreenState extends State<ReceiptScreen>
               animationController: _animationController,
               fadeAnimation: _fadeAnimation,
               slideAnimation: _slideAnimation,
-              onBuildingChanged: (newValue) {
-                setState(() {
-                  _selectedBuildingId = newValue;
-                });
-              },
-              onStatusChanged: (status) {
-                setState(() {
-                  _selectedStatus = status;
-                });
-              },
+              onBuildingChanged: (v) => setState(() => _selectedBuildingId = v),
+              onStatusChanged: (s) => setState(() => _selectedStatus = s),
               onEditReceipt: _navigateToEditReceipt,
               onViewDetail: _navigateToReceiptDetail,
               onShowMenuOptions: _showMenuOptions,
@@ -389,13 +382,10 @@ class _ReceiptScreenState extends State<ReceiptScreen>
 
   double _calculateBackgroundHeight(BuildContext context) {
     final appBarHeight = Scaffold.of(context).appBarMaxHeight ?? kToolbarHeight;
-    const summaryCardHeight =
-        240.0; // Approximation for the summary card's height
+    const summaryCardHeight = 240.0;
     return appBarHeight + summaryCardHeight - 200;
   }
 }
-
-// Extracted Widgets below
 
 class _ReceiptAppBar extends StatelessWidget implements PreferredSizeWidget {
   const _ReceiptAppBar({required this.onAddPressed});
@@ -405,6 +395,7 @@ class _ReceiptAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final isLight = theme.brightness == Brightness.light;
     final iconColor = isLight ? Colors.white : theme.colorScheme.onSurface;
     final backgroundColor =
@@ -412,7 +403,7 @@ class _ReceiptAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     return AppBar(
       title: Text(
-        'វិក្កយបត្រ',
+        l10n.receiptTitle,
         style: TextStyle(
           color: iconColor,
           fontWeight: FontWeight.w600,
@@ -422,19 +413,25 @@ class _ReceiptAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       iconTheme: IconThemeData(color: iconColor),
       actions: [
+        // Generate monthly receipts button
         IconButton(
           icon: Icon(Icons.autorenew, color: iconColor),
-          tooltip: 'Generate Monthly Receipts',
+          tooltip: l10n
+              .receiptRestored, // you may want a dedicated key: generateMonthlyReceipts
           onPressed: () async {
             final provider = context.read<ReceiptProvider>();
             await provider.generateMonthlyReceipts();
-            GlobalSnackBar.show(message: 'Receipt Generated', context: context);
+            GlobalSnackBar.show(
+              message: l10n.receiptRestored,
+              context: context,
+            );
           },
         ),
         IconButton(
           icon: Icon(Icons.add, color: iconColor),
+          tooltip:
+              l10n.createNewTenant, // generic “add” – you can add addReceipt
           onPressed: onAddPressed,
-          tooltip: 'Add Receipt',
         ),
         const SizedBox(width: 8),
       ],
@@ -454,14 +451,10 @@ class _BackgroundGradient extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
-      builder: (context, constraints) {
-        return Container(
-          height: height,
-          decoration: BoxDecoration(
-            color: color,
-          ),
-        );
-      },
+      builder: (_, __) => Container(
+        height: height,
+        decoration: BoxDecoration(color: color),
+      ),
     );
   }
 }

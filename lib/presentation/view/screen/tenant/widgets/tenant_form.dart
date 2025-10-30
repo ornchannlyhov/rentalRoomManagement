@@ -8,6 +8,7 @@ import 'package:joul_v2/data/models/enum/gender.dart';
 import 'package:joul_v2/data/models/room.dart';
 import 'package:joul_v2/data/models/tenant.dart';
 import 'package:joul_v2/data/models/enum/mode.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:joul_v2/presentation/providers/building_provider.dart';
 import 'package:joul_v2/presentation/providers/room_provider.dart';
 
@@ -158,9 +159,22 @@ class _TenantFormState extends State<TenantForm> {
     }
   }
 
+  String _getGenderText(BuildContext context, Gender g) {
+    final localizations = AppLocalizations.of(context)!;
+    switch (g) {
+      case Gender.male:
+        return localizations.male;
+      case Gender.female:
+        return localizations.female;
+      case Gender.other:
+        return localizations.other;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final localizations = AppLocalizations.of(context)!;
     const fieldSpacing = SizedBox(height: 12);
     final buildingProvider = context.watch<BuildingProvider>();
     final roomProvider = context.watch<RoomProvider>();
@@ -169,7 +183,9 @@ class _TenantFormState extends State<TenantForm> {
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
-        title: Text(isEditing ? 'កែប្រែអ្នកជួល' : 'បង្កើតអ្នកជួលថ្មី'),
+        title: Text(isEditing 
+            ? localizations.editTenant 
+            : localizations.createNewTenant),
         actions: [
           IconButton(
             onPressed: () => Navigator.pop(context),
@@ -201,7 +217,7 @@ class _TenantFormState extends State<TenantForm> {
                           DropdownMenuItem(
                             value: null,
                             child: Text(
-                              'ទាំងអស់',
+                              localizations.all,
                               style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w500,
                               ),
@@ -231,7 +247,7 @@ class _TenantFormState extends State<TenantForm> {
                           });
                         },
                         decoration: InputDecoration(
-                          labelText: 'ជ្រើសរើសអគារ',
+                          labelText: localizations.selectBuilding,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
@@ -264,12 +280,12 @@ class _TenantFormState extends State<TenantForm> {
                       TextFormField(
                         initialValue: name,
                         decoration: InputDecoration(
-                          labelText: 'ឈ្មោះអ្នកជួល',
+                          labelText: localizations.tenantName,
                           labelStyle: theme.textTheme.bodyMedium,
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'សូមបញ្ចូលឈ្មោះអ្នកជួល';
+                            return localizations.pleaseEnterTenantName;
                           }
                           return null;
                         },
@@ -279,7 +295,7 @@ class _TenantFormState extends State<TenantForm> {
                       // Phone Number Field with Country Picker
                       IntlPhoneField(
                         decoration: InputDecoration(
-                          labelText: 'លេខទូរស័ព្ទ',
+                          labelText: localizations.phoneNumber,
                           labelStyle: theme.textTheme.bodyMedium,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -302,17 +318,17 @@ class _TenantFormState extends State<TenantForm> {
                         },
                         validator: (phone) {
                           if (phone == null || phone.number.isEmpty) {
-                            return 'សូមបញ្ចូលលេខទូរស័ព្ទ';
+                            return localizations.pleaseEnterPhoneNumber;
                           }
                           return null;
                         },
-                        invalidNumberMessage: 'លេខទូរស័ព្ទមិនត្រឹមត្រូវ',
-                        searchText: 'ស្វែងរកប្រទេស',
+                        invalidNumberMessage: localizations.invalidPhoneNumber,
+                        searchText: localizations.searchCountry,
                         disableLengthCheck: true,
                         pickerDialogStyle: PickerDialogStyle(
                           backgroundColor: theme.colorScheme.surface,
                           searchFieldInputDecoration: InputDecoration(
-                            labelText: 'ស្វែងរកប្រទេស',
+                            labelText: localizations.searchCountry,
                             labelStyle: theme.textTheme.bodyMedium,
                           ),
                           countryCodeStyle: theme.textTheme.bodyMedium,
@@ -327,7 +343,6 @@ class _TenantFormState extends State<TenantForm> {
                             vertical: 6,
                           ),
                           padding: const EdgeInsets.all(16),
-                          
                         ),
                       ),
                       fieldSpacing,
@@ -340,7 +355,7 @@ class _TenantFormState extends State<TenantForm> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('បន្ទប់: ${room.roomNumber}'),
+                                Text('${localizations.room}: ${room.roomNumber}'),
                                 Text('- ${room.building?.name ?? ''}'),
                               ],
                             ),
@@ -352,31 +367,25 @@ class _TenantFormState extends State<TenantForm> {
                           });
                         },
                         decoration: InputDecoration(
-                          labelText: 'បន្ទប់',
+                          labelText: localizations.room,
                           labelStyle: theme.textTheme.bodyMedium,
                         ),
                         validator: (value) =>
-                            value == null ? 'សូមជ្រើសរើសបន្ទប់' : null,
+                            value == null ? localizations.pleaseSelectRoom : null,
                       ),
                       fieldSpacing,
                       // Gender Selection
                       DropdownButtonFormField<Gender>(
                         value: gender,
                         decoration: InputDecoration(
-                          labelText: 'ភេទ',
+                          labelText: localizations.gender,
                           labelStyle: theme.textTheme.bodyMedium,
                         ),
                         items: Gender.values
                             .map(
                               (g) => DropdownMenuItem(
                                 value: g,
-                                child: Text(
-                                  {
-                                    Gender.male: 'បុរស',
-                                    Gender.female: 'នារី',
-                                    Gender.other: 'ផ្សេងៗ',
-                                  }[g]!,
-                                ),
+                                child: Text(_getGenderText(context, g)),
                               ),
                             )
                             .toList(),
@@ -395,7 +404,9 @@ class _TenantFormState extends State<TenantForm> {
                               foregroundColor: theme.colorScheme.onPrimary,
                             ),
                             child: Text(
-                              isEditing ? 'កែប្រអ្នកជួល' : 'បង្កើតអ្នកជួល',
+                              isEditing 
+                                  ? localizations.updateTenant 
+                                  : localizations.createTenant,
                               style: const TextStyle(color: Colors.white),
                             ),
                           ),
@@ -405,19 +416,43 @@ class _TenantFormState extends State<TenantForm> {
                   ),
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(
+                      localizations.loading,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
               error: (error) => Center(
                 child: Text(
-                  'មានបញ្ហាក្នុងការផ្ទុកបន្ទប់: $error',
+                  '${localizations.errorLoadingRooms}: $error',
                   style: theme.textTheme.titleMedium,
                 ),
               ),
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  localizations.loading,
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ],
+            ),
+          ),
           error: (error) => Center(
             child: Text(
-              'មានបញ្ហាក្នុងការផ្ទុកអគារ: $error',
+              '${localizations.errorLoadingBuildings}: $error',
               style: theme.textTheme.titleMedium,
             ),
           ),

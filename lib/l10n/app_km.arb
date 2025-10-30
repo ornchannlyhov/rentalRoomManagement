@@ -7,6 +7,90 @@
   "settingsTab": "ការកំណត់",
   "detailedAnalysis": "ការវិភាគលម្អិត",
   "moneyTab": "ប្រាក់",
+  "changeRoom": "ផ្លាស់ប្តូរបន្ទប់",
+  "viewDetails": "មើលព័ត៌មានលម្អិត",
+  "building": "អគារ",
+  "tenantInformation": "ព័ត៌មានអ្នកជួល",
+  "male": "បុរស",
+  "female": "នារី",
+  "other": "ផ្សេងៗ",
+  "editReceipt": "កែប្រែវិក្កយបត្រ",
+"createNewReceipt": "បង្កើតវិក្កយបត្រថ្មី",
+"noBuildingsPrompt": "មិនមានអគារទេ។ សូមបង្កើតអគារមុននឹងបង្កើតវិក្កយបត្រ។",
+"createNewBuilding": "បង្កើតអគារថ្មី",
+"selectBuilding": "ជ្រើសរើសអគារ",
+"all": "ទាំងអស់",
+"selectRoom": "ជ្រើសរើសបន្ទប់",
+"noOccupiedRooms": "មិនមានបន្ទប់ដែលមានអ្នកជួលទេ",
+"pleaseSelectRoom": "សូមជ្រើសរើសបន្ទប់",
+"previousMonthUsage": "ការប្រើប្រាស់ខែមុន",
+"currentMonthUsage": "ការប្រើប្រាស់ខែនេះ",
+"waterM3": "ទឹក (m³)",
+"electricityKWh": "ភ្លើង (kWh)",
+"services": "សេវាកម្ម",
+"unknown": "មិនស្គាល់",
+"selectBuildingFirst": "សូមជ្រើសរើសអគារមុនសិន",
+"noServicesForBuilding": "មិនមានសេវាកម្មសម្រាប់អគារនេះទេ",
+"errorLoadingServices": "មានបញ្ហាក្នុងការផ្ទុកសេវាកម្ម",
+"save": "រក្សាទុក",
+"errorLoadingBuildings": "មានបញ្ហាក្នុងការផ្ទុកអគារ",
+"receiptDetailTitle": "វិក្កយបត្របន្ទប់ជួល",
+"shareReceipt": "ចែករំលែកវិក្កយបត្រ",
+"receiptForRoom": "វិក្កយបត្របន្ទប់ {room}",
+"tenantInfo": "ព័ត៌មានអ្នកជួល",
+"tenantName": "ឈ្មោះ",
+"phoneNumber": "លេខទូរស័ព្ទ",
+"utilityUsage": "ការប្រើប្រាស់",
+"waterPreviousMonth": "ទឹកប្រើប្រាស់ខែមុន",
+"waterCurrentMonth": "ទឹកប្រើប្រាស់ខែនេះ",
+"electricPreviousMonth": "ភ្លើងប្រើប្រាស់ខែមុន",
+"electricCurrentMonth": "ភ្លើងប្រើប្រាស់ខែនេះ",
+"paymentBreakdown": "ទូទាត់ការប្រើប្រាស់",
+"waterUsage": "ទឹកប្រើប្រាស់",
+"totalWaterPrice": "ថ្លៃទឹកសរុប",
+"electricUsage": "ភ្លើងប្រើប្រាស់",
+"totalElectricPrice": "ថ្លៃភ្លើងសរុប",
+"additionalServices": "សេវាកម្មបន្ថែម",
+"totalServicePrice": "សរុបសេវាកម្ម",
+"roomRent": "ថ្លៃជួលបន្ទប់",
+"grandTotal": "សរុបទឹកប្រាក់",
+"currencyServiceUnavailable": "សេវាប្រាក់ប្តូរមានបញ្ហា - កំពុងបង្ហាញអត្រាមូលដ្ឋាន USD ជំនួសវិញ",
+"thankYouForUsingOurService": "សូមអរគុណសម្រាប់ការប្រើប្រាស់សេវាកម្មរបស់យើងខ្ញុំ!",
+"currencyConversionFailed": "បរាជ័យក្នុងការប្តូរប្រាក់",
+"shareReceiptFailed": "មានបញ្ហាក្នុងការចែករំលែក",
+  "contactInformation": "ព័ត៌មានទំនាក់ទំនង",
+  "roomInformation": "ព័ត៌មានបន្ទប់",
+  "notAvailable": "មិនមាន",
+  "rentalPrice": "ថ្លៃជួល",
+  "editTenant": "កែប្រែអ្នកជួល",
+  "createNewTenant": "បង្កើតអ្នកជួលថ្មី",
+  "selectBuilding": "ជ្រើសរើសអគារ",
+  "tenantName": "ឈ្មោះអ្នកជួល",
+  "pleaseEnterTenantName": "សូមបញ្ចូលឈ្មោះអ្នកជួល",
+  "pleaseEnterPhoneNumber": "សូមបញ្ចូលលេខទូរស័ព្ទ",
+  "invalidPhoneNumber": "លេខទូរស័ព្ទមិនត្រឹមត្រូវ",
+  "searchCountry": "ស្វែងរកប្រទេស",
+  "pleaseSelectRoom": "សូមជ្រើសរើសបន្ទប់",
+  "gender": "ភេទ",
+  "updateTenant": "កែប្រអ្នកជួល",
+  "createTenant": "បង្កើតអ្នកជួល",
+  "errorLoadingRooms": "មានបញ្ហាក្នុងការផ្ទុកបន្ទប់",
+  "deleteTenantConfirmMsg": "តើអ្នកពិតជាចង់លុបអ្នកជួល {tenant} មែនទេ?",
+  "@deleteTenantConfirmMsg": {
+    "placeholders": {
+      "tenant": {
+        "type": "String"
+      }
+    }
+  },
+  "noTenants": "មិនមានអ្នកជួល",
+  "tapToAddNewTenant": "សូមចុចប៊ូតុង + ដើម្បីបន្ថែមអ្នកជួលថ្មី",
+  "errorLoadingData": "មានបញ្ហាក្នុងការផ្ទុកទិន្នន័យ",
+  "tryAgain": "ព្យាយាមម្តងទៀត",
+  "roomNumber": "លេខបន្ទប់",
+  "phoneNumber": "លេខទូរស័ព្ទ",
+  "noRoom": "មិនមានបន្ទប់",
+  "unknownRoom": "មិនស្គាល់បន្ទប់",
   "buildingAnalysisTab": "អគារ",
   "welcomeBack": "សូមស្វាគមន័យការត្រឡប់មកវិញ",
   "signInPrompt": "ចូលទៅក្នុងគណនីរបស់អ្នក",
@@ -25,31 +109,70 @@
   "haveAccount": "មានគណនីរួចហើយ?",
   "loginLink": "ចូលប្រើ",
   "buildingsTitle": "អគារ",
+  "paidStatus": "បានបង់ប្រាក់",
+"pendingStatus": "មិនទាន់បង់ប្រាក់",
+"overdueStatus": "ហួសកំណត់",
+"delete": "លុប",
+"unknownRoom": "មិនស្គាល់បន្ទប់",
+"room": "បន្ទប់",
+"changedTo": "បានផ្លាស់ប្តូរទៅជា",
   "searchBuildingHint": "ស្វែងរកអគារ...",
   "confirmDelete": "បញ្ជាក់ការលុប",
+  "deleteConfirmMsg": "តើអ្នកពិតជាចង់លុបអគារ {building} មែនទេ?",
   "@deleteConfirmMsg": {
     "description": "សារបញ្ជាក់សម្រាប់លុបអគារ",
     "placeholders": {
-      "building": {}
+      "building": {
+        "type": "String"
+      }
     }
   },
-  "deleteConfirmMsg": "តើអ្នកពិតជាចង់លុបអគារ {building} មែនទេ?",
   "cancel": "បោះបង់",
   "delete": "លុប",
+  "buildingDeleted": "អគារ {building} ត្រូវបានលុបដោយជោគជ័យ",
   "@buildingDeleted": {
     "description": "សារជោគជ័យបន្ទាប់ពីលុបអគារ",
     "placeholders": {
-      "building": {}
-    }
-  },
-  "buildingDeleted": "អគារ {building} ត្រូវបានលុបដោយជោគជ័យ",
-  "@deleteFailed": {
-    "description": "សារបរាជ័យនៅពេលលុបអគារមិនបានសម្រេច",
-    "placeholders": {
-      "error": {}
+      "building": {
+        "type": "String"
+      }
     }
   },
   "deleteFailed": "បរាជ័យក្នុងការលុបអគារ: {error}",
+  "@deleteFailed": {
+    "description": "សារបរាជ័យនៅពេលលុបអគារមិនបានសម្រេច",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "addReceipt": "បន្ថែមវិក្កយបត្រ",
+"@addReceipt": {
+  "description": "Tooltip for the add-receipt button"
+},
+"deleteReceiptConfirmMsg": "តើអ្នកប្រាកដជាចង់លុបវិក្កយបត្រសម្រាប់បន្ទប់ {room} មែនទេ?",
+"@deleteReceiptConfirmMsg": {
+  "description": "Confirmation dialog when deleting a receipt",
+  "placeholders": {
+    "room": { "type": "String" }
+  }
+},
+"receiptDeletedRoom": "បានលុបវិក្កយបត្របន្ទប់ {room}",
+"@receiptDeletedRoom": {
+  "description": "Success message after a receipt is deleted",
+  "placeholders": {
+    "room": { "type": "String" }
+  }
+},
+"receiptNotFound": "រកមិនឃើញវិក្កយបត្រ",
+"@receiptNotFound": {
+  "description": "Error message when a receipt cannot be found in the provider"
+},
+"unknownRoom": "មិនស្គាល់បន្ទប់",
+"@unknownRoom": {
+  "description": "Displayed when the room number is not available"
+},
   "noBuildings": "មិនមានអគារ",
   "noBuildingsSearch": "រកមិនឃើញអគារ",
   "addNewBuildingHint": "សូមចុចប៊ូតុង + ដើម្បីបន្ថែមអគារថ្មី",
@@ -87,7 +210,45 @@
   "helpAndSupportSubtitle": "សំណួរញឹកញាប់ និងទំនាក់ទំនងមកយើង",
   "faqContact": "សំណួរញឹកញាប់ និងទំនាក់ទំនងមកយើង",
   "about": "អំពីកម្មវិធី",
+  "receiptDeleted": "បានលុបវិក្កយបត្រដោយជោគជ័យ",
+  "receiptRestored": "បានស្ដារវិក្កយបត្រដោយជោគជ័យ",
+  "noReceiptsForMonth": "មិនមានវិក្កយបត្រសម្រាប់ខែ {month}",
+  "menu": "ម៉ឺនុយ",
+  "dueDate": "កាលបរិច្ឆេទផុតកំណត់",
+  "@noReceiptsForMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "noReceiptsForBuilding": "មិនមានវិក្កយបត្រសម្រាប់អគារនេះ",
+  "noSearchResults": "មិនមានលទ្ធផលស្វែងរកសម្រាប់ \"{query}\"",
+  "@noSearchResults": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "receiptStatusChanged": "ស្ថានភាពវិក្កយបត្របានផ្លាស់ប្តូរទៅជា {status}",
+  "@receiptStatusChanged": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
   "version": "ជំនាន់ {versionNumber}",
+  "@version": {
+    "description": "The application version number",
+    "placeholders": {
+      "versionNumber": {
+        "type": "String",
+        "example": "1.2.3"
+      }
+    }
+  },
   "signOut": "ចាកចេញ",
   "signOutConfirm": "តើអ្នកពិតជាចង់ចេញពីប្រព័ន្ធមែនទេ?",
   "signOutConfirmation": "តើអ្នកប្រាកដថាចង់ចាកចេញ?",
@@ -95,38 +256,48 @@
   "premiumMember": "សមាជិក Premium",
   "tenantsTitle": "អ្នកជួល",
   "searchTenantHint": "ស្វែងរកអ្នកជួល...",
+  "tenantAdded": "បានបន្ថែមអ្នកជួល {tenant} ដោយជោគជ័យ",
   "@tenantAdded": {
     "description": "សារជោគជ័យបន្ទាប់ពីបន្ថែមអ្នកជួល",
     "placeholders": {
-      "tenant": {}
+      "tenant": {
+        "type": "String"
+      }
     }
   },
-  "tenantAdded": "បានបន្ថែមអ្នកជួល {tenant} ដោយជោគជ័យ",
   "tenantAddFailed": "បរាជ័យក្នុងការបន្ថែមអ្នកជួល",
+  "tenantUpdated": "បានកែប្រែព័ត៌មានអ្នកជួល {tenant} ដោយជោគជ័យ",
   "@tenantUpdated": {
     "description": "សារជោគជ័យបន្ទាប់ពីកែប្រែព័ត៌មានអ្នកជួល",
     "placeholders": {
-      "tenant": {}
+      "tenant": {
+        "type": "String"
+      }
     }
   },
-  "tenantUpdated": "បានកែប្រែព័ត៌មានអ្នកជួល {tenant} ដោយជោគជ័យ",
   "tenantUpdateFailed": "បរាជ័យក្នុងការកែប្រែព័ត៌មាន",
+  "tenantDeleted": "បានលុបអ្នកជួល {tenant}",
   "@tenantDeleted": {
     "description": "សារជោគជ័យបន្ទាប់ពីលុបអ្នកជួល",
     "placeholders": {
-      "tenant": {}
+      "tenant": {
+        "type": "String"
+      }
     }
   },
-  "tenantDeleted": "បានលុបអ្នកជួល {tenant}",
   "tenantDeleteFailed": "បរាជ័យក្នុងការលុបអ្នកជួល",
+  "roomChanged": "បានផ្លាស់ប្តូរបន្ទប់សម្រាប់ {tenant} ទៅបន្ទប់ {room}",
   "@roomChanged": {
     "description": "សារបង្ហាញនៅពេលផ្លាស់ប្តូរបន្ទប់អ្នកជួល",
     "placeholders": {
-      "tenant": {},
-      "room": {}
+      "tenant": {
+        "type": "String"
+      },
+      "room": {
+        "type": "String"
+      }
     }
   },
-  "roomChanged": "បានផ្លាស់ប្តូរបន្ទប់សម្រាប់ {tenant} ទៅបន្ទប់ {room}",
   "roomChangeFailed": "មានបញ្ហាក្នុងការផ្លាស់ប្តូរបន្ទប់",
   "retryLoadingProfile": "ព្យាយាមម្តងទៀត",
   "failedToLoadProfile": "ការទាញយកព័ត៌មាន Profile បានបរាជ័យ",
@@ -150,7 +321,6 @@
   "automationToolsDesc": "ធ្វើឱ្យការងារស្វ័យប្រវត្តិជាមួយការរំលឹកតាម Telegram និងការបញ្ចូលឧបករណ៍ជាច្រើន។",
   "advancedAnalysis": "ការវិភាគកម្រិតខ្ពស់",
   "financial": "ហិរញ្ញវត្ថុ",
-  "building": "អគារ",
   "errorLoadingCurrencyRate": "មានបញ្ហាក្នុងការទាញយកអត្រាប្តូរប្រាក់",
   "january": "មករា",
   "february": "កុម្ភៈ",
@@ -170,10 +340,24 @@
   "pleaseEnterValue": "សូមបញ្ចូលតម្លៃ",
   "pleaseEnterValidNumber": "សូមបញ្ចូលលេខត្រឹមត្រូវ",
   "receiptsCount": "{count} វិក្កយបត្រ",
+  "@receiptsCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
   "totalRevenue": "ប្រាក់ចំណូលសរុប",
   "paid": "បានបង់ប្រាក់",
   "remaining": "នៅសល់",
   "collectionRate": "អត្រាប្រមូល: {rate}%",
+  "@collectionRate": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
   "tapToSeeDetails": "ចុចដើម្បីមើលលម្អិត",
   "utilityAnalysis": "ការវិភាគតម្លៃ",
   "pending": "មិនទាន់បង់",
@@ -189,5 +373,5 @@
   "service": "សេវាកម្ម",
   "emailValidationInvalid": "សូមបញ្ចូលអ៊ីមែលដែលត្រឹមត្រូវ",
   "passwordValidationLength": "ពាក្យសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ 6 តួអក្សរ",
-  "passwordsDoNotMatch": "ពាក្យសម្ងាត់មិនตรงគ្នាទេ"
+  "passwordsDoNotMatch": "ពាក្យសម្ងាត់មិនតរងគ្នាទេ"
 }

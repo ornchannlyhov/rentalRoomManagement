@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/tenant.dart';
 import 'package:joul_v2/data/models/enum/gender.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 class TenantDetail extends StatelessWidget {
   final Tenant tenant;
@@ -21,25 +22,27 @@ class TenantDetail extends StatelessWidget {
     }
   }
 
-  String _getGenderText() {
+  String _getGenderText(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     switch (tenant.gender) {
       case Gender.male:
-        return 'បុរស';
+        return localizations.male;
       case Gender.female:
-        return 'នារី';
+        return localizations.female;
       case Gender.other:
-        return 'ផ្សេងៗ';
+        return localizations.other;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final localizations = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
-        title: const Text('ព័ត៌មានអ្នកជួល'),
+        title: Text(localizations.tenantInformation),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -75,7 +78,7 @@ class TenantDetail extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      _getGenderText(),
+                      _getGenderText(context),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w600,
@@ -88,28 +91,28 @@ class TenantDetail extends StatelessWidget {
             const SizedBox(height: 32),
 
             // Information Section
-            _buildSectionHeader(theme, 'ព័ត៌មានទំនាក់ទំនង'),
-            _buildInfoRow(theme, 'លេខទូរស័ព្ទ', tenant.phoneNumber),
+            _buildSectionHeader(theme, localizations.contactInformation),
+            _buildInfoRow(theme, localizations.phoneNumber, tenant.phoneNumber),
 
             const SizedBox(height: 8),
             _buildDivider(theme),
             const SizedBox(height: 8),
 
-            _buildSectionHeader(theme, 'ព័ត៌មានបន្ទប់'),
+            _buildSectionHeader(theme, localizations.roomInformation),
             _buildInfoRow(
               theme,
-              'អគារ',
-              tenant.room?.building?.name ?? 'មិនមាន',
+              localizations.building,
+              tenant.room?.building?.name ?? localizations.notAvailable,
             ),
             _buildInfoRow(
               theme,
-              'លេខបន្ទប់',
-              tenant.room?.roomNumber ?? 'មិនមាន',
+              localizations.roomNumber,
+              tenant.room?.roomNumber ?? localizations.notAvailable,
             ),
             if (tenant.room?.price != null)
               _buildInfoRow(
                 theme,
-                'ថ្លៃជួល',
+                localizations.rentalPrice,
                 '\$${tenant.room!.price.toStringAsFixed(2)}',
               ),
           ],

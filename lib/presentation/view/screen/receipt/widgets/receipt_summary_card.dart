@@ -4,6 +4,7 @@ import 'package:joul_v2/data/models/enum/payment_status.dart';
 import 'package:joul_v2/data/models/receipt.dart';
 import 'package:joul_v2/presentation/providers/building_provider.dart';
 import 'package:joul_v2/presentation/view/app_widgets/building_filter_dropdown.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 class ReceiptSummaryCard extends StatelessWidget {
   const ReceiptSummaryCard({
@@ -38,7 +39,6 @@ class ReceiptSummaryCard extends StatelessWidget {
     return receipts.where((receipt) => receipt.paymentStatus == status).length;
   }
 
-  // Helper method to filter receipts for current month
   List<Receipt> _filterReceiptsForCurrentMonth(List<Receipt> receipts) {
     final now = DateTime.now();
     return receipts.where((receipt) {
@@ -50,10 +50,10 @@ class ReceiptSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final currentMonth = DateTime.now().month;
     final thisMonth = getKhmerMonth(currentMonth);
 
-    // First filter by current month, then by selected building if needed
     final currentMonthReceipts = _filterReceiptsForCurrentMonth(receipts);
 
     final filteredReceipts = selectedBuildingId != null
@@ -118,7 +118,7 @@ class ReceiptSummaryCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'ខែ $thisMonth',
+                          '${l10n.month} $thisMonth', // Localized "Month"
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -135,7 +135,7 @@ class ReceiptSummaryCard extends StatelessWidget {
                       color: colorScheme.primary,
                       size: 24,
                     ),
-                    tooltip: 'ការវិភាគលម្អិត',
+                    tooltip: l10n.detailedAnalysis, // Localized tooltip
                     style: IconButton.styleFrom(
                       backgroundColor: colorScheme.primary.withOpacity(0.1),
                       padding: const EdgeInsets.all(4),
@@ -159,100 +159,101 @@ class ReceiptSummaryCard extends StatelessWidget {
                 ),
               ),
               Transform.translate(
-                  offset: const Offset(0, -8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _StatusCard(
-                                    status: PaymentStatus.paid,
-                                    count: paidCount,
-                                    icon: Icons.check_circle_outline,
-                                    theme: theme,
-                                    colorScheme: colorScheme,
-                                    getStatusColor: getStatusColor,
-                                  ),
+                offset: const Offset(0, -8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _StatusCard(
+                                  status: PaymentStatus.paid,
+                                  count: paidCount,
+                                  icon: Icons.check_circle_outline,
+                                  theme: theme,
+                                  colorScheme: colorScheme,
+                                  getStatusColor: getStatusColor,
                                 ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: _StatusCard(
-                                    status: PaymentStatus.pending,
-                                    count: unpaidCount,
-                                    icon: Icons.pending_actions,
-                                    theme: theme,
-                                    colorScheme: colorScheme,
-                                    getStatusColor: getStatusColor,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: _StatusCard(
-                                    status: PaymentStatus.overdue,
-                                    count: overdueCount,
-                                    icon: Icons.cancel_outlined,
-                                    theme: theme,
-                                    colorScheme: colorScheme,
-                                    getStatusColor: getStatusColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        flex: 1,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                SizedBox(
-                                  width: 80,
-                                  height: 80,
-                                  child: CircularProgressIndicator(
-                                    value: progress.clamp(0.0, 1.0),
-                                    strokeWidth: 3,
-                                    backgroundColor: theme.colorScheme.outline
-                                        .withOpacity(0.1),
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      colorScheme.primary,
-                                    ),
-                                    strokeCap: StrokeCap.round,
-                                  ),
-                                ),
-                                Text(
-                                  '$receiptCount/$totalRooms',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: colorScheme.primary,
-                                    fontSize: 9,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'វិក្កយបត្រ/បន្ទប់',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 9,
                               ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: _StatusCard(
+                                  status: PaymentStatus.pending,
+                                  count: unpaidCount,
+                                  icon: Icons.pending_actions,
+                                  theme: theme,
+                                  colorScheme: colorScheme,
+                                  getStatusColor: getStatusColor,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: _StatusCard(
+                                  status: PaymentStatus.overdue,
+                                  count: overdueCount,
+                                  icon: Icons.cancel_outlined,
+                                  theme: theme,
+                                  colorScheme: colorScheme,
+                                  getStatusColor: getStatusColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    ],
-                  )),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 1,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              SizedBox(
+                                width: 80,
+                                height: 80,
+                                child: CircularProgressIndicator(
+                                  value: progress.clamp(0.0, 1.0),
+                                  strokeWidth: 3,
+                                  backgroundColor:
+                                      theme.colorScheme.outline.withOpacity(0.1),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    colorScheme.primary,
+                                  ),
+                                  strokeCap: StrokeCap.round,
+                                ),
+                              ),
+                              Text(
+                                '$receiptCount/$totalRooms',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
+                                  fontSize: 9,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            l10n.receiptsCount(receiptCount), // Localized plural
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 9,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -278,20 +279,18 @@ class _StatusCard extends StatelessWidget {
   final ColorScheme colorScheme;
   final Color Function(PaymentStatus) getStatusColor;
 
-  String translatePaymentStatus(PaymentStatus status) {
-    switch (status) {
-      case PaymentStatus.paid:
-        return 'បានបង់ប្រាក់';
-      case PaymentStatus.pending:
-        return 'មិនទាន់បង់ប្រាក់';
-      case PaymentStatus.overdue:
-        return 'ហួសកំណត់';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final statusColor = getStatusColor(status);
+
+    String statusText() {
+      return switch (status) {
+        PaymentStatus.paid => l10n.paidStatus,
+        PaymentStatus.pending => l10n.pendingStatus,
+        PaymentStatus.overdue => l10n.overdueStatus,
+      };
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -321,7 +320,7 @@ class _StatusCard extends StatelessWidget {
             ),
           ),
           Text(
-            translatePaymentStatus(status),
+            statusText(),
             style: theme.textTheme.bodySmall?.copyWith(
               color: statusColor,
               fontWeight: FontWeight.w500,

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:joul_v2/data/models/enum/mode.dart';
 import 'package:joul_v2/data/models/enum/room_status.dart';
 import 'package:joul_v2/data/models/tenant.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:joul_v2/presentation/providers/building_provider.dart';
 import 'package:joul_v2/presentation/providers/room_provider.dart';
 import 'package:joul_v2/presentation/providers/tenant_provider.dart';
@@ -104,6 +105,8 @@ class _TenantScreenState extends State<TenantScreen>
 
   /// Handles the process of adding a new tenant.
   Future<void> _addTenantToRoom(BuildContext context) async {
+    final localizations = AppLocalizations.of(context)!;
+    
     final newTenant = await Navigator.of(context).push<Tenant>(
       MaterialPageRoute(
         builder: (ctx) => TenantForm(
@@ -128,14 +131,14 @@ class _TenantScreenState extends State<TenantScreen>
         if (mounted) {
           GlobalSnackBar.show(
             context: context,
-            message: 'បានបន្ថែមអ្នកជួល ${newTenant.name} ដោយជោគជ័យ',
+            message: localizations.tenantAdded(newTenant.name),
           );
         }
       } catch (e) {
         if (mounted) {
           GlobalSnackBar.show(
             context: context,
-            message: 'មានបញ្ហាក្នុងការបន្ថែមអ្នកជួល',
+            message: localizations.tenantAddFailed,
             isError: true,
           );
         }
@@ -145,6 +148,8 @@ class _TenantScreenState extends State<TenantScreen>
 
   /// Handles the process of editing an existing tenant.
   Future<void> _editTenant(BuildContext context, Tenant tenant) async {
+    final localizations = AppLocalizations.of(context)!;
+    
     final updatedTenant = await Navigator.of(context).push<Tenant>(
       MaterialPageRoute(
         builder: (ctx) => TenantForm(
@@ -179,14 +184,14 @@ class _TenantScreenState extends State<TenantScreen>
         if (mounted) {
           GlobalSnackBar.show(
             context: context,
-            message: 'បានកែប្រែព័ត៌មានអ្នកជួល ${updatedTenant.name} ដោយជោគជ័យ',
+            message: localizations.tenantUpdated(updatedTenant.name),
           );
         }
       } catch (e) {
         if (mounted) {
           GlobalSnackBar.show(
             context: context,
-            message: 'មានបញ្ហាក្នុងការកែប្រែព័ត៌មាន',
+            message: localizations.tenantUpdateFailed,
             isError: true,
           );
         }
@@ -205,6 +210,8 @@ class _TenantScreenState extends State<TenantScreen>
 
   /// Handles changing a tenant's room.
   void _changeRoom(BuildContext context, Tenant tenant) {
+    final localizations = AppLocalizations.of(context)!;
+    
     showDialog(
       context: context,
       builder: (ctx) => RoomChangeDialog(
@@ -212,8 +219,7 @@ class _TenantScreenState extends State<TenantScreen>
         onRoomChanged: (newRoom) {
           GlobalSnackBar.show(
             context: context,
-            message:
-                'បានផ្លាស់ប្តូរបន្ទប់សម្រាប់ ${tenant.name} ទៅបន្ទប់ ${newRoom.roomNumber}',
+            message: localizations.roomChanged(tenant.name, newRoom.roomNumber),
             onRestore: () => _undoRoomChange(tenant, newRoom),
           );
         },
@@ -230,6 +236,7 @@ class _TenantScreenState extends State<TenantScreen>
 
   /// Undoes a room change operation.
   Future<void> _undoRoomChange(Tenant originalTenant, newRoom) async {
+    final localizations = AppLocalizations.of(context)!;
     final tenantProvider = context.read<TenantProvider>();
     final roomProvider = context.read<RoomProvider>();
 
@@ -250,14 +257,14 @@ class _TenantScreenState extends State<TenantScreen>
       if (mounted) {
         GlobalSnackBar.show(
           context: context,
-          message: 'បានត្រឡប់បន្ទប់ដោយជោគជ័យ',
+          message: localizations.undo,
         );
       }
     } catch (e) {
       if (mounted) {
         GlobalSnackBar.show(
           context: context,
-          message: 'មានបញ្ហាក្នុងការត្រឡប់វិញ',
+          message: localizations.roomChangeFailed,
           isError: true,
         );
       }
@@ -267,6 +274,8 @@ class _TenantScreenState extends State<TenantScreen>
   /// Handles the process of deleting a tenant.
   Future<void> _deleteTenant(
       BuildContext context, int index, Tenant tenant) async {
+    final localizations = AppLocalizations.of(context)!;
+    
     final shouldDelete = await _showConfirmDeleteDialog(context, tenant.name);
 
     if (shouldDelete == true && mounted) {
@@ -292,7 +301,7 @@ class _TenantScreenState extends State<TenantScreen>
         if (mounted) {
           GlobalSnackBar.show(
             context: context,
-            message: 'មានបញ្ហាក្នុងការលុបអ្នកជួល',
+            message: localizations.tenantDeleteFailed,
             isError: true,
           );
         }
@@ -304,20 +313,22 @@ class _TenantScreenState extends State<TenantScreen>
   Future<bool?> _showConfirmDeleteDialog(
       BuildContext context, String tenantName) {
     final theme = Theme.of(context);
+    final localizations = AppLocalizations.of(context)!;
+    
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: theme.colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          'បញ្ជាក់ការលុប',
+          localizations.confirmDelete,
           style: TextStyle(
             color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w600,
           ),
         ),
         content: Text(
-          'តើអ្នកពិតជាចង់លុបអ្នកជួល "$tenantName" មែនទេ?',
+          '${localizations.deleteConfirmMsg(tenantName)}',
           style: TextStyle(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -326,7 +337,7 @@ class _TenantScreenState extends State<TenantScreen>
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: Text(
-              'បោះបង់',
+              localizations.cancel,
               style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             ),
           ),
@@ -335,7 +346,7 @@ class _TenantScreenState extends State<TenantScreen>
             style: FilledButton.styleFrom(
                 backgroundColor: theme.colorScheme.error),
             child: Text(
-              'លុប',
+              localizations.delete,
               style: TextStyle(color: theme.colorScheme.onError),
             ),
           ),
@@ -365,6 +376,7 @@ class _TenantScreenState extends State<TenantScreen>
   /// Handles the dismissal of a tenant card (swipe to delete).
   Future<void> _handleTenantDismissed(
       Tenant tenant, int index, DismissDirection direction) async {
+    final localizations = AppLocalizations.of(context)!;
     final tenantProvider = context.read<TenantProvider>();
     final roomProvider = context.read<RoomProvider>();
     final originalRoomId = tenant.room?.id;
@@ -387,7 +399,7 @@ class _TenantScreenState extends State<TenantScreen>
       if (mounted) {
         GlobalSnackBar.show(
           context: context,
-          message: 'មានបញ្ហាក្នុងការលុបអ្នកជួល',
+          message: localizations.tenantDeleteFailed,
           isError: true,
         );
       }
@@ -397,6 +409,7 @@ class _TenantScreenState extends State<TenantScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final localizations = AppLocalizations.of(context)!;
     final tenantProvider = context.watch<TenantProvider>();
     final buildingProvider = context.watch<BuildingProvider>();
 
@@ -404,7 +417,7 @@ class _TenantScreenState extends State<TenantScreen>
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: Text(
-          'អ្នកជួល',
+          localizations.tenantsTitle,
           style: TextStyle(
             color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w600,

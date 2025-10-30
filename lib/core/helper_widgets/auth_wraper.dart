@@ -86,7 +86,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
       }
     });
 
-    // Check for existing session expiry
+    // Check for existing session expiryz 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       if (authProvider.sessionHasExpired) {

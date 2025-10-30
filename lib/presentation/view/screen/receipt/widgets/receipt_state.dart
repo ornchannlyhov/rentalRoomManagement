@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 class EmptyState extends StatelessWidget {
-  const EmptyState({super.key, 
+  const EmptyState({
+    super.key,
     required this.theme,
     required this.fadeAnimation,
     required this.slideAnimation,
@@ -13,6 +15,8 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return SlideTransition(
       position: slideAnimation,
       child: FadeTransition(
@@ -35,7 +39,7 @@ class EmptyState extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                'មិនមានវិក្កយបត្រ',
+                l10n.noReceipts, // 'មិនមានវិក្កយបត្រ'
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
@@ -43,7 +47,7 @@ class EmptyState extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'សូមចុចប៊ូតុង + ដើម្បីបន្ថែមវិក្កយបត្រថ្មី',
+                l10n.tapToAddNewTenant, // 'សូមចុចប៊ូតុង + ដើម្បីបន្ថែមវិក្កយបត្រថ្មី'
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
                 ),
@@ -64,6 +68,8 @@ class LoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -75,7 +81,7 @@ class LoadingState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'កំពុងដំណើការ...',
+            l10n.loading, // 'កំពុងដំណើការ...'
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -87,8 +93,12 @@ class LoadingState extends StatelessWidget {
 }
 
 class ErrorState extends StatelessWidget {
-  const ErrorState(
-      {super.key, required this.theme, required this.error, required this.onRetry});
+  const ErrorState({
+    super.key,
+    required this.theme,
+    required this.error,
+    required this.onRetry,
+  });
 
   final ThemeData theme;
   final Object error;
@@ -96,6 +106,8 @@ class ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -114,7 +126,7 @@ class ErrorState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'មានបញ្ហាក្នុងការផ្ទុកទិន្នន័យ',
+            l10n.errorLoadingData, // 'មានបញ្ហាក្នុងការផ្ទុកទិន្នន័យ'
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.onErrorContainer,
               fontWeight: FontWeight.w600,
@@ -132,7 +144,7 @@ class ErrorState extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: const Text('ព្យាយាមម្តងទៀត'),
+            label: Text(l10n.tryAgain), // 'ព្យាយាមម្តងទៀត'
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: theme.colorScheme.onPrimary,

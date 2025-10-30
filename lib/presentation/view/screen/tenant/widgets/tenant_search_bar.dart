@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 class TenantSearchBar extends StatelessWidget {
   const TenantSearchBar({
@@ -19,6 +20,8 @@ class TenantSearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final localizations = AppLocalizations.of(context)!;
+    
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       height: isSearching ? 56 : 0,
@@ -39,7 +42,7 @@ class TenantSearchBar extends StatelessWidget {
               child: TextField(
                 controller: searchController,
                 decoration: InputDecoration(
-                  hintText: 'ស្វែងរកអ្នកជួល...',
+                  hintText: localizations.searchTenantHint,
                   hintStyle: TextStyle(
                     color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
                   ),
