@@ -82,12 +82,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
   }
 
   Future<void> _deleteRoom(int index, Room room) async {
-    final confirmed = await _showConfirmDialog(
-      title: 'លុបបន្ទប់',
-      content: 'តើអ្នកចង់លុបបន្ទប់ "${room.roomNumber}"?',
-    );
-
-    if (confirmed && mounted) {
+    if (mounted) {
       final tenantProvider = context.read<TenantProvider>();
       final tenants = tenantProvider.getTenantsByBuilding(widget.building.id);
 
@@ -103,10 +98,6 @@ class _BuildingDetailState extends State<BuildingDetail> {
         GlobalSnackBar.show(
           context: context,
           message: 'បានលុបបន្ទប់ "${room.roomNumber}" ជោគជ័យ',
-          onRestore: () async {
-            await context.read<RoomProvider>().restoreRoom(index, room);
-            _showSuccessMessage('បានស្ដារបន្ទប់ "${room.roomNumber}" ជោគជ័យ');
-          },
         );
       }
     }
@@ -145,26 +136,13 @@ class _BuildingDetailState extends State<BuildingDetail> {
   }
 
   Future<void> _deleteService(int index, Service service) async {
-    final confirmed = await _showConfirmDialog(
-      title: 'លុបសេវា',
-      content: 'តើអ្នកចង់លុបសេវា "${service.name}"?',
-    );
-
-    if (confirmed && mounted) {
-      final serviceData = service;
-
+    if (mounted) {
       await context.read<ServiceProvider>().deleteService(service.id);
 
       if (mounted) {
         GlobalSnackBar.show(
           context: context,
           message: 'បានលុបសេវា "${service.name}" ជោគជ័យ',
-          onRestore: () async {
-            await context
-                .read<ServiceProvider>()
-                .restoreService(index, serviceData);
-            _showSuccessMessage('បានស្ដារសេវា "${service.name}" ជោគជ័យ');
-          },
         );
       }
     }

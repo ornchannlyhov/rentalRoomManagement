@@ -271,25 +271,82 @@ class _HistoryScreenState extends State<HistoryScreen>
     );
   }
 
-  void _deleteReceipt(int index, Receipt receipt) {
-    final provider = context.read<ReceiptProvider>();
-    final receiptData = receipt;
+  Future<void> _deleteReceipt(int index, Receipt receipt) async {
+    final confirmed = await _confirmDeleteReceipt(context, receipt);
 
+    if (!confirmed) return;
+
+    final provider = context.read<ReceiptProvider>();
     provider.deleteReceipt(receipt.id);
 
     GlobalSnackBar.show(
       context: context,
       message: 'បានលុបវិក្កយបត្រជោគជ័យ',
-      onRestore: () async {
-        await provider.restoreReceipt(index, receiptData);
-        if (mounted) {
-          GlobalSnackBar.show(
-            context: context,
-            message: 'បានស្ដារវិក្កយបត្រជោគជ័យ',
-          );
-        }
+    );
+  }
+
+  Future<bool> _confirmDeleteReceipt(
+      BuildContext context, Receipt receipt) async {
+    final theme = Theme.of(context);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: theme.colorScheme.error,
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'លុបវិក្កយបត្រ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'តើអ្នកប្រាកដជាចង់លុបវិក្កយបត្រនេះមែនទេ?',
+            style: TextStyle(height: 1.5),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(
+                'បោះបង់',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: theme.colorScheme.onError,
+              ),
+              child: const Text(
+                'លុប',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        );
       },
     );
+
+    return confirmed ?? false;
   }
 
   void _showMenuOptions(BuildContext context, int index, Receipt receipt,
@@ -441,15 +498,23 @@ class _HistoryScreenState extends State<HistoryScreen>
     }
   }
 
-  void _handleReceiptDismissed(
-      int index, Receipt receipt, DismissDirection direction) {
+  Future<void> _handleReceiptDismissed(
+      int index, Receipt receipt, DismissDirection direction) async {
     final provider = context.read<ReceiptProvider>();
     final roomNumber = receipt.room?.roomNumber ?? 'ទរទេ';
 
     if (direction == DismissDirection.startToEnd) {
       _togglePaymentStatus(receipt, roomNumber, provider);
     } else if (direction == DismissDirection.endToStart) {
-      _deleteReceipt(index, receipt);
+      // Show confirmation before deleting
+      final confirmed = await _confirmDeleteReceipt(context, receipt);
+
+      if (confirmed) {
+        await _deleteReceipt(index, receipt);
+      } else {
+        // Reset the dismissible if user cancels
+        setState(() {});
+      }
     }
   }
 
@@ -480,6 +545,14 @@ class _HistoryScreenState extends State<HistoryScreen>
       background: _buildDismissStartBackground(receipt),
       secondaryBackground: _buildDismissEndBackground(theme),
       direction: DismissDirection.horizontal,
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.endToStart) {
+          // Ask for confirmation before dismissing for delete
+          return await _confirmDeleteReceipt(context, receipt);
+        }
+        // Allow immediate dismissal for status toggle
+        return true;
+      },
       onDismissed: (direction) =>
           _handleReceiptDismissed(index, receipt, direction),
       child: ReceiptCard(

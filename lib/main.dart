@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/data/repositories/report_repository.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
@@ -27,18 +28,17 @@ import 'package:joul_v2/core/helper_widgets/splash_screen.dart';
 import 'core/theme/app_theme.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'dart:async';
-
-// Localization
 import 'package:joul_v2/l10n/app_localizations.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await initializeDateFormatting();
+  // await SecureStorageService.clearAll();
 
   // NotificationService.initialize();
 
-  // STEP 1: Create repositories (no dependencies)
+  // STEP 1: Create repositories
   final roomRepository = RoomRepository();
   final buildingRepository = BuildingRepository();
   final serviceRepository = ServiceRepository();
@@ -105,7 +105,6 @@ Future<void> main() async {
   final buildingProvider = BuildingProvider(
     buildingRepository,
     roomRepository,
-    tenantRepository,
     repositoryManager: repositoryManager,
   );
 
@@ -266,5 +265,14 @@ class _MyAppState extends State<MyApp> {
         },
       ),
     );
+  }
+}
+
+class SecureStorageService {
+  static const _storage = FlutterSecureStorage();
+
+  /// Wipes all securely stored data
+  static Future<void> clearAll() async {
+    await _storage.deleteAll();
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/data/models/enum/payment_status.dart';
 import 'package:joul_v2/data/models/receipt.dart';
@@ -26,7 +27,8 @@ class ReceiptList extends StatelessWidget {
     required this.onViewDetail,
     required this.onShowMenuOptions,
     required this.onRefresh,
-    required this.onShowUndoSnackbar,
+    required this.onConfirmDelete,
+    required this.onHandleDelete,
     required this.getStatusColor,
     required this.getKhmerMonth,
   });
@@ -45,7 +47,8 @@ class ReceiptList extends StatelessWidget {
   final void Function(BuildContext, int index, Receipt, List<Receipt>)
       onShowMenuOptions;
   final Future<void> Function() onRefresh;
-  final void Function(BuildContext, String, VoidCallback) onShowUndoSnackbar;
+  final Future<bool> Function(BuildContext, Receipt) onConfirmDelete;
+  final Future<void> Function(Receipt, int) onHandleDelete;
   final Color Function(PaymentStatus) getStatusColor;
   final String Function(int) getKhmerMonth;
 
@@ -133,7 +136,8 @@ class ReceiptList extends StatelessWidget {
                           opacity: fadeAnimation,
                           child: RefreshIndicator(
                             onRefresh: onRefresh,
-                            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                            backgroundColor:
+                                theme.colorScheme.surfaceContainerHighest,
                             color: theme.colorScheme.primary,
                             child: ListView.separated(
                               padding: const EdgeInsets.all(0),
@@ -215,9 +219,17 @@ class ReceiptList extends StatelessWidget {
                                       ),
                                     ),
                                     direction: DismissDirection.horizontal,
-                                    onDismissed: (direction) {
-                                      final originStatus =
-                                          receipt.paymentStatus;
+                                    confirmDismiss: (direction) async {
+                                      if (direction ==
+                                          DismissDirection.endToStart) {
+                                        // Show confirmation dialog for delete
+                                        return await onConfirmDelete(
+                                            context, receipt);
+                                      }
+                                      // Allow status change without confirmation
+                                      return true;
+                                    },
+                                    onDismissed: (direction) async {
                                       final provider =
                                           context.read<ReceiptProvider>();
                                       final roomNumber =
@@ -231,22 +243,21 @@ class ReceiptList extends StatelessWidget {
                                                 ? PaymentStatus.pending
                                                 : PaymentStatus.paid;
 
-                                        provider.updateReceipt(receipt.copyWith(
-                                            paymentStatus: newStatus));
+                                        await provider.updateReceipt(
+                                            receipt.copyWith(
+                                                paymentStatus: newStatus));
 
-                                        onShowUndoSnackbar(
-                                          context,
-                                          "បន្ទប់ $roomNumber បានផ្លាស់ប្តូរទៅជា ${_translatePaymentStatus(newStatus)}",
-                                          () {
-                                            provider.updateReceipt(
-                                                receipt.copyWith(
-                                                    paymentStatus:
-                                                        originStatus));
-                                          },
+                                        GlobalSnackBar.show(
+                                          // ignore: use_build_context_synchronously
+                                          context: context,
+                                          message:
+                                              "បន្ទប់ $roomNumber បានផ្លាស់ប្តូរទៅជា ${_translatePaymentStatus(newStatus)}",
                                         );
                                       } else if (direction ==
                                           DismissDirection.endToStart) {
-                                        provider.deleteReceipt(receipt.id);
+                                        // Delete with undo snackbar
+                                        await provider
+                                            .deleteReceipt(receipt.id);
                                       }
                                     },
                                     child: ReceiptCard(

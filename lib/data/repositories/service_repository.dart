@@ -227,34 +227,6 @@ class ServiceRepository {
     await save();
   }
 
-  Future<Service> restoreService(int restoreIndex, Service service) async {
-    _serviceCache.insert(restoreIndex, service);
-
-    final requestData = {
-      'name': service.name,
-      'price': service.price,
-      'buildingId': service.buildingId,
-    };
-
-    final result = await _syncHelper.create<Service>(
-      endpoint: '/services',
-      data: requestData,
-      fromJson: (json) => ServiceDto.fromJson(json).toService(),
-      addToCache: (createdService) async {
-        _serviceCache.removeAt(restoreIndex);
-        _serviceCache.insert(restoreIndex, createdService);
-      },
-      addPendingChange: (type, data) => _addPendingChange(
-        type,
-        {...data, 'localId': service.id},
-        '/services',
-      ),
-      offlineModel: service,
-    );
-
-    await save();
-    return result.data ?? service;
-  }
 
   List<Service> getAllServices() {
     return List.unmodifiable(_serviceCache);

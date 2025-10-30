@@ -1,24 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/building.dart';
-import 'package:joul_v2/data/models/room.dart';
-import 'package:joul_v2/data/models/tenant.dart';
 import 'package:joul_v2/data/repositories/building_repository.dart';
 import 'package:joul_v2/data/repositories/room_repository.dart';
 import 'package:joul_v2/core/helpers/repository_manager.dart';
 import 'package:joul_v2/core/helpers/asyn_value.dart';
-import 'package:joul_v2/data/repositories/tenant_repository.dart';
 
 class BuildingProvider with ChangeNotifier {
   final BuildingRepository _buildingRepository;
   final RoomRepository _roomRepository;
-  final TenantRepository _tenantRepository;
   final RepositoryManager? _repositoryManager;
 
   AsyncValue<List<Building>> _buildingsState = const AsyncValue.loading();
 
   BuildingProvider(
     this._buildingRepository,
-    this._roomRepository, this._tenantRepository, {
+    this._roomRepository, {
     RepositoryManager? repositoryManager,
   }) : _repositoryManager = repositoryManager;
 
@@ -134,64 +130,6 @@ class BuildingProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> restoreBuilding(int index, Building building) async {
-    try {
-      _buildingsState = AsyncValue.loading(_buildingsState.data);
-      notifyListeners();
-
-      // Restore the building
-      final restoredBuilding =
-          await _buildingRepository.restoreBuilding(index, building);
-
-      // Restore all rooms for this building
-      for (var oldRoom in building.rooms) {
-        // Create room copy with reference to restored building
-        final roomToRestore = Room(
-          id: oldRoom.id,
-          roomNumber: oldRoom.roomNumber,
-          roomStatus: oldRoom.roomStatus,
-          price: oldRoom.price,
-          building: restoredBuilding,
-          tenant: null, // Will restore tenant separately
-        );
-
-        // Use RoomRepository's restore method
-        final restoredRoom = await _roomRepository.restoreRoom(
-          building.rooms.indexOf(oldRoom),
-          roomToRestore,
-        );
-
-        // If room had a tenant, restore the tenant
-        if (oldRoom.tenant != null) {
-          final oldTenant = oldRoom.tenant!;
-
-          final tenantToRestore = Tenant(
-            id: oldTenant.id,
-            name: oldTenant.name,
-            phoneNumber: oldTenant.phoneNumber,
-            gender: oldTenant.gender,
-            room: restoredRoom,
-          );
-
-          // Use TenantRepository's restore method
-          await _tenantRepository.restoreTenant(0, tenantToRestore);
-        }
-      }
-
-      //  Hydrate all relationships
-      if (_repositoryManager != null) {
-        await _repositoryManager.hydrateAllRelationships();
-        await _repositoryManager.saveAll();
-      }
-
-      // Reload state
-      final buildings = _buildingRepository.getAllBuildings();
-      _buildingsState = AsyncValue.success(buildings);
-    } catch (e) {
-      _buildingsState = AsyncValue.error(e, _buildingsState.data);
-    }
-    notifyListeners();
-  }
 
   List<Building> searchBuildings(String query) {
     return _buildingRepository.searchBuildings(query);

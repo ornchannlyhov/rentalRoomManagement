@@ -286,9 +286,6 @@ class _TenantScreenState extends State<TenantScreen>
           GlobalSnackBar.show(
             context: context,
             message: 'បានលុបអ្នកជួល ${tenant.name}',
-            onRestore: () async {
-              await tenantProvider.restoreTenant(index, tenant);
-            },
           );
         }
       } catch (e) {
@@ -384,9 +381,6 @@ class _TenantScreenState extends State<TenantScreen>
         GlobalSnackBar.show(
           context: context,
           message: 'បានលុបអ្នកជួល ${tenant.name}',
-          onRestore: () async {
-            await tenantProvider.restoreTenant(index, tenant);
-          },
         );
       }
     } catch (e) {

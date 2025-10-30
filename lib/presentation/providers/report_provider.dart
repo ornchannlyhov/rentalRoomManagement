@@ -116,26 +116,6 @@ class ReportProvider with ChangeNotifier {
     }
   }
 
-  Future<void> restoreReport(int index, Report report) async {
-    _reportsState = AsyncValue.loading(_reportsState.bestData);
-    notifyListeners();
-
-    try {
-      await _reportRepository.restoreReport(index, report);
-
-      if (_repositoryManager != null) {
-        await _repositoryManager.hydrateAllRelationships();
-        await _repositoryManager.saveAll();
-      }
-
-      await load();
-    } catch (e) {
-      _reportsState = AsyncValue.error(e, _reportsState.bestData);
-      notifyListeners();
-      rethrow;
-    }
-  }
-
   List<Report> getReportsByTenant(String tenantId) {
     return _reportRepository.getReportsByTenant(tenantId);
   }

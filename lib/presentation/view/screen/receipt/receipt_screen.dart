@@ -108,27 +108,98 @@ class _ReceiptScreenState extends State<ReceiptScreen>
     );
 
     if (freshReceipt == null) {
-      GlobalSnackBar.show(message: 'មិនអាចរកឃើញវិក្កយបត្រ', isError: true, context: context);
+      GlobalSnackBar.show(
+          message: 'មិនអាចរកឃើញវិក្កយបត្រ', isError: true, context: context);
       return;
     }
 
-    await Navigator.of(context).push(
+    Navigator.push(
+      context,
       MaterialPageRoute(
-        builder: (ctx) => ReceiptDetailScreen(receipt: freshReceipt),
+        builder: (context) => ReceiptDetailScreen(receipt: receipt),
       ),
     );
   }
 
-  void _showUndoSnackbar(
-    BuildContext context,
-    String content,
-    VoidCallback onUndo,
-  ) {
-    GlobalSnackBar.show(
+  Future<bool> _confirmDeleteReceipt(
+      BuildContext context, Receipt receipt) async {
+    final theme = Theme.of(context);
+
+    final confirmed = await showDialog<bool>(
       context: context,
-      message: content,
-      onRestore: onUndo,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: theme.colorScheme.error,
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'លុបវិក្កយបត្រ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'តើអ្នកប្រាកដជាចង់លុបវិក្កយបត្រនេះមែនទេ?',
+            style: TextStyle(height: 1.5),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(
+                'បោះបង់',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: theme.colorScheme.onError,
+              ),
+              child: const Text(
+                'លុប',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        );
+      },
     );
+
+    return confirmed ?? false;
+  }
+
+  Future<void> _handleDeleteReceipt(Receipt receipt, int index) async {
+    final confirmed = await _confirmDeleteReceipt(context, receipt);
+
+    if (confirmed && mounted) {
+      final provider = context.read<ReceiptProvider>();
+      await provider.deleteReceipt(receipt.id);
+
+      if (mounted) {
+        final roomNumber = receipt.room?.roomNumber ?? 'ទរទេ';
+        GlobalSnackBar.show(
+          message: 'បានលុបវិក្កយបត្របន្ទប់ $roomNumber',
+          context: context,
+        );
+      }
+    }
   }
 
   void _showMenuOptions(BuildContext context, int index, Receipt receipt,
@@ -197,8 +268,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
                   'លុប',
                   () {
                     Navigator.pop(context);
-                    final provider = context.read<ReceiptProvider>();
-                    provider.deleteReceipt(receipt.id);
+                    _handleDeleteReceipt(receipt, index);
                   },
                   isDestructive: true,
                 ),
@@ -306,7 +376,8 @@ class _ReceiptScreenState extends State<ReceiptScreen>
               onViewDetail: _navigateToReceiptDetail,
               onShowMenuOptions: _showMenuOptions,
               onRefresh: _loadData,
-              onShowUndoSnackbar: _showUndoSnackbar,
+              onConfirmDelete: _confirmDeleteReceipt,
+              onHandleDelete: _handleDeleteReceipt,
               getStatusColor: _getStatusColor,
               getKhmerMonth: getKhmerMonth,
             ),
