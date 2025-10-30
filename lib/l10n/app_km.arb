@@ -14,6 +14,50 @@
   "male": "បុរស",
   "female": "នារី",
   "other": "ផ្សេងៗ",
+  "editReceipt": "កែប្រែវិក្កយបត្រ",
+"createNewReceipt": "បង្កើតវិក្កយបត្រថ្មី",
+"noBuildingsPrompt": "មិនមានអគារទេ។ សូមបង្កើតអគារមុននឹងបង្កើតវិក្កយបត្រ។",
+"createNewBuilding": "បង្កើតអគារថ្មី",
+"selectBuilding": "ជ្រើសរើសអគារ",
+"all": "ទាំងអស់",
+"selectRoom": "ជ្រើសរើសបន្ទប់",
+"noOccupiedRooms": "មិនមានបន្ទប់ដែលមានអ្នកជួលទេ",
+"pleaseSelectRoom": "សូមជ្រើសរើសបន្ទប់",
+"previousMonthUsage": "ការប្រើប្រាស់ខែមុន",
+"currentMonthUsage": "ការប្រើប្រាស់ខែនេះ",
+"waterM3": "ទឹក (m³)",
+"electricityKWh": "ភ្លើង (kWh)",
+"services": "សេវាកម្ម",
+"unknown": "មិនស្គាល់",
+"selectBuildingFirst": "សូមជ្រើសរើសអគារមុនសិន",
+"noServicesForBuilding": "មិនមានសេវាកម្មសម្រាប់អគារនេះទេ",
+"errorLoadingServices": "មានបញ្ហាក្នុងការផ្ទុកសេវាកម្ម",
+"save": "រក្សាទុក",
+"errorLoadingBuildings": "មានបញ្ហាក្នុងការផ្ទុកអគារ",
+"receiptDetailTitle": "វិក្កយបត្របន្ទប់ជួល",
+"shareReceipt": "ចែករំលែកវិក្កយបត្រ",
+"receiptForRoom": "វិក្កយបត្របន្ទប់ {room}",
+"tenantInfo": "ព័ត៌មានអ្នកជួល",
+"tenantName": "ឈ្មោះ",
+"phoneNumber": "លេខទូរស័ព្ទ",
+"utilityUsage": "ការប្រើប្រាស់",
+"waterPreviousMonth": "ទឹកប្រើប្រាស់ខែមុន",
+"waterCurrentMonth": "ទឹកប្រើប្រាស់ខែនេះ",
+"electricPreviousMonth": "ភ្លើងប្រើប្រាស់ខែមុន",
+"electricCurrentMonth": "ភ្លើងប្រើប្រាស់ខែនេះ",
+"paymentBreakdown": "ទូទាត់ការប្រើប្រាស់",
+"waterUsage": "ទឹកប្រើប្រាស់",
+"totalWaterPrice": "ថ្លៃទឹកសរុប",
+"electricUsage": "ភ្លើងប្រើប្រាស់",
+"totalElectricPrice": "ថ្លៃភ្លើងសរុប",
+"additionalServices": "សេវាកម្មបន្ថែម",
+"totalServicePrice": "សរុបសេវាកម្ម",
+"roomRent": "ថ្លៃជួលបន្ទប់",
+"grandTotal": "សរុបទឹកប្រាក់",
+"currencyServiceUnavailable": "សេវាប្រាក់ប្តូរមានបញ្ហា - កំពុងបង្ហាញអត្រាមូលដ្ឋាន USD ជំនួសវិញ",
+"thankYouForUsingOurService": "សូមអរគុណសម្រាប់ការប្រើប្រាស់សេវាកម្មរបស់យើងខ្ញុំ!",
+"currencyConversionFailed": "បរាជ័យក្នុងការប្តូរប្រាក់",
+"shareReceiptFailed": "មានបញ្ហាក្នុងការចែករំលែក",
   "contactInformation": "ព័ត៌មានទំនាក់ទំនង",
   "roomInformation": "ព័ត៌មានបន្ទប់",
   "notAvailable": "មិនមាន",
@@ -65,6 +109,13 @@
   "haveAccount": "មានគណនីរួចហើយ?",
   "loginLink": "ចូលប្រើ",
   "buildingsTitle": "អគារ",
+  "paidStatus": "បានបង់ប្រាក់",
+"pendingStatus": "មិនទាន់បង់ប្រាក់",
+"overdueStatus": "ហួសកំណត់",
+"delete": "លុប",
+"unknownRoom": "មិនស្គាល់បន្ទប់",
+"room": "បន្ទប់",
+"changedTo": "បានផ្លាស់ប្តូរទៅជា",
   "searchBuildingHint": "ស្វែងរកអគារ...",
   "confirmDelete": "បញ្ជាក់ការលុប",
   "deleteConfirmMsg": "តើអ្នកពិតជាចង់លុបអគារ {building} មែនទេ?",
@@ -96,6 +147,32 @@
       }
     }
   },
+  "addReceipt": "បន្ថែមវិក្កយបត្រ",
+"@addReceipt": {
+  "description": "Tooltip for the add-receipt button"
+},
+"deleteReceiptConfirmMsg": "តើអ្នកប្រាកដជាចង់លុបវិក្កយបត្រសម្រាប់បន្ទប់ {room} មែនទេ?",
+"@deleteReceiptConfirmMsg": {
+  "description": "Confirmation dialog when deleting a receipt",
+  "placeholders": {
+    "room": { "type": "String" }
+  }
+},
+"receiptDeletedRoom": "បានលុបវិក្កយបត្របន្ទប់ {room}",
+"@receiptDeletedRoom": {
+  "description": "Success message after a receipt is deleted",
+  "placeholders": {
+    "room": { "type": "String" }
+  }
+},
+"receiptNotFound": "រកមិនឃើញវិក្កយបត្រ",
+"@receiptNotFound": {
+  "description": "Error message when a receipt cannot be found in the provider"
+},
+"unknownRoom": "មិនស្គាល់បន្ទប់",
+"@unknownRoom": {
+  "description": "Displayed when the room number is not available"
+},
   "noBuildings": "មិនមានអគារ",
   "noBuildingsSearch": "រកមិនឃើញអគារ",
   "addNewBuildingHint": "សូមចុចប៊ូតុង + ដើម្បីបន្ថែមអគារថ្មី",
@@ -136,6 +213,8 @@
   "receiptDeleted": "បានលុបវិក្កយបត្រដោយជោគជ័យ",
   "receiptRestored": "បានស្ដារវិក្កយបត្រដោយជោគជ័យ",
   "noReceiptsForMonth": "មិនមានវិក្កយបត្រសម្រាប់ខែ {month}",
+  "menu": "ម៉ឺនុយ",
+  "dueDate": "កាលបរិច្ឆេទផុតកំណត់",
   "@noReceiptsForMonth": {
     "placeholders": {
       "month": {

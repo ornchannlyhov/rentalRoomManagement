@@ -28,11 +28,11 @@ class TenantCard extends StatelessWidget {
   String getAvatar() {
     switch (tenant.gender) {
       case Gender.female:
-        return 'assets/avatar/female_avatar.png';
+        return 'assets/placeholder/female_avatar.png';
       case Gender.male:
-        return 'assets/avatar/male_avatar.png';
+        return 'assets/placeholder/male_avatar.png';
       case Gender.other:
-        return 'assets/avatar/lgbtq+_avatar.png';
+        return 'assets/placeholder/lgbtq+_avatar.png';
     }
   }
 
@@ -83,7 +83,7 @@ class TenantCard extends StatelessWidget {
       builder: (BuildContext context) {
         return Container(
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
+            color: theme.colorScheme.background,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),

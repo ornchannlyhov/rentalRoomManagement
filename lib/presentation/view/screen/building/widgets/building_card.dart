@@ -205,40 +205,30 @@ class _AnimatedCardContent extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Building name with icon
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.apartment_rounded,
-                            color: theme.colorScheme.primary,
-                            size: 18,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            building.name,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
+                    Text(
+                      building.name,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.5,
+                      ),
                     ),
-
-                    const SizedBox(height: 12),
+                    if (building.passKey != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        "Key: ${building.passKey!}",
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.8),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 18),
 
                     // Rent price
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
+                        horizontal: 8,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.primary.withOpacity(0.1),
@@ -250,7 +240,7 @@ class _AnimatedCardContent extends StatelessWidget {
                           Icon(
                             Icons.attach_money_rounded,
                             color: theme.colorScheme.primary,
-                            size: 16,
+                            size: 12,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -272,7 +262,7 @@ class _AnimatedCardContent extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 6),
 
                     // Utility prices
                     Row(
@@ -280,7 +270,6 @@ class _AnimatedCardContent extends StatelessWidget {
                         _buildUtilityChip(
                           context,
                           Icons.flash_on_rounded,
-                          "អគ្គិសនី",
                           "${building.electricPrice}\$",
                           Colors.amber,
                         ),
@@ -288,7 +277,6 @@ class _AnimatedCardContent extends StatelessWidget {
                         _buildUtilityChip(
                           context,
                           Icons.water_drop_rounded,
-                          "ទឹក",
                           "${building.waterPrice}\$",
                           Colors.blue,
                         ),
@@ -332,7 +320,6 @@ class _AnimatedCardContent extends StatelessWidget {
   Widget _buildUtilityChip(
     BuildContext context,
     IconData icon,
-    String label,
     String price,
     Color color,
   ) {
@@ -361,12 +348,6 @@ class _AnimatedCardContent extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                label,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
-                ),
-              ),
               Text(
                 price,
                 style: theme.textTheme.bodySmall?.copyWith(

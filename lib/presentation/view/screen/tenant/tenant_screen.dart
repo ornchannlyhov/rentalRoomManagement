@@ -294,10 +294,7 @@ class _TenantScreenState extends State<TenantScreen>
         if (mounted) {
           GlobalSnackBar.show(
             context: context,
-            message: localizations.tenantDeleted(tenant.name),
-            onRestore: () async {
-              await tenantProvider.restoreTenant(index, tenant);
-            },
+            message: 'បានលុបអ្នកជួល ${tenant.name}',
           );
         }
       } catch (e) {
@@ -395,10 +392,7 @@ class _TenantScreenState extends State<TenantScreen>
       if (mounted) {
         GlobalSnackBar.show(
           context: context,
-          message: localizations.tenantDeleted(tenant.name),
-          onRestore: () async {
-            await tenantProvider.restoreTenant(index, tenant);
-          },
+          message: 'បានលុបអ្នកជួល ${tenant.name}',
         );
       }
     } catch (e) {

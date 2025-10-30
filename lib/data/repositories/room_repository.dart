@@ -303,54 +303,6 @@ class RoomRepository {
     await save();
   }
 
-  Future<Room> restoreRoom(int restoreIndex, Room room) async {
-    _roomCache.insert(restoreIndex, room);
-
-    if (room.building == null) {
-      throw Exception('Room must have a building reference');
-    }
-
-    final requestData = {
-      'buildingId': room.building!.id,
-      'roomNumber': room.roomNumber,
-      'price': room.price,
-      'roomStatus': room.roomStatus == RoomStatus.occupied
-          ? 'occupied'
-          : 'available',
-    };
-
-    final result = await _syncHelper.create<Room>(
-      endpoint: '/rooms',
-      data: requestData,
-      fromJson: (json) {
-        final roomDto = RoomDto.fromJson(json);
-        final room = roomDto.toRoom();
-
-        if (roomDto.building != null) {
-          room.building = roomDto.building!.toBuilding();
-        }
-        if (roomDto.tenant != null) {
-          room.tenant = roomDto.tenant!.toTenant();
-          if (room.tenant != null) {
-            room.tenant!.room = room;
-          }
-        }
-
-        return room;
-      },
-      addToCache: (createdRoom) async {
-        _roomCache.removeAt(restoreIndex);
-        _roomCache.insert(restoreIndex, createdRoom);
-      },
-      addPendingChange: (type, data) =>
-          _addPendingChange(type, {...data, 'localId': room.id}, '/rooms'),
-      offlineModel: room,
-    );
-
-    await save();
-    return result.data ?? room;
-  }
-
   Future<void> updateRoomStatus(String roomId, RoomStatus status) async {
     final room = _roomCache.firstWhere((r) => r.id == roomId);
     room.roomStatus = status;

@@ -55,7 +55,7 @@ dependencies:
   dio: ^5.9.0
   collection: ^1.19.1
   # flutter_local_notifications: ^19.5.0
-  # flutter_native_splash: ^2.4.7
+  flutter_native_splash: ^2.4.7
   intl_phone_field: ^3.2.0
   flutter_secure_storage: ^9.2.4
 
@@ -67,7 +67,7 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/joul-logo.png"
+  image_path: "assets/logo/joul_logo.png"
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -91,10 +91,13 @@ flutter:
   assets:
     - .env
   # avatar
-    - assets/avatar/female_avatar.png
-    - assets/avatar/male_avatar.png
-    - assets/avatar/lgbtq+_avatar.png
-    - assets/joul-logo.png
+    - assets/placeholder/female_avatar.png
+    - assets/placeholder/male_avatar.png
+    - assets/placeholder/lgbtq+_avatar.png
+    - assets/placeholder/building_placeholder.png
+    - assets/placeholder/room_placeholder.jpg
+    - assets/logo/joul_logo.png
+    - assets/logo/joul_splash_logo.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
@@ -125,13 +128,13 @@ flutter:
   #         weight: 700
   #
 
-# flutter_native_splash:
-#   color: "#ffffff"
-#   image: assets/joul-logo.png
-#   android_12:
-#     image: assets/joul-logo.png
-#     color: "#ffffff"
-#   web: false
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/logo/joul_splash_logo.png
+  android_12:
+    image: assets/joul-logo.png
+    color: "#ffffff"
+  web: false
 
 
   # For details regarding fonts from package dependencies,

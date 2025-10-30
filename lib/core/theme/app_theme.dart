@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   static const Color primaryColor = Color(0xFF10B981);
-  // static const Color primaryColor = Colors.green;
   static const Color secondaryColor = Color.fromARGB(255, 66, 255, 192);
   static const Color backgroundColor = Color.fromARGB(255, 245, 245, 245);
-  static const Color surface = Color.fromARGB(250, 250, 250, 250);
+  static const Color surface = Color(0xFFFAFAFA);
   static const Color surfaceDark = Color.fromARGB(255, 40, 40, 40);
-  static const Color backgroundColorDark = Color.fromARGB(255, 34, 34, 34);
+  static const Color backgroundColorDark = Color.fromARGB(255, 41, 40, 40);
   static const Color success = Color(0xFF37B954);
   static const Color dangerColor = Color(0xFFFF0606);
   static const Color secondaryDanger = Color(0xFFF4E1E1);
@@ -46,7 +45,7 @@ class AppTheme {
         base.textTheme,
       ).apply(bodyColor: Colors.black, displayColor: Colors.black),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.transparent, // Make background transparent
+        backgroundColor: Colors.transparent,
         elevation: 0,
         shadowColor: Color.fromARGB(66, 50, 49, 49),
         titleTextStyle: TextStyle(

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:joul_v2/data/models/receipt.dart';
 import 'package:joul_v2/data/repositories/currency_repositoy.dart';
 import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -39,7 +40,6 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
     _scrollController = ScrollController();
     _checkServiceAvailability();
 
-    // Call _shareReceipt if onShareRequested is provided
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.onShareRequested != null) {
         _shareReceipt();
@@ -63,6 +63,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
   }
 
   Future<void> _convertCurrency(String targetCurrency) async {
+    final l10n = AppLocalizations.of(context)!;
     if (targetCurrency == 'USD') {
       setState(() {
         _selectedCurrency = targetCurrency;
@@ -91,25 +92,28 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
         setState(() {
           _isLoading = false;
         });
-        GlobalSnackBar.show(message: 'Fail to covert currency', isError: true, context: context);
+        GlobalSnackBar.show(
+          message: l10n.currencyConversionFailed,
+          isError: true,
+          context: context,
+        );
       }
     }
   }
 
   Future<void> _shareReceipt() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _isSharing = true;
     });
 
     try {
-      // Scroll to top to ensure consistent rendering
       await _scrollController.animateTo(
         0,
         duration: const Duration(milliseconds: 100),
         curve: Curves.easeIn,
       );
 
-      // Capture screenshot with delay
       final Uint8List? imageBytes = await _screenshotController.capture(
         delay: const Duration(milliseconds: 100),
         pixelRatio: 3.0,
@@ -119,19 +123,13 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
         throw Exception('Failed to capture screenshot');
       }
 
-      // Get temporary directory
       final directory = await getTemporaryDirectory();
       final imagePath = '${directory.path}/receipt_${widget.receipt.id}.png';
-
-      // Save image to file
       final File imageFile = File(imagePath);
       await imageFile.writeAsBytes(imageBytes);
 
-      await Share.shareXFiles(
-        [XFile(imagePath)],
-      );
+      await Share.shareXFiles([XFile(imagePath)]);
 
-      // Clean up temporary file
       try {
         await imageFile.delete();
       } catch (e) {
@@ -139,7 +137,11 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        GlobalSnackBar.show(message: 'មានបញ្ហាក្នុងការចែករំលែក', isError: true, context: context);
+        GlobalSnackBar.show(
+          message: l10n.shareReceiptFailed,
+          isError: true,
+          context: context,
+        );
       }
     } finally {
       if (mounted) {
@@ -152,13 +154,13 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
 
   String _formatPrice(double price, {bool isTotal = false}) {
     if (isTotal && _selectedCurrency != 'USD' && _convertedTotalPrice != null) {
-      return CurrencyService.formatCurrency(
-          _convertedTotalPrice!, _selectedCurrency);
+      return CurrencyService.formatCurrency(_convertedTotalPrice!, _selectedCurrency);
     }
     return '\$${price.toStringAsFixed(2)}';
   }
 
   Widget _buildCurrencyDropdown() {
+    // final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
@@ -171,7 +173,6 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
         child: DropdownButton<String>(
           value: _selectedCurrency,
           isDense: true,
-          // Disable dropdown when service unavailable or loading
           onChanged: (!_isServiceAvailable || _isLoading)
               ? null
               : (String? newValue) {
@@ -204,6 +205,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final hasServices = widget.receipt.services.isNotEmpty;
     final hasWaterUsage = widget.receipt.thisWaterUsed > 0;
     final hasElectricUsage = widget.receipt.thisElectricUsed > 0;
@@ -213,7 +215,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
-        title: Text('វិក្កយបត្របន្ទប់ជួល'),
+        title: Text(l10n.receiptDetailTitle),
         centerTitle: true,
         actions: [
           IconButton(
@@ -230,7 +232,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                     ),
                   )
                 : const Icon(Icons.share),
-            tooltip: 'ចែករំលែកវិក្កយបត្រ',
+            tooltip: l10n.shareReceipt,
           ),
         ],
       ),
@@ -251,7 +253,9 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                     child: Column(
                       children: [
                         Text(
-                          'វិក្កយបត្របន្ទប់ ${widget.receipt.room?.roomNumber ?? "N/A"}',
+                          l10n.receiptForRoom(
+                            widget.receipt.room?.roomNumber ?? l10n.notAvailable,
+                          ),
                           style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: theme.colorScheme.primary,
@@ -269,27 +273,27 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
 
                   // Tenant Information
                   if (tenant != null) ...[
-                    _buildSectionHeader(theme, 'ព័ត៌មានអ្នកជួល'),
-                    _buildInfoRow(theme, 'ឈ្មោះ', tenant.name),
-                    _buildInfoRow(theme, 'លេខទូរស័ព្ទ', tenant.phoneNumber),
+                    _buildSectionHeader(theme, l10n.tenantInfo),
+                    _buildInfoRow(theme, l10n.tenantName, tenant.name),
+                    _buildInfoRow(theme, l10n.phoneNumber, tenant.phoneNumber),
                     const SizedBox(height: 8),
                     _buildDividerSimple(theme),
                     const SizedBox(height: 8),
                   ],
 
-                  // Utility usage (only show if has usage)
+                  // Utility usage
                   if (hasWaterUsage || hasElectricUsage) ...[
-                    _buildSectionHeader(theme, 'ការប្រើប្រាស់'),
+                    _buildSectionHeader(theme, l10n.utilityUsage),
                     if (hasWaterUsage) ...[
-                      _buildInfoRow(theme, 'ទឹកប្រើប្រាស់ខែមុន',
+                      _buildInfoRow(theme, l10n.waterPreviousMonth,
                           '${widget.receipt.lastWaterUsed} m³'),
-                      _buildInfoRow(theme, 'ទឹកប្រើប្រាស់ខែនេះ',
+                      _buildInfoRow(theme, l10n.waterCurrentMonth,
                           '${widget.receipt.thisWaterUsed} m³'),
                     ],
                     if (hasElectricUsage) ...[
-                      _buildInfoRow(theme, 'ភ្លើងប្រើប្រាស់ខែមុន',
+                      _buildInfoRow(theme, l10n.electricPreviousMonth,
                           '${widget.receipt.lastElectricUsed} kWh'),
-                      _buildInfoRow(theme, 'ភ្លើងប្រើប្រាស់ខែនេះ',
+                      _buildInfoRow(theme, l10n.electricCurrentMonth,
                           '${widget.receipt.thisElectricUsed} kWh'),
                     ],
                     const SizedBox(height: 8),
@@ -297,36 +301,36 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                     const SizedBox(height: 8),
                   ],
 
-                  // Payment section (only show if has usage)
+                  // Payment section
                   if (hasWaterUsage || hasElectricUsage) ...[
-                    _buildSectionHeader(theme, 'ទូទាត់ការប្រើប្រាស់'),
+                    _buildSectionHeader(theme, l10n.paymentBreakdown),
                     if (hasWaterUsage) ...[
-                      _buildInfoRow(theme, 'ទឹកប្រើប្រាស់',
+                      _buildInfoRow(theme, l10n.waterUsage,
                           '${widget.receipt.waterUsage} m³'),
-                      _buildPriceRow(
-                          theme, 'ថ្លៃទឹកសរុប', widget.receipt.waterPrice),
+                      _buildPriceRow(theme, l10n.totalWaterPrice,
+                          widget.receipt.waterPrice),
                     ],
                     if (hasElectricUsage) ...[
-                      _buildInfoRow(theme, 'ភ្លើងប្រើប្រាស់',
+                      _buildInfoRow(theme, l10n.electricUsage,
                           '${widget.receipt.electricUsage} kWh'),
-                      _buildPriceRow(
-                          theme, 'ថ្លៃភ្លើងសរុប', widget.receipt.electricPrice),
+                      _buildPriceRow(theme, l10n.totalElectricPrice,
+                          widget.receipt.electricPrice),
                     ],
                     const SizedBox(height: 8),
                     _buildDividerSimple(theme),
                     const SizedBox(height: 8),
                   ],
 
-                  // Services (only show if has services)
+                  // Services
                   if (hasServices) ...[
-                    _buildSectionHeader(theme, 'សេវាកម្មបន្ថែម'),
+                    _buildSectionHeader(theme, l10n.additionalServices),
                     Column(
                       children: widget.receipt.services
                           .map((service) => _buildServiceItem(
                               theme, service.name, service.price))
                           .toList(),
                     ),
-                    _buildPriceRow(theme, 'សរុបសេវាកម្ម',
+                    _buildPriceRow(theme, l10n.totalServicePrice,
                         widget.receipt.totalServicePrice),
                     const SizedBox(height: 8),
                     _buildDividerSimple(theme),
@@ -334,19 +338,19 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                   ],
 
                   // Rent
-                  _buildPriceRow(theme, 'ថ្លៃជួលបន្ទប់',
+                  _buildPriceRow(theme, l10n.roomRent,
                       widget.receipt.room?.building?.rentPrice ?? 0),
 
                   const SizedBox(height: 8),
                   _buildDividerThick(theme),
                   const SizedBox(height: 8),
 
-                  // Grand total with currency selector
+                  // Grand total
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'សរុបទឹកប្រាក់',
+                        l10n.grandTotal,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -362,8 +366,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                             const SizedBox(width: 8),
                           ],
                           Text(
-                            _formatPrice(widget.receipt.totalPrice,
-                                isTotal: true),
+                            _formatPrice(widget.receipt.totalPrice, isTotal: true),
                             style: theme.textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: theme.colorScheme.primary,
@@ -376,7 +379,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                     ],
                   ),
 
-                  // Service availability warning
+                  // Service warning
                   if (!_isServiceAvailable) ...[
                     const SizedBox(height: 16),
                     Container(
@@ -395,7 +398,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'សេវាប្រាក់ប្តូរមានបញ្ហា - កំពុងបង្ហាញអត្រាមូលដ្ឋាន USD ជំនួសវិញ',
+                              l10n.currencyServiceUnavailable,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.orange.shade800,
@@ -407,11 +410,11 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                     ),
                   ],
 
-                  // Footer note
+                  // Footer
                   const SizedBox(height: 16),
                   Center(
                     child: Text(
-                      'សូមអរគុណសម្រាប់ការប្រើប្រាស់សេវាកម្មរបស់យើងខ្ញុំ!',
+                      l10n.thankYouForUsingOurService,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurface.withOpacity(0.6),
                       ),

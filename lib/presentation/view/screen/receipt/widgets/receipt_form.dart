@@ -16,6 +16,7 @@ import 'package:joul_v2/presentation/providers/room_provider.dart';
 import 'package:joul_v2/presentation/providers/service_provider.dart';
 import 'package:joul_v2/presentation/view/app_widgets/number_field.dart';
 import 'package:joul_v2/presentation/view/screen/building/widgets/building_form.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:uuid/uuid.dart';
 
 class ReceiptForm extends StatefulWidget {
@@ -187,7 +188,6 @@ class _ReceiptFormState extends State<ReceiptForm> {
     }
   }
 
-  // FIXED: Added serviceProvider.load()
   Future<void> _addBuilding(BuildContext context) async {
     final buildingProvider = context.read<BuildingProvider>();
     final roomProvider = context.read<RoomProvider>();
@@ -223,6 +223,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final roomProvider = context.watch<RoomProvider>();
     final serviceProvider = context.watch<ServiceProvider>();
     final buildingProvider = context.watch<BuildingProvider>();
@@ -234,7 +235,6 @@ class _ReceiptFormState extends State<ReceiptForm> {
 
     roomProvider.roomsState.when(
       success: (rooms) {
-        // Filter by building and only show occupied rooms
         if (selectedBuildingId != null) {
           filteredRooms = rooms
               .where((room) =>
@@ -266,7 +266,6 @@ class _ReceiptFormState extends State<ReceiptForm> {
       error: (_) {},
     );
 
-    // Filter services based on selected building
     serviceProvider.servicesState.when(
       success: (services) {
         if (selectedBuildingId != null) {
@@ -284,7 +283,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: Text(isEditing ? 'កែប្រែវិក្កយបត្រ' : 'បង្កើតវិក្កយបត្រថ្មី'),
+        title: Text(isEditing ? l10n.editReceipt : l10n.createNewReceipt),
         backgroundColor: theme.colorScheme.surface,
         actions: [
           IconButton(
@@ -297,10 +296,8 @@ class _ReceiptFormState extends State<ReceiptForm> {
         padding: const EdgeInsets.all(16.0),
         child: buildingProvider.buildingsState.when(
           success: (buildings) {
-            // FIXED: Validate that selectedBuildingId exists in buildings list
             if (validatedBuildingId != null &&
                 !buildings.any((b) => b.id == validatedBuildingId)) {
-              // Building ID doesn't exist, reset it
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted) {
                   setState(() {
@@ -329,7 +326,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'មិនមានអាគារទេ។ សូមបង្កើតអគារមុននឹងបង្កើតវិក្កយបត្រ។',
+                          l10n.noBuildingsPrompt,
                           style: theme.textTheme.titleMedium,
                           textAlign: TextAlign.center,
                         ),
@@ -344,7 +341,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
                             vertical: 16, horizontal: 24),
                       ),
                       child: Text(
-                        'បង្កើតអគារថ្មី',
+                        l10n.createNewBuilding,
                         style: theme.textTheme.titleMedium
                             ?.copyWith(color: Colors.white),
                       ),
@@ -359,8 +356,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
               child: ListView(
                 children: [
                   // Due Date Section
-                  Text('កាលបរិច្ឆេទផុតកំណត់',
-                      style: theme.textTheme.titleMedium),
+                  Text(l10n.dueDate, style: theme.textTheme.titleMedium),
                   const SizedBox(height: 8),
                   InkWell(
                     onTap: () => _selectDueDate(context),
@@ -377,14 +373,14 @@ class _ReceiptFormState extends State<ReceiptForm> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Building Filter Bar - FIXED: Use validatedBuildingId
+                  // Building Filter
                   DropdownButtonFormField<String?>(
                     value: validatedBuildingId,
                     items: [
                       DropdownMenuItem(
                         value: null,
                         child: Text(
-                          'ទាំងអស់',
+                          l10n.all,
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w500,
                           ),
@@ -406,12 +402,11 @@ class _ReceiptFormState extends State<ReceiptForm> {
                         if (selectedRoom?.building?.id != newValue) {
                           selectedRoom = null;
                         }
-                        // Clear selected services when building changes
                         selectedServices.clear();
                       });
                     },
                     decoration: InputDecoration(
-                      labelText: 'ជ្រើសរើសអគារ',
+                      labelText: l10n.selectBuilding,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(
@@ -440,7 +435,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Room Selection - Only occupied rooms
+                  // Room Selection
                   DropdownButtonFormField<Room>(
                     value: correctedSelectedRoom,
                     items: filteredRooms.map((room) {
@@ -448,8 +443,8 @@ class _ReceiptFormState extends State<ReceiptForm> {
                         value: room,
                         child: Text(
                           selectedBuildingId != null
-                              ? 'បន្ទប់ ${room.roomNumber}'
-                              : 'បន្ទប់ ${room.roomNumber} - ${room.building?.name}',
+                              ? '${l10n.room} ${room.roomNumber}'
+                              : '${l10n.room} ${room.roomNumber} - ${room.building?.name}',
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w500,
                           ),
@@ -461,9 +456,9 @@ class _ReceiptFormState extends State<ReceiptForm> {
                       await _loadLastMonthData();
                     },
                     decoration: InputDecoration(
-                      labelText: 'ជ្រើសរើសបន្ទប់',
+                      labelText: l10n.selectRoom,
                       hintText: filteredRooms.isEmpty
-                          ? 'មិនមានបន្ទប់ដែលមានអ្នកជួលទេ'
+                          ? l10n.noOccupiedRooms
                           : null,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -490,42 +485,40 @@ class _ReceiptFormState extends State<ReceiptForm> {
                       size: 20,
                     ),
                     validator: (value) =>
-                        value == null ? 'សូមជ្រើសរើសបន្ទប់' : null,
+                        value == null ? l10n.pleaseSelectRoom : null,
                   ),
                   const SizedBox(height: 16),
 
                   // Water and Electricity Usage
-                  Text('ការប្រើប្រាស់ខែមុន',
-                      style: theme.textTheme.titleMedium),
+                  Text(l10n.previousMonthUsage, style: theme.textTheme.titleMedium),
                   NumberTextFormField(
                     controller: lastWaterUsedController,
-                    label: 'ទឹក (m³)',
+                    label: l10n.waterM3,
                     onSaved: (value) => lastWaterUsed = int.parse(value!),
                   ),
                   NumberTextFormField(
                     controller: lastElectricUsedController,
-                    label: 'ភ្លើង (kWh)',
+                    label: l10n.electricityKWh,
                     onSaved: (value) => lastElectricUsed = int.parse(value!),
                   ),
 
                   const SizedBox(height: 8),
 
-                  Text('ការប្រើប្រាស់ខែនេះ',
-                      style: theme.textTheme.titleMedium),
+                  Text(l10n.currentMonthUsage, style: theme.textTheme.titleMedium),
                   NumberTextFormField(
                     controller: thisWaterUsedController,
-                    label: 'ទឹក (m³)',
+                    label: l10n.waterM3,
                     onSaved: (value) => thisWaterUsed = int.parse(value!),
                   ),
                   NumberTextFormField(
                     controller: thisElectricUsedController,
-                    label: 'ភ្លើង (kWh)',
+                    label: l10n.electricityKWh,
                     onSaved: (value) => thisElectricUsed = int.parse(value!),
                   ),
                   const SizedBox(height: 16),
 
-                  // Services Selection - Now filtered by building
-                  Text('សេវាកម្ម', style: theme.textTheme.titleMedium),
+                  // Services Selection
+                  Text(l10n.services, style: theme.textTheme.titleMedium),
                   const SizedBox(height: 8),
                   serviceProvider.servicesState.when(
                     success: (services) {
@@ -533,7 +526,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           child: Text(
-                            'សូមជ្រើសរើសអគារមុនសិន',
+                            l10n.selectBuildingFirst,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: Colors.grey,
                               fontStyle: FontStyle.italic,
@@ -547,7 +540,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           child: Text(
-                            'មិនមានសេវាកម្មសម្រាប់អគារនេះទេ',
+                            l10n.noServicesForBuilding,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: Colors.grey,
                               fontStyle: FontStyle.italic,
@@ -580,7 +573,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
                       );
                     },
                     loading: () => const CircularProgressIndicator(),
-                    error: (_) => const Text('មានបញ្ហាក្នុងការផ្ទុកសេវាកម្ម'),
+                    error: (_) => Text(l10n.errorLoadingServices),
                   ),
                   const SizedBox(height: 24),
 
@@ -592,7 +585,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: Text(
-                      'រក្សាទុក',
+                      l10n.save,
                       style: theme.textTheme.titleMedium
                           ?.copyWith(color: Colors.white),
                     ),
@@ -604,7 +597,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error) => Center(
             child: Text(
-              'មានបញ្ហាក្នុងការផ្ទុកអគារ: $error',
+              '${l10n.errorLoadingBuildings}: $error',
               style: theme.textTheme.titleMedium,
             ),
           ),

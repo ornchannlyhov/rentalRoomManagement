@@ -47,6 +47,167 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get editReceipt => '编辑收据';
+
+  @override
+  String get createNewReceipt => '创建新收据';
+
+  @override
+  String get noBuildingsPrompt => '没有建筑。请先创建建筑再创建收据。';
+
+  @override
+  String get createNewBuilding => '创建新建筑';
+
+  @override
+  String get selectBuilding => '选择建筑';
+
+  @override
+  String get all => '全部';
+
+  @override
+  String get selectRoom => '选择房间';
+
+  @override
+  String get noOccupiedRooms => '没有已入住的房间';
+
+  @override
+  String get pleaseSelectRoom => '请选择房间';
+
+  @override
+  String get previousMonthUsage => '上月使用量';
+
+  @override
+  String get currentMonthUsage => '本月使用量';
+
+  @override
+  String get waterM3 => '水 (m³)';
+
+  @override
+  String get electricityKWh => '电 (kWh)';
+
+  @override
+  String get services => '服务';
+
+  @override
+  String get selectBuildingFirst => '请先选择建筑';
+
+  @override
+  String get noServicesForBuilding => '此建筑无可用服务';
+
+  @override
+  String get errorLoadingServices => '加载服务出错';
+
+  @override
+  String get receiptDetailTitle => '收据详情';
+
+  @override
+  String get shareReceipt => '分享收据';
+
+  @override
+  String receiptForRoom(Object room) {
+    return '房间 $room 的收据';
+  }
+
+  @override
+  String get tenantInfo => '租户信息';
+
+  @override
+  String get tenantName => '姓名';
+
+  @override
+  String get phoneNumber => '电话号码';
+
+  @override
+  String get utilityUsage => '公用事业使用';
+
+  @override
+  String get waterPreviousMonth => '水（上月）';
+
+  @override
+  String get waterCurrentMonth => '水（本月）';
+
+  @override
+  String get electricPreviousMonth => '电（上月）';
+
+  @override
+  String get electricCurrentMonth => '电（本月）';
+
+  @override
+  String get paymentBreakdown => '付款明细';
+
+  @override
+  String get waterUsage => '用水量';
+
+  @override
+  String get totalWaterPrice => '总水费';
+
+  @override
+  String get electricUsage => '用电量';
+
+  @override
+  String get totalElectricPrice => '总电费';
+
+  @override
+  String get additionalServices => '附加服务';
+
+  @override
+  String get totalServicePrice => '服务总计';
+
+  @override
+  String get roomRent => '房租';
+
+  @override
+  String get grandTotal => '总计';
+
+  @override
+  String get currencyServiceUnavailable => '货币服务不可用 – 显示基础美元汇率';
+
+  @override
+  String get thankYouForUsingOurService => '感谢使用我们的服务！';
+
+  @override
+  String get currencyConversionFailed => '货币转换失败';
+
+  @override
+  String get shareReceiptFailed => '分享收据失败';
+
+  @override
+  String get save => '保存';
+
+  @override
+  String get errorLoadingBuildings => '加载建筑物时出错';
+
+  @override
+  String get unknown => '未知';
+
+  @override
+  String get menu => '菜单';
+
+  @override
+  String get dueDate => '到期日期';
+
+  @override
+  String get paidStatus => '已支付';
+
+  @override
+  String get pendingStatus => '待处理';
+
+  @override
+  String get overdueStatus => '已逾期';
+
+  @override
+  String get delete => '删除';
+
+  @override
+  String get unknownRoom => '未知房间';
+
+  @override
+  String get room => '房间';
+
+  @override
+  String get changedTo => '已更改为';
+
+  @override
   String get noTenants => '没有租户';
 
   @override
@@ -86,12 +247,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get createNewTenant => '创建新租户';
 
   @override
-  String get selectBuilding => '选择建筑物';
-
-  @override
-  String get tenantName => '租户姓名';
-
-  @override
   String get pleaseEnterTenantName => '请输入租户姓名';
 
   @override
@@ -102,9 +257,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get searchCountry => '搜索国家';
-
-  @override
-  String get pleaseSelectRoom => '请选择房间';
 
   @override
   String get gender => '性别';
@@ -178,9 +330,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cancel => '取消';
 
   @override
-  String get delete => '删除';
-
-  @override
   String buildingDeleted(String building) {
     return '建筑物 $building 删除成功';
   }
@@ -207,15 +356,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get searchReceiptHint => '搜索收据...';
-
-  @override
-  String get paidStatus => '已支付';
-
-  @override
-  String get pendingStatus => '待处理';
-
-  @override
-  String get overdueStatus => '逾期';
 
   @override
   String get viewDetail => '查看详情';
@@ -260,13 +400,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get roomNumber => '房间号';
 
   @override
-  String get phoneNumber => '电话号码';
-
-  @override
   String get noRoom => '没有房间';
-
-  @override
-  String get unknownRoom => '未知房间';
 
   @override
   String get accountSettings => '帐户设置';
@@ -513,12 +647,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get orSignOut => '或退出登录';
 
   @override
-  String get all => '全部';
-
-  @override
-  String get errorLoadingBuildings => '加载建筑物时出错';
-
-  @override
   String get pleaseEnterValue => '请输入一个值';
 
   @override
@@ -527,6 +655,22 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String receiptsCount(num count) {
     return '$count 张收据';
+  }
+
+  @override
+  String receiptDeletedRoom(String room) {
+    return '已删除房间 $room 的收据';
+  }
+
+  @override
+  String get receiptNotFound => '未找到收据';
+
+  @override
+  String get addReceipt => '添加收据';
+
+  @override
+  String deleteReceiptConfirmMsg(String room) {
+    return '您确定要删除房间 $room 的收据吗？';
   }
 
   @override
@@ -575,9 +719,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get electricity => '电费';
-
-  @override
-  String get room => '房间';
 
   @override
   String get service => '服务费';

@@ -103,26 +103,6 @@ class TenantProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> restoreTenant(int index, Tenant tenant) async {
-    try {
-      _tenantsState = AsyncValue.loading(_tenantsState.data);
-      notifyListeners();
-
-      await _tenantRepository.restoreTenant(index, tenant);
-
-      if (_repositoryManager != null) {
-        await _repositoryManager.hydrateAllRelationships();
-        await _repositoryManager.saveAll();
-      }
-
-      final tenants = _tenantRepository.getAllTenants();
-      _tenantsState = AsyncValue.success(tenants);
-    } catch (e) {
-      _tenantsState = AsyncValue.error(e, _tenantsState.data);
-    }
-    notifyListeners();
-  }
-
   Future<void> removeRoom(String tenantId) async {
     try {
       _tenantsState = AsyncValue.loading(_tenantsState.data);

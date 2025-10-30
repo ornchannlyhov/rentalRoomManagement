@@ -276,9 +276,6 @@ class _BuildingScreenState extends State<BuildingScreen>
           GlobalSnackBar.show(
             context: context,
             message: 'អគារ "${building.name}" ត្រូវបានលុបជោគជ័យ',
-            onRestore: () async {
-              await buildingProvider.restoreBuilding(index, building);
-            },
           );
         }
       } catch (error) {
@@ -312,10 +309,6 @@ class _BuildingScreenState extends State<BuildingScreen>
     GlobalSnackBar.show(
       context: context,
       message: 'អគារ "${building.name}" ត្រូវបានលុប',
-      onRestore: () async {
-        buildingProvider.restoreBuilding(index, building);
-        await _loadData();
-      },
     );
   }
 

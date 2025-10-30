@@ -106,26 +106,6 @@ class RoomProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> restoreRoom(int index, Room room) async {
-    try {
-      _roomsState = AsyncValue.loading(_roomsState.data);
-      notifyListeners();
-
-      await _roomRepository.restoreRoom(index, room);
-
-      if (_repositoryManager != null) {
-        await _repositoryManager.hydrateAllRelationships();
-        await _repositoryManager.saveAll();
-      }
-
-      final rooms = _roomRepository.getAllRooms();
-      _roomsState = AsyncValue.success(rooms);
-    } catch (e) {
-      _roomsState = AsyncValue.error(e, _roomsState.data);
-    }
-    notifyListeners();
-  }
-
   /// Add tenant to room (cross-repository operation)
   Future<void> addTenantToRoom(String roomId, Tenant tenant) async {
     try {

@@ -103,26 +103,6 @@ class ServiceProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> restoreService(int index, Service service) async {
-    try {
-      _servicesState = AsyncValue.loading(_servicesState.data);
-      notifyListeners();
-
-      await _serviceRepository.restoreService(index, service);
-
-      if (_repositoryManager != null) {
-        await _repositoryManager.hydrateAllRelationships();
-        await _repositoryManager.saveAll();
-      }
-
-      final services = _serviceRepository.getAllServices();
-      _servicesState = AsyncValue.success(services);
-    } catch (e) {
-      _servicesState = AsyncValue.error(e, _servicesState.data);
-    }
-    notifyListeners();
-  }
-
   List<Service> getServicesByBuilding(String buildingId) {
     return _serviceRepository.getServicesByBuilding(buildingId);
   }

@@ -12,7 +12,7 @@ class SplashScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'assets/joul-logo.png',
+              'assets/logo/joul_splash_logo.png',
             ),
             const SizedBox(height: 10),
           ],

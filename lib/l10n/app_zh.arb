@@ -129,6 +129,59 @@
   "khmer": "高棉语",
   "english": "英语",
   "chinese": "中文",
+  "editReceipt": "编辑收据",
+"createNewReceipt": "创建新收据",
+"noBuildingsPrompt": "没有建筑。请先创建建筑再创建收据。",
+"createNewBuilding": "创建新建筑",
+"selectBuilding": "选择建筑",
+"all": "全部",
+"selectRoom": "选择房间",
+"noOccupiedRooms": "没有已入住的房间",
+"pleaseSelectRoom": "请选择房间",
+"previousMonthUsage": "上月使用量",
+"currentMonthUsage": "本月使用量",
+"waterM3": "水 (m³)",
+"electricityKWh": "电 (kWh)",
+"services": "服务",
+"unknown": "未知",
+"selectBuildingFirst": "请先选择建筑",
+"noServicesForBuilding": "此建筑无可用服务",
+"errorLoadingServices": "加载服务出错",
+"save": "保存",
+"receiptDetailTitle": "收据详情",
+"shareReceipt": "分享收据",
+"receiptForRoom": "房间 {room} 的收据",
+"tenantInfo": "租户信息",
+"tenantName": "姓名",
+"phoneNumber": "电话号码",
+"utilityUsage": "公用事业使用",
+"waterPreviousMonth": "水（上月）",
+"waterCurrentMonth": "水（本月）",
+"electricPreviousMonth": "电（上月）",
+"electricCurrentMonth": "电（本月）",
+"paymentBreakdown": "付款明细",
+"waterUsage": "用水量",
+"totalWaterPrice": "总水费",
+"electricUsage": "用电量",
+"totalElectricPrice": "总电费",
+"additionalServices": "附加服务",
+"totalServicePrice": "服务总计",
+"roomRent": "房租",
+"grandTotal": "总计",
+"currencyServiceUnavailable": "货币服务不可用 – 显示基础美元汇率",
+"thankYouForUsingOurService": "感谢使用我们的服务！",
+"currencyConversionFailed": "货币转换失败",
+"shareReceiptFailed": "分享收据失败",
+"errorLoadingBuildings": "加载建筑出错",
+  "paidStatus": "已支付",
+"pendingStatus": "待处理",
+"overdueStatus": "已逾期",
+"dueDate": "到期日期",
+"delete": "删除",
+"menu": "菜单",
+"unknownRoom": "未知房间",
+"room": "房间",
+"changedTo": "已更改为",
   "helpAndSupport": "帮助与支持",
   "helpAndSupportSubtitle": "常见问题与联系我们",
   "faqContact": "常见问题与联系我们",
@@ -219,6 +272,32 @@
       }
     }
   },
+  "addReceipt": "添加收据",
+"@addReceipt": {
+  "description": "Tooltip for the add-receipt button"
+},
+"deleteReceiptConfirmMsg": "您确定要删除房间 {room} 的收据吗？",
+"@deleteReceiptConfirmMsg": {
+  "description": "Confirmation dialog when deleting a receipt",
+  "placeholders": {
+    "room": { "type": "String" }
+  }
+},
+"receiptDeletedRoom": "已删除房间 {room} 的收据",
+"@receiptDeletedRoom": {
+  "description": "Success message after a receipt is deleted",
+  "placeholders": {
+    "room": { "type": "String" }
+  }
+},
+"receiptNotFound": "未找到收据",
+"@receiptNotFound": {
+  "description": "Error message when a receipt cannot be found in the provider"
+},
+"unknownRoom": "未知房间",
+"@unknownRoom": {
+  "description": "Displayed when the room number is not available"
+},
   "roomChangeFailed": "更改房间失败",
   "retryLoadingProfile": "重试加载资料",
   "failedToLoadProfile": "加载资料失败",

@@ -47,6 +47,167 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get editReceipt => 'Edit Receipt';
+
+  @override
+  String get createNewReceipt => 'Create New Receipt';
+
+  @override
+  String get noBuildingsPrompt => 'No buildings. Please create a building before creating a receipt.';
+
+  @override
+  String get createNewBuilding => 'Create New Building';
+
+  @override
+  String get selectBuilding => 'Select Building';
+
+  @override
+  String get all => 'All';
+
+  @override
+  String get selectRoom => 'Select Room';
+
+  @override
+  String get noOccupiedRooms => 'No occupied rooms';
+
+  @override
+  String get pleaseSelectRoom => 'Please select room';
+
+  @override
+  String get previousMonthUsage => 'Previous Month Usage';
+
+  @override
+  String get currentMonthUsage => 'Current Month Usage';
+
+  @override
+  String get waterM3 => 'Water (m³)';
+
+  @override
+  String get electricityKWh => 'Electricity (kWh)';
+
+  @override
+  String get services => 'Services';
+
+  @override
+  String get selectBuildingFirst => 'Please select a building first';
+
+  @override
+  String get noServicesForBuilding => 'No services available for this building';
+
+  @override
+  String get errorLoadingServices => 'Error loading services';
+
+  @override
+  String get receiptDetailTitle => 'Receipt Details';
+
+  @override
+  String get shareReceipt => 'Share Receipt';
+
+  @override
+  String receiptForRoom(Object room) {
+    return 'Receipt for Room $room';
+  }
+
+  @override
+  String get tenantInfo => 'Tenant Information';
+
+  @override
+  String get tenantName => 'Tenant Name';
+
+  @override
+  String get phoneNumber => 'Phone Number';
+
+  @override
+  String get utilityUsage => 'Utility Usage';
+
+  @override
+  String get waterPreviousMonth => 'Water (Previous Month)';
+
+  @override
+  String get waterCurrentMonth => 'Water (Current Month)';
+
+  @override
+  String get electricPreviousMonth => 'Electricity (Previous Month)';
+
+  @override
+  String get electricCurrentMonth => 'Electricity (Current Month)';
+
+  @override
+  String get paymentBreakdown => 'Payment Breakdown';
+
+  @override
+  String get waterUsage => 'Water Usage';
+
+  @override
+  String get totalWaterPrice => 'Total Water Price';
+
+  @override
+  String get electricUsage => 'Electricity Usage';
+
+  @override
+  String get totalElectricPrice => 'Total Electricity Price';
+
+  @override
+  String get additionalServices => 'Additional Services';
+
+  @override
+  String get totalServicePrice => 'Total Service Price';
+
+  @override
+  String get roomRent => 'Room Rent';
+
+  @override
+  String get grandTotal => 'Grand Total';
+
+  @override
+  String get currencyServiceUnavailable => 'Currency service unavailable – showing base USD rate';
+
+  @override
+  String get thankYouForUsingOurService => 'Thank you for using our service!';
+
+  @override
+  String get currencyConversionFailed => 'Failed to convert currency';
+
+  @override
+  String get shareReceiptFailed => 'Failed to share receipt';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get errorLoadingBuildings => 'Error loading buildings';
+
+  @override
+  String get unknown => 'Unknown';
+
+  @override
+  String get menu => 'Menu';
+
+  @override
+  String get dueDate => 'Due Date';
+
+  @override
+  String get paidStatus => 'Paid';
+
+  @override
+  String get pendingStatus => 'Pending';
+
+  @override
+  String get overdueStatus => 'Overdue';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get unknownRoom => 'Unknown Room';
+
+  @override
+  String get room => 'Room';
+
+  @override
+  String get changedTo => 'changed to';
+
+  @override
   String get noTenants => 'No tenants';
 
   @override
@@ -86,12 +247,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createNewTenant => 'Create New Tenant';
 
   @override
-  String get selectBuilding => 'Select Building';
-
-  @override
-  String get tenantName => 'Tenant Name';
-
-  @override
   String get pleaseEnterTenantName => 'Please enter tenant name';
 
   @override
@@ -102,9 +257,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchCountry => 'Search country';
-
-  @override
-  String get pleaseSelectRoom => 'Please select room';
 
   @override
   String get gender => 'Gender';
@@ -178,9 +330,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancel => 'Cancel';
 
   @override
-  String get delete => 'Delete';
-
-  @override
   String buildingDeleted(String building) {
     return 'Building $building deleted successfully';
   }
@@ -207,15 +356,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchReceiptHint => 'Search receipts...';
-
-  @override
-  String get paidStatus => 'Paid';
-
-  @override
-  String get pendingStatus => 'Pending';
-
-  @override
-  String get overdueStatus => 'Overdue';
 
   @override
   String get viewDetail => 'View Details';
@@ -260,13 +400,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get roomNumber => 'Room Number';
 
   @override
-  String get phoneNumber => 'Phone Number';
-
-  @override
   String get noRoom => 'No Room';
-
-  @override
-  String get unknownRoom => 'Unknown Room';
 
   @override
   String get accountSettings => 'Account Settings';
@@ -513,12 +647,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get orSignOut => 'Or Sign Out';
 
   @override
-  String get all => 'All';
-
-  @override
-  String get errorLoadingBuildings => 'Error loading buildings';
-
-  @override
   String get pleaseEnterValue => 'Please enter a value';
 
   @override
@@ -533,6 +661,22 @@ class AppLocalizationsEn extends AppLocalizations {
       one: '$count receipt',
     );
     return '$_temp0';
+  }
+
+  @override
+  String receiptDeletedRoom(String room) {
+    return 'Receipt for room $room deleted';
+  }
+
+  @override
+  String get receiptNotFound => 'Receipt not found';
+
+  @override
+  String get addReceipt => 'Add Receipt';
+
+  @override
+  String deleteReceiptConfirmMsg(String room) {
+    return 'Are you sure you want to delete the receipt for room $room?';
   }
 
   @override
@@ -581,9 +725,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get electricity => 'Electricity';
-
-  @override
-  String get room => 'Room';
 
   @override
   String get service => 'Service';

@@ -124,27 +124,6 @@ class ReceiptProvider with ChangeNotifier {
     }
   }
 
-  Future<void> restoreReceipt(int index, Receipt receipt) async {
-    _receiptsState = AsyncValue.loading(_receiptsState.bestData);
-    notifyListeners();
-
-    try {
-      await _receiptRepository.restoreReceipt(index, receipt);
-
-      // Hydrate relationships
-      if (_repositoryManager != null) {
-        await _repositoryManager.hydrateAllRelationships();
-        await _repositoryManager.saveAll();
-      }
-
-      await load();
-    } catch (e) {
-      _receiptsState = AsyncValue.error(e, _receiptsState.bestData);
-      notifyListeners();
-      rethrow;
-    }
-  }
-
   Future<void> deleteLastYearReceipts() async {
     _receiptsState = AsyncValue.loading(_receiptsState.bestData);
     notifyListeners();

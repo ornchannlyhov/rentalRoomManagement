@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/enum/payment_status.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 class FilterByPaymentButton extends StatefulWidget {
   final Function(PaymentStatus) onStatusSelected;
@@ -31,17 +32,7 @@ class _FilterButtonState extends State<FilterByPaymentButton> {
     widget.onStatusSelected(status);
   }
 
-  String _khmerLabel(PaymentStatus status) {
-    switch (status) {
-      case PaymentStatus.pending:
-        return 'កំពុងរងចាំ';
-      case PaymentStatus.paid:
-        return 'បានបង់';
-      case PaymentStatus.overdue:
-        return 'ហួសកំណត់';
-    }
-  }
-
+  // Removed _khmerLabel — now uses AppLocalizations
   Color _statusColor(PaymentStatus status, ThemeData theme) {
     switch (status) {
       case PaymentStatus.paid:
@@ -57,10 +48,19 @@ class _FilterButtonState extends State<FilterByPaymentButton> {
     BuildContext context,
     PaymentStatus status,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final bool isSelected = _selectedStatus == status;
     final statusColor = _statusColor(status, theme);
+
+    String statusLabel() {
+      return switch (status) {
+        PaymentStatus.pending => l10n.pendingStatus,
+        PaymentStatus.paid => l10n.paidStatus,
+        PaymentStatus.overdue => l10n.overdueStatus,
+      };
+    }
 
     return Expanded(
       child: Padding(
@@ -95,7 +95,7 @@ class _FilterButtonState extends State<FilterByPaymentButton> {
             ),
             child: Center(
               child: Text(
-                _khmerLabel(status),
+                statusLabel(),
                 style: theme.textTheme.labelMedium?.copyWith(
                   color:
                       isSelected ? Colors.white : colorScheme.onSurfaceVariant,

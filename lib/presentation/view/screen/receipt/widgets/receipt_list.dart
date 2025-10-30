@@ -1,14 +1,18 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/data/models/enum/payment_status.dart';
 import 'package:joul_v2/data/models/receipt.dart';
 import 'package:joul_v2/presentation/providers/building_provider.dart';
 import 'package:joul_v2/presentation/providers/receipt_provider.dart';
+import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
 import 'package:joul_v2/presentation/view/screen/analysis/advanced_analysis.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/filler_by_payment_button.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_card.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_summary_card.dart';
 import 'package:joul_v2/presentation/view/screen/tenant/widgets/tenant_state.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 class ReceiptList extends StatelessWidget {
   const ReceiptList({
@@ -26,7 +30,8 @@ class ReceiptList extends StatelessWidget {
     required this.onViewDetail,
     required this.onShowMenuOptions,
     required this.onRefresh,
-    required this.onShowUndoSnackbar,
+    required this.onConfirmDelete,
+    required this.onHandleDelete,
     required this.getStatusColor,
     required this.getKhmerMonth,
   });
@@ -45,24 +50,26 @@ class ReceiptList extends StatelessWidget {
   final void Function(BuildContext, int index, Receipt, List<Receipt>)
       onShowMenuOptions;
   final Future<void> Function() onRefresh;
-  final void Function(BuildContext, String, VoidCallback) onShowUndoSnackbar;
+  final Future<bool> Function(BuildContext, Receipt) onConfirmDelete;
+  final Future<void> Function(Receipt, int) onHandleDelete;
   final Color Function(PaymentStatus) getStatusColor;
   final String Function(int) getKhmerMonth;
 
-  String _translatePaymentStatus(PaymentStatus status) {
-    switch (status) {
-      case PaymentStatus.paid:
-        return 'បានបង់ប្រាក់';
-      case PaymentStatus.pending:
-        return 'មិនទាន់បង់ប្រាក់';
-      case PaymentStatus.overdue:
-        return 'ហួសកំណត់';
-    }
+  // --------------------------------------------------------------
+  // Localized status text (uses ARB keys)
+  // --------------------------------------------------------------
+  String _translatePaymentStatus(PaymentStatus status, AppLocalizations l10n) {
+    return switch (status) {
+      PaymentStatus.paid => l10n.paidStatus,
+      PaymentStatus.pending => l10n.pendingStatus,
+      PaymentStatus.overdue => l10n.overdueStatus,
+    };
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return receiptProvider.receiptsState.when(
       loading: () => LoadingState(theme: theme),
@@ -84,7 +91,7 @@ class ReceiptList extends StatelessWidget {
             return Column(
               children: [
                 ReceiptSummaryCard(
-                  receipts: allReceipts, // Pass all receipts for analysis
+                  receipts: allReceipts,
                   buildings: buildings,
                   selectedBuildingId: selectedBuildingId,
                   onBuildingChanged: onBuildingChanged,
@@ -133,7 +140,8 @@ class ReceiptList extends StatelessWidget {
                           opacity: fadeAnimation,
                           child: RefreshIndicator(
                             onRefresh: onRefresh,
-                            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                            backgroundColor:
+                                theme.colorScheme.surfaceContainerHighest,
                             color: theme.colorScheme.primary,
                             child: ListView.separated(
                               padding: const EdgeInsets.all(0),
@@ -143,7 +151,6 @@ class ReceiptList extends StatelessWidget {
                               itemBuilder: (ctx, index) {
                                 final receipt = filteredReceiptsByStatus[index];
 
-                                // Calculate staggered animation intervals with proper clamping
                                 final double begin =
                                     (index * 0.05).clamp(0.0, 0.4);
                                 final double end =
@@ -204,7 +211,7 @@ class ReceiptList extends StatelessWidget {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            'លុប',
+                                            l10n.delete, // localized
                                             style: TextStyle(
                                               color: theme.colorScheme.onError,
                                               fontSize: 12,
@@ -215,13 +222,19 @@ class ReceiptList extends StatelessWidget {
                                       ),
                                     ),
                                     direction: DismissDirection.horizontal,
-                                    onDismissed: (direction) {
-                                      final originStatus =
-                                          receipt.paymentStatus;
+                                    confirmDismiss: (direction) async {
+                                      if (direction ==
+                                          DismissDirection.endToStart) {
+                                        return await onConfirmDelete(
+                                            context, receipt);
+                                      }
+                                      return true;
+                                    },
+                                    onDismissed: (direction) async {
                                       final provider =
                                           context.read<ReceiptProvider>();
-                                      final roomNumber =
-                                          receipt.room?.roomNumber ?? 'ទរទេ';
+                                      final roomNumber = receipt.room?.roomNumber ??
+                                          l10n.unknownRoom;
 
                                       if (direction ==
                                           DismissDirection.startToEnd) {
@@ -231,22 +244,19 @@ class ReceiptList extends StatelessWidget {
                                                 ? PaymentStatus.pending
                                                 : PaymentStatus.paid;
 
-                                        provider.updateReceipt(receipt.copyWith(
-                                            paymentStatus: newStatus));
+                                        await provider.updateReceipt(
+                                            receipt.copyWith(
+                                                paymentStatus: newStatus));
 
-                                        onShowUndoSnackbar(
-                                          context,
-                                          "បន្ទប់ $roomNumber បានផ្លាស់ប្តូរទៅជា ${_translatePaymentStatus(newStatus)}",
-                                          () {
-                                            provider.updateReceipt(
-                                                receipt.copyWith(
-                                                    paymentStatus:
-                                                        originStatus));
-                                          },
+                                        GlobalSnackBar.show(
+                                          context: context,
+                                          message:
+                                              "${l10n.room} $roomNumber ${l10n.changedTo} ${_translatePaymentStatus(newStatus, l10n)}",
                                         );
                                       } else if (direction ==
                                           DismissDirection.endToStart) {
-                                        provider.deleteReceipt(receipt.id);
+                                        await provider
+                                            .deleteReceipt(receipt.id);
                                       }
                                     },
                                     child: ReceiptCard(
