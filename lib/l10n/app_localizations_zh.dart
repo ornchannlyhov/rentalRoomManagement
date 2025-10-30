@@ -112,7 +112,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tenantInfo => '租户信息';
 
   @override
-  String get tenantName => '姓名';
+  String tenantName(Object name) {
+    return '租户: $name';
+  }
 
   @override
   String get phoneNumber => '电话号码';
@@ -158,6 +160,30 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get grandTotal => '总计';
+
+  @override
+  String get available => '可用';
+
+  @override
+  String get rented => '已租';
+
+  @override
+  String get editService => '编辑服务';
+
+  @override
+  String get createNewService => '创建新服务';
+
+  @override
+  String get serviceName => '服务名称';
+
+  @override
+  String get serviceNameRequired => '请输入服务名称';
+
+  @override
+  String get servicePriceLabel => '服务价格';
+
+  @override
+  String get addService => '添加服务';
 
   @override
   String get currencyServiceUnavailable => '货币服务不可用 – 显示基础美元汇率';
@@ -214,7 +240,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tapToAddNewTenant => '点击 + 添加新租户';
 
   @override
-  String get errorLoadingData => '加载数据时出错';
+  String get errorLoadingData => '加载数据出错';
 
   @override
   String get tryAgain => '重试';
@@ -322,16 +348,94 @@ class AppLocalizationsZh extends AppLocalizations {
   String get confirmDelete => '确认删除';
 
   @override
-  String deleteConfirmMsg(String building) {
-    return '您确定要删除建筑物 $building 吗？';
+  String get buildings => '建筑';
+
+  @override
+  String get searchBuildings => '搜索建筑...';
+
+  @override
+  String get noBuildingsFound => '未找到建筑';
+
+  @override
+  String get noBuildingsAvailable => '无可用建筑';
+
+  @override
+  String get tryDifferentKeywords => '尝试使用其他关键词搜索';
+
+  @override
+  String get tapPlusToAddBuilding => '点击 + 添加新建筑';
+
+  @override
+  String get loading => '加载中...';
+
+  @override
+  String deleteBuildingConfirmMsg(Object name) {
+    return '您确定要删除建筑 \"$name\" 吗？';
   }
 
   @override
   String get cancel => '取消';
 
   @override
-  String buildingDeleted(String building) {
-    return '建筑物 $building 删除成功';
+  String buildingDeletedSuccess(Object name) {
+    return '建筑 \"$name\" 已成功删除';
+  }
+
+  @override
+  String buildingDeleted(String building, Object name) {
+    return '建筑 \"$name\" 已删除';
+  }
+
+  @override
+  String buildingDeleteFailed(Object error) {
+    return '删除建筑失败: $error';
+  }
+
+  @override
+  String get rentPriceLabel => '每月租金';
+
+  @override
+  String get electricPricePerKwh => '电费 (1 kWh)';
+
+  @override
+  String get waterPricePerCubicMeter => '水费 (1 m³)';
+
+  @override
+  String get rentPricePerMonthLabel => '每月租金';
+
+  @override
+  String rentPricePerMonth(Object price) {
+    return '每月租金';
+  }
+
+  @override
+  String passKey(Object key) {
+    return '钥匙: $key';
+  }
+
+  @override
+  String get perMonth => '/月';
+
+  @override
+  String get electricity => '电费';
+
+  @override
+  String get water => '水费';
+
+  @override
+  String get viewDetails => '查看详情';
+
+  @override
+  String get edit => '编辑';
+
+  @override
+  String ofTotal(Object total) {
+    return '/ $total';
+  }
+
+  @override
+  String deleteConfirmMsg(String building) {
+    return '您确定要删除建筑物 $building 吗？';
   }
 
   @override
@@ -364,9 +468,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get share => '分享';
 
   @override
-  String get edit => '编辑';
-
-  @override
   String get deleteOption => '删除';
 
   @override
@@ -379,9 +480,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noReceipts => '没有收据';
 
   @override
-  String get loading => '加载中...';
-
-  @override
   String get settingsTitle => '设置';
 
   @override
@@ -391,13 +489,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get changeRoom => '更换房间';
 
   @override
-  String get viewDetails => '查看详情';
-
-  @override
   String get building => '建筑物';
 
   @override
-  String get roomNumber => '房间号';
+  String roomNumberLabel(Object number) {
+    return '房间 $number';
+  }
+
+  @override
+  String get tenantNameLabel => '姓名';
+
+  @override
+  String roomStatus(Object status) {
+    return '状态: $status';
+  }
+
+  @override
+  String rentPrice(Object price) {
+    return '租金: $price\$';
+  }
 
   @override
   String get noRoom => '没有房间';
@@ -534,6 +644,126 @@ class AppLocalizationsZh extends AppLocalizations {
   String roomChanged(String tenant, String room) {
     return '$tenant 的房间已更改为 $room';
   }
+
+  @override
+  String priceValue(Object price) {
+    return '价格: $price\$';
+  }
+
+  @override
+  String get rooms => '房间';
+
+  @override
+  String servicePrice(Object price) {
+    return '服务价格';
+  }
+
+  @override
+  String get addRoom => '添加房间';
+
+  @override
+  String get noRooms => '无房间';
+
+  @override
+  String get noServices => '无服务';
+
+  @override
+  String get pullToRefresh => '下拉刷新';
+
+  @override
+  String roomAddedSuccess(Object number) {
+    return '房间 \"$number\" 添加成功';
+  }
+
+  @override
+  String roomUpdatedSuccess(Object number) {
+    return '房间 \"$number\" 更新成功';
+  }
+
+  @override
+  String roomDeletedSuccess(Object number) {
+    return '房间 \"$number\" 删除成功';
+  }
+
+  @override
+  String serviceAddedSuccess(Object name) {
+    return '服务 \"$name\" 添加成功';
+  }
+
+  @override
+  String serviceUpdatedSuccess(Object name) {
+    return '服务 \"$name\" 更新成功';
+  }
+
+  @override
+  String serviceDeletedSuccess(Object name) {
+    return '服务 \"$name\" 删除成功';
+  }
+
+  @override
+  String buildingUpdatedSuccess(Object name) {
+    return '建筑 \"$name\" 更新成功';
+  }
+
+  @override
+  String get deleteBuilding => '删除建筑';
+
+  @override
+  String deleteBuildingConfirm(Object name) {
+    return '是否要删除建筑 \"$name\"?';
+  }
+
+  @override
+  String get deleteRoom => '删除房间';
+
+  @override
+  String deleteRoomConfirm(Object number) {
+    return '是否要删除房间 \"$number\"?';
+  }
+
+  @override
+  String get deleteService => '删除服务';
+
+  @override
+  String deleteServiceConfirm(Object name) {
+    return '是否要删除服务 \"$name\"?';
+  }
+
+  @override
+  String get errorOccurred => '发生错误';
+
+  @override
+  String get addNewBuilding => '添加新建筑';
+
+  @override
+  String get editBuilding => '编辑建筑';
+
+  @override
+  String get buildingName => '建筑名称';
+
+  @override
+  String get buildingNameRequired => '请输入建筑名称。';
+
+  @override
+  String get roomCount => '房间数量';
+
+  @override
+  String get currentRoomCount => '当前房间数量';
+
+  @override
+  String get roomCountRequired => '请输入房间数量。';
+
+  @override
+  String get roomCountInvalid => '请输入有效的房间数量。';
+
+  @override
+  String get roomCountEditNote => '房间数量无法更改。请单独管理每个房间。';
+
+  @override
+  String get saveChanges => '保存更改';
+
+  @override
+  String get saveBuilding => '保存建筑';
 
   @override
   String get roomChangeFailed => '更改房间失败';
@@ -713,12 +943,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get nextMonth => '下个月';
-
-  @override
-  String get water => '水费';
-
-  @override
-  String get electricity => '电费';
 
   @override
   String get service => '服务费';

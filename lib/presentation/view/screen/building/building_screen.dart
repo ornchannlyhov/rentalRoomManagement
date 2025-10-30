@@ -9,6 +9,7 @@ import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
 import 'package:joul_v2/presentation/view/screen/building/widgets/building_card.dart';
 import 'package:joul_v2/presentation/view/screen/building/widgets/building_detail.dart';
 import 'package:joul_v2/presentation/view/screen/building/widgets/building_form.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 /// Search bar widget for filtering buildings
 class BuildingSearchBar extends StatelessWidget {
@@ -30,6 +31,8 @@ class BuildingSearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       height: isSearching ? 56 : 0,
@@ -50,7 +53,7 @@ class BuildingSearchBar extends StatelessWidget {
               child: TextField(
                 controller: searchController,
                 decoration: InputDecoration(
-                  hintText: 'ស្វែងរកអគារ...',
+                  hintText: l10n.searchBuildings,
                   hintStyle: TextStyle(
                     color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
                   ),
@@ -140,10 +143,9 @@ class _BuildingScreenState extends State<BuildingScreen>
       serviceProvider.load(),
     ]);
 
-    _animationController.forward();
+    if (mounted) _animationController.forward();
   }
 
-  /// Filters buildings based on search query
   List<Building> _filterBuildings(List<Building> buildings) {
     if (_searchQuery.isNotEmpty) {
       return buildings.where((building) {
@@ -218,6 +220,7 @@ class _BuildingScreenState extends State<BuildingScreen>
 
   Future<void> _deleteBuilding(
       BuildContext context, int index, Building building) async {
+    final l10n = AppLocalizations.of(context)!;
     final buildingProvider = context.read<BuildingProvider>();
 
     final bool? shouldDelete = await showDialog<bool>(
@@ -230,14 +233,14 @@ class _BuildingScreenState extends State<BuildingScreen>
             borderRadius: BorderRadius.circular(16),
           ),
           title: Text(
-            'បញ្ជាក់ការលុប', // "Confirm Delete"
+            l10n.confirmDelete,
             style: TextStyle(
               color: theme.colorScheme.onSurface,
               fontWeight: FontWeight.w600,
             ),
           ),
           content: Text(
-            'តើអ្នកពិតជាចង់លុបអគារ "${building.name}" មែនទេ?', // "Are you sure you want to delete building?"
+            l10n.deleteBuildingConfirmMsg(building.name),
             style: TextStyle(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -246,7 +249,7 @@ class _BuildingScreenState extends State<BuildingScreen>
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
               child: Text(
-                'បោះបង់', // "Cancel"
+                l10n.cancel,
                 style: TextStyle(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -258,7 +261,7 @@ class _BuildingScreenState extends State<BuildingScreen>
                 backgroundColor: theme.colorScheme.error,
               ),
               child: Text(
-                'លុប', // "Delete"
+                l10n.delete,
                 style: TextStyle(
                   color: theme.colorScheme.onError,
                 ),
@@ -275,14 +278,14 @@ class _BuildingScreenState extends State<BuildingScreen>
         if (mounted) {
           GlobalSnackBar.show(
             context: context,
-            message: 'អគារ "${building.name}" ត្រូវបានលុបជោគជ័យ',
+            message: l10n.buildingDeletedSuccess(building.name),
           );
         }
       } catch (error) {
         if (mounted) {
           GlobalSnackBar.show(
             context: context,
-            message: 'បរាជ័យក្នុងការលុបអគារ: $error',
+            message: l10n.buildingDeleteFailed(error.toString()),
             isError: true,
           );
         }
@@ -291,28 +294,28 @@ class _BuildingScreenState extends State<BuildingScreen>
   }
 
   void _onBuildingTap(BuildContext context, Building building) {
-    // Default tap action - navigate to building details
     _viewBuilding(context, building);
   }
 
   void _onBuildingLongPress(BuildContext context, Building building) {
-    // Long press action - show edit form
     _editBuilding(context, building);
   }
 
   void _dismissibleDeleteBuilding(
       BuildContext context, int index, Building building) {
+    final l10n = AppLocalizations.of(context)!;
     final buildingProvider = context.read<BuildingProvider>();
 
     buildingProvider.deleteBuilding(building.id);
 
     GlobalSnackBar.show(
       context: context,
-      message: 'អគារ "${building.name}" ត្រូវបានលុប',
+      message: l10n.buildingDeleted(building.name, building.id),
     );
   }
 
   Widget _buildEmptyState(ThemeData theme) {
+    final l10n = AppLocalizations.of(context)!;
     return SlideTransition(
       position: _slideAnimation,
       child: FadeTransition(
@@ -336,8 +339,8 @@ class _BuildingScreenState extends State<BuildingScreen>
               const SizedBox(height: 24),
               Text(
                 _searchQuery.isNotEmpty
-                    ? 'រកមិនឃើញអគារ'
-                    : 'មិនមានអគារ', // "No buildings found" or "No buildings available"
+                    ? l10n.noBuildingsFound
+                    : l10n.noBuildingsAvailable,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
@@ -346,8 +349,8 @@ class _BuildingScreenState extends State<BuildingScreen>
               const SizedBox(height: 8),
               Text(
                 _searchQuery.isNotEmpty
-                    ? 'សូមព្យាយាមស្វែងរកជាមួយពាក្យគន្លឹះផ្សេង'
-                    : 'សូមចុចប៊ូតុង + ដើម្បីបន្ថែមអគារថ្មី',
+                    ? l10n.tryDifferentKeywords
+                    : l10n.tapPlusToAddBuilding,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
                 ),
@@ -361,6 +364,7 @@ class _BuildingScreenState extends State<BuildingScreen>
   }
 
   Widget _buildLoadingState(ThemeData theme) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -372,7 +376,7 @@ class _BuildingScreenState extends State<BuildingScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            'កំពុងដំណើការ...', // "Loading..."
+            l10n.loading,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -383,6 +387,7 @@ class _BuildingScreenState extends State<BuildingScreen>
   }
 
   Widget _buildErrorState(ThemeData theme, Object error) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -401,7 +406,7 @@ class _BuildingScreenState extends State<BuildingScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            'មានបញ្ហាក្នុងការផ្ទុកទិន្នន័យ', // "Error loading data"
+            l10n.errorLoadingData,
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.onErrorContainer,
               fontWeight: FontWeight.w600,
@@ -419,7 +424,7 @@ class _BuildingScreenState extends State<BuildingScreen>
           ElevatedButton.icon(
             onPressed: _loadData,
             icon: const Icon(Icons.refresh),
-            label: const Text('ព្យាយាមម្តងទៀត'), // "Try again"
+            label: Text(l10n.tryAgain),
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: theme.colorScheme.onPrimary,
@@ -431,6 +436,7 @@ class _BuildingScreenState extends State<BuildingScreen>
   }
 
   Widget _buildBuildingsList(ThemeData theme, List<Building> buildings) {
+    final l10n = AppLocalizations.of(context)!;
     return FadeTransition(
       opacity: _fadeAnimation,
       child: RefreshIndicator(
@@ -444,7 +450,6 @@ class _BuildingScreenState extends State<BuildingScreen>
           itemBuilder: (ctx, index) {
             final building = buildings[index];
 
-            // Calculate staggered animation intervals with proper clamping
             final double begin = (index * 0.05).clamp(0.0, 0.4);
             final double end = ((index * 0.05) + 0.6).clamp(0.0, 1.0);
 
@@ -481,7 +486,7 @@ class _BuildingScreenState extends State<BuildingScreen>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'លុប', // "Delete"
+                        l10n.delete,
                         style: TextStyle(
                           color: theme.colorScheme.onError,
                           fontSize: 12,
@@ -502,14 +507,14 @@ class _BuildingScreenState extends State<BuildingScreen>
                           borderRadius: BorderRadius.circular(16),
                         ),
                         title: Text(
-                          'បញ្ជាក់ការលុប', // "Confirm Delete"
+                          l10n.confirmDelete,
                           style: TextStyle(
                             color: theme.colorScheme.onSurface,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         content: Text(
-                          'តើអ្នកពិតជាចង់លុបអគារ "${building.name}" មែនទេ?', // "Are you sure you want to delete building?"
+                          l10n.deleteBuildingConfirmMsg(building.name),
                           style: TextStyle(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -518,7 +523,7 @@ class _BuildingScreenState extends State<BuildingScreen>
                           TextButton(
                             onPressed: () => Navigator.of(context).pop(false),
                             child: Text(
-                              'បោះបង់', // "Cancel"
+                              l10n.cancel,
                               style: TextStyle(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
@@ -530,7 +535,7 @@ class _BuildingScreenState extends State<BuildingScreen>
                               backgroundColor: theme.colorScheme.error,
                             ),
                             child: Text(
-                              'លុប', // "Delete"
+                              l10n.delete,
                               style: TextStyle(
                                 color: theme.colorScheme.onError,
                               ),
@@ -562,12 +567,13 @@ class _BuildingScreenState extends State<BuildingScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: Text(
-          'អគារ',
+          l10n.buildings,
           style: TextStyle(
             color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w600,
@@ -603,7 +609,6 @@ class _BuildingScreenState extends State<BuildingScreen>
       ),
       body: Column(
         children: [
-          // Search Bar
           BuildingSearchBar(
             isSearching: _isSearching,
             searchController: _searchController,

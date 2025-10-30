@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:joul_v2/core/theme/app_theme.dart';
 import 'package:joul_v2/data/models/room.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 enum RoomMenuOption {
   edit,
@@ -21,12 +22,13 @@ class RoomCard extends StatelessWidget {
     this.onMenuSelected,
   });
 
-  String _getMenuOptionText(RoomMenuOption option) {
+  String _getMenuOptionText(BuildContext context, RoomMenuOption option) {
+    final l10n = AppLocalizations.of(context)!;
     switch (option) {
       case RoomMenuOption.edit:
-        return 'កែប្រែ';
+        return l10n.edit;
       case RoomMenuOption.delete:
-        return 'លុប';
+        return l10n.delete;
     }
   }
 
@@ -51,6 +53,7 @@ class RoomCard extends StatelessWidget {
   void _showOptionsBottomSheet(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     showModalBottomSheet(
       context: context,
@@ -88,8 +91,7 @@ class RoomCard extends StatelessWidget {
 
               // Header
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
                     Container(
@@ -110,7 +112,7 @@ class RoomCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'បន្ទប់ ${room.roomNumber}',
+                            l10n.roomNumberLabel(room.roomNumber),
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: colorScheme.onSurface,
@@ -129,7 +131,7 @@ class RoomCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                'ស្ថានភាព: ${status ? 'ជួលហើយ' : 'ទំនេរ'}',
+                                l10n.roomStatus(status ? l10n.rented : l10n.available),
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: colorScheme.onSurfaceVariant,
                                   fontSize: 14,
@@ -149,16 +151,8 @@ class RoomCard extends StatelessWidget {
                 shrinkWrap: true,
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 children: [
-                  _buildMenuOption(
-                    context,
-                    theme,
-                    RoomMenuOption.edit,
-                  ),
-                  _buildMenuOption(
-                    context,
-                    theme,
-                    RoomMenuOption.delete,
-                  ),
+                  _buildMenuOption(context, theme, RoomMenuOption.edit),
+                  _buildMenuOption(context, theme, RoomMenuOption.delete),
                 ],
               ),
 
@@ -186,7 +180,7 @@ class RoomCard extends StatelessWidget {
         size: 24,
       ),
       title: Text(
-        _getMenuOptionText(option),
+        _getMenuOptionText(context, option),
         style: theme.textTheme.bodyLarge?.copyWith(
           color: color ?? colorScheme.onSurface,
           fontWeight: FontWeight.w500,
@@ -212,6 +206,7 @@ class RoomCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return GestureDetector(
       onTap: onTap,
@@ -237,7 +232,7 @@ class RoomCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'បន្ទប់ ${room.roomNumber}',
+                    l10n.roomNumberLabel(room.roomNumber),
                     style: textTheme.titleMedium?.copyWith(
                       color: colorScheme.onSurface,
                       fontWeight: FontWeight.w700,
@@ -247,15 +242,16 @@ class RoomCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     room.tenant?.name != null
-                        ? 'ម្ចាស់បន្ទប់៖ ${room.tenant!.name}'
-                        : 'ទំនេរ',
+                        ? l10n.tenantName(room.tenant!.name)
+                        : l10n.available,
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurface.withOpacity(0.7),
                       fontSize: 12,
                     ),
                   ),
+                  // FIXED: Convert to int to remove decimal places
                   Text(
-                    'តម្លៃជួល៖ ${room.price}\$',
+                    l10n.rentPrice(room.price.toInt().toString()),
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurface.withOpacity(0.7),
                       fontSize: 12,
@@ -274,9 +270,7 @@ class RoomCard extends StatelessWidget {
                 ),
                 if (onMenuSelected != null)
                   Padding(
-                    padding: const EdgeInsets.only(
-                        top:
-                            10.0), 
+                    padding: const EdgeInsets.only(top: 10.0),
                     child: GestureDetector(
                       onTap: () => _showOptionsBottomSheet(context),
                       child: Container(

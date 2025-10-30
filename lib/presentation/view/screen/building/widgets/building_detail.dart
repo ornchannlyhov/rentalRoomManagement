@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:joul_v2/presentation/view/screen/building/widgets/screen_type.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/data/models/building.dart';
 import 'package:joul_v2/data/models/enum/mode.dart';
@@ -19,6 +20,8 @@ import 'package:joul_v2/presentation/view/screen/building/widgets/room/room_card
 import 'package:joul_v2/presentation/view/screen/building/widgets/room/room_form.dart';
 import 'package:joul_v2/presentation/view/screen/building/widgets/service/service_card.dart';
 import 'package:joul_v2/presentation/view/screen/building/widgets/service/service_form.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
+
 
 class BuildingDetail extends StatefulWidget {
   final Building building;
@@ -53,6 +56,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
   }
 
   Future<void> _addRoom() async {
+    final l10n = AppLocalizations.of(context)!;
     final newRoom = await Navigator.push<Room>(
       context,
       MaterialPageRoute(
@@ -60,11 +64,12 @@ class _BuildingDetailState extends State<BuildingDetail> {
     );
     if (newRoom != null && mounted) {
       await context.read<RoomProvider>().createRoom(newRoom);
-      _showSuccessMessage('បន្ថែមបន្ទប់ "${newRoom.roomNumber}" ដោយជោគជ័យ');
+      _showSuccessMessage(l10n.roomAddedSuccess(newRoom.roomNumber));
     }
   }
 
   Future<void> _editRoom(Room room) async {
+    final l10n = AppLocalizations.of(context)!;
     final updatedRoom = await Navigator.push<Room>(
       context,
       MaterialPageRoute(
@@ -77,11 +82,12 @@ class _BuildingDetailState extends State<BuildingDetail> {
     );
     if (updatedRoom != null && mounted) {
       await context.read<RoomProvider>().updateRoom(updatedRoom);
-      _showSuccessMessage('កែប្រែបន្ទប់ "${updatedRoom.roomNumber}" ដោយជោគជ័យ');
+      _showSuccessMessage(l10n.roomUpdatedSuccess(updatedRoom.roomNumber));
     }
   }
 
   Future<void> _deleteRoom(int index, Room room) async {
+    final l10n = AppLocalizations.of(context)!;
     if (mounted) {
       final tenantProvider = context.read<TenantProvider>();
       final tenants = tenantProvider.getTenantsByBuilding(widget.building.id);
@@ -97,13 +103,14 @@ class _BuildingDetailState extends State<BuildingDetail> {
       if (mounted) {
         GlobalSnackBar.show(
           context: context,
-          message: 'បានលុបបន្ទប់ "${room.roomNumber}" ជោគជ័យ',
+          message: l10n.roomDeletedSuccess(room.roomNumber),
         );
       }
     }
   }
 
   Future<void> _addService() async {
+    final l10n = AppLocalizations.of(context)!;
     final newService = await Navigator.push<Service>(
       context,
       MaterialPageRoute(
@@ -114,11 +121,12 @@ class _BuildingDetailState extends State<BuildingDetail> {
     if (newService != null && mounted) {
       assert(newService.buildingId == widget.building.id);
       await context.read<ServiceProvider>().createService(newService);
-      _showSuccessMessage('បន្ថែមសេវា "${newService.name}" ដោយជោគជ័យ');
+      _showSuccessMessage(l10n.serviceAddedSuccess(newService.name));
     }
   }
 
   Future<void> _editService(Service service) async {
+    final l10n = AppLocalizations.of(context)!;
     final updatedService = await Navigator.push<Service>(
       context,
       MaterialPageRoute(
@@ -131,24 +139,26 @@ class _BuildingDetailState extends State<BuildingDetail> {
     );
     if (updatedService != null && mounted) {
       await context.read<ServiceProvider>().updateService(updatedService);
-      _showSuccessMessage('កែប្រែសេវា "${updatedService.name}" ដោយជោគជ័យ');
+      _showSuccessMessage(l10n.serviceUpdatedSuccess(updatedService.name));
     }
   }
 
   Future<void> _deleteService(int index, Service service) async {
+    final l10n = AppLocalizations.of(context)!;
     if (mounted) {
       await context.read<ServiceProvider>().deleteService(service.id);
 
       if (mounted) {
         GlobalSnackBar.show(
           context: context,
-          message: 'បានលុបសេវា "${service.name}" ជោគជ័យ',
+          message: l10n.serviceDeletedSuccess(service.name),
         );
       }
     }
   }
 
   Future<void> _editBuilding() async {
+    final l10n = AppLocalizations.of(context)!;
     final updatedBuilding = await Navigator.push<Building>(
       context,
       MaterialPageRoute(
@@ -160,14 +170,15 @@ class _BuildingDetailState extends State<BuildingDetail> {
     );
     if (updatedBuilding != null && mounted) {
       await context.read<BuildingProvider>().updateBuilding(updatedBuilding);
-      _showSuccessMessage('កែប្រែអគារ "${updatedBuilding.name}" ដោយជោគជ័យ');
+      _showSuccessMessage(l10n.buildingUpdatedSuccess(updatedBuilding.name));
     }
   }
 
   Future<void> _deleteBuilding() async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await _showConfirmDialog(
-      title: 'លុបអគារ',
-      content: 'តើអ្នកចង់លុបអគារ "${widget.building.name}"?',
+      title: l10n.deleteBuilding,
+      content: l10n.deleteBuildingConfirm(widget.building.name),
     );
 
     if (confirmed && mounted) {
@@ -175,19 +186,16 @@ class _BuildingDetailState extends State<BuildingDetail> {
       final roomProvider = context.read<RoomProvider>();
       final serviceProvider = context.read<ServiceProvider>();
 
-      // Remove associated tenants
       final tenants = tenantProvider.getTenantsByBuilding(widget.building.id);
       for (final tenant in tenants) {
         await tenantProvider.removeRoom(tenant.id);
       }
 
-      // Remove associated rooms
       final rooms = roomProvider.getThisBuildingRooms(widget.building.id);
       for (final room in rooms) {
         await roomProvider.deleteRoom(room.id);
       }
 
-      // Remove associated services
       final services = serviceProvider.services
           .where((s) => s.buildingId == widget.building.id)
           .toList();
@@ -195,15 +203,14 @@ class _BuildingDetailState extends State<BuildingDetail> {
         await serviceProvider.deleteService(service.id);
       }
 
-      // Delete the building
       await context.read<BuildingProvider>().deleteBuilding(widget.building.id);
 
       if (mounted) {
         GlobalSnackBar.show(
           context: context,
-          message: 'បានលុបអគារ "${widget.building.name}" ជោគជ័យ',
+          message: l10n.buildingDeletedSuccess(widget.building.name),
         );
-        Navigator.pop(context); // Return to previous screen
+        Navigator.pop(context);
       }
     }
   }
@@ -212,6 +219,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
     required String title,
     required String content,
   }) async {
+    final l10n = AppLocalizations.of(context)!;
     return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
@@ -236,7 +244,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
                 child: Text(
-                  'បោះបង់',
+                  l10n.cancel,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -248,7 +256,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
                   backgroundColor: Theme.of(context).colorScheme.error,
                 ),
                 child: Text(
-                  'លុប',
+                  l10n.delete,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onError,
                   ),
@@ -268,6 +276,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
   }
 
   Widget _buildRoomContent() {
+    final l10n = AppLocalizations.of(context)!;
     return Selector<RoomProvider, dynamic>(
       selector: (_, provider) => provider.roomsState,
       builder: (context, roomsState, _) {
@@ -282,9 +291,9 @@ class _BuildingDetailState extends State<BuildingDetail> {
             if (buildingRooms.isEmpty) {
               return _buildEmptyStateWithRefresh(
                 icon: Icons.bed,
-                title: 'គ្មានបន្ទប់',
-                subtitle: 'ទាញចុះដើម្បីផ្ទុកទិន្នន័យឡើងវិញ',
-                actionText: 'បន្ថែមបន្ទប់',
+                title: l10n.noRooms,
+                subtitle: l10n.pullToRefresh,
+                actionText: l10n.addRoom,
                 onAction: _addRoom,
               );
             }
@@ -308,6 +317,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
   }
 
   Widget _buildServiceContent() {
+    final l10n = AppLocalizations.of(context)!;
     return Selector<ServiceProvider, dynamic>(
       selector: (_, provider) => provider.servicesState,
       builder: (context, servicesState, _) {
@@ -322,9 +332,9 @@ class _BuildingDetailState extends State<BuildingDetail> {
             if (buildingServices.isEmpty) {
               return _buildEmptyStateWithRefresh(
                 icon: Icons.room_service,
-                title: 'គ្មានសេវា',
-                subtitle: 'ទាញចុះដើម្បីផ្ទុកទិន្នន័យឡើងវិញ',
-                actionText: 'បន្ថែមសេវា',
+                title: l10n.noServices,
+                subtitle: l10n.pullToRefresh,
+                actionText: l10n.addService,
                 onAction: _addService,
               );
             }
@@ -348,13 +358,14 @@ class _BuildingDetailState extends State<BuildingDetail> {
   }
 
   Widget _buildDismissibleRoomCard(int index, Room room) {
+    final l10n = AppLocalizations.of(context)!;
     return Dismissible(
       key: Key(room.id),
       background: _buildDismissBackground(),
       direction: DismissDirection.endToStart,
       confirmDismiss: (_) => _showConfirmDialog(
-        title: 'លុបបន្ទប់',
-        content: 'តើអ្នកចង់លុបបន្ទប់ "${room.roomNumber}"?',
+        title: l10n.deleteRoom,
+        content: l10n.deleteRoomConfirm(room.roomNumber),
       ),
       onDismissed: (_) => _deleteRoom(index, room),
       child: Padding(
@@ -376,13 +387,14 @@ class _BuildingDetailState extends State<BuildingDetail> {
   }
 
   Widget _buildDismissibleServiceCard(int index, Service service) {
+    final l10n = AppLocalizations.of(context)!;
     return Dismissible(
       key: Key(service.id),
       background: _buildDismissBackground(),
       direction: DismissDirection.endToStart,
       confirmDismiss: (_) => _showConfirmDialog(
-        title: 'លុបសេវា',
-        content: 'តើអ្នកចង់លុបសេវា "${service.name}"?',
+        title: l10n.deleteService,
+        content: l10n.deleteServiceConfirm(service.name),
       ),
       onDismissed: (_) => _deleteService(index, service),
       child: Padding(
@@ -403,6 +415,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
   }
 
   Widget _buildDismissBackground() {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       alignment: Alignment.centerRight,
       decoration: BoxDecoration(
@@ -420,7 +433,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
           ),
           const SizedBox(height: 4),
           Text(
-            'លុប',
+            l10n.delete,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onError,
               fontSize: 12,
@@ -433,6 +446,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
   }
 
   Widget _buildErrorState(Object error, VoidCallback onRetry) {
+    final l10n = AppLocalizations.of(context)!;
     return RefreshIndicator(
       onRefresh: _loadData,
       child: SingleChildScrollView(
@@ -450,7 +464,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'មានកំហុស',
+                  l10n.errorOccurred,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
@@ -467,7 +481,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
                 ElevatedButton.icon(
                   onPressed: onRetry,
                   icon: const Icon(Icons.refresh),
-                  label: const Text('ព្យាយាមម្តងទៀត'),
+                  label: Text(l10n.tryAgain),
                 ),
               ],
             ),
@@ -550,6 +564,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
@@ -580,7 +595,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  _currentScreen == ScreenType.room ? 'បន្ទប់' : 'សេវា',
+                  _currentScreen == ScreenType.room ? l10n.rooms : l10n.services,
                   style: theme.textTheme.titleLarge,
                 ),
                 IconButton(
@@ -593,8 +608,8 @@ class _BuildingDetailState extends State<BuildingDetail> {
                     foregroundColor: Colors.white,
                   ),
                   tooltip: _currentScreen == ScreenType.room
-                      ? 'បន្ថែមបន្ទប់'
-                      : 'បន្ថែមសេវា',
+                      ? l10n.addRoom
+                      : l10n.addService,
                 ),
               ],
             ),

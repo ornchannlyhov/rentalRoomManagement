@@ -4,6 +4,7 @@ import 'package:joul_v2/data/models/enum/mode.dart';
 import 'package:joul_v2/data/models/service.dart';
 import 'package:joul_v2/presentation/view/app_widgets/number_field.dart';
 import 'package:uuid/uuid.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 class ServiceForm extends StatefulWidget {
   final Service? service;
@@ -61,15 +62,14 @@ class _ServiceFormState extends State<ServiceForm> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor:
-            theme.colorScheme.surface,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor:
-            theme.colorScheme.surface,
+        backgroundColor: theme.colorScheme.surface,
         title: Text(
-          isEditing ? 'កែប្រែសេវា' : 'បង្កើតសេវាថ្មី',
+          isEditing ? l10n.editService : l10n.createNewService,
           style: theme.appBarTheme.titleTextStyle ??
               theme.textTheme.titleLarge?.copyWith(
                 color: theme.colorScheme.onSurface,
@@ -82,6 +82,7 @@ class _ServiceFormState extends State<ServiceForm> {
           IconButton(
             onPressed: () => Navigator.pop(context),
             icon: Icon(Icons.cancel, color: theme.colorScheme.onSurface),
+            tooltip: l10n.cancel,
           ),
         ],
       ),
@@ -94,16 +95,18 @@ class _ServiceFormState extends State<ServiceForm> {
               TextFormField(
                 initialValue: name,
                 decoration: InputDecoration(
-                  labelText: 'ឈ្មោះសេវា',
+                  labelText: l10n.serviceName,
                   labelStyle: TextStyle(color: theme.colorScheme.onSurface),
                 ),
                 onSaved: (value) => name = value!,
                 validator: (value) =>
-                    value!.isEmpty ? 'សូមបញ្ចូលឈ្មោះសេវា' : null,
+                    value!.isEmpty ? l10n.serviceNameRequired : null,
               ),
+              const SizedBox(height: 12),
+              // FIXED: Use servicePriceLabel instead of servicePrice()
               NumberTextFormField(
                 initialValue: price.toString(),
-                label: 'តម្លៃសេវា',
+                label: l10n.servicePriceLabel,  // ← Changed this line
                 onSaved: (value) => price = double.parse(value!),
               ),
               const SizedBox(height: 12),
@@ -116,7 +119,10 @@ class _ServiceFormState extends State<ServiceForm> {
                       backgroundColor: theme.colorScheme.primary,
                       foregroundColor: theme.colorScheme.onPrimary,
                     ),
-                    child: Text(isEditing ? 'រក្សាទុក' : 'បញ្ចូលសេវា',style: TextStyle(color: Colors.white),),
+                    child: Text(
+                      isEditing ? l10n.save : l10n.addService,
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ),
                 ],
               ),

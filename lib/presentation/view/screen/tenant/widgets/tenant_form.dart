@@ -280,7 +280,7 @@ class _TenantFormState extends State<TenantForm> {
                       TextFormField(
                         initialValue: name,
                         decoration: InputDecoration(
-                          labelText: localizations.tenantName,
+                          labelText: localizations.tenantNameLabel,
                           labelStyle: theme.textTheme.bodyMedium,
                         ),
                         validator: (value) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/service.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 // Enum for menu options
 enum ServiceMenuOption {
@@ -19,12 +20,13 @@ class ServiceCard extends StatelessWidget {
     this.onMenuSelected,
   });
 
-  String _getMenuOptionText(ServiceMenuOption option) {
+  String _getMenuOptionText(BuildContext context, ServiceMenuOption option) {
+    final l10n = AppLocalizations.of(context)!;
     switch (option) {
       case ServiceMenuOption.edit:
-        return 'កែប្រែ';
+        return l10n.edit;
       case ServiceMenuOption.delete:
-        return 'លុប';
+        return l10n.delete;
     }
   }
 
@@ -48,6 +50,7 @@ class ServiceCard extends StatelessWidget {
 
   void _showOptionsBottomSheet(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     showModalBottomSheet(
       context: context,
@@ -107,7 +110,7 @@ class ServiceCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'តម្លៃ: ${service.price}\$',
+                            '${l10n.servicePriceLabel}: ${service.price.toInt()}\$',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -160,7 +163,7 @@ class ServiceCard extends StatelessWidget {
         size: 20,
       ),
       title: Text(
-        _getMenuOptionText(option),
+        _getMenuOptionText(context, option),
         style: theme.textTheme.titleMedium?.copyWith(
           color: color ?? theme.colorScheme.onSurface,
           fontWeight: FontWeight.w500,
@@ -179,6 +182,7 @@ class ServiceCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return GestureDetector(
       onTap: onTap,
@@ -210,8 +214,9 @@ class ServiceCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
+                  // FIXED: Manually construct the label + price format
                   Text(
-                    'តម្លៃសេវា: ${service.price}\$',
+                    '${l10n.servicePriceLabel}: ${service.price.toInt()}\$',
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),

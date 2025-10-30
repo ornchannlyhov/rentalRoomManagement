@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-enum ScreenType { service, room }
+import 'screen_type.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';   // ← NEW
 
 class ScreenSwitchButton extends StatefulWidget {
   final Function(ScreenType) onScreenSelected;
@@ -83,13 +84,12 @@ class _ScreenSwitchButtonState extends State<ScreenSwitchButton> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;   // ← NEW
 
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: colorScheme.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -101,8 +101,8 @@ class _ScreenSwitchButtonState extends State<ScreenSwitchButton> {
       ),
       child: Row(
         children: [
-          _buildSwitchOption(context, ScreenType.room, 'បន្ទប់'),
-          _buildSwitchOption(context, ScreenType.service, 'សេវាកម្ម'),
+          _buildSwitchOption(context, ScreenType.room, l10n.rooms),
+          _buildSwitchOption(context, ScreenType.service, l10n.services),
         ],
       ),
     );

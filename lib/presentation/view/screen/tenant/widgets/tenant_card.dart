@@ -264,7 +264,7 @@ class TenantCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${localizations.roomNumber}: ${tenant.room?.roomNumber ?? localizations.noRoom}',
+                    '${localizations.roomNumberLabel(tenant.room?.roomNumber ?? localizations.notAvailable)}',
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurface.withOpacity(0.7),
                       fontSize: 12,

@@ -4,6 +4,7 @@ import 'package:joul_v2/data/models/enum/mode.dart';
 import 'package:joul_v2/data/models/enum/room_status.dart';
 import 'package:joul_v2/data/models/room.dart';
 import 'package:joul_v2/presentation/view/app_widgets/number_field.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:uuid/uuid.dart';
 
 class RoomForm extends StatefulWidget {
@@ -65,18 +66,17 @@ class _RoomFormState extends State<RoomForm> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor:
-            theme.colorScheme.surface,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor:
-            theme.colorScheme.surface,
+        backgroundColor: theme.colorScheme.surface,
         iconTheme: theme.iconTheme.copyWith(
           color: theme.iconTheme.color ?? theme.colorScheme.onPrimary,
         ),
         title: Text(
-          isEditing ? 'កែប្រែបន្ទប់' : 'បន្ថែមបន្ទប់ថ្មី',
+          isEditing ? l10n.edit : l10n.addRoom,
           style: theme.appBarTheme.titleTextStyle ??
               theme.textTheme.titleLarge?.copyWith(
                 color: theme.colorScheme.onSurface,
@@ -88,6 +88,7 @@ class _RoomFormState extends State<RoomForm> {
           IconButton(
             onPressed: () => Navigator.pop(context),
             icon: Icon(Icons.cancel, color: theme.colorScheme.onSurface),
+            tooltip: l10n.cancel,
           ),
         ],
       ),
@@ -100,7 +101,7 @@ class _RoomFormState extends State<RoomForm> {
               TextFormField(
                 initialValue: roomNumber,
                 decoration: InputDecoration(
-                  labelText: 'លេខបន្ទប់',
+                  labelText: l10n.room,
                   labelStyle: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurface,
                   ),
@@ -116,12 +117,12 @@ class _RoomFormState extends State<RoomForm> {
                 ),
                 onSaved: (value) => roomNumber = value!,
                 validator: (value) =>
-                    value!.isEmpty ? 'សូមបញ្ចូលលេខបន្ទប់' : null,
+                    value!.isEmpty ? l10n.pleaseSelectRoom : null,
               ),
               const SizedBox(height: 16),
               NumberTextFormField(
                 initialValue: price.toString(),
-                label: 'តម្លៃជួលបន្ទប់',
+                label: l10n.rentPriceLabel,
                 onSaved: (value) => price = double.parse(value!),
               ),
               const SizedBox(height: 24),
@@ -130,12 +131,12 @@ class _RoomFormState extends State<RoomForm> {
                 children: [
                   ElevatedButton.icon(
                     onPressed: _save,
-                    icon: Icon(
+                    icon: const Icon(
                       Icons.save,
                       color: Colors.white,
                     ),
                     label: Text(
-                      'រក្សាទុក',
+                      l10n.save,
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: Colors.white,
                       ),

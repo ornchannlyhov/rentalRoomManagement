@@ -112,7 +112,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tenantInfo => 'Tenant Information';
 
   @override
-  String get tenantName => 'Tenant Name';
+  String tenantName(Object name) {
+    return 'Tenant: $name';
+  }
 
   @override
   String get phoneNumber => 'Phone Number';
@@ -160,10 +162,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get grandTotal => 'Grand Total';
 
   @override
+  String get available => 'Available';
+
+  @override
+  String get rented => 'Rented';
+
+  @override
+  String get editService => 'Edit Service';
+
+  @override
+  String get createNewService => 'Create New Service';
+
+  @override
+  String get serviceName => 'Service Name';
+
+  @override
+  String get serviceNameRequired => 'Please enter service name';
+
+  @override
+  String get servicePriceLabel => 'Service Price';
+
+  @override
+  String get addService => 'Add Service';
+
+  @override
   String get currencyServiceUnavailable => 'Currency service unavailable – showing base USD rate';
 
   @override
-  String get thankYouForUsingOurService => 'Thank you for using our service!';
+  String get thankYouForUsingOurService => 'Thank you for using or service!';
 
   @override
   String get currencyConversionFailed => 'Failed to convert currency';
@@ -217,7 +243,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorLoadingData => 'Error loading data';
 
   @override
-  String get tryAgain => 'Try again';
+  String get tryAgain => 'Try Again';
 
   @override
   String get male => 'Male';
@@ -322,16 +348,94 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmDelete => 'Confirm Delete';
 
   @override
-  String deleteConfirmMsg(String building) {
-    return 'Are you sure you want to delete building $building?';
+  String get buildings => 'Buildings';
+
+  @override
+  String get searchBuildings => 'Search buildings...';
+
+  @override
+  String get noBuildingsFound => 'No buildings found';
+
+  @override
+  String get noBuildingsAvailable => 'No buildings available';
+
+  @override
+  String get tryDifferentKeywords => 'Try searching with different keywords';
+
+  @override
+  String get tapPlusToAddBuilding => 'Tap + to add a new building';
+
+  @override
+  String get loading => 'Loading...';
+
+  @override
+  String deleteBuildingConfirmMsg(Object name) {
+    return 'Are you sure you want to delete building \"$name\"?';
   }
 
   @override
   String get cancel => 'Cancel';
 
   @override
-  String buildingDeleted(String building) {
+  String buildingDeletedSuccess(Object name) {
+    return 'Building \"$name\" deleted successfully';
+  }
+
+  @override
+  String buildingDeleted(String building, Object name) {
     return 'Building $building deleted successfully';
+  }
+
+  @override
+  String buildingDeleteFailed(Object error) {
+    return 'Failed to delete building: $error';
+  }
+
+  @override
+  String get rentPriceLabel => 'Monthly Rent Price';
+
+  @override
+  String get electricPricePerKwh => 'Electricity Price (1 kWh)';
+
+  @override
+  String get waterPricePerCubicMeter => 'Water Price (1 m³)';
+
+  @override
+  String get rentPricePerMonthLabel => 'Monthly Rent Price';
+
+  @override
+  String rentPricePerMonth(Object price) {
+    return 'Monthly Rent Price';
+  }
+
+  @override
+  String passKey(Object key) {
+    return 'Key: $key';
+  }
+
+  @override
+  String get perMonth => '/ month';
+
+  @override
+  String get electricity => 'Electricity';
+
+  @override
+  String get water => 'Water';
+
+  @override
+  String get viewDetails => 'View Details';
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String ofTotal(Object total) {
+    return '/ $total';
+  }
+
+  @override
+  String deleteConfirmMsg(String building) {
+    return 'Are you sure you want to delete building $building?';
   }
 
   @override
@@ -364,9 +468,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get share => 'Share';
 
   @override
-  String get edit => 'Edit';
-
-  @override
   String get deleteOption => 'Delete';
 
   @override
@@ -379,9 +480,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noReceipts => 'No receipts';
 
   @override
-  String get loading => 'Loading...';
-
-  @override
   String get settingsTitle => 'Settings';
 
   @override
@@ -391,13 +489,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get changeRoom => 'Change Room';
 
   @override
-  String get viewDetails => 'View Details';
-
-  @override
   String get building => 'Building';
 
   @override
-  String get roomNumber => 'Room Number';
+  String roomNumberLabel(Object number) {
+    return 'Room $number';
+  }
+
+  @override
+  String get tenantNameLabel => 'Name';
+
+  @override
+  String roomStatus(Object status) {
+    return 'Status: $status';
+  }
+
+  @override
+  String rentPrice(Object price) {
+    return 'Rent Price: $price\$';
+  }
 
   @override
   String get noRoom => 'No Room';
@@ -534,6 +644,126 @@ class AppLocalizationsEn extends AppLocalizations {
   String roomChanged(String tenant, String room) {
     return 'Room for $tenant changed to $room';
   }
+
+  @override
+  String priceValue(Object price) {
+    return 'Price: $price\$';
+  }
+
+  @override
+  String get rooms => 'Rooms';
+
+  @override
+  String servicePrice(Object price) {
+    return '$price\$';
+  }
+
+  @override
+  String get addRoom => 'Add Room';
+
+  @override
+  String get noRooms => 'No Rooms';
+
+  @override
+  String get noServices => 'No Services';
+
+  @override
+  String get pullToRefresh => 'Pull down to refresh';
+
+  @override
+  String roomAddedSuccess(Object number) {
+    return 'Room \"$number\" added successfully';
+  }
+
+  @override
+  String roomUpdatedSuccess(Object number) {
+    return 'Room \"$number\" updated successfully';
+  }
+
+  @override
+  String roomDeletedSuccess(Object number) {
+    return 'Room \"$number\" deleted successfully';
+  }
+
+  @override
+  String serviceAddedSuccess(Object name) {
+    return 'Service \"$name\" added successfully';
+  }
+
+  @override
+  String serviceUpdatedSuccess(Object name) {
+    return 'Service \"$name\" updated successfully';
+  }
+
+  @override
+  String serviceDeletedSuccess(Object name) {
+    return 'Service \"$name\" deleted successfully';
+  }
+
+  @override
+  String buildingUpdatedSuccess(Object name) {
+    return 'Building \"$name\" updated successfully';
+  }
+
+  @override
+  String get deleteBuilding => 'Delete Building';
+
+  @override
+  String deleteBuildingConfirm(Object name) {
+    return 'Do you want to delete building \"$name\"?';
+  }
+
+  @override
+  String get deleteRoom => 'Delete Room';
+
+  @override
+  String deleteRoomConfirm(Object number) {
+    return 'Do you want to delete room \"$number\"?';
+  }
+
+  @override
+  String get deleteService => 'Delete Service';
+
+  @override
+  String deleteServiceConfirm(Object name) {
+    return 'Do you want to delete service \"$name\"?';
+  }
+
+  @override
+  String get errorOccurred => 'An error occurred';
+
+  @override
+  String get addNewBuilding => 'Add New Building';
+
+  @override
+  String get editBuilding => 'Edit Building';
+
+  @override
+  String get buildingName => 'Building Name';
+
+  @override
+  String get buildingNameRequired => 'Please enter building name.';
+
+  @override
+  String get roomCount => 'Number of Rooms';
+
+  @override
+  String get currentRoomCount => 'Current Number of Rooms';
+
+  @override
+  String get roomCountRequired => 'Please enter number of rooms.';
+
+  @override
+  String get roomCountInvalid => 'Please enter a valid number of rooms.';
+
+  @override
+  String get roomCountEditNote => 'Room count cannot be changed. Manage rooms individually.';
+
+  @override
+  String get saveChanges => 'Save Changes';
+
+  @override
+  String get saveBuilding => 'Save Building';
 
   @override
   String get roomChangeFailed => 'Error undoing room change';
@@ -719,12 +949,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nextMonth => 'Next Month';
-
-  @override
-  String get water => 'Water';
-
-  @override
-  String get electricity => 'Electricity';
 
   @override
   String get service => 'Service';
