@@ -86,7 +86,7 @@ class AppLocalizationsKm extends AppLocalizations {
   String get electricityKWh => 'ភ្លើង (kWh)';
 
   @override
-  String get services => 'សេវាកម្ម';
+  String get services => 'សេវា';
 
   @override
   String get selectBuildingFirst => 'សូមជ្រើសរើសអគារមុនសិន';
@@ -112,7 +112,9 @@ class AppLocalizationsKm extends AppLocalizations {
   String get tenantInfo => 'ព័ត៌មានអ្នកជួល';
 
   @override
-  String get tenantName => 'ឈ្មោះអ្នកជួល';
+  String tenantName(Object name) {
+    return 'ម្ចាស់បន្ទប់៖ $name';
+  }
 
   @override
   String get phoneNumber => 'លេខទូរស័ព្ទ';
@@ -158,6 +160,30 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get grandTotal => 'សរុបទឹកប្រាក់';
+
+  @override
+  String get available => 'ទំនេរ';
+
+  @override
+  String get rented => 'មានអ្នកជួល';
+
+  @override
+  String get editService => 'កែប្រែសេវា';
+
+  @override
+  String get createNewService => 'បង្កើតសេវាថ្មី';
+
+  @override
+  String get serviceName => 'ឈ្មោះសេវា';
+
+  @override
+  String get serviceNameRequired => 'សូមបញ្ចូលឈ្មោះសេវា';
+
+  @override
+  String get servicePriceLabel => 'តម្លៃសេវា';
+
+  @override
+  String get addService => 'បញ្ចូលសេវា';
 
   @override
   String get currencyServiceUnavailable => 'សេវាប្រាក់ប្តូរមានបញ្ហា - កំពុងបង្ហាញអត្រាមូលដ្ឋាន USD ជំនួសវិញ';
@@ -322,16 +348,94 @@ class AppLocalizationsKm extends AppLocalizations {
   String get confirmDelete => 'បញ្ជាក់ការលុប';
 
   @override
-  String deleteConfirmMsg(String building) {
-    return 'តើអ្នកពិតជាចង់លុបអគារ $building មែនទេ?';
+  String get buildings => 'អគារ';
+
+  @override
+  String get searchBuildings => 'ស្វែងរកអគារ...';
+
+  @override
+  String get noBuildingsFound => 'រកមិនឃើញអគារ';
+
+  @override
+  String get noBuildingsAvailable => 'មិនមានអគារ';
+
+  @override
+  String get tryDifferentKeywords => 'សូមព្យាយាមស្វែងរកជាមួយពាក្យគន្លឹះផ្សេង';
+
+  @override
+  String get tapPlusToAddBuilding => 'សូមចុចប៊ូតុង + ដើម្បីបន្ថែមអគារថ្មី';
+
+  @override
+  String get loading => 'កំពុងដំណើរការ...';
+
+  @override
+  String deleteBuildingConfirmMsg(Object name) {
+    return 'តើអ្នកពិតជាចង់លុបអគារ \"$name\" មែនទេ?';
   }
 
   @override
   String get cancel => 'បោះបង់';
 
   @override
-  String buildingDeleted(String building) {
+  String buildingDeletedSuccess(Object name) {
+    return 'បានលុបអគារ \"$name\" ជោគជ័យ';
+  }
+
+  @override
+  String buildingDeleted(String building, Object name) {
     return 'អគារ $building ត្រូវបានលុបដោយជោគជ័យ';
+  }
+
+  @override
+  String buildingDeleteFailed(Object error) {
+    return 'បរាជ័យក្នុងការលុបអគារ: $error';
+  }
+
+  @override
+  String get rentPriceLabel => 'តម្លៃជួលប្រចាំខែ';
+
+  @override
+  String get electricPricePerKwh => 'តម្លៃអគ្គិសនី (1kWh)';
+
+  @override
+  String get waterPricePerCubicMeter => 'តម្លៃទឹក (1m³)';
+
+  @override
+  String get rentPricePerMonthLabel => 'តម្លៃជួលប្រចាំខែ';
+
+  @override
+  String rentPricePerMonth(Object price) {
+    return 'តម្លៃជួលប្រចាំខែ';
+  }
+
+  @override
+  String passKey(Object key) {
+    return 'Key: $key';
+  }
+
+  @override
+  String get perMonth => '/ខែ';
+
+  @override
+  String get electricity => 'អគ្គិសនី';
+
+  @override
+  String get water => 'ទឹក';
+
+  @override
+  String get viewDetails => 'មើលព័ត៌មានលម្អិត';
+
+  @override
+  String get edit => 'កែប្រែ';
+
+  @override
+  String ofTotal(Object total) {
+    return '/$total';
+  }
+
+  @override
+  String deleteConfirmMsg(String building) {
+    return 'តើអ្នកពិតជាចង់លុបអគារ $building មែនទេ?';
   }
 
   @override
@@ -364,9 +468,6 @@ class AppLocalizationsKm extends AppLocalizations {
   String get share => 'ចែករំលែក';
 
   @override
-  String get edit => 'កែប្រែ';
-
-  @override
   String get deleteOption => 'លុប';
 
   @override
@@ -379,9 +480,6 @@ class AppLocalizationsKm extends AppLocalizations {
   String get noReceipts => 'មិនមានវិក្កយបត្រ';
 
   @override
-  String get loading => 'កំពុងដំណើរការ...';
-
-  @override
   String get settingsTitle => 'ការកំណត់';
 
   @override
@@ -391,13 +489,25 @@ class AppLocalizationsKm extends AppLocalizations {
   String get changeRoom => 'ផ្លាស់ប្តូរបន្ទប់';
 
   @override
-  String get viewDetails => 'មើលព័ត៌មានលម្អិត';
-
-  @override
   String get building => 'អគារ';
 
   @override
-  String get roomNumber => 'លេខបន្ទប់';
+  String roomNumberLabel(Object number) {
+    return 'បន្ទប់ $number';
+  }
+
+  @override
+  String get tenantNameLabel => 'ឈ្មោះ';
+
+  @override
+  String roomStatus(Object status) {
+    return 'ស្ថានភាព: $status';
+  }
+
+  @override
+  String rentPrice(Object price) {
+    return 'តម្លៃជួល៖ $price\$';
+  }
 
   @override
   String get noRoom => 'មិនមានបន្ទប់';
@@ -534,6 +644,126 @@ class AppLocalizationsKm extends AppLocalizations {
   String roomChanged(String tenant, String room) {
     return 'បានផ្លាស់ប្តូរបន្ទប់សម្រាប់ $tenant ទៅបន្ទប់ $room';
   }
+
+  @override
+  String priceValue(Object price) {
+    return 'តម្លៃ: $price\$';
+  }
+
+  @override
+  String get rooms => 'បន្ទប់';
+
+  @override
+  String servicePrice(Object price) {
+    return 'តម្លៃសេវា: $price\$';
+  }
+
+  @override
+  String get addRoom => 'បន្ថែមបន្ទប់';
+
+  @override
+  String get noRooms => 'គ្មានបន្ទប់';
+
+  @override
+  String get noServices => 'គ្មានសេវា';
+
+  @override
+  String get pullToRefresh => 'ទាញចុះដើម្បីផ្ទុកទិន្នន័យឡើងវិញ';
+
+  @override
+  String roomAddedSuccess(Object number) {
+    return 'បន្ថែមបន្ទប់ \"$number\" ដោយជោគជ័យ';
+  }
+
+  @override
+  String roomUpdatedSuccess(Object number) {
+    return 'កែប្រែបន្ទប់ \"$number\" ដោយជោគជ័យ';
+  }
+
+  @override
+  String roomDeletedSuccess(Object number) {
+    return 'បានលុបបន្ទប់ \"$number\" ជោគជ័យ';
+  }
+
+  @override
+  String serviceAddedSuccess(Object name) {
+    return 'បន្ថែមសេវា \"$name\" ដោយជោគជ័យ';
+  }
+
+  @override
+  String serviceUpdatedSuccess(Object name) {
+    return 'កែប្រែសេវា \"$name\" ដោយជោគជ័យ';
+  }
+
+  @override
+  String serviceDeletedSuccess(Object name) {
+    return 'បានលុបសេវា \"$name\" ជោគជ័យ';
+  }
+
+  @override
+  String buildingUpdatedSuccess(Object name) {
+    return 'កែប្រែអគារ \"$name\" ដោយជោគជ័យ';
+  }
+
+  @override
+  String get deleteBuilding => 'លុបអគារ';
+
+  @override
+  String deleteBuildingConfirm(Object name) {
+    return 'តើអ្នកចង់លុបអគារ \"$name\"?';
+  }
+
+  @override
+  String get deleteRoom => 'លុបបន្ទប់';
+
+  @override
+  String deleteRoomConfirm(Object number) {
+    return 'តើអ្នកចង់លុបបន្ទប់ \"$number\"?';
+  }
+
+  @override
+  String get deleteService => 'លុបសេវា';
+
+  @override
+  String deleteServiceConfirm(Object name) {
+    return 'តើអ្នកចង់លុបសេវា \"$name\"?';
+  }
+
+  @override
+  String get errorOccurred => 'មានកំហុស';
+
+  @override
+  String get addNewBuilding => 'បញ្ចូលអគារថ្មី';
+
+  @override
+  String get editBuilding => 'កែប្រែអគារ';
+
+  @override
+  String get buildingName => 'ឈ្មោះអគារ';
+
+  @override
+  String get buildingNameRequired => 'សូមបញ្ចូលឈ្មោះអគារ។';
+
+  @override
+  String get roomCount => 'ចំនួនបន្ទប់';
+
+  @override
+  String get currentRoomCount => 'ចំនួនបន្ទប់បច្ចុប្បន្ន';
+
+  @override
+  String get roomCountRequired => 'សូមបញ្ចូលចំនួនបន្ទប់។';
+
+  @override
+  String get roomCountInvalid => 'សូមបញ្ចូលចំនួនបន្ទប់ត្រឹមត្រូវ។';
+
+  @override
+  String get roomCountEditNote => 'ចំនួនបន្ទប់មិនអាចកែប្រែបានទេ។ សូមគ្រប់គ្រងបន្ទប់នីមួយៗដាច់ដោយឡែក។';
+
+  @override
+  String get saveChanges => 'រក្សាទុកការកែប្រែ';
+
+  @override
+  String get saveBuilding => 'រក្សាទុកអគារ';
 
   @override
   String get roomChangeFailed => 'មានបញ្ហាក្នុងការផ្លាស់ប្តូរបន្ទប់';
@@ -713,12 +943,6 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get nextMonth => 'ខែបន្ទាប់';
-
-  @override
-  String get water => 'ទឹក';
-
-  @override
-  String get electricity => 'អគ្គិសនី';
 
   @override
   String get service => 'សេវាកម្ម';

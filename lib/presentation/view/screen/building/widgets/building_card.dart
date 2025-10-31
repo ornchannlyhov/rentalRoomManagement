@@ -4,6 +4,7 @@ import 'package:joul_v2/data/models/building.dart';
 import 'package:joul_v2/data/models/enum/room_status.dart';
 import 'package:joul_v2/data/models/room.dart';
 import 'package:joul_v2/presentation/providers/room_provider.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 class BuildingCard extends StatelessWidget {
   final Building building;
@@ -61,6 +62,7 @@ class _AnimatedCardContent extends StatelessWidget {
   });
 
   void _showMoreOptionsBottomSheet(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -119,7 +121,7 @@ class _AnimatedCardContent extends StatelessWidget {
                                   ),
                         ),
                         Text(
-                          "${building.rentPrice}\$ /ខែ",
+                          l10n.rentPricePerMonth(building.rentPrice),
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: Theme.of(context)
@@ -142,7 +144,7 @@ class _AnimatedCardContent extends StatelessWidget {
                   Icons.visibility_rounded,
                   color: Theme.of(context).colorScheme.primary,
                 ),
-                title: const Text('មើលព័ត៌មានលម្អិត'),
+                title: Text(l10n.viewDetails),
                 onTap: () {
                   Navigator.pop(context);
                   onViewDetails?.call();
@@ -155,7 +157,7 @@ class _AnimatedCardContent extends StatelessWidget {
                   Icons.edit_rounded,
                   color: Theme.of(context).colorScheme.primary,
                 ),
-                title: const Text('កែប្រែ'),
+                title: Text(l10n.edit),
                 onTap: () {
                   Navigator.pop(context);
                   onEdit?.call();
@@ -168,7 +170,7 @@ class _AnimatedCardContent extends StatelessWidget {
                   Icons.delete_rounded,
                   color: Colors.red,
                 ),
-                title: const Text('លុប'),
+                title: Text(l10n.delete),
                 onTap: () {
                   Navigator.pop(context);
                   onDelete?.call();
@@ -185,6 +187,7 @@ class _AnimatedCardContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
@@ -215,7 +218,7 @@ class _AnimatedCardContent extends StatelessWidget {
                     if (building.passKey != null) ...[
                       const SizedBox(height: 4),
                       Text(
-                        "Key: ${building.passKey!}",
+                        l10n.passKey(building.passKey!),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurface.withOpacity(0.8),
                           letterSpacing: 0.5,
@@ -244,7 +247,7 @@ class _AnimatedCardContent extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            "${building.rentPrice}\$",
+                            "\$${building.rentPrice}",
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: theme.colorScheme.primary,
                               fontWeight: FontWeight.bold,
@@ -252,7 +255,7 @@ class _AnimatedCardContent extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            "/ខែ",
+                            l10n.perMonth,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color:
                                   theme.colorScheme.onSurface.withOpacity(0.7),
@@ -270,15 +273,17 @@ class _AnimatedCardContent extends StatelessWidget {
                         _buildUtilityChip(
                           context,
                           Icons.flash_on_rounded,
-                          "${building.electricPrice}\$",
+                          "\$${building.electricPrice}",
                           Colors.amber,
+                          l10n.electricity,
                         ),
                         const SizedBox(width: 8),
                         _buildUtilityChip(
                           context,
                           Icons.water_drop_rounded,
-                          "${building.waterPrice}\$",
+                          "\$${building.waterPrice}",
                           Colors.blue,
+                          l10n.water,
                         ),
                       ],
                     ),
@@ -291,11 +296,8 @@ class _AnimatedCardContent extends StatelessWidget {
               // Right side content: circular indicator and options
               Column(
                 children: [
-                  // Compact circular indicator
                   _CompactCircularIndicator(rooms: rooms),
-
                   const SizedBox(height: 8),
-
                   InkWell(
                     borderRadius: BorderRadius.circular(20),
                     onTap: () => _showMoreOptionsBottomSheet(context),
@@ -322,6 +324,7 @@ class _AnimatedCardContent extends StatelessWidget {
     IconData icon,
     String price,
     Color color,
+    String label,
   ) {
     final theme = Theme.of(context);
 
@@ -355,6 +358,13 @@ class _AnimatedCardContent extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              Text(
+                label,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: color.withOpacity(0.8),
+                  fontSize: 10,
+                ),
+              ),
             ],
           ),
         ],
@@ -375,6 +385,7 @@ class _CompactCircularIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final progress = totalRooms > 0 ? occupiedRooms / totalRooms : 0;
     final progressColor = progress == 0
         ? theme.colorScheme.outline
@@ -409,7 +420,7 @@ class _CompactCircularIndicator extends StatelessWidget {
                 ),
               ),
               Text(
-                "/$totalRooms",
+                l10n.ofTotal(totalRooms),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(0.6),
                 ),

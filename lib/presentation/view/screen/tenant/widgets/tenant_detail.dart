@@ -106,7 +106,7 @@ class TenantDetail extends StatelessWidget {
             ),
             _buildInfoRow(
               theme,
-              localizations.roomNumber,
+              localizations.roomNumberLabel(tenant.room?.roomNumber ?? localizations.notAvailable),
               tenant.room?.roomNumber ?? localizations.notAvailable,
             ),
             if (tenant.room?.price != null)

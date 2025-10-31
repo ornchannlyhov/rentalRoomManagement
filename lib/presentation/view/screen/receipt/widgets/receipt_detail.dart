@@ -274,7 +274,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                   // Tenant Information
                   if (tenant != null) ...[
                     _buildSectionHeader(theme, l10n.tenantInfo),
-                    _buildInfoRow(theme, l10n.tenantName, tenant.name),
+                    _buildInfoRow(theme, l10n.tenantNameLabel, tenant.name),
                     _buildInfoRow(theme, l10n.phoneNumber, tenant.phoneNumber),
                     const SizedBox(height: 8),
                     _buildDividerSimple(theme),

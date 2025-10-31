@@ -298,8 +298,8 @@ abstract class AppLocalizations {
   /// No description provided for @tenantName.
   ///
   /// In en, this message translates to:
-  /// **'Tenant Name'**
-  String get tenantName;
+  /// **'Tenant: {name}'**
+  String tenantName(Object name);
 
   /// No description provided for @phoneNumber.
   ///
@@ -391,6 +391,54 @@ abstract class AppLocalizations {
   /// **'Grand Total'**
   String get grandTotal;
 
+  /// No description provided for @available.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get available;
+
+  /// No description provided for @rented.
+  ///
+  /// In en, this message translates to:
+  /// **'Rented'**
+  String get rented;
+
+  /// No description provided for @editService.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Service'**
+  String get editService;
+
+  /// No description provided for @createNewService.
+  ///
+  /// In en, this message translates to:
+  /// **'Create New Service'**
+  String get createNewService;
+
+  /// No description provided for @serviceName.
+  ///
+  /// In en, this message translates to:
+  /// **'Service Name'**
+  String get serviceName;
+
+  /// No description provided for @serviceNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter service name'**
+  String get serviceNameRequired;
+
+  /// No description provided for @servicePriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Service Price'**
+  String get servicePriceLabel;
+
+  /// No description provided for @addService.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Service'**
+  String get addService;
+
   /// No description provided for @currencyServiceUnavailable.
   ///
   /// In en, this message translates to:
@@ -400,7 +448,7 @@ abstract class AppLocalizations {
   /// No description provided for @thankYouForUsingOurService.
   ///
   /// In en, this message translates to:
-  /// **'Thank you for using our service!'**
+  /// **'Thank you for using or service!'**
   String get thankYouForUsingOurService;
 
   /// No description provided for @currencyConversionFailed.
@@ -508,7 +556,7 @@ abstract class AppLocalizations {
   /// No description provided for @tryAgain.
   ///
   /// In en, this message translates to:
-  /// **'Try again'**
+  /// **'Try Again'**
   String get tryAgain;
 
   /// No description provided for @male.
@@ -715,11 +763,53 @@ abstract class AppLocalizations {
   /// **'Confirm Delete'**
   String get confirmDelete;
 
-  /// Confirmation message for deleting a building
+  /// No description provided for @buildings.
   ///
   /// In en, this message translates to:
-  /// **'Are you sure you want to delete building {building}?'**
-  String deleteConfirmMsg(String building);
+  /// **'Buildings'**
+  String get buildings;
+
+  /// No description provided for @searchBuildings.
+  ///
+  /// In en, this message translates to:
+  /// **'Search buildings...'**
+  String get searchBuildings;
+
+  /// No description provided for @noBuildingsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No buildings found'**
+  String get noBuildingsFound;
+
+  /// No description provided for @noBuildingsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No buildings available'**
+  String get noBuildingsAvailable;
+
+  /// No description provided for @tryDifferentKeywords.
+  ///
+  /// In en, this message translates to:
+  /// **'Try searching with different keywords'**
+  String get tryDifferentKeywords;
+
+  /// No description provided for @tapPlusToAddBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + to add a new building'**
+  String get tapPlusToAddBuilding;
+
+  /// No description provided for @loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get loading;
+
+  /// No description provided for @deleteBuildingConfirmMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete building \"{name}\"?'**
+  String deleteBuildingConfirmMsg(Object name);
 
   /// No description provided for @cancel.
   ///
@@ -727,11 +817,101 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get cancel;
 
+  /// No description provided for @buildingDeletedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Building \"{name}\" deleted successfully'**
+  String buildingDeletedSuccess(Object name);
+
   /// Success message after deleting a building
   ///
   /// In en, this message translates to:
   /// **'Building {building} deleted successfully'**
-  String buildingDeleted(String building);
+  String buildingDeleted(String building, Object name);
+
+  /// No description provided for @buildingDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete building: {error}'**
+  String buildingDeleteFailed(Object error);
+
+  /// No description provided for @rentPriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly Rent Price'**
+  String get rentPriceLabel;
+
+  /// No description provided for @electricPricePerKwh.
+  ///
+  /// In en, this message translates to:
+  /// **'Electricity Price (1 kWh)'**
+  String get electricPricePerKwh;
+
+  /// No description provided for @waterPricePerCubicMeter.
+  ///
+  /// In en, this message translates to:
+  /// **'Water Price (1 m³)'**
+  String get waterPricePerCubicMeter;
+
+  /// No description provided for @rentPricePerMonthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly Rent Price'**
+  String get rentPricePerMonthLabel;
+
+  /// No description provided for @rentPricePerMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly Rent Price'**
+  String rentPricePerMonth(Object price);
+
+  /// No description provided for @passKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Key: {key}'**
+  String passKey(Object key);
+
+  /// No description provided for @perMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'/ month'**
+  String get perMonth;
+
+  /// No description provided for @electricity.
+  ///
+  /// In en, this message translates to:
+  /// **'Electricity'**
+  String get electricity;
+
+  /// No description provided for @water.
+  ///
+  /// In en, this message translates to:
+  /// **'Water'**
+  String get water;
+
+  /// No description provided for @viewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View Details'**
+  String get viewDetails;
+
+  /// No description provided for @edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get edit;
+
+  /// No description provided for @ofTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'/ {total}'**
+  String ofTotal(Object total);
+
+  /// Confirmation message for deleting a building
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete building {building}?'**
+  String deleteConfirmMsg(String building);
 
   /// Error message when building deletion fails
   ///
@@ -787,12 +967,6 @@ abstract class AppLocalizations {
   /// **'Share'**
   String get share;
 
-  /// No description provided for @edit.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit'**
-  String get edit;
-
   /// No description provided for @deleteOption.
   ///
   /// In en, this message translates to:
@@ -817,12 +991,6 @@ abstract class AppLocalizations {
   /// **'No receipts'**
   String get noReceipts;
 
-  /// No description provided for @loading.
-  ///
-  /// In en, this message translates to:
-  /// **'Loading...'**
-  String get loading;
-
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:
@@ -841,23 +1009,35 @@ abstract class AppLocalizations {
   /// **'Change Room'**
   String get changeRoom;
 
-  /// No description provided for @viewDetails.
-  ///
-  /// In en, this message translates to:
-  /// **'View Details'**
-  String get viewDetails;
-
   /// No description provided for @building.
   ///
   /// In en, this message translates to:
   /// **'Building'**
   String get building;
 
-  /// No description provided for @roomNumber.
+  /// No description provided for @roomNumberLabel.
   ///
   /// In en, this message translates to:
-  /// **'Room Number'**
-  String get roomNumber;
+  /// **'Room {number}'**
+  String roomNumberLabel(Object number);
+
+  /// No description provided for @tenantNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get tenantNameLabel;
+
+  /// No description provided for @roomStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status: {status}'**
+  String roomStatus(Object status);
+
+  /// No description provided for @rentPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Rent Price: {price}\$'**
+  String rentPrice(Object price);
 
   /// No description provided for @noRoom.
   ///
@@ -1098,6 +1278,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Room for {tenant} changed to {room}'**
   String roomChanged(String tenant, String room);
+
+  /// No description provided for @priceValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Price: {price}\$'**
+  String priceValue(Object price);
+
+  /// No description provided for @rooms.
+  ///
+  /// In en, this message translates to:
+  /// **'Rooms'**
+  String get rooms;
+
+  /// No description provided for @servicePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'{price}\$'**
+  String servicePrice(Object price);
+
+  /// No description provided for @addRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Room'**
+  String get addRoom;
+
+  /// No description provided for @noRooms.
+  ///
+  /// In en, this message translates to:
+  /// **'No Rooms'**
+  String get noRooms;
+
+  /// No description provided for @noServices.
+  ///
+  /// In en, this message translates to:
+  /// **'No Services'**
+  String get noServices;
+
+  /// No description provided for @pullToRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull down to refresh'**
+  String get pullToRefresh;
+
+  /// No description provided for @roomAddedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Room \"{number}\" added successfully'**
+  String roomAddedSuccess(Object number);
+
+  /// No description provided for @roomUpdatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Room \"{number}\" updated successfully'**
+  String roomUpdatedSuccess(Object number);
+
+  /// No description provided for @roomDeletedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Room \"{number}\" deleted successfully'**
+  String roomDeletedSuccess(Object number);
+
+  /// No description provided for @serviceAddedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Service \"{name}\" added successfully'**
+  String serviceAddedSuccess(Object name);
+
+  /// No description provided for @serviceUpdatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Service \"{name}\" updated successfully'**
+  String serviceUpdatedSuccess(Object name);
+
+  /// No description provided for @serviceDeletedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Service \"{name}\" deleted successfully'**
+  String serviceDeletedSuccess(Object name);
+
+  /// No description provided for @buildingUpdatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Building \"{name}\" updated successfully'**
+  String buildingUpdatedSuccess(Object name);
+
+  /// No description provided for @deleteBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Building'**
+  String get deleteBuilding;
+
+  /// No description provided for @deleteBuildingConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to delete building \"{name}\"?'**
+  String deleteBuildingConfirm(Object name);
+
+  /// No description provided for @deleteRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Room'**
+  String get deleteRoom;
+
+  /// No description provided for @deleteRoomConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to delete room \"{number}\"?'**
+  String deleteRoomConfirm(Object number);
+
+  /// No description provided for @deleteService.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Service'**
+  String get deleteService;
+
+  /// No description provided for @deleteServiceConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to delete service \"{name}\"?'**
+  String deleteServiceConfirm(Object name);
+
+  /// No description provided for @errorOccurred.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred'**
+  String get errorOccurred;
+
+  /// No description provided for @addNewBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'Add New Building'**
+  String get addNewBuilding;
+
+  /// No description provided for @editBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Building'**
+  String get editBuilding;
+
+  /// No description provided for @buildingName.
+  ///
+  /// In en, this message translates to:
+  /// **'Building Name'**
+  String get buildingName;
+
+  /// No description provided for @buildingNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter building name.'**
+  String get buildingNameRequired;
+
+  /// No description provided for @roomCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of Rooms'**
+  String get roomCount;
+
+  /// No description provided for @currentRoomCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Number of Rooms'**
+  String get currentRoomCount;
+
+  /// No description provided for @roomCountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter number of rooms.'**
+  String get roomCountRequired;
+
+  /// No description provided for @roomCountInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid number of rooms.'**
+  String get roomCountInvalid;
+
+  /// No description provided for @roomCountEditNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Room count cannot be changed. Manage rooms individually.'**
+  String get roomCountEditNote;
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get saveChanges;
+
+  /// No description provided for @saveBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Building'**
+  String get saveBuilding;
 
   /// No description provided for @roomChangeFailed.
   ///
@@ -1440,18 +1812,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Next Month'**
   String get nextMonth;
-
-  /// No description provided for @water.
-  ///
-  /// In en, this message translates to:
-  /// **'Water'**
-  String get water;
-
-  /// No description provided for @electricity.
-  ///
-  /// In en, this message translates to:
-  /// **'Electricity'**
-  String get electricity;
 
   /// No description provided for @service.
   ///
