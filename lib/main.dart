@@ -242,7 +242,7 @@ class _MyAppState extends State<MyApp> {
           }
 
           return MaterialApp(
-            title: 'Receipts',
+            title: 'JOUL',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,

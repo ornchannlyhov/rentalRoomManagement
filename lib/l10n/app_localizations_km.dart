@@ -955,4 +955,16 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get passwordsDoNotMatch => 'ពាក្យសម្ងាត់មិនតរងគ្នាទេ';
+
+  @override
+  String get chooseLanguageTitle => 'ជ្រើសរើសភាសារបស់អ្នក';
+
+  @override
+  String get chooseLanguageSubtitle => 'ជ្រើសរើសភាសាដែលអ្នកចូលចិត្ត';
+
+  @override
+  String get continueButton => 'បន្ត';
+
+  @override
+  String get nextButton => 'បន្ទាប់';
 }

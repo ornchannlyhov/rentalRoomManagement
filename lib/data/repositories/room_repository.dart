@@ -165,20 +165,48 @@ class RoomRepository {
     if (_pendingChanges.isEmpty) return;
 
     final successfulChanges = <int>[];
+    final failedChanges = <int>[];
 
     for (int i = 0; i < _pendingChanges.length; i++) {
       final change = _pendingChanges[i];
+      final retryCount = change['retryCount'] ?? 0;
+
+      // Max 5 retries for failed changes
+      if (retryCount >= 5) {
+        failedChanges.add(i);
+        if (kDebugMode) {
+          print(
+              'Room pending change exceeded retry limit: ${change['type']} ${change['endpoint']}');
+        }
+        continue;
+      }
+
       final success = await _syncHelper.applyPendingChange(change);
+
       if (success) {
         successfulChanges.add(i);
+        if (kDebugMode) {
+          print(
+              'Successfully synced room pending change: ${change['type']} ${change['endpoint']}');
+        }
+      } else {
+        // Increment retry count
+        _pendingChanges[i]['retryCount'] = retryCount + 1;
+        if (kDebugMode) {
+          print(
+              'Failed to sync room pending change (retry ${retryCount + 1}/5): ${change['type']} ${change['endpoint']}');
+        }
       }
     }
 
-    for (int i = successfulChanges.length - 1; i >= 0; i--) {
-      _pendingChanges.removeAt(successfulChanges[i]);
+    // Remove successful and permanently failed changes (reverse order)
+    final toRemove = [...successfulChanges, ...failedChanges]
+      ..sort((a, b) => b.compareTo(a));
+    for (final index in toRemove) {
+      _pendingChanges.removeAt(index);
     }
 
-    if (successfulChanges.isNotEmpty) {
+    if (successfulChanges.isNotEmpty || failedChanges.isNotEmpty) {
       await _apiHelper.storage.write(
         key: pendingChangesKey,
         value: jsonEncode(_pendingChanges),
@@ -191,12 +219,52 @@ class RoomRepository {
     Map<String, dynamic> data,
     String endpoint,
   ) async {
+    // Check for duplicate pending changes
+    final isDuplicate = _pendingChanges.any((change) {
+      if (change['type'] != type || change['endpoint'] != endpoint) {
+        return false;
+      }
+
+      // For creates with localId, check if localId matches
+      if (type == 'create' && data['localId'] != null) {
+        return change['data']['localId'] == data['localId'];
+      }
+
+      // For updates/deletes, check if id matches
+      if (data['id'] != null) {
+        return change['data']['id'] == data['id'];
+      }
+
+      // For rooms, also check by buildingId + roomNumber combination
+      if (type == 'create' &&
+          data['buildingId'] != null &&
+          data['roomNumber'] != null) {
+        return change['data']['buildingId'] == data['buildingId'] &&
+            change['data']['roomNumber'] == data['roomNumber'];
+      }
+
+      // Fallback: compare full data
+      return jsonEncode(change['data']) == jsonEncode(data);
+    });
+
+    if (isDuplicate) {
+      if (kDebugMode) {
+        print('Skipping duplicate room pending change: $type $endpoint');
+      }
+      return;
+    }
+
     _pendingChanges.add({
       'type': type,
       'data': data,
       'endpoint': endpoint,
       'timestamp': DateTime.now().toIso8601String(),
+      'retryCount': 0,
     });
+
+    if (kDebugMode) {
+      print('Added room pending change: $type $endpoint');
+    }
   }
 
   Future<Room> createRoom(Room newRoom) async {
@@ -208,9 +276,8 @@ class RoomRepository {
       'buildingId': newRoom.building!.id,
       'roomNumber': newRoom.roomNumber,
       'price': newRoom.price,
-      'roomStatus': newRoom.roomStatus == RoomStatus.occupied
-          ? 'occupied'
-          : 'available',
+      'roomStatus':
+          newRoom.roomStatus == RoomStatus.occupied ? 'occupied' : 'available',
       if (newRoom.tenant != null)
         'tenant': {
           'id': newRoom.tenant!.id,
@@ -242,8 +309,8 @@ class RoomRepository {
       addToCache: (room) async {
         _roomCache.add(room);
       },
-      addPendingChange: (type, data) =>
-          _addPendingChange(type, {...data, 'localId': newRoom.id}, '/rooms'),
+      addPendingChange: (type, endpoint, data) =>
+          _addPendingChange(type, {...data, 'localId': newRoom.id}, endpoint),
       offlineModel: newRoom,
     );
 
@@ -282,8 +349,8 @@ class RoomRepository {
           throw Exception('Room not found: ${updatedRoom.id}');
         }
       },
-      addPendingChange: (type, data) =>
-          _addPendingChange(type, data, '/rooms/${updatedRoom.id}'),
+      addPendingChange: (type, endpoint, data) =>
+          _addPendingChange(type, data, endpoint),
     );
 
     await save();
@@ -296,8 +363,8 @@ class RoomRepository {
       deleteFromCache: () async {
         _roomCache.removeWhere((r) => r.id == roomId);
       },
-      addPendingChange: (type, data) =>
-          _addPendingChange(type, data, '/rooms/$roomId'),
+      addPendingChange: (type, endpoint, data) =>
+          _addPendingChange(type, data, endpoint),
     );
 
     await save();
@@ -325,4 +392,9 @@ class RoomRepository {
 
   bool hasPendingChanges() => _pendingChanges.isNotEmpty;
   int getPendingChangesCount() => _pendingChanges.length;
+
+  /// Get list of pending changes for debugging/display
+  List<Map<String, dynamic>> getPendingChanges() {
+    return List.unmodifiable(_pendingChanges);
+  }
 }

@@ -114,20 +114,48 @@ class ServiceRepository {
     if (_pendingChanges.isEmpty) return;
 
     final successfulChanges = <int>[];
+    final failedChanges = <int>[];
 
     for (int i = 0; i < _pendingChanges.length; i++) {
       final change = _pendingChanges[i];
+      final retryCount = change['retryCount'] ?? 0;
+
+      // Max 5 retries for failed changes
+      if (retryCount >= 5) {
+        failedChanges.add(i);
+        if (kDebugMode) {
+          print(
+              'Service pending change exceeded retry limit: ${change['type']} ${change['endpoint']}');
+        }
+        continue;
+      }
+
       final success = await _syncHelper.applyPendingChange(change);
+
       if (success) {
         successfulChanges.add(i);
+        if (kDebugMode) {
+          print(
+              'Successfully synced service pending change: ${change['type']} ${change['endpoint']}');
+        }
+      } else {
+        // Increment retry count
+        _pendingChanges[i]['retryCount'] = retryCount + 1;
+        if (kDebugMode) {
+          print(
+              'Failed to sync service pending change (retry ${retryCount + 1}/5): ${change['type']} ${change['endpoint']}');
+        }
       }
     }
 
-    for (int i = successfulChanges.length - 1; i >= 0; i--) {
-      _pendingChanges.removeAt(successfulChanges[i]);
+    // Remove successful and permanently failed changes (reverse order)
+    final toRemove = [...successfulChanges, ...failedChanges]
+      ..sort((a, b) => b.compareTo(a));
+    for (final index in toRemove) {
+      _pendingChanges.removeAt(index);
     }
 
-    if (successfulChanges.isNotEmpty) {
+    if (successfulChanges.isNotEmpty || failedChanges.isNotEmpty) {
       await _apiHelper.storage.write(
         key: pendingChangesKey,
         value: jsonEncode(_pendingChanges),
@@ -140,12 +168,52 @@ class ServiceRepository {
     Map<String, dynamic> data,
     String endpoint,
   ) async {
+    // Check for duplicate pending changes
+    final isDuplicate = _pendingChanges.any((change) {
+      if (change['type'] != type || change['endpoint'] != endpoint) {
+        return false;
+      }
+
+      // For creates with localId, check if localId matches
+      if (type == 'create' && data['localId'] != null) {
+        return change['data']['localId'] == data['localId'];
+      }
+
+      // For updates/deletes, check if id matches
+      if (data['id'] != null) {
+        return change['data']['id'] == data['id'];
+      }
+
+      // For services, also check by buildingId + name combination (services are unique per building + name)
+      if (type == 'create' &&
+          data['buildingId'] != null &&
+          data['name'] != null) {
+        return change['data']['buildingId'] == data['buildingId'] &&
+            change['data']['name'] == data['name'];
+      }
+
+      // Fallback: compare full data
+      return jsonEncode(change['data']) == jsonEncode(data);
+    });
+
+    if (isDuplicate) {
+      if (kDebugMode) {
+        print('Skipping duplicate service pending change: $type $endpoint');
+      }
+      return;
+    }
+
     _pendingChanges.add({
       'type': type,
       'data': data,
       'endpoint': endpoint,
       'timestamp': DateTime.now().toIso8601String(),
+      'retryCount': 0,
     });
+
+    if (kDebugMode) {
+      print('Added service pending change: $type $endpoint');
+    }
   }
 
   Future<void> createService(Service newService) async {
@@ -166,10 +234,13 @@ class ServiceRepository {
       addToCache: (service) async {
         _serviceCache.add(service);
       },
-      addPendingChange: (type, data) => _addPendingChange(
+      addPendingChange: (type, endpoint, data) => _addPendingChange(
         type,
-        {...data, 'localId': newService.id},
-        '/services',
+        {
+          ...data,
+          'localId': newService.id
+        }, // Include localId for offline mapping
+        endpoint,
       ),
       offlineModel: newService,
     );
@@ -200,10 +271,10 @@ class ServiceRepository {
           throw Exception('Service not found: ${updatedService.id}');
         }
       },
-      addPendingChange: (type, data) => _addPendingChange(
+      addPendingChange: (type, endpoint, data) => _addPendingChange(
         type,
         data,
-        '/services/${updatedService.id}',
+        endpoint,
       ),
     );
 
@@ -217,16 +288,15 @@ class ServiceRepository {
       deleteFromCache: () async {
         _serviceCache.removeWhere((s) => s.id == serviceId);
       },
-      addPendingChange: (type, data) => _addPendingChange(
+      addPendingChange: (type, endpoint, data) => _addPendingChange(
         type,
         data,
-        '/services/$serviceId',
+        endpoint,
       ),
     );
 
     await save();
   }
-
 
   List<Service> getAllServices() {
     return List.unmodifiable(_serviceCache);
@@ -238,4 +308,9 @@ class ServiceRepository {
 
   bool hasPendingChanges() => _pendingChanges.isNotEmpty;
   int getPendingChangesCount() => _pendingChanges.length;
+
+  /// Get list of pending changes for debugging/display
+  List<Map<String, dynamic>> getPendingChanges() {
+    return List.unmodifiable(_pendingChanges);
+  }
 }

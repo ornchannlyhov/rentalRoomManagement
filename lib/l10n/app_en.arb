@@ -517,5 +517,9 @@
   "service": "Service",
   "emailValidationInvalid": "Please enter a valid email",
   "passwordValidationLength": "Password must be at least 6 characters",
-  "passwordsDoNotMatch": "Passwords do not match"
+  "passwordsDoNotMatch": "Passwords do not match",
+  "chooseLanguageTitle": "Choose Your Language",
+  "chooseLanguageSubtitle": "Select your preferred language",
+  "continueButton": "Continue",
+  "nextButton": "Next"
 }

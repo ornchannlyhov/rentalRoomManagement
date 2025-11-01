@@ -194,21 +194,48 @@ class TenantRepository {
     if (_pendingChanges.isEmpty) return;
 
     final successfulChanges = <int>[];
+    final failedChanges = <int>[];
 
     for (int i = 0; i < _pendingChanges.length; i++) {
       final change = _pendingChanges[i];
+      final retryCount = change['retryCount'] ?? 0;
+
+      // Max 5 retries for failed changes
+      if (retryCount >= 5) {
+        failedChanges.add(i);
+        if (kDebugMode) {
+          print(
+              'Tenant pending change exceeded retry limit: ${change['type']} ${change['endpoint']}');
+        }
+        continue;
+      }
+
       final success = await _syncHelper.applyPendingChange(change);
+
       if (success) {
         successfulChanges.add(i);
+        if (kDebugMode) {
+          print(
+              'Successfully synced tenant pending change: ${change['type']} ${change['endpoint']}');
+        }
+      } else {
+        // Increment retry count
+        _pendingChanges[i]['retryCount'] = retryCount + 1;
+        if (kDebugMode) {
+          print(
+              'Failed to sync tenant pending change (retry ${retryCount + 1}/5): ${change['type']} ${change['endpoint']}');
+        }
       }
     }
 
-    // Remove successful changes in reverse order
-    for (int i = successfulChanges.length - 1; i >= 0; i--) {
-      _pendingChanges.removeAt(successfulChanges[i]);
+    // Remove successful and permanently failed changes (reverse order)
+    final toRemove = [...successfulChanges, ...failedChanges]
+      ..sort((a, b) => b.compareTo(a));
+    for (final index in toRemove) {
+      _pendingChanges.removeAt(index);
     }
 
-    if (successfulChanges.isNotEmpty) {
+    if (successfulChanges.isNotEmpty || failedChanges.isNotEmpty) {
       await _apiHelper.storage.write(
         key: pendingChangesKey,
         value: jsonEncode(_pendingChanges),
@@ -221,12 +248,49 @@ class TenantRepository {
     Map<String, dynamic> data,
     String endpoint,
   ) async {
+    // Check for duplicate pending changes
+    final isDuplicate = _pendingChanges.any((change) {
+      if (change['type'] != type || change['endpoint'] != endpoint) {
+        return false;
+      }
+
+      // For creates with localId, check if localId matches
+      if (type == 'create' && data['localId'] != null) {
+        return change['data']['localId'] == data['localId'];
+      }
+
+      // For updates/deletes, check if id matches
+      if (data['id'] != null) {
+        return change['data']['id'] == data['id'];
+      }
+
+      // For tenants, also check by phoneNumber (tenants are unique per phone number)
+      if (type == 'create' && data['phoneNumber'] != null) {
+        return change['data']['phoneNumber'] == data['phoneNumber'];
+      }
+
+      // Fallback: compare full data
+      return jsonEncode(change['data']) == jsonEncode(data);
+    });
+
+    if (isDuplicate) {
+      if (kDebugMode) {
+        print('Skipping duplicate tenant pending change: $type $endpoint');
+      }
+      return;
+    }
+
     _pendingChanges.add({
       'type': type,
       'data': data,
       'endpoint': endpoint,
       'timestamp': DateTime.now().toIso8601String(),
+      'retryCount': 0,
     });
+
+    if (kDebugMode) {
+      print('Added tenant pending change: $type $endpoint');
+    }
   }
 
   Future<void> createTenant(Tenant newTenant) async {
@@ -262,10 +326,13 @@ class TenantRepository {
         }
         _tenantCache.add(tenant);
       },
-      addPendingChange: (type, data) => _addPendingChange(
+      addPendingChange: (type, endpoint, data) => _addPendingChange(
         type,
-        {...data, 'localId': newTenant.id},
-        '/tenants',
+        {
+          ...data,
+          'localId': newTenant.id
+        }, // Include localId for offline mapping
+        endpoint,
       ),
       offlineModel: newTenant,
     );
@@ -295,10 +362,10 @@ class TenantRepository {
           throw Exception('Tenant not found: ${updatedTenant.id}');
         }
       },
-      addPendingChange: (type, data) => _addPendingChange(
+      addPendingChange: (type, endpoint, data) => _addPendingChange(
         type,
         data,
-        '/tenants/${updatedTenant.id}',
+        endpoint,
       ),
     );
 
@@ -313,14 +380,17 @@ class TenantRepository {
         final index = _tenantCache.indexWhere((t) => t.id == tenantId);
         if (index != -1) {
           final tenant = _tenantCache[index];
-          if (tenant.room != null) {}
+          if (tenant.room != null) {
+            // Clear tenant reference from room
+            tenant.room!.tenant = null;
+          }
           _tenantCache.removeAt(index);
         }
       },
-      addPendingChange: (type, data) => _addPendingChange(
+      addPendingChange: (type, endpoint, data) => _addPendingChange(
         type,
         data,
-        '/tenants/$tenantId',
+        endpoint,
       ),
     );
 
@@ -348,10 +418,10 @@ class TenantRepository {
       updateCache: () async {
         _tenantCache[index] = updatedTenant;
       },
-      addPendingChange: (type, data) => _addPendingChange(
+      addPendingChange: (type, endpoint, data) => _addPendingChange(
         type,
         data,
-        '/tenants/$tenantId',
+        endpoint,
       ),
     );
 
@@ -380,6 +450,11 @@ class TenantRepository {
 
   bool hasPendingChanges() => _pendingChanges.isNotEmpty;
   int getPendingChangesCount() => _pendingChanges.length;
+
+  /// Get list of pending changes for debugging/display
+  List<Map<String, dynamic>> getPendingChanges() {
+    return List.unmodifiable(_pendingChanges);
+  }
 
   String _genderToString(Gender gender) {
     switch (gender) {

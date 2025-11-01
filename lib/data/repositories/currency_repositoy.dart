@@ -1,10 +1,13 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
+import 'package:joul_v2/core/helpers/api_helper.dart';
+import 'package:dio/dio.dart';
 
 class CurrencyService {
   static const String _baseUrl =
       'https://api.exchangerate-api.com/v4/latest/USD';
   static const Duration _cacheTimeout = Duration(hours: 1);
+
+  static final ApiHelper _apiHelper = ApiHelper.instance;
 
   static Map<String, double>? _cachedRates;
   static DateTime? _lastFetch;
@@ -22,15 +25,29 @@ class CurrencyService {
   };
 
   static Future<Map<String, double>> _fetchExchangeRates() async {
+    // Check network availability first
+    if (!await _apiHelper.hasNetwork()) {
+      debugPrint('No network available, using default rates');
+      return _defaultRates;
+    }
+
     try {
-      final response = await http.get(
-        Uri.parse(_baseUrl),
-        headers: {'Accept': 'application/json'},
-      ).timeout(const Duration(seconds: 10));
+      final response = await _apiHelper.dio.get(
+        _baseUrl,
+        options: Options(
+          headers: {'Accept': 'application/json'},
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+      );
+
+      if (response.data['cancelled'] == true) {
+        debugPrint('Request cancelled, using default rates');
+        return _defaultRates;
+      }
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final ratesData = data['rates'] as Map<String, dynamic>;
+        final ratesData = response.data['rates'] as Map<String, dynamic>;
 
         final rates = <String, double>{};
         ratesData.forEach((key, value) {
@@ -42,22 +59,41 @@ class CurrencyService {
 
         return rates;
       } else {
-        print('Failed to fetch exchange rates: ${response.statusCode}');
+        debugPrint('Failed to fetch exchange rates: ${response.statusCode}');
         return _defaultRates;
       }
+    } on DioException catch (e) {
+      debugPrint('Dio error fetching exchange rates: ${e.type} - ${e.message}');
+
+      // Use cached rates if available, otherwise default
+      if (_cachedRates != null) {
+        debugPrint('Using cached rates due to error');
+        return _cachedRates!;
+      }
+
+      return _defaultRates;
     } catch (e) {
-      print('Error fetching exchange rates: $e');
+      debugPrint('Error fetching exchange rates: $e');
+
+      // Use cached rates if available, otherwise default
+      if (_cachedRates != null) {
+        debugPrint('Using cached rates due to error');
+        return _cachedRates!;
+      }
+
       return _defaultRates;
     }
   }
 
   static Future<Map<String, double>> getExchangeRates() async {
+    // Return cached rates if still valid
     if (_cachedRates != null &&
         _lastFetch != null &&
         DateTime.now().difference(_lastFetch!) < _cacheTimeout) {
       return _cachedRates!;
     }
 
+    // Otherwise fetch new rates
     return await _fetchExchangeRates();
   }
 
@@ -134,15 +170,42 @@ class CurrencyService {
   }
 
   static Future<bool> isServiceAvailable() async {
-    try {
-      final response = await http.get(
-        Uri.parse(_baseUrl),
-        headers: {'Accept': 'application/json'},
-      ).timeout(const Duration(seconds: 5));
-
-      return response.statusCode == 200;
-    } catch (e) {
+    // Check network availability first
+    if (!await _apiHelper.hasNetwork()) {
       return false;
     }
+
+    try {
+      final response = await _apiHelper.dio.get(
+        _baseUrl,
+        options: Options(
+          headers: {'Accept': 'application/json'},
+          sendTimeout: const Duration(seconds: 5),
+          receiveTimeout: const Duration(seconds: 5),
+        ),
+      );
+
+      if (response.data['cancelled'] == true) {
+        return false;
+      }
+
+      return response.statusCode == 200;
+    } on DioException catch (_) {
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Clear cached rates (useful for testing or manual refresh)
+  static void clearCache() {
+    _cachedRates = null;
+    _lastFetch = null;
+  }
+
+  /// Force refresh rates (ignores cache)
+  static Future<Map<String, double>> refreshRates() async {
+    clearCache();
+    return await _fetchExchangeRates();
   }
 }

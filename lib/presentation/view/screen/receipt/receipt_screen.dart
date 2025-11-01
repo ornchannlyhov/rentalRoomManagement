@@ -402,6 +402,7 @@ class _ReceiptAppBar extends StatelessWidget implements PreferredSizeWidget {
         isLight ? theme.colorScheme.primary : theme.appBarTheme.backgroundColor;
 
     return AppBar(
+      automaticallyImplyLeading: false,
       title: Text(
         l10n.receiptTitle,
         style: TextStyle(

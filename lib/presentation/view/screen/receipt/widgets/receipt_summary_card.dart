@@ -46,6 +46,19 @@ class ReceiptSummaryCard extends StatelessWidget {
     }).toList();
   }
 
+  // FIXED: First filter by building, THEN filter by current month
+  List<Receipt> _getFilteredReceipts(List<Receipt> allReceipts) {
+    // Step 1: Filter by building if selected
+    List<Receipt> buildingFiltered = selectedBuildingId != null
+        ? allReceipts
+            .where((r) => r.room?.building?.id == selectedBuildingId)
+            .toList()
+        : allReceipts;
+
+    // Step 2: Filter by current month
+    return _filterReceiptsForCurrentMonth(buildingFiltered);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -54,13 +67,8 @@ class ReceiptSummaryCard extends StatelessWidget {
     final currentMonth = DateTime.now().month;
     final thisMonth = getKhmerMonth(currentMonth);
 
-    final currentMonthReceipts = _filterReceiptsForCurrentMonth(receipts);
-
-    final filteredReceipts = selectedBuildingId != null
-        ? currentMonthReceipts
-            .where((r) => r.room?.building?.id == selectedBuildingId)
-            .toList()
-        : currentMonthReceipts;
+    // Use the new filtering method
+    final filteredReceipts = _getFilteredReceipts(receipts);
 
     final totalRooms = selectedBuildingId != null
         ? _countRoomsInBuilding(
@@ -118,7 +126,7 @@ class ReceiptSummaryCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${l10n.month} $thisMonth', // Localized "Month"
+                          '${l10n.month} $thisMonth',
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -135,7 +143,7 @@ class ReceiptSummaryCard extends StatelessWidget {
                       color: colorScheme.primary,
                       size: 24,
                     ),
-                    tooltip: l10n.detailedAnalysis, // Localized tooltip
+                    tooltip: l10n.detailedAnalysis,
                     style: IconButton.styleFrom(
                       backgroundColor: colorScheme.primary.withOpacity(0.1),
                       padding: const EdgeInsets.all(4),
@@ -220,8 +228,8 @@ class ReceiptSummaryCard extends StatelessWidget {
                                 child: CircularProgressIndicator(
                                   value: progress.clamp(0.0, 1.0),
                                   strokeWidth: 3,
-                                  backgroundColor:
-                                      theme.colorScheme.outline.withOpacity(0.1),
+                                  backgroundColor: theme.colorScheme.outline
+                                      .withOpacity(0.1),
                                   valueColor: AlwaysStoppedAnimation<Color>(
                                     colorScheme.primary,
                                   ),
@@ -240,7 +248,7 @@ class ReceiptSummaryCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            l10n.receiptsCount(receiptCount), // Localized plural
+                            l10n.receiptsCount(receiptCount),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
                               fontWeight: FontWeight.w500,

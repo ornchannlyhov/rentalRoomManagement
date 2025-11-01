@@ -208,17 +208,48 @@ class ReceiptRepository {
     if (_pendingChanges.isEmpty) return;
 
     final successfulChanges = <int>[];
+    final failedChanges = <int>[];
+
     for (int i = 0; i < _pendingChanges.length; i++) {
       final change = _pendingChanges[i];
+      final retryCount = change['retryCount'] ?? 0;
+
+      // Max 5 retries for failed changes
+      if (retryCount >= 5) {
+        failedChanges.add(i);
+        if (kDebugMode) {
+          print(
+              'Receipt pending change exceeded retry limit: ${change['type']} ${change['endpoint']}');
+        }
+        continue;
+      }
+
       final success = await _syncHelper.applyPendingChange(change);
-      if (success) successfulChanges.add(i);
+
+      if (success) {
+        successfulChanges.add(i);
+        if (kDebugMode) {
+          print(
+              'Successfully synced receipt pending change: ${change['type']} ${change['endpoint']}');
+        }
+      } else {
+        // Increment retry count
+        _pendingChanges[i]['retryCount'] = retryCount + 1;
+        if (kDebugMode) {
+          print(
+              'Failed to sync receipt pending change (retry ${retryCount + 1}/5): ${change['type']} ${change['endpoint']}');
+        }
+      }
     }
 
-    for (int i = successfulChanges.length - 1; i >= 0; i--) {
-      _pendingChanges.removeAt(successfulChanges[i]);
+    // Remove successful and permanently failed changes (reverse order)
+    final toRemove = [...successfulChanges, ...failedChanges]
+      ..sort((a, b) => b.compareTo(a));
+    for (final index in toRemove) {
+      _pendingChanges.removeAt(index);
     }
 
-    if (successfulChanges.isNotEmpty) {
+    if (successfulChanges.isNotEmpty || failedChanges.isNotEmpty) {
       await _apiHelper.storage.write(
         key: pendingChangesKey,
         value: jsonEncode(_pendingChanges),
@@ -231,12 +262,50 @@ class ReceiptRepository {
     Map<String, dynamic> data,
     String endpoint,
   ) async {
+    // Check for duplicate pending changes
+    final isDuplicate = _pendingChanges.any((change) {
+      if (change['type'] != type || change['endpoint'] != endpoint) {
+        return false;
+      }
+
+      // For creates with localId, check if localId matches
+      if (type == 'create' && data['localId'] != null) {
+        return change['data']['localId'] == data['localId'];
+      }
+
+      // For updates/deletes, check if id matches
+      if (data['id'] != null) {
+        return change['data']['id'] == data['id'];
+      }
+
+      // For receipts, also check by roomId and date combination
+      if (data['roomId'] != null && data['date'] != null) {
+        return change['data']['roomId'] == data['roomId'] &&
+            change['data']['date'] == data['date'];
+      }
+
+      // Fallback: compare full data
+      return jsonEncode(change['data']) == jsonEncode(data);
+    });
+
+    if (isDuplicate) {
+      if (kDebugMode) {
+        print('Skipping duplicate receipt pending change: $type $endpoint');
+      }
+      return;
+    }
+
     _pendingChanges.add({
       'type': type,
       'data': data,
       'endpoint': endpoint,
       'timestamp': DateTime.now().toIso8601String(),
+      'retryCount': 0,
     });
+
+    if (kDebugMode) {
+      print('Added receipt pending change: $type $endpoint');
+    }
   }
 
   Future<List<Map<String, dynamic>>> _fetchCurrentMonthUsage() async {
@@ -388,69 +457,37 @@ class ReceiptRepository {
       'serviceIds': jsonEncode(serviceIds),
     };
 
-    bool syncedOnline = false;
-    Receipt? createdReceipt;
+    await _syncHelper.create<Receipt>(
+      endpoint: '/receipts',
+      data: requestData,
+      fromJson: (json) {
+        final dto = ReceiptDto.fromJson(json);
+        final receipt = dto.toReceipt();
+        receipt.room = newReceipt.room;
+        return receipt;
+      },
+      addToCache: (receipt) async {
+        final existingIndex = _receiptCache.indexWhere((r) =>
+            r.room?.id == receipt.room?.id &&
+            r.date.year == receipt.date.year &&
+            r.date.month == receipt.date.month);
 
-    if (await _apiHelper.hasNetwork()) {
-      final token = await _apiHelper.storage.read(key: 'auth_token');
-      if (token != null && newReceipt.room?.id != null) {
-        try {
-          Response response;
-          if (receiptImage != null) {
-            final formData = FormData.fromMap({
-              ...requestData,
-              'receiptImage': MultipartFile.fromBytes(
-                receiptImage,
-                filename: 'receipt_${newReceipt.id}.png',
-              ),
-            });
-
-            response = await _apiHelper.dio.post(
-              '${_apiHelper.baseUrl}/receipts',
-              data: formData,
-              options: Options(
-                headers: {'Authorization': 'Bearer $token'},
-                contentType: 'multipart/form-data',
-              ),
-              cancelToken: _apiHelper.cancelToken,
-            );
-          } else {
-            response = await _apiHelper.dio.post(
-              '${_apiHelper.baseUrl}/receipts',
-              data: requestData,
-              options: Options(headers: {'Authorization': 'Bearer $token'}),
-              cancelToken: _apiHelper.cancelToken,
-            );
-          }
-
-          if (response.data['cancelled'] != true &&
-              response.statusCode == 201 &&
-              response.data['success'] == true) {
-            final dto = ReceiptDto.fromJson(response.data['data']);
-            createdReceipt = dto.toReceipt();
-            createdReceipt.room = newReceipt.room;
-            syncedOnline = true;
-          }
-        } catch (_) {}
-      }
-    }
-
-    createdReceipt ??= newReceipt;
-
-    final existingIndex = _receiptCache.indexWhere((receipt) =>
-        receipt.room?.id == newReceipt.room?.id &&
-        receipt.date.year == newReceipt.date.year &&
-        receipt.date.month == newReceipt.date.month);
-
-    if (existingIndex != -1) {
-      _receiptCache[existingIndex] = createdReceipt;
-    } else {
-      _receiptCache.add(createdReceipt);
-    }
-
-    if (!syncedOnline) {
-      await _addPendingChange('create', requestData, '/receipts');
-    }
+        if (existingIndex != -1) {
+          _receiptCache[existingIndex] = receipt;
+        } else {
+          _receiptCache.add(receipt);
+        }
+      },
+      addPendingChange: (type, endpoint, data) => _addPendingChange(
+        type,
+        {
+          ...data,
+          'localId': newReceipt.id
+        }, // Include localId for offline mapping
+        endpoint,
+      ),
+      offlineModel: newReceipt,
+    );
 
     await save();
   }
@@ -489,8 +526,8 @@ class ReceiptRepository {
           throw Exception('Receipt not found: ${updatedReceipt.id}');
         }
       },
-      addPendingChange: (type, data) =>
-          _addPendingChange(type, data, '/receipts/${updatedReceipt.id}'),
+      addPendingChange: (type, endpoint, data) =>
+          _addPendingChange(type, data, endpoint),
     );
 
     await save();
@@ -503,8 +540,8 @@ class ReceiptRepository {
       deleteFromCache: () async {
         _receiptCache.removeWhere((r) => r.id == receiptId);
       },
-      addPendingChange: (type, data) =>
-          _addPendingChange(type, data, '/receipts/$receiptId'),
+      addPendingChange: (type, endpoint, data) =>
+          _addPendingChange(type, data, endpoint),
     );
     await save();
   }
@@ -553,4 +590,9 @@ class ReceiptRepository {
 
   bool hasPendingChanges() => _pendingChanges.isNotEmpty;
   int getPendingChangesCount() => _pendingChanges.length;
+
+  /// Get list of pending changes for debugging/display
+  List<Map<String, dynamic>> getPendingChanges() {
+    return List.unmodifiable(_pendingChanges);
+  }
 }

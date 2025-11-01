@@ -37,7 +37,7 @@ class ReceiptSearchBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       height: isSearching ? 56 : 0,
@@ -125,7 +125,7 @@ class MonthFilterChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final monthNames = _getMonthNames(context);
-    
+
     return Container(
       height: 48,
       margin: const EdgeInsets.only(bottom: 8),
@@ -264,21 +264,16 @@ class _HistoryScreenState extends State<HistoryScreen>
     );
   }
 
-  Future<void> _deleteReceipt(int index, Receipt receipt) async {
-    final confirmed = await _confirmDeleteReceipt(context, receipt);
-
-    if (!confirmed) return;
-
+  Future<void> _deleteReceipt(Receipt receipt) async {
     final provider = context.read<ReceiptProvider>();
-    provider.deleteReceipt(receipt.id);
+    await provider.deleteReceipt(receipt.id);
 
-    // Create localized delete message
-    // final deleteMessage = '${l10n.room} $roomNumber ${l10n.delete.toLowerCase()}';
-
-    GlobalSnackBar.show(
-      context: context,
-      message: 'បានលុបវិក្កយបត្រជោគជ័យ',
-    );
+    if (mounted) {
+      GlobalSnackBar.show(
+        context: context,
+        message: 'បានលុបវិក្កយបត្រជោគជ័យ',
+      );
+    }
   }
 
   Future<bool> _confirmDeleteReceipt(
@@ -406,9 +401,13 @@ class _HistoryScreenState extends State<HistoryScreen>
                   theme,
                   Icons.delete_outline,
                   l10n.delete,
-                  () {
+                  () async {
                     Navigator.pop(context);
-                    _deleteReceipt(index, receipt);
+                    final confirmed =
+                        await _confirmDeleteReceipt(context, receipt);
+                    if (confirmed) {
+                      await _deleteReceipt(receipt);
+                    }
                   },
                   isDestructive: true,
                 ),
@@ -497,22 +496,16 @@ class _HistoryScreenState extends State<HistoryScreen>
   }
 
   Future<void> _handleReceiptDismissed(
-      int index, Receipt receipt, DismissDirection direction) async {
+      Receipt receipt, DismissDirection direction) async {
     final provider = context.read<ReceiptProvider>();
-    final roomNumber = receipt.room?.roomNumber ?? AppLocalizations.of(context)!.noRoom;
+    final roomNumber =
+        receipt.room?.roomNumber ?? AppLocalizations.of(context)!.noRoom;
 
     if (direction == DismissDirection.startToEnd) {
       _togglePaymentStatus(receipt, roomNumber, provider);
     } else if (direction == DismissDirection.endToStart) {
-      // Show confirmation before deleting
-      final confirmed = await _confirmDeleteReceipt(context, receipt);
-
-      if (confirmed) {
-        await _deleteReceipt(index, receipt);
-      } else {
-        // Reset the dismissible if user cancels
-        setState(() {});
-      }
+      // No need to show confirmation here - it's already shown in confirmDismiss
+      await _deleteReceipt(receipt);
     }
   }
 
@@ -528,8 +521,7 @@ class _HistoryScreenState extends State<HistoryScreen>
     final l10n = AppLocalizations.of(context)!;
     GlobalSnackBar.show(
       context: context,
-      message:
-          "${l10n.room} $roomNumber ${_translatePaymentStatus(newStatus)}",
+      message: "${l10n.room} $roomNumber ${_translatePaymentStatus(newStatus)}",
       onRestore: () {
         provider.updateReceipt(receipt.copyWith(paymentStatus: originalStatus));
       },
@@ -546,14 +538,13 @@ class _HistoryScreenState extends State<HistoryScreen>
       direction: DismissDirection.horizontal,
       confirmDismiss: (direction) async {
         if (direction == DismissDirection.endToStart) {
-          // Ask for confirmation before dismissing for delete
+          // Show confirmation for delete
           return await _confirmDeleteReceipt(context, receipt);
         }
         // Allow immediate dismissal for status toggle
         return true;
       },
-      onDismissed: (direction) =>
-          _handleReceiptDismissed(index, receipt, direction),
+      onDismissed: (direction) => _handleReceiptDismissed(receipt, direction),
       child: ReceiptCard(
         receipt: receipt,
         ontap: () => _viewDetail(context, receipt),
@@ -591,7 +582,7 @@ class _HistoryScreenState extends State<HistoryScreen>
 
   Widget _buildDismissEndBackground(ThemeData theme) {
     final l10n = AppLocalizations.of(context)!;
-    
+
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.error,

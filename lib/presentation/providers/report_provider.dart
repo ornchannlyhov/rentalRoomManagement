@@ -36,46 +36,6 @@ class ReportProvider with ChangeNotifier {
     }
   }
 
-  Future<void> createReport(Report report) async {
-    _reportsState = AsyncValue.loading(_reportsState.bestData);
-    notifyListeners();
-
-    try {
-      await _reportRepository.createReport(report);
-
-      if (_repositoryManager != null) {
-        await _repositoryManager.hydrateAllRelationships();
-        await _repositoryManager.saveAll();
-      }
-
-      await load();
-    } catch (e) {
-      _reportsState = AsyncValue.error(e, _reportsState.bestData);
-      notifyListeners();
-      rethrow;
-    }
-  }
-
-  Future<void> updateReport(Report report) async {
-    _reportsState = AsyncValue.loading(_reportsState.bestData);
-    notifyListeners();
-
-    try {
-      await _reportRepository.updateReport(report);
-
-      if (_repositoryManager != null) {
-        await _repositoryManager.hydrateAllRelationships();
-        await _repositoryManager.saveAll();
-      }
-
-      await load();
-    } catch (e) {
-      _reportsState = AsyncValue.error(e, _reportsState.bestData);
-      notifyListeners();
-      rethrow;
-    }
-  }
-
   Future<void> updateReportStatus(String reportId, String status) async {
     _reportsState = AsyncValue.loading(_reportsState.bestData);
     notifyListeners();
