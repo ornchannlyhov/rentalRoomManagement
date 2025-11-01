@@ -182,7 +182,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   : 2,
                         ),
                         child: Text(
-                          _currentPage == 0 ? 'Continue' : 'Next',
+                          _currentPage == 0
+                              ? localizations.continueButton
+                              : localizations.nextButton,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -283,6 +285,8 @@ class LanguageSelectionPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -302,9 +306,9 @@ class LanguageSelectionPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Choose Your Language',
-            style: TextStyle(
+          Text(
+            localizations.chooseLanguageTitle,
+            style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1F2937),
@@ -313,7 +317,7 @@ class LanguageSelectionPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Select your preferred language',
+            localizations.chooseLanguageSubtitle,
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey.shade600,

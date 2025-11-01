@@ -1036,4 +1036,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get passwordsDoNotMatch => '密码不匹配';
+
+  @override
+  String get chooseLanguageTitle => '选择您的语言';
+
+  @override
+  String get chooseLanguageSubtitle => '选择您的首选语言';
+
+  @override
+  String get continueButton => '继续';
+
+  @override
+  String get nextButton => '下一步';
 }

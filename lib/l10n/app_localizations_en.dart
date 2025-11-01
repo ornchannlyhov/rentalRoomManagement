@@ -1042,4 +1042,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get passwordsDoNotMatch => 'Passwords do not match';
+
+  @override
+  String get chooseLanguageTitle => 'Choose Your Language';
+
+  @override
+  String get chooseLanguageSubtitle => 'Select your preferred language';
+
+  @override
+  String get continueButton => 'Continue';
+
+  @override
+  String get nextButton => 'Next';
 }

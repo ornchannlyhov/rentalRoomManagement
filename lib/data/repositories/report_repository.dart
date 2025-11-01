@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:joul_v2/data/models/enum/report_priority.dart';
 import 'package:joul_v2/data/models/enum/report_status.dart';
@@ -118,20 +117,48 @@ class ReportRepository {
     if (_pendingChanges.isEmpty) return;
 
     final successfulChanges = <int>[];
+    final failedChanges = <int>[];
 
     for (int i = 0; i < _pendingChanges.length; i++) {
       final change = _pendingChanges[i];
+      final retryCount = change['retryCount'] ?? 0;
+
+      // Max 5 retries for failed changes
+      if (retryCount >= 5) {
+        failedChanges.add(i);
+        if (kDebugMode) {
+          print(
+              'Report pending change exceeded retry limit: ${change['type']} ${change['endpoint']}');
+        }
+        continue;
+      }
+
       final success = await _syncHelper.applyPendingChange(change);
+
       if (success) {
         successfulChanges.add(i);
+        if (kDebugMode) {
+          print(
+              'Successfully synced report pending change: ${change['type']} ${change['endpoint']}');
+        }
+      } else {
+        // Increment retry count
+        _pendingChanges[i]['retryCount'] = retryCount + 1;
+        if (kDebugMode) {
+          print(
+              'Failed to sync report pending change (retry ${retryCount + 1}/5): ${change['type']} ${change['endpoint']}');
+        }
       }
     }
 
-    for (int i = successfulChanges.length - 1; i >= 0; i--) {
-      _pendingChanges.removeAt(successfulChanges[i]);
+    // Remove successful and permanently failed changes (reverse order)
+    final toRemove = [...successfulChanges, ...failedChanges]
+      ..sort((a, b) => b.compareTo(a));
+    for (final index in toRemove) {
+      _pendingChanges.removeAt(index);
     }
 
-    if (successfulChanges.isNotEmpty) {
+    if (successfulChanges.isNotEmpty || failedChanges.isNotEmpty) {
       await _apiHelper.storage.write(
         key: pendingChangesKey,
         value: jsonEncode(_pendingChanges),
@@ -144,135 +171,75 @@ class ReportRepository {
     Map<String, dynamic> data,
     String endpoint,
   ) async {
+    // Check for duplicate pending changes
+    final isDuplicate = _pendingChanges.any((change) {
+      if (change['type'] != type || change['endpoint'] != endpoint) {
+        return false;
+      }
+
+      // For updates/deletes, check if id matches
+      if (data['id'] != null) {
+        return change['data']['id'] == data['id'];
+      }
+
+      // For status updates, check endpoint (already has id in it)
+      if (type == 'updateStatus') {
+        return true; // Endpoint already contains the id
+      }
+
+      // Fallback: compare full data
+      return jsonEncode(change['data']) == jsonEncode(data);
+    });
+
+    if (isDuplicate) {
+      if (kDebugMode) {
+        print('Skipping duplicate report pending change: $type $endpoint');
+      }
+      return;
+    }
+
     _pendingChanges.add({
       'type': type,
       'data': data,
       'endpoint': endpoint,
       'timestamp': DateTime.now().toIso8601String(),
+      'retryCount': 0,
     });
+
+    if (kDebugMode) {
+      print('Added report pending change: $type $endpoint');
+    }
   }
 
-  Future<Report> createReport(Report newReport) async {
-    if (newReport.tenant == null) {
-      throw Exception('Report must have a valid tenant');
-    }
-
-    final requestData = {
-      'id': newReport.id,
-      'tenantId': newReport.tenant!.id,
-      if (newReport.room?.id != null) 'roomId': newReport.room!.id,
-      'problemDescription': newReport.problemDescription,
-      'status': newReport.status.toApiString(),
-      'priority': newReport.priority.toApiString(),
-      'language': newReport.language.toApiString(),
-      if (newReport.notes != null) 'notes': newReport.notes,
-    };
-
-    final result = await _syncHelper.create<Report>(
-      endpoint: '/reports',
-      data: requestData,
-      fromJson: (json) => ReportDto.fromJson(json).toReport(),
-      addToCache: (report) async {
-        report.tenant = newReport.tenant;
-        report.room = newReport.room;
-        _reportCache.add(report);
-      },
-      addPendingChange: (type, data) => _addPendingChange(
-        type,
-        data,
-        '/reports',
-      ),
-      offlineModel: newReport,
-    );
-
-    if (!result.success) {
-      throw Exception('Failed to create report');
-    }
-
-    await save();
-    return result.data ?? newReport;
-  }
-
-  Future<Report> updateReport(Report updatedReport) async {
-    if (updatedReport.tenant == null) {
-      throw Exception('Report must have a valid tenant');
-    }
-
-    final requestData = {
-      'problemDescription': updatedReport.problemDescription,
-      'status': updatedReport.status.toApiString(),
-      'priority': updatedReport.priority.toApiString(),
-      if (updatedReport.notes != null) 'notes': updatedReport.notes,
-      if (updatedReport.room?.id != null) 'roomId': updatedReport.room!.id,
-    };
-
-    await _syncHelper.update(
-      endpoint: '/reports/${updatedReport.id}',
-      data: requestData,
-      updateCache: () async {
-        final index = _reportCache.indexWhere((r) => r.id == updatedReport.id);
-        if (index != -1) {
-          _reportCache[index] = updatedReport;
-        } else {
-          throw Exception('Report not found: ${updatedReport.id}');
-        }
-      },
-      addPendingChange: (type, data) => _addPendingChange(
-        type,
-        data,
-        '/reports/${updatedReport.id}',
-      ),
-    );
-
-    await save();
-    return updatedReport;
-  }
-
+  // LANDLORD FUNCTION: Update report status only
   Future<void> updateReportStatus(String reportId, String status) async {
     final endpoint = '/reports/$reportId/status';
-    final data = {'status': status};
+    final requestData = {'status': status};
 
-    bool syncedOnline = false;
-
-    if (await _apiHelper.hasNetwork()) {
-      final token = await _apiHelper.storage.read(key: 'auth_token');
-      if (token != null) {
-        try {
-          final response = await _apiHelper.dio.patch(
-            '${_apiHelper.baseUrl}$endpoint',
-            data: data,
-            options: Options(headers: {'Authorization': 'Bearer $token'}),
-            cancelToken: _apiHelper.cancelToken,
+    await _syncHelper.update(
+      endpoint: endpoint,
+      data: requestData,
+      updateCache: () async {
+        final index = _reportCache.indexWhere((r) => r.id == reportId);
+        if (index != -1) {
+          _reportCache[index] = _reportCache[index].copyWith(
+            status: ReportStatus.fromApiString(status),
           );
-
-          if (response.data['cancelled'] != true &&
-              response.statusCode == 200) {
-            syncedOnline = true;
-          }
-        } catch (e) {
-          // Fall through to offline handling
+        } else {
+          throw Exception('Report not found: $reportId');
         }
-      }
-    }
-
-    // Update local cache
-    final index = _reportCache.indexWhere((r) => r.id == reportId);
-    if (index != -1) {
-      _reportCache[index] = _reportCache[index].copyWith(
-        status: ReportStatus.fromApiString(status),
-      );
-    } else {
-      throw Exception('Report not found: $reportId');
-    }
-
-    // Add to pending changes if not synced online
-    if (!syncedOnline) {
-      await _addPendingChange('updateStatus', data, endpoint);
-    }
+      },
+      addPendingChange: (type, endpoint, data) => _addPendingChange(
+        'updateStatus',
+        data,
+        endpoint,
+      ),
+    );
 
     await save();
   }
 
+  // LANDLORD FUNCTION: Delete report
   Future<void> deleteReport(String reportId) async {
     await _syncHelper.delete(
       endpoint: '/reports/$reportId',
@@ -280,16 +247,17 @@ class ReportRepository {
       deleteFromCache: () async {
         _reportCache.removeWhere((r) => r.id == reportId);
       },
-      addPendingChange: (type, data) => _addPendingChange(
+      addPendingChange: (type, endpoint, data) => _addPendingChange(
         type,
         data,
-        '/reports/$reportId',
+        endpoint,
       ),
     );
 
     await save();
   }
 
+  // READ-ONLY FUNCTIONS FOR LANDLORD
   List<Report> getAllReports() {
     return List.unmodifiable(_reportCache);
   }
@@ -343,4 +311,9 @@ class ReportRepository {
 
   bool hasPendingChanges() => _pendingChanges.isNotEmpty;
   int getPendingChangesCount() => _pendingChanges.length;
+
+  /// Get list of pending changes for debugging/display
+  List<Map<String, dynamic>> getPendingChanges() {
+    return List.unmodifiable(_pendingChanges);
+  }
 }

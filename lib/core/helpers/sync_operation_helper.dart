@@ -15,38 +15,35 @@ class SyncResult<T> {
 }
 
 /// Helper class for handling offline/online CRUD operations
-/// Automatically handles:
-/// - Network availability checks
-/// - Token authentication
-/// - Pending changes queue
-/// - Local cache updates
 class SyncOperationHelper {
   final ApiHelper _apiHelper = ApiHelper.instance;
 
   /// Execute a CREATE operation with offline support
-  ///
-  /// [endpoint] - API endpoint (e.g., '/buildings')
-  /// [data] - Request body data
-  /// [fromJson] - Function to convert response JSON to model
-  /// [addToCache] - Function to add item to local cache
-  /// [addPendingChange] - Function to queue change for later sync
   Future<SyncResult<T>> create<T>({
     required String endpoint,
     required Map<String, dynamic> data,
     required T Function(Map<String, dynamic>) fromJson,
     required Future<void> Function(T) addToCache,
-    required Future<void> Function(String type, Map<String, dynamic> data)
-        addPendingChange,
+    required Future<void> Function(
+      String type,
+      String endpoint,
+      Map<String, dynamic> data,
+    ) addPendingChange,
     T? offlineModel,
   }) async {
     if (await _apiHelper.hasNetwork()) {
       final token = await _apiHelper.storage.read(key: 'auth_token');
       if (token != null) {
         try {
+          // Add timeout to prevent hanging requests
           final response = await _apiHelper.dio.post(
             '${_apiHelper.baseUrl}$endpoint',
             data: data,
-            options: Options(headers: {'Authorization': 'Bearer $token'}),
+            options: Options(
+              headers: {'Authorization': 'Bearer $token'},
+              sendTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 10),
+            ),
             cancelToken: _apiHelper.cancelToken,
           );
 
@@ -60,33 +57,48 @@ class SyncOperationHelper {
             return SyncResult(
                 success: true, data: createdItem, wasOnline: true);
           }
+          
+          // Non-201 response - treat as failure
+          throw Exception('Unexpected status code: ${response.statusCode}');
+        } on DioException catch (e) {
+          // Only queue if it's a definite network failure
+          // Don't queue on 4xx/5xx errors (server processed it)
+          if (e.type != DioExceptionType.badResponse) {
+            // Network timeout/connection error - queue for retry
+            if (offlineModel != null) {
+              await addToCache(offlineModel);
+            }
+            await addPendingChange('create', endpoint, data);
+            return SyncResult(success: true, data: offlineModel, wasOnline: false);
+          }
+          
+          // Server error - don't queue, propagate error
+          rethrow;
         } catch (e) {
-          // Fall through to offline handling
+          // Other errors - don't queue automatically
+          rethrow;
         }
       }
     }
 
-    // Offline creation
+    // Offline creation (no network available)
     if (offlineModel != null) {
       await addToCache(offlineModel);
     }
-
-    await addPendingChange('create', data);
+    await addPendingChange('create', endpoint, data);
     return SyncResult(success: true, data: offlineModel, wasOnline: false);
   }
 
   /// Execute an UPDATE operation with offline support
-  ///
-  /// [endpoint] - API endpoint (e.g., '/buildings/123')
-  /// [data] - Request body data
-  /// [updateCache] - Function to update item in local cache
-  /// [addPendingChange] - Function to queue change for later sync
   Future<SyncResult<void>> update({
     required String endpoint,
     required Map<String, dynamic> data,
     required Future<void> Function() updateCache,
-    required Future<void> Function(String type, Map<String, dynamic> data)
-        addPendingChange,
+    required Future<void> Function(
+      String type,
+      String endpoint,
+      Map<String, dynamic> data,
+    ) addPendingChange,
   }) async {
     bool syncedOnline = false;
 
@@ -97,43 +109,53 @@ class SyncOperationHelper {
           final response = await _apiHelper.dio.put(
             '${_apiHelper.baseUrl}$endpoint',
             data: data,
-            options: Options(headers: {'Authorization': 'Bearer $token'}),
+            options: Options(
+              headers: {'Authorization': 'Bearer $token'},
+              sendTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 10),
+            ),
             cancelToken: _apiHelper.cancelToken,
           );
 
           if (response.data['cancelled'] != true &&
               response.statusCode == 200) {
             syncedOnline = true;
+          } else if (response.statusCode != 200) {
+            throw Exception('Unexpected status code: ${response.statusCode}');
           }
+        } on DioException catch (e) {
+          // Only queue on network failures, not server errors
+          if (e.type == DioExceptionType.badResponse) {
+            rethrow;
+          }
+          // Network error - will queue below
         } catch (e) {
-          // Fall through to offline handling
+          rethrow;
         }
       }
     }
 
-    // Update local cache
+    // Update local cache regardless
     await updateCache();
 
     // Add to pending changes if not synced online
     if (!syncedOnline) {
-      await addPendingChange('update', data);
+      await addPendingChange('update', endpoint, data);
     }
 
     return SyncResult(success: true, wasOnline: syncedOnline);
   }
 
   /// Execute a DELETE operation with offline support
-  ///
-  /// [endpoint] - API endpoint (e.g., '/buildings/123')
-  /// [id] - ID of the item to delete
-  /// [deleteFromCache] - Function to delete item from local cache
-  /// [addPendingChange] - Function to queue change for later sync
   Future<SyncResult<void>> delete({
     required String endpoint,
     required String id,
     required Future<void> Function() deleteFromCache,
-    required Future<void> Function(String type, Map<String, dynamic> data)
-        addPendingChange,
+    required Future<void> Function(
+      String type,
+      String endpoint,
+      Map<String, dynamic> data,
+    ) addPendingChange,
   }) async {
     bool syncedOnline = false;
 
@@ -143,35 +165,44 @@ class SyncOperationHelper {
         try {
           final response = await _apiHelper.dio.delete(
             '${_apiHelper.baseUrl}$endpoint',
-            options: Options(headers: {'Authorization': 'Bearer $token'}),
+            options: Options(
+              headers: {'Authorization': 'Bearer $token'},
+              sendTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 10),
+            ),
             cancelToken: _apiHelper.cancelToken,
           );
 
           if (response.data['cancelled'] != true &&
               response.statusCode == 200) {
             syncedOnline = true;
+          } else if (response.statusCode != 200) {
+            throw Exception('Unexpected status code: ${response.statusCode}');
           }
+        } on DioException catch (e) {
+          // Only queue on network failures, not server errors
+          if (e.type == DioExceptionType.badResponse) {
+            rethrow;
+          }
+          // Network error - will queue below
         } catch (e) {
-          // Fall through to offline handling
+          rethrow;
         }
       }
     }
 
-    // Delete from local cache
+    // Delete from local cache regardless
     await deleteFromCache();
 
     // Add to pending changes if not synced online
     if (!syncedOnline) {
-      await addPendingChange('delete', {'id': id});
+      await addPendingChange('delete', endpoint, {'id': id});
     }
 
     return SyncResult(success: true, wasOnline: syncedOnline);
   }
 
   /// Fetch data from API
-  ///
-  /// [endpoint] - API endpoint (e.g., '/buildings')
-  /// [fromJsonList] - Function to convert response JSON array to model list
   Future<SyncResult<List<T>>> fetch<T>({
     required String endpoint,
     required List<T> Function(List<dynamic>) fromJsonList,
@@ -188,7 +219,11 @@ class SyncOperationHelper {
     try {
       final response = await _apiHelper.dio.get(
         '${_apiHelper.baseUrl}$endpoint',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
         cancelToken: _apiHelper.cancelToken,
       );
 
@@ -208,8 +243,6 @@ class SyncOperationHelper {
   }
 
   /// Apply a pending change to the API
-  ///
-  /// [change] - Pending change object with type and data
   Future<bool> applyPendingChange(Map<String, dynamic> change) async {
     final token = await _apiHelper.storage.read(key: 'auth_token');
     if (token == null) return false;
@@ -221,31 +254,68 @@ class SyncOperationHelper {
     if (endpoint == null) return false;
 
     try {
+      Response response;
+      
       switch (type) {
         case 'create':
-          await _apiHelper.dio.post(
+          response = await _apiHelper.dio.post(
             '${_apiHelper.baseUrl}$endpoint',
             data: data,
-            options: Options(headers: {'Authorization': 'Bearer $token'}),
+            options: Options(
+              headers: {'Authorization': 'Bearer $token'},
+              sendTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 10),
+              // Important: Handle 409 Conflict for duplicates
+              validateStatus: (status) => status! < 500,
+            ),
           );
-          break;
+          
+          // 201 = success, 409 = already exists (treat as success)
+          return response.statusCode == 201 || response.statusCode == 409;
+          
         case 'update':
-          await _apiHelper.dio.put(
+          response = await _apiHelper.dio.put(
             '${_apiHelper.baseUrl}$endpoint',
             data: data,
-            options: Options(headers: {'Authorization': 'Bearer $token'}),
+            options: Options(
+              headers: {'Authorization': 'Bearer $token'},
+              sendTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 10),
+              validateStatus: (status) => status! < 500,
+            ),
           );
-          break;
+          
+          // 200 = success, 404 = already deleted (treat as success)
+          return response.statusCode == 200 || response.statusCode == 404;
+          
         case 'delete':
-          await _apiHelper.dio.delete(
+          response = await _apiHelper.dio.delete(
             '${_apiHelper.baseUrl}$endpoint',
-            options: Options(headers: {'Authorization': 'Bearer $token'}),
+            options: Options(
+              headers: {'Authorization': 'Bearer $token'},
+              sendTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 10),
+              validateStatus: (status) => status! < 500,
+            ),
           );
-          break;
+          
+          // 200 = success, 404 = already deleted (treat as success)
+          return response.statusCode == 200 || response.statusCode == 404;
+          
         default:
           return false;
       }
-      return true;
+    } on DioException catch (e) {
+      // Only fail on network errors, not 4xx/5xx
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        return false;
+      }
+      
+      // Server errors - consider the operation failed
+      return false;
     } catch (e) {
       return false;
     }

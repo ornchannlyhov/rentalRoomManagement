@@ -501,5 +501,9 @@
   "service": "សេវាកម្ម",
   "emailValidationInvalid": "សូមបញ្ចូលអ៊ីមែលដែលត្រឹមត្រូវ",
   "passwordValidationLength": "ពាក្យសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ 6 តួអក្សរ",
-  "passwordsDoNotMatch": "ពាក្យសម្ងាត់មិនតរងគ្នាទេ"
+  "passwordsDoNotMatch": "ពាក្យសម្ងាត់មិនតរងគ្នាទេ",
+  "chooseLanguageTitle": "ជ្រើសរើសភាសារបស់អ្នក",
+  "chooseLanguageSubtitle": "ជ្រើសរើសភាសាដែលអ្នកចូលចិត្ត",
+  "continueButton": "បន្ត",
+  "nextButton": "បន្ទាប់"
 }
