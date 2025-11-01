@@ -10,8 +10,8 @@ import 'package:joul_v2/presentation/view/screen/building/widgets/building_card.
 import 'package:joul_v2/presentation/view/screen/building/widgets/building_detail.dart';
 import 'package:joul_v2/presentation/view/screen/building/widgets/building_form.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
+import 'widgets/skeleton_building.dart';
 
-/// Search bar widget for filtering buildings
 class BuildingSearchBar extends StatelessWidget {
   const BuildingSearchBar({
     super.key,
@@ -102,6 +102,7 @@ class _BuildingScreenState extends State<BuildingScreen>
 
   String _searchQuery = '';
   bool _isSearching = false;
+  bool _isRefreshing = false;
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -143,7 +144,27 @@ class _BuildingScreenState extends State<BuildingScreen>
       serviceProvider.load(),
     ]);
 
-    if (mounted) _animationController.forward();
+    if (mounted) {
+      _animationController.forward();
+    }
+  }
+
+  Future<void> _handleRefresh() async {
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    // Add minimum delay to show skeleton
+    await Future.wait([
+      _loadData(),
+      Future.delayed(const Duration(milliseconds: 500)),
+    ]);
+
+    if (mounted) {
+      setState(() {
+        _isRefreshing = false;
+      });
+    }
   }
 
   List<Building> _filterBuildings(List<Building> buildings) {
@@ -327,7 +348,8 @@ class _BuildingScreenState extends State<BuildingScreen>
               Container(
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                  color: theme.colorScheme.surfaceContainerHighest
+                      .withOpacity(0.3),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -364,25 +386,11 @@ class _BuildingScreenState extends State<BuildingScreen>
   }
 
   Widget _buildLoadingState(ThemeData theme) {
-    final l10n = AppLocalizations.of(context)!;
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(
-              theme.colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            l10n.loading,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      itemCount: 5,
+      separatorBuilder: (context, index) => const SizedBox(height: 2),
+      itemBuilder: (context, index) => const BuildingCardSkeleton(),
     );
   }
 
@@ -437,10 +445,16 @@ class _BuildingScreenState extends State<BuildingScreen>
 
   Widget _buildBuildingsList(ThemeData theme, List<Building> buildings) {
     final l10n = AppLocalizations.of(context)!;
+
+    // If refreshing, show skeleton INSTEAD of the list
+    if (_isRefreshing) {
+      return _buildLoadingState(theme);
+    }
+
     return FadeTransition(
       opacity: _fadeAnimation,
       child: RefreshIndicator(
-        onRefresh: _loadData,
+        onRefresh: _handleRefresh,
         backgroundColor: theme.colorScheme.surfaceContainerHighest,
         color: theme.colorScheme.primary,
         child: ListView.separated(

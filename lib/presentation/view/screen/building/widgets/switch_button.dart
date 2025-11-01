@@ -103,6 +103,7 @@ class _ScreenSwitchButtonState extends State<ScreenSwitchButton> {
         children: [
           _buildSwitchOption(context, ScreenType.room, l10n.rooms),
           _buildSwitchOption(context, ScreenType.service, l10n.services),
+          _buildSwitchOption(context, ScreenType.report, l10n.reports),
         ],
       ),
     );

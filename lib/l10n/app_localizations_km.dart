@@ -36,6 +36,9 @@ class AppLocalizationsKm extends AppLocalizations {
   String get welcomeBack => 'សូមស្វាគមន័យការត្រឡប់មកវិញ';
 
   @override
+  String get report => 'របាយការណ៍';
+
+  @override
   String get signInPrompt => 'ចូលទៅក្នុងគណនីរបស់អ្នក';
 
   @override
@@ -45,6 +48,75 @@ class AppLocalizationsKm extends AppLocalizations {
   String deleteTenantConfirmMsg(String tenant) {
     return 'តើអ្នកពិតជាចង់លុបអ្នកជួល $tenant មែនទេ?';
   }
+
+  @override
+  String get reports => 'របាយការណ៍';
+
+  @override
+  String get addReport => 'បន្ថែមរបាយការណ៍';
+
+  @override
+  String get editReport => 'កែសម្រួលរបាយការណ៍';
+
+  @override
+  String get deleteReport => 'លុបរបាយការណ៍';
+
+  @override
+  String get noReports => 'គ្មានរបាយការណ៍';
+
+  @override
+  String get reportAddedSuccess => 'បានបន្ថែមរបាយការណ៍ដោយជោគជ័យ';
+
+  @override
+  String get reportUpdatedSuccess => 'បានកែសម្រួលរបាយការណ៍ដោយជោគជ័យ';
+
+  @override
+  String get reportDeletedSuccess => 'បានលុបរបាយការណ៍ដោយជោគជ័យ';
+
+  @override
+  String get deleteReportConfirm => 'តើអ្នកពិតជាចង់លុបរបាយការណ៍នេះមែនទេ?';
+
+  @override
+  String get selectTenant => 'សូមជ្រើសរើសអ្នកជួល';
+
+  @override
+  String get problemDescription => 'ការពិពណ៌នាបញ្ហា';
+
+  @override
+  String get enterProblemDescription => 'សូមបញ្ចូលការពិពណ៌នាបញ្ហា';
+
+  @override
+  String get noTenant => 'គ្មានអ្នកជួល';
+
+  @override
+  String get optional => 'ស្រេចចិត្ត';
+
+  @override
+  String get reportStatusPending => 'កំពុងរងចាំ';
+
+  @override
+  String get reportStatusInProgress => 'កំពុងដំណើរការ';
+
+  @override
+  String get reportStatusResolved => 'បានដោះស្រាយ';
+
+  @override
+  String get reportStatusClosed => 'បានបិទ';
+
+  @override
+  String get reportPriorityLow => 'ទាប';
+
+  @override
+  String get reportPriorityMedium => 'មធ្យម';
+
+  @override
+  String get reportPriorityHigh => 'ខ្ពស់';
+
+  @override
+  String get reportLanguageEnglish => 'អង់គ្លេស';
+
+  @override
+  String get reportLanguageKhmer => 'ខ្មែរ';
 
   @override
   String get editReceipt => 'កែប្រែវិក្កយបត្រ';
@@ -219,7 +291,16 @@ class AppLocalizationsKm extends AppLocalizations {
   String get pendingStatus => 'មិនទាន់បង់ប្រាក់';
 
   @override
+  String get notes => 'កំណត់ចំណាំ';
+
+  @override
+  String get priorityLabel => 'អាទិភាព';
+
+  @override
   String get overdueStatus => 'ហួសកំណត់';
+
+  @override
+  String get status => 'ស្ថានភាព';
 
   @override
   String get delete => 'លុប';

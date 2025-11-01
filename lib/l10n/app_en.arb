@@ -9,6 +9,7 @@
   "moneyTab": "Money",
   "buildingAnalysisTab": "Building",
   "welcomeBack": "Welcome Back",
+  "report": "report",
   "signInPrompt": "Sign in to your account",
   "tenantInformation": "Tenant Information",
   "deleteTenantConfirmMsg": "Are you sure you want to delete tenant {tenant}?",
@@ -18,6 +19,126 @@
         "type": "String"
       }
     }
+  },
+    
+  "report": "Report",
+  "@report": {
+    "description": "Label for a single report"
+  },
+  
+  "reports": "Reports",
+  "@reports": {
+    "description": "Label for multiple reports"
+  },
+  
+  "addReport": "Add Report",
+  "@addReport": {
+    "description": "Button text to add a new report"
+  },
+  
+  "editReport": "Edit Report",
+  "@editReport": {
+    "description": "Button text to edit an existing report"
+  },
+  
+  "deleteReport": "Delete Report",
+  "@deleteReport": {
+    "description": "Button text to delete a report"
+  },
+  
+  "noReports": "No Reports",
+  "@noReports": {
+    "description": "Message shown when there are no reports"
+  },
+  
+  "reportAddedSuccess": "Report added successfully",
+  "@reportAddedSuccess": {
+    "description": "Success message after adding a report"
+  },
+  
+  "reportUpdatedSuccess": "Report updated successfully",
+  "@reportUpdatedSuccess": {
+    "description": "Success message after updating a report"
+  },
+  
+  "reportDeletedSuccess": "Report deleted successfully",
+  "@reportDeletedSuccess": {
+    "description": "Success message after deleting a report"
+  },
+  
+  "deleteReportConfirm": "Are you sure you want to delete this report?",
+  "@deleteReportConfirm": {
+    "description": "Confirmation message before deleting a report"
+  },
+  
+  "selectTenant": "Please select a tenant",
+  "@selectTenant": {
+    "description": "Validation message to select a tenant"
+  },
+  
+  "problemDescription": "Problem Description",
+  "@problemDescription": {
+    "description": "Label for problem description field"
+  },
+  
+  "enterProblemDescription": "Please enter a problem description",
+  "@enterProblemDescription": {
+    "description": "Validation message for problem description field"
+  },
+  
+  "noTenant": "No Tenant",
+  "@noTenant": {
+    "description": "Text shown when report has no tenant assigned"
+  },
+  
+  "optional": "Optional",
+  "@optional": {
+    "description": "Label indicating a field is optional"
+  },
+  
+  "reportStatusPending": "Pending",
+  "@reportStatusPending": {
+    "description": "Report status: Pending"
+  },
+  
+  "reportStatusInProgress": "In Progress",
+  "@reportStatusInProgress": {
+    "description": "Report status: In Progress"
+  },
+  
+  "reportStatusResolved": "Resolved",
+  "@reportStatusResolved": {
+    "description": "Report status: Resolved"
+  },
+  
+  "reportStatusClosed": "Closed",
+  "@reportStatusClosed": {
+    "description": "Report status: Closed"
+  },
+  
+  "reportPriorityLow": "Low",
+  "@reportPriorityLow": {
+    "description": "Report priority: Low"
+  },
+  
+  "reportPriorityMedium": "Medium",
+  "@reportPriorityMedium": {
+    "description": "Report priority: Medium"
+  },
+  
+  "reportPriorityHigh": "High",
+  "@reportPriorityHigh": {
+    "description": "Report priority: High"
+  },
+  
+  "reportLanguageEnglish": "English",
+  "@reportLanguageEnglish": {
+    "description": "Report language: English"
+  },
+  
+  "reportLanguageKhmer": "Khmer",
+  "@reportLanguageKhmer": {
+    "description": "Report language: Khmer"
   },
   "editReceipt": "Edit Receipt",
 "createNewReceipt": "Create New Receipt",
@@ -79,7 +200,10 @@
   "dueDate": "Due Date",
   "paidStatus": "Paid",
 "pendingStatus": "Pending",
+"notes": "Notes",
+  "priorityLabel": "Priority",
 "overdueStatus": "Overdue",
+"status": "status",
 "delete": "Delete",
 "unknownRoom": "Unknown Room",
 "room": "Room",

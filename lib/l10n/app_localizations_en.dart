@@ -36,6 +36,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeBack => 'Welcome Back';
 
   @override
+  String get report => 'Report';
+
+  @override
   String get signInPrompt => 'Sign in to your account';
 
   @override
@@ -45,6 +48,75 @@ class AppLocalizationsEn extends AppLocalizations {
   String deleteTenantConfirmMsg(String tenant) {
     return 'Are you sure you want to delete tenant $tenant?';
   }
+
+  @override
+  String get reports => 'Reports';
+
+  @override
+  String get addReport => 'Add Report';
+
+  @override
+  String get editReport => 'Edit Report';
+
+  @override
+  String get deleteReport => 'Delete Report';
+
+  @override
+  String get noReports => 'No Reports';
+
+  @override
+  String get reportAddedSuccess => 'Report added successfully';
+
+  @override
+  String get reportUpdatedSuccess => 'Report updated successfully';
+
+  @override
+  String get reportDeletedSuccess => 'Report deleted successfully';
+
+  @override
+  String get deleteReportConfirm => 'Are you sure you want to delete this report?';
+
+  @override
+  String get selectTenant => 'Please select a tenant';
+
+  @override
+  String get problemDescription => 'Problem Description';
+
+  @override
+  String get enterProblemDescription => 'Please enter a problem description';
+
+  @override
+  String get noTenant => 'No Tenant';
+
+  @override
+  String get optional => 'Optional';
+
+  @override
+  String get reportStatusPending => 'Pending';
+
+  @override
+  String get reportStatusInProgress => 'In Progress';
+
+  @override
+  String get reportStatusResolved => 'Resolved';
+
+  @override
+  String get reportStatusClosed => 'Closed';
+
+  @override
+  String get reportPriorityLow => 'Low';
+
+  @override
+  String get reportPriorityMedium => 'Medium';
+
+  @override
+  String get reportPriorityHigh => 'High';
+
+  @override
+  String get reportLanguageEnglish => 'English';
+
+  @override
+  String get reportLanguageKhmer => 'Khmer';
 
   @override
   String get editReceipt => 'Edit Receipt';
@@ -219,7 +291,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pendingStatus => 'Pending';
 
   @override
+  String get notes => 'Notes';
+
+  @override
+  String get priorityLabel => 'Priority';
+
+  @override
   String get overdueStatus => 'Overdue';
+
+  @override
+  String get status => 'status';
 
   @override
   String get delete => 'Delete';
