@@ -473,5 +473,9 @@
   "service": "服务费",
   "emailValidationInvalid": "请输入有效的电子邮件",
   "passwordValidationLength": "密码长度至少为 6 个字符",
-  "passwordsDoNotMatch": "密码不匹配"
+  "passwordsDoNotMatch": "密码不匹配",
+  "chooseLanguageTitle": "选择您的语言",
+  "chooseLanguageSubtitle": "选择您的首选语言",
+  "continueButton": "继续",
+  "nextButton": "下一步"
 }

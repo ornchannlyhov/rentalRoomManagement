@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:joul_v2/presentation/providers/building_provider.dart';
-import 'package:joul_v2/l10n/app_localizations.dart'; // Import localizations
+import 'package:joul_v2/l10n/app_localizations.dart'; 
 
 class BuildingFilterDropdown extends StatelessWidget {
   const BuildingFilterDropdown({

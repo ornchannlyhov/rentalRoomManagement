@@ -2,18 +2,19 @@ import 'dart:async';
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiHelper {
   CancelToken _cancelToken = CancelToken();
 
-  /// Public getter for cancel token 
+  /// Public getter for cancel token
   CancelToken get cancelToken => _cancelToken;
 
   void cancelRequests() {
     _cancelToken.cancel('Network connection lost');
-    _cancelToken = CancelToken(); 
+    _cancelToken = CancelToken();
   }
 
   // Singleton instance
@@ -81,16 +82,25 @@ class ApiHelper {
     });
   }
 
-  /// Check for internet access
+  /// Check for internet access (Web-compatible)
   Future<bool> hasNetwork() async {
-    final connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult == ConnectivityResult.none) {
-      return false;
+    // On web, if the page loaded, we have internet - just return true
+    if (kIsWeb) {
+      return true;
     }
+
+    // On mobile/desktop, do proper connectivity check
     try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        return false;
+      }
+
       final result = await InternetAddress.lookup('google.com');
       return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
     } on SocketException catch (_) {
+      return false;
+    } catch (_) {
       return false;
     }
   }

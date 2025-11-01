@@ -66,6 +66,31 @@ class ReceiptList extends StatelessWidget {
     };
   }
 
+  // --------------------------------------------------------------
+  // FIXED: Centralized filtering logic
+  // --------------------------------------------------------------
+  List<Receipt> _getFilteredReceipts(List<Receipt> allReceipts) {
+    // Step 1: Always filter by current month first
+    final now = DateTime.now();
+    var filtered = allReceipts.where((receipt) {
+      return receipt.date.year == now.year && receipt.date.month == now.month;
+    }).toList();
+
+    // Step 2: If building is selected, filter by building
+    if (selectedBuildingId != null) {
+      filtered = filtered
+          .where((r) => r.room?.building?.id == selectedBuildingId)
+          .toList();
+    }
+
+    // Step 3: Filter by payment status
+    filtered = filtered
+        .where((receipt) => receipt.paymentStatus == selectedStatus)
+        .toList();
+
+    return filtered;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -81,12 +106,8 @@ class ReceiptList extends StatelessWidget {
           error: (error) =>
               ErrorState(theme: theme, error: error, onRetry: onRefresh),
           success: (buildings) {
-            final receiptsForCurrentMonthOrBuilding = selectedBuildingId != null
-                ? receiptProvider.getReceiptsByBuilding(selectedBuildingId!)
-                : receiptProvider.getReceiptsForCurrentMonth();
-            final filteredReceiptsByStatus = receiptsForCurrentMonthOrBuilding
-                .where((receipt) => receipt.paymentStatus == selectedStatus)
-                .toList();
+            // Use centralized filtering
+            final filteredReceipts = _getFilteredReceipts(allReceipts);
 
             return Column(
               children: [
@@ -130,7 +151,7 @@ class ReceiptList extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Expanded(
-                  child: filteredReceiptsByStatus.isEmpty
+                  child: filteredReceipts.isEmpty
                       ? EmptyState(
                           theme: theme,
                           fadeAnimation: fadeAnimation,
@@ -145,11 +166,11 @@ class ReceiptList extends StatelessWidget {
                             color: theme.colorScheme.primary,
                             child: ListView.separated(
                               padding: const EdgeInsets.all(0),
-                              itemCount: filteredReceiptsByStatus.length,
+                              itemCount: filteredReceipts.length,
                               separatorBuilder: (context, index) =>
                                   const SizedBox(height: 2),
                               itemBuilder: (ctx, index) {
-                                final receipt = filteredReceiptsByStatus[index];
+                                final receipt = filteredReceipts[index];
 
                                 final double begin =
                                     (index * 0.05).clamp(0.0, 0.4);
@@ -211,7 +232,7 @@ class ReceiptList extends StatelessWidget {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            l10n.delete, // localized
+                                            l10n.delete,
                                             style: TextStyle(
                                               color: theme.colorScheme.onError,
                                               fontSize: 12,
@@ -233,8 +254,9 @@ class ReceiptList extends StatelessWidget {
                                     onDismissed: (direction) async {
                                       final provider =
                                           context.read<ReceiptProvider>();
-                                      final roomNumber = receipt.room?.roomNumber ??
-                                          l10n.unknownRoom;
+                                      final roomNumber =
+                                          receipt.room?.roomNumber ??
+                                              l10n.unknownRoom;
 
                                       if (direction ==
                                           DismissDirection.startToEnd) {

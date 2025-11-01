@@ -1836,6 +1836,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Passwords do not match'**
   String get passwordsDoNotMatch;
+
+  /// No description provided for @chooseLanguageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Your Language'**
+  String get chooseLanguageTitle;
+
+  /// No description provided for @chooseLanguageSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select your preferred language'**
+  String get chooseLanguageSubtitle;
+
+  /// No description provided for @continueButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueButton;
+
+  /// No description provided for @nextButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get nextButton;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
