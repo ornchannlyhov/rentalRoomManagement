@@ -330,6 +330,62 @@ class AppLocalizationsZh extends AppLocalizations {
   String get male => '男性';
 
   @override
+  String get changeStatus => '更改状态';
+
+  @override
+  String get filterByStatus => '按状态筛选';
+
+  @override
+  String get allReports => '所有报告';
+
+  @override
+  String get unknownTenant => '未知租户';
+
+  @override
+  String reportStatusUpdated(String status) {
+    return '报告状态已更新为 $status';
+  }
+
+  @override
+  String get reportStatusUpdateFailed => '更新报告状态失败';
+
+  @override
+  String noFilteredReports(String status) {
+    return '没有 $status 报告';
+  }
+
+  @override
+  String get noFilteredReportsSubtitle => '没有符合所选状态筛选的报告';
+
+  @override
+  String get clearFilter => '清除筛选';
+
+  @override
+  String deleteReportConfirmFrom(String tenant) {
+    return '确定要删除来自 $tenant 的此报告吗？';
+  }
+
+  @override
+  String get reportPriorityUrgent => '紧急';
+
+  @override
+  String deleteBuildingWarning(String name) {
+    return '确定要删除 $name 吗？这将同时删除所有房间、服务和相关数据。';
+  }
+
+  @override
+  String get noRoomsSubtitle => '下拉刷新或添加新房间';
+
+  @override
+  String get noServicesSubtitle => '下拉刷新或添加新服务';
+
+  @override
+  String get noReportsSubtitle => '下拉刷新';
+
+  @override
+  String get refresh => '刷新';
+
+  @override
   String get female => '女性';
 
   @override

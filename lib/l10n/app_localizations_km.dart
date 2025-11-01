@@ -330,6 +330,62 @@ class AppLocalizationsKm extends AppLocalizations {
   String get male => 'បុរស';
 
   @override
+  String get changeStatus => 'ប្តូរស្ថានភាព';
+
+  @override
+  String get filterByStatus => 'ច្រោះតាមស្ថានភាព';
+
+  @override
+  String get allReports => 'របាយការណ៍ទាំងអស់';
+
+  @override
+  String get unknownTenant => 'អ្នកជួលមិនស្គាល់';
+
+  @override
+  String reportStatusUpdated(String status) {
+    return 'ស្ថានភាពរបាយការណ៍បានធ្វើបច្ចុប្បន្នភាពទៅ $status';
+  }
+
+  @override
+  String get reportStatusUpdateFailed => 'បរាជ័យក្នុងការធ្វើបច្ចុប្បន្នភាពស្ថានភាពរបាយការណ៍';
+
+  @override
+  String noFilteredReports(String status) {
+    return 'គ្មានរបាយការណ៍ $status';
+  }
+
+  @override
+  String get noFilteredReportsSubtitle => 'គ្មានរបាយការណ៍ត្រូវគ្នានឹងតម្រងស្ថានភាពដែលបានជ្រើសរើស';
+
+  @override
+  String get clearFilter => 'លុបតម្រង';
+
+  @override
+  String deleteReportConfirmFrom(String tenant) {
+    return 'តើអ្នកប្រាកដថាចង់លុបរបាយការណ៍នេះពី $tenant ទេ?';
+  }
+
+  @override
+  String get reportPriorityUrgent => 'បន្ទាន់';
+
+  @override
+  String deleteBuildingWarning(String name) {
+    return 'តើអ្នកប្រាកដថាចង់លុប $name ទេ? នេះនឹងលុបបន្ទប់ សេវាកម្ម និងទិន្នន័យទាក់ទងទាំងអស់។';
+  }
+
+  @override
+  String get noRoomsSubtitle => 'អូសចុះដើម្បីផ្ទុកឡើងវិញ ឬបន្ថែមបន្ទប់ថ្មី';
+
+  @override
+  String get noServicesSubtitle => 'អូសចុះដើម្បីផ្ទុកឡើងវិញ ឬបន្ថែមសេវាកម្មថ្មី';
+
+  @override
+  String get noReportsSubtitle => 'អូសចុះដើម្បីផ្ទុកឡើងវិញ';
+
+  @override
+  String get refresh => 'ធ្វើឱ្យស្រស់';
+
+  @override
   String get female => 'នារី';
 
   @override

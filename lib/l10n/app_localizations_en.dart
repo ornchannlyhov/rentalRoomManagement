@@ -330,6 +330,62 @@ class AppLocalizationsEn extends AppLocalizations {
   String get male => 'Male';
 
   @override
+  String get changeStatus => 'Change Status';
+
+  @override
+  String get filterByStatus => 'Filter by Status';
+
+  @override
+  String get allReports => 'All Reports';
+
+  @override
+  String get unknownTenant => 'Unknown Tenant';
+
+  @override
+  String reportStatusUpdated(String status) {
+    return 'Report status updated to $status';
+  }
+
+  @override
+  String get reportStatusUpdateFailed => 'Failed to update report status';
+
+  @override
+  String noFilteredReports(String status) {
+    return 'No $status Reports';
+  }
+
+  @override
+  String get noFilteredReportsSubtitle => 'No reports match the selected status filter';
+
+  @override
+  String get clearFilter => 'Clear Filter';
+
+  @override
+  String deleteReportConfirmFrom(String tenant) {
+    return 'Are you sure you want to delete this report from $tenant?';
+  }
+
+  @override
+  String get reportPriorityUrgent => 'Urgent';
+
+  @override
+  String deleteBuildingWarning(String name) {
+    return 'Are you sure you want to delete $name? This will also delete all rooms, services, and associated data.';
+  }
+
+  @override
+  String get noRoomsSubtitle => 'Pull to refresh or add a new room';
+
+  @override
+  String get noServicesSubtitle => 'Pull to refresh or add a new service';
+
+  @override
+  String get noReportsSubtitle => 'Pull to refresh';
+
+  @override
+  String get refresh => 'refresh';
+
+  @override
   String get female => 'Female';
 
   @override

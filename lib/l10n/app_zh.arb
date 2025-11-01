@@ -211,6 +211,50 @@
   "reportPriorityLow": "低",
   "status": "地位",
     "notes": "备注",
+     "changeStatus": "更改状态",
+    "filterByStatus": "按状态筛选",
+    "allReports": "所有报告",
+    "unknownTenant": "未知租户",
+    "reportStatusUpdated": "报告状态已更新为 {status}",
+    "@reportStatusUpdated": {
+      "placeholders": {
+        "status": {
+          "type": "String"
+        }
+      }
+    },
+    "reportStatusUpdateFailed": "更新报告状态失败",
+    "noFilteredReports": "没有 {status} 报告",
+    "@noFilteredReports": {
+      "placeholders": {
+        "status": {
+          "type": "String"
+        }
+      }
+    },
+    "noFilteredReportsSubtitle": "没有符合所选状态筛选的报告",
+    "clearFilter": "清除筛选",
+    "deleteReportConfirmFrom": "确定要删除来自 {tenant} 的此报告吗？",
+    "@deleteReportConfirmFrom": {
+      "placeholders": {
+        "tenant": {
+          "type": "String"
+        }
+      }
+    },
+    "reportPriorityUrgent": "紧急",
+    "deleteBuildingWarning": "确定要删除 {name} 吗？这将同时删除所有房间、服务和相关数据。",
+    "@deleteBuildingWarning": {
+      "placeholders": {
+        "name": {
+          "type": "String"
+        }
+      }
+    },
+    "noRoomsSubtitle": "下拉刷新或添加新房间",
+    "noServicesSubtitle": "下拉刷新或添加新服务",
+    "noReportsSubtitle": "下拉刷新",
+       "refresh": "刷新",
   "priorityLabel": "优先级",
   "reportPriorityMedium": "中",
   "reportPriorityHigh": "高",

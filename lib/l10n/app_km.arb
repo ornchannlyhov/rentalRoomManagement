@@ -120,6 +120,50 @@
   "reportStatusClosed": "បានបិទ",
     "notes": "កំណត់ចំណាំ",
   "priorityLabel": "អាទិភាព",
+     "changeStatus": "ប្តូរស្ថានភាព",
+    "filterByStatus": "ច្រោះតាមស្ថានភាព",
+    "allReports": "របាយការណ៍ទាំងអស់",
+    "unknownTenant": "អ្នកជួលមិនស្គាល់",
+    "reportStatusUpdated": "ស្ថានភាពរបាយការណ៍បានធ្វើបច្ចុប្បន្នភាពទៅ {status}",
+    "@reportStatusUpdated": {
+      "placeholders": {
+        "status": {
+          "type": "String"
+        }
+      }
+    },
+    "reportStatusUpdateFailed": "បរាជ័យក្នុងការធ្វើបច្ចុប្បន្នភាពស្ថានភាពរបាយការណ៍",
+    "noFilteredReports": "គ្មានរបាយការណ៍ {status}",
+    "@noFilteredReports": {
+      "placeholders": {
+        "status": {
+          "type": "String"
+        }
+      }
+    },
+    "noFilteredReportsSubtitle": "គ្មានរបាយការណ៍ត្រូវគ្នានឹងតម្រងស្ថានភាពដែលបានជ្រើសរើស",
+    "clearFilter": "លុបតម្រង",
+    "deleteReportConfirmFrom": "តើអ្នកប្រាកដថាចង់លុបរបាយការណ៍នេះពី {tenant} ទេ?",
+    "@deleteReportConfirmFrom": {
+      "placeholders": {
+        "tenant": {
+          "type": "String"
+        }
+      }
+    },
+    "reportPriorityUrgent": "បន្ទាន់",
+    "deleteBuildingWarning": "តើអ្នកប្រាកដថាចង់លុប {name} ទេ? នេះនឹងលុបបន្ទប់ សេវាកម្ម និងទិន្នន័យទាក់ទងទាំងអស់។",
+    "@deleteBuildingWarning": {
+      "placeholders": {
+        "name": {
+          "type": "String"
+        }
+      }
+    },
+    "noRoomsSubtitle": "អូសចុះដើម្បីផ្ទុកឡើងវិញ ឬបន្ថែមបន្ទប់ថ្មី",
+    "noServicesSubtitle": "អូសចុះដើម្បីផ្ទុកឡើងវិញ ឬបន្ថែមសេវាកម្មថ្មី",
+    "noReportsSubtitle": "អូសចុះដើម្បីផ្ទុកឡើងវិញ",
+    "refresh":"ធ្វើឱ្យស្រស់",
   "status": "ស្ថានភាព",
   "reportPriorityLow": "ទាប",
   "reportPriorityMedium": "មធ្យម",

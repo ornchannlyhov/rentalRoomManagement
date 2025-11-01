@@ -727,6 +727,102 @@ abstract class AppLocalizations {
   /// **'Male'**
   String get male;
 
+  /// No description provided for @changeStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Status'**
+  String get changeStatus;
+
+  /// No description provided for @filterByStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by Status'**
+  String get filterByStatus;
+
+  /// No description provided for @allReports.
+  ///
+  /// In en, this message translates to:
+  /// **'All Reports'**
+  String get allReports;
+
+  /// No description provided for @unknownTenant.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Tenant'**
+  String get unknownTenant;
+
+  /// No description provided for @reportStatusUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Report status updated to {status}'**
+  String reportStatusUpdated(String status);
+
+  /// No description provided for @reportStatusUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update report status'**
+  String get reportStatusUpdateFailed;
+
+  /// No description provided for @noFilteredReports.
+  ///
+  /// In en, this message translates to:
+  /// **'No {status} Reports'**
+  String noFilteredReports(String status);
+
+  /// No description provided for @noFilteredReportsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No reports match the selected status filter'**
+  String get noFilteredReportsSubtitle;
+
+  /// No description provided for @clearFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Filter'**
+  String get clearFilter;
+
+  /// No description provided for @deleteReportConfirmFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this report from {tenant}?'**
+  String deleteReportConfirmFrom(String tenant);
+
+  /// No description provided for @reportPriorityUrgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Urgent'**
+  String get reportPriorityUrgent;
+
+  /// No description provided for @deleteBuildingWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete {name}? This will also delete all rooms, services, and associated data.'**
+  String deleteBuildingWarning(String name);
+
+  /// No description provided for @noRoomsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull to refresh or add a new room'**
+  String get noRoomsSubtitle;
+
+  /// No description provided for @noServicesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull to refresh or add a new service'**
+  String get noServicesSubtitle;
+
+  /// No description provided for @noReportsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull to refresh'**
+  String get noReportsSubtitle;
+
+  /// No description provided for @refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'refresh'**
+  String get refresh;
+
   /// No description provided for @female.
   ///
   /// In en, this message translates to:
