@@ -36,6 +36,9 @@ class AppLocalizationsKm extends AppLocalizations {
   String get welcomeBack => 'សូមស្វាគមន័យការត្រឡប់មកវិញ';
 
   @override
+  String get report => 'របាយការណ៍';
+
+  @override
   String get signInPrompt => 'ចូលទៅក្នុងគណនីរបស់អ្នក';
 
   @override
@@ -45,6 +48,75 @@ class AppLocalizationsKm extends AppLocalizations {
   String deleteTenantConfirmMsg(String tenant) {
     return 'តើអ្នកពិតជាចង់លុបអ្នកជួល $tenant មែនទេ?';
   }
+
+  @override
+  String get reports => 'របាយការណ៍';
+
+  @override
+  String get addReport => 'បន្ថែមរបាយការណ៍';
+
+  @override
+  String get editReport => 'កែសម្រួលរបាយការណ៍';
+
+  @override
+  String get deleteReport => 'លុបរបាយការណ៍';
+
+  @override
+  String get noReports => 'គ្មានរបាយការណ៍';
+
+  @override
+  String get reportAddedSuccess => 'បានបន្ថែមរបាយការណ៍ដោយជោគជ័យ';
+
+  @override
+  String get reportUpdatedSuccess => 'បានកែសម្រួលរបាយការណ៍ដោយជោគជ័យ';
+
+  @override
+  String get reportDeletedSuccess => 'បានលុបរបាយការណ៍ដោយជោគជ័យ';
+
+  @override
+  String get deleteReportConfirm => 'តើអ្នកពិតជាចង់លុបរបាយការណ៍នេះមែនទេ?';
+
+  @override
+  String get selectTenant => 'សូមជ្រើសរើសអ្នកជួល';
+
+  @override
+  String get problemDescription => 'ការពិពណ៌នាបញ្ហា';
+
+  @override
+  String get enterProblemDescription => 'សូមបញ្ចូលការពិពណ៌នាបញ្ហា';
+
+  @override
+  String get noTenant => 'គ្មានអ្នកជួល';
+
+  @override
+  String get optional => 'ស្រេចចិត្ត';
+
+  @override
+  String get reportStatusPending => 'កំពុងរងចាំ';
+
+  @override
+  String get reportStatusInProgress => 'កំពុងដំណើរការ';
+
+  @override
+  String get reportStatusResolved => 'បានដោះស្រាយ';
+
+  @override
+  String get reportStatusClosed => 'បានបិទ';
+
+  @override
+  String get reportPriorityLow => 'ទាប';
+
+  @override
+  String get reportPriorityMedium => 'មធ្យម';
+
+  @override
+  String get reportPriorityHigh => 'ខ្ពស់';
+
+  @override
+  String get reportLanguageEnglish => 'អង់គ្លេស';
+
+  @override
+  String get reportLanguageKhmer => 'ខ្មែរ';
 
   @override
   String get editReceipt => 'កែប្រែវិក្កយបត្រ';
@@ -219,7 +291,16 @@ class AppLocalizationsKm extends AppLocalizations {
   String get pendingStatus => 'មិនទាន់បង់ប្រាក់';
 
   @override
+  String get notes => 'កំណត់ចំណាំ';
+
+  @override
+  String get priorityLabel => 'អាទិភាព';
+
+  @override
   String get overdueStatus => 'ហួសកំណត់';
+
+  @override
+  String get status => 'ស្ថានភាព';
 
   @override
   String get delete => 'លុប';
@@ -247,6 +328,62 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get male => 'បុរស';
+
+  @override
+  String get changeStatus => 'ប្តូរស្ថានភាព';
+
+  @override
+  String get filterByStatus => 'ច្រោះតាមស្ថានភាព';
+
+  @override
+  String get allReports => 'របាយការណ៍ទាំងអស់';
+
+  @override
+  String get unknownTenant => 'អ្នកជួលមិនស្គាល់';
+
+  @override
+  String reportStatusUpdated(String status) {
+    return 'ស្ថានភាពរបាយការណ៍បានធ្វើបច្ចុប្បន្នភាពទៅ $status';
+  }
+
+  @override
+  String get reportStatusUpdateFailed => 'បរាជ័យក្នុងការធ្វើបច្ចុប្បន្នភាពស្ថានភាពរបាយការណ៍';
+
+  @override
+  String noFilteredReports(String status) {
+    return 'គ្មានរបាយការណ៍ $status';
+  }
+
+  @override
+  String get noFilteredReportsSubtitle => 'គ្មានរបាយការណ៍ត្រូវគ្នានឹងតម្រងស្ថានភាពដែលបានជ្រើសរើស';
+
+  @override
+  String get clearFilter => 'លុបតម្រង';
+
+  @override
+  String deleteReportConfirmFrom(String tenant) {
+    return 'តើអ្នកប្រាកដថាចង់លុបរបាយការណ៍នេះពី $tenant ទេ?';
+  }
+
+  @override
+  String get reportPriorityUrgent => 'បន្ទាន់';
+
+  @override
+  String deleteBuildingWarning(String name) {
+    return 'តើអ្នកប្រាកដថាចង់លុប $name ទេ? នេះនឹងលុបបន្ទប់ សេវាកម្ម និងទិន្នន័យទាក់ទងទាំងអស់។';
+  }
+
+  @override
+  String get noRoomsSubtitle => 'អូសចុះដើម្បីផ្ទុកឡើងវិញ ឬបន្ថែមបន្ទប់ថ្មី';
+
+  @override
+  String get noServicesSubtitle => 'អូសចុះដើម្បីផ្ទុកឡើងវិញ ឬបន្ថែមសេវាកម្មថ្មី';
+
+  @override
+  String get noReportsSubtitle => 'អូសចុះដើម្បីផ្ទុកឡើងវិញ';
+
+  @override
+  String get refresh => 'ធ្វើឱ្យស្រស់';
 
   @override
   String get female => 'នារី';

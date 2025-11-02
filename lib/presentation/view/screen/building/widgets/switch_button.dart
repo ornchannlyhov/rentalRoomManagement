@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-
 import 'screen_type.dart';
-import 'package:joul_v2/l10n/app_localizations.dart';   // ← NEW
+import 'package:joul_v2/l10n/app_localizations.dart';  
 
 class ScreenSwitchButton extends StatefulWidget {
   final Function(ScreenType) onScreenSelected;
@@ -103,6 +102,7 @@ class _ScreenSwitchButtonState extends State<ScreenSwitchButton> {
         children: [
           _buildSwitchOption(context, ScreenType.room, l10n.rooms),
           _buildSwitchOption(context, ScreenType.service, l10n.services),
+          _buildSwitchOption(context, ScreenType.report, l10n.reports),
         ],
       ),
     );

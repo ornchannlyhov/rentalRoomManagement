@@ -151,6 +151,12 @@ abstract class AppLocalizations {
   /// **'Welcome Back'**
   String get welcomeBack;
 
+  /// Label for a single report
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get report;
+
   /// No description provided for @signInPrompt.
   ///
   /// In en, this message translates to:
@@ -168,6 +174,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to delete tenant {tenant}?'**
   String deleteTenantConfirmMsg(String tenant);
+
+  /// Label for multiple reports
+  ///
+  /// In en, this message translates to:
+  /// **'Reports'**
+  String get reports;
+
+  /// Button text to add a new report
+  ///
+  /// In en, this message translates to:
+  /// **'Add Report'**
+  String get addReport;
+
+  /// Button text to edit an existing report
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Report'**
+  String get editReport;
+
+  /// Button text to delete a report
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Report'**
+  String get deleteReport;
+
+  /// Message shown when there are no reports
+  ///
+  /// In en, this message translates to:
+  /// **'No Reports'**
+  String get noReports;
+
+  /// Success message after adding a report
+  ///
+  /// In en, this message translates to:
+  /// **'Report added successfully'**
+  String get reportAddedSuccess;
+
+  /// Success message after updating a report
+  ///
+  /// In en, this message translates to:
+  /// **'Report updated successfully'**
+  String get reportUpdatedSuccess;
+
+  /// Success message after deleting a report
+  ///
+  /// In en, this message translates to:
+  /// **'Report deleted successfully'**
+  String get reportDeletedSuccess;
+
+  /// Confirmation message before deleting a report
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this report?'**
+  String get deleteReportConfirm;
+
+  /// Validation message to select a tenant
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a tenant'**
+  String get selectTenant;
+
+  /// Label for problem description field
+  ///
+  /// In en, this message translates to:
+  /// **'Problem Description'**
+  String get problemDescription;
+
+  /// Validation message for problem description field
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a problem description'**
+  String get enterProblemDescription;
+
+  /// Text shown when report has no tenant assigned
+  ///
+  /// In en, this message translates to:
+  /// **'No Tenant'**
+  String get noTenant;
+
+  /// Label indicating a field is optional
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get optional;
+
+  /// Report status: Pending
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get reportStatusPending;
+
+  /// Report status: In Progress
+  ///
+  /// In en, this message translates to:
+  /// **'In Progress'**
+  String get reportStatusInProgress;
+
+  /// Report status: Resolved
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get reportStatusResolved;
+
+  /// Report status: Closed
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get reportStatusClosed;
+
+  /// Report priority: Low
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get reportPriorityLow;
+
+  /// Report priority: Medium
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get reportPriorityMedium;
+
+  /// Report priority: High
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get reportPriorityHigh;
+
+  /// Report language: English
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get reportLanguageEnglish;
+
+  /// Report language: Khmer
+  ///
+  /// In en, this message translates to:
+  /// **'Khmer'**
+  String get reportLanguageKhmer;
 
   /// No description provided for @editReceipt.
   ///
@@ -505,11 +649,29 @@ abstract class AppLocalizations {
   /// **'Pending'**
   String get pendingStatus;
 
+  /// No description provided for @notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get notes;
+
+  /// No description provided for @priorityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get priorityLabel;
+
   /// No description provided for @overdueStatus.
   ///
   /// In en, this message translates to:
   /// **'Overdue'**
   String get overdueStatus;
+
+  /// No description provided for @status.
+  ///
+  /// In en, this message translates to:
+  /// **'status'**
+  String get status;
 
   /// No description provided for @delete.
   ///
@@ -564,6 +726,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Male'**
   String get male;
+
+  /// No description provided for @changeStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Status'**
+  String get changeStatus;
+
+  /// No description provided for @filterByStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by Status'**
+  String get filterByStatus;
+
+  /// No description provided for @allReports.
+  ///
+  /// In en, this message translates to:
+  /// **'All Reports'**
+  String get allReports;
+
+  /// No description provided for @unknownTenant.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Tenant'**
+  String get unknownTenant;
+
+  /// No description provided for @reportStatusUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Report status updated to {status}'**
+  String reportStatusUpdated(String status);
+
+  /// No description provided for @reportStatusUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update report status'**
+  String get reportStatusUpdateFailed;
+
+  /// No description provided for @noFilteredReports.
+  ///
+  /// In en, this message translates to:
+  /// **'No {status} Reports'**
+  String noFilteredReports(String status);
+
+  /// No description provided for @noFilteredReportsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No reports match the selected status filter'**
+  String get noFilteredReportsSubtitle;
+
+  /// No description provided for @clearFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Filter'**
+  String get clearFilter;
+
+  /// No description provided for @deleteReportConfirmFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this report from {tenant}?'**
+  String deleteReportConfirmFrom(String tenant);
+
+  /// No description provided for @reportPriorityUrgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Urgent'**
+  String get reportPriorityUrgent;
+
+  /// No description provided for @deleteBuildingWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete {name}? This will also delete all rooms, services, and associated data.'**
+  String deleteBuildingWarning(String name);
+
+  /// No description provided for @noRoomsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull to refresh or add a new room'**
+  String get noRoomsSubtitle;
+
+  /// No description provided for @noServicesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull to refresh or add a new service'**
+  String get noServicesSubtitle;
+
+  /// No description provided for @noReportsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull to refresh'**
+  String get noReportsSubtitle;
+
+  /// No description provided for @refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'refresh'**
+  String get refresh;
 
   /// No description provided for @female.
   ///

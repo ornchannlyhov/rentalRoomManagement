@@ -36,6 +36,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get welcomeBack => '欢迎回来';
 
   @override
+  String get report => '报告';
+
+  @override
   String get signInPrompt => '登录您的帐户';
 
   @override
@@ -45,6 +48,75 @@ class AppLocalizationsZh extends AppLocalizations {
   String deleteTenantConfirmMsg(String tenant) {
     return '您确定要删除租户 $tenant 吗？';
   }
+
+  @override
+  String get reports => '报告';
+
+  @override
+  String get addReport => '添加报告';
+
+  @override
+  String get editReport => '编辑报告';
+
+  @override
+  String get deleteReport => '删除报告';
+
+  @override
+  String get noReports => '暂无报告';
+
+  @override
+  String get reportAddedSuccess => '报告添加成功';
+
+  @override
+  String get reportUpdatedSuccess => '报告更新成功';
+
+  @override
+  String get reportDeletedSuccess => '报告删除成功';
+
+  @override
+  String get deleteReportConfirm => '您确定要删除此报告吗？';
+
+  @override
+  String get selectTenant => '请选择租户';
+
+  @override
+  String get problemDescription => '问题描述';
+
+  @override
+  String get enterProblemDescription => '请输入问题描述';
+
+  @override
+  String get noTenant => '没有租户';
+
+  @override
+  String get optional => '可选';
+
+  @override
+  String get reportStatusPending => '待处理';
+
+  @override
+  String get reportStatusInProgress => '处理中';
+
+  @override
+  String get reportStatusResolved => '已解决';
+
+  @override
+  String get reportStatusClosed => '已关闭';
+
+  @override
+  String get reportPriorityLow => '低';
+
+  @override
+  String get reportPriorityMedium => '中';
+
+  @override
+  String get reportPriorityHigh => '高';
+
+  @override
+  String get reportLanguageEnglish => '英语';
+
+  @override
+  String get reportLanguageKhmer => '高棉语';
 
   @override
   String get editReceipt => '编辑收据';
@@ -219,7 +291,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pendingStatus => '待处理';
 
   @override
+  String get notes => '备注';
+
+  @override
+  String get priorityLabel => '优先级';
+
+  @override
   String get overdueStatus => '已逾期';
+
+  @override
+  String get status => '地位';
 
   @override
   String get delete => '删除';
@@ -247,6 +328,62 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get male => '男性';
+
+  @override
+  String get changeStatus => '更改状态';
+
+  @override
+  String get filterByStatus => '按状态筛选';
+
+  @override
+  String get allReports => '所有报告';
+
+  @override
+  String get unknownTenant => '未知租户';
+
+  @override
+  String reportStatusUpdated(String status) {
+    return '报告状态已更新为 $status';
+  }
+
+  @override
+  String get reportStatusUpdateFailed => '更新报告状态失败';
+
+  @override
+  String noFilteredReports(String status) {
+    return '没有 $status 报告';
+  }
+
+  @override
+  String get noFilteredReportsSubtitle => '没有符合所选状态筛选的报告';
+
+  @override
+  String get clearFilter => '清除筛选';
+
+  @override
+  String deleteReportConfirmFrom(String tenant) {
+    return '确定要删除来自 $tenant 的此报告吗？';
+  }
+
+  @override
+  String get reportPriorityUrgent => '紧急';
+
+  @override
+  String deleteBuildingWarning(String name) {
+    return '确定要删除 $name 吗？这将同时删除所有房间、服务和相关数据。';
+  }
+
+  @override
+  String get noRoomsSubtitle => '下拉刷新或添加新房间';
+
+  @override
+  String get noServicesSubtitle => '下拉刷新或添加新服务';
+
+  @override
+  String get noReportsSubtitle => '下拉刷新';
+
+  @override
+  String get refresh => '刷新';
 
   @override
   String get female => '女性';

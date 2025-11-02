@@ -1,1 +1,1 @@
-enum ScreenType { service, room }
+enum ScreenType { service, room, report }
