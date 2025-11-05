@@ -1,8 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
-
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:joul_v2/presentation/providers/notification_provider.dart';
 import 'package:joul_v2/data/models/enum/mode.dart';
 import 'package:joul_v2/data/models/enum/payment_status.dart';
 import 'package:joul_v2/data/models/receipt.dart';
@@ -14,6 +14,7 @@ import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_detail.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_form.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_list.dart';
+import 'package:joul_v2/presentation/view/screen/notification/notification_screen.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 
 class ReceiptScreen extends StatefulWidget {
@@ -48,7 +49,10 @@ class _ReceiptScreenState extends State<ReceiptScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
     );
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+      // REMOVED: _setupNotificationListeners() - Now handled in main.dart
+    });
   }
 
   @override
@@ -108,7 +112,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
 
     if (freshReceipt == null) {
       GlobalSnackBar.show(
-        message: l10n.errorLoadingData, // fallback
+        message: l10n.errorLoadingData,
         isError: true,
         context: context,
       );
@@ -141,15 +145,13 @@ class _ReceiptScreenState extends State<ReceiptScreen>
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                l10n.confirmDelete, // "Confirm Delete"
+                l10n.confirmDelete,
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ],
         ),
         content: Text(
-          // You need a key like "deleteReceiptConfirmMsg"
-          // For now using a generic placeholder – add the key below.
           l10n.deleteReceiptConfirmMsg(
               receipt.room?.roomNumber ?? l10n.unknown),
           style: const TextStyle(height: 1.5),
@@ -183,7 +185,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
   }
 
   Future<void> _handleDeleteReceipt(Receipt receipt, int index) async {
-    final l10n = AppLocalizations.of(context)!; // Add this line
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await _confirmDeleteReceipt(context, receipt);
     if (!confirmed || !mounted) return;
 
@@ -333,7 +335,6 @@ class _ReceiptScreenState extends State<ReceiptScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // final l10n = AppLocalizations.of(context)!;
     final receiptProvider = context.watch<ReceiptProvider>();
     final buildingProvider = context.watch<BuildingProvider>();
 
@@ -414,24 +415,60 @@ class _ReceiptAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       iconTheme: IconThemeData(color: iconColor),
       actions: [
-        // Generate monthly receipts button
-        IconButton(
-          icon: Icon(Icons.autorenew, color: iconColor),
-          tooltip: l10n
-              .receiptRestored, // you may want a dedicated key: generateMonthlyReceipts
-          onPressed: () async {
-            final provider = context.read<ReceiptProvider>();
-            await provider.generateMonthlyReceipts();
-            GlobalSnackBar.show(
-              message: l10n.receiptRestored,
-              context: context,
+        // Notification button with badge
+        Consumer<NotificationProvider>(
+          builder: (context, notificationProvider, child) {
+            final unreadCount = notificationProvider.unreadCount;
+
+            return Stack(
+              children: [
+                IconButton(
+                  icon: Icon(Icons.notifications_outlined, color: iconColor),
+                  tooltip: 'Notifications',
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const NotificationScreen(),
+                      ),
+                    );
+                  },
+                ),
+                if (unreadCount > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: backgroundColor ?? Colors.white,
+                          width: 1.5,
+                        ),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      child: Text(
+                        unreadCount > 9 ? '9+' : unreadCount.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
             );
           },
         ),
         IconButton(
           icon: Icon(Icons.add, color: iconColor),
-          tooltip:
-              l10n.createNewTenant, // generic “add” – you can add addReceipt
+          tooltip: l10n.createNewReceipt,
           onPressed: onAddPressed,
         ),
         const SizedBox(width: 8),

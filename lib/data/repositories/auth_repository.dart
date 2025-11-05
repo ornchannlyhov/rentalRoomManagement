@@ -56,6 +56,16 @@ class UpdatePasswordRequest {
       };
 }
 
+class UpdateFCMTokenRequest {
+  final String fcmToken;
+
+  UpdateFCMTokenRequest({required this.fcmToken});
+
+  Map<String, dynamic> toJson() => {
+        'fcmToken': fcmToken,
+      };
+}
+
 class AuthRepository {
   final ApiHelper _apiHelper = ApiHelper.instance;
   final Logger _logger = Logger();
@@ -81,7 +91,7 @@ class AuthRepository {
           '${_apiHelper.baseUrl}/auth/profile',
           options: Options(
             headers: {'Authorization': 'Bearer $token'},
-            validateStatus: (status) => status! < 500, // Don't throw on 4xx
+            validateStatus: (status) => status! < 500,
           ),
         );
 
@@ -138,7 +148,7 @@ class AuthRepository {
   Future<bool> _isTokenExpired() async {
     final expiryStr =
         await _apiHelper.storage.read(key: StorageKeys.tokenExpiry);
-    if (expiryStr == null) return false; // If no expiry set, assume not expired
+    if (expiryStr == null) return false;
 
     try {
       final expiry = DateTime.parse(expiryStr);
@@ -193,6 +203,7 @@ class AuthRepository {
           id: userDto.id,
           username: userDto.username,
           email: userDto.email,
+          fcmToken: userDto.fcmToken,
           token: token,
         );
       } else {
@@ -235,6 +246,7 @@ class AuthRepository {
           id: userDto.id,
           username: userDto.username,
           email: userDto.email,
+          fcmToken: userDto.fcmToken,
           token: token,
         );
       } else {
@@ -363,6 +375,7 @@ class AuthRepository {
               id: validatedUser.id,
               username: validatedUser.username,
               email: validatedUser.email,
+              fcmToken: validatedUser.fcmToken,
             );
           }
           return null;
@@ -373,6 +386,7 @@ class AuthRepository {
           id: userDto.id,
           username: userDto.username,
           email: userDto.email,
+          fcmToken: userDto.fcmToken,
         );
       } catch (e) {
         _logger.w("Failed to parse cached user data: $e. Clearing cache.");
@@ -388,6 +402,7 @@ class AuthRepository {
           id: userDto.id,
           username: userDto.username,
           email: userDto.email,
+          fcmToken: userDto.fcmToken,
         );
       }
     }
@@ -409,4 +424,54 @@ class AuthRepository {
 
   /// Stream for no network events
   Stream<void> get onNoNetwork => _apiHelper.onNoNetwork;
+
+  /// Update FCM token on backend. Call after successful login/register.
+  Future<void> updateFCMToken(String fcmToken) async {
+    if (!await _hasNetwork()) {
+      _logger.i("No network, skipping FCM token update.");
+      return;
+    }
+
+    final token = await getToken();
+    if (token == null) {
+      _logger.w("Cannot update FCM token: user is not authenticated.");
+      return;
+    }
+
+    final url = '${_apiHelper.baseUrl}/auth/update-fcm-token';
+    final request = UpdateFCMTokenRequest(fcmToken: fcmToken);
+
+    try {
+      final response = await _apiHelper.dio.put(
+        url,
+        data: request.toJson(),
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        // Update cached user with new fcmToken
+        final updatedUserDto = UserDto.fromJson(response.data['user']);
+        await _apiHelper.storage.write(
+          key: StorageKeys.user,
+          value: jsonEncode(updatedUserDto.toJson()),
+        );
+        _logger.i('FCM token updated successfully on the backend.');
+      } else {
+        final error = response.data?['message'] ?? 'Failed to update FCM token';
+        throw Exception(error);
+      }
+    } on DioException catch (e) {
+      final message = e.response?.data?['message'] ??
+          e.message ??
+          'Failed to update FCM token';
+      _logger.e("FCM token update failed: $message");
+      throw Exception(message);
+    } catch (e) {
+      _logger.e("Unexpected error during FCM token update: $e");
+      throw Exception(
+          "An unexpected error occurred while updating the FCM token.");
+    }
+  }
 }

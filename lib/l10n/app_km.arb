@@ -549,5 +549,11 @@
   "chooseLanguageTitle": "ជ្រើសរើសភាសារបស់អ្នក",
   "chooseLanguageSubtitle": "ជ្រើសរើសភាសាដែលអ្នកចូលចិត្ត",
   "continueButton": "បន្ត",
-  "nextButton": "បន្ទាប់"
+  "nextButton": "បន្ទាប់",
+  "notificationRemoved": "បានលុបការជូនដំណឹង",
+  "notificationsCleared": "បានលុបការជូនដំណឹងទាំងអស់",
+  "noNotifications": "មិនមានការជូនដំណឹងទេ",
+  "newReceiptNotification": "ការជូនដំណឹងអំពីបង្កាន់ដៃថ្មីនឹងបង្ហាញនៅទីនេះ",
+  "clearAllNotifications": "លុបការជូនដំណឹងទាំងអស់មែនទេ?",
+  "clearNotificationsMessage": "ការរើសលុបនេះនឹងលុបការជូនដំណឹងទាំងអស់។ អ្នកនៅតែអាចមើលបង្កាន់ដៃនៅផ្ទាំងបង្កាន់ដៃបាន។"
 }

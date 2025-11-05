@@ -1110,4 +1110,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nextButton => 'Next';
+
+  @override
+  String get notificationRemoved => 'Notification removed';
+
+  @override
+  String get notificationsCleared => 'All notifications cleared';
+
+  @override
+  String get noNotifications => 'No notifications';
+
+  @override
+  String get newReceiptNotification => 'New receipt notifications will appear here';
+
+  @override
+  String get clearAllNotifications => 'Clear all notifications?';
+
+  @override
+  String get clearNotificationsMessage => 'This will remove all notification items. You can still view receipts in the Receipts tab.';
 }

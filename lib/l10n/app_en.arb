@@ -689,5 +689,11 @@
   "chooseLanguageTitle": "Choose Your Language",
   "chooseLanguageSubtitle": "Select your preferred language",
   "continueButton": "Continue",
-  "nextButton": "Next"
+  "nextButton": "Next",
+  "notificationRemoved": "Notification removed",
+  "notificationsCleared": "All notifications cleared",
+  "noNotifications": "No notifications",
+  "newReceiptNotification": "New receipt notifications will appear here",
+  "clearAllNotifications": "Clear all notifications?",
+  "clearNotificationsMessage": "This will remove all notification items. You can still view receipts in the Receipts tab."
 }

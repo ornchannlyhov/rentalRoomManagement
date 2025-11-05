@@ -328,7 +328,7 @@ class _TenantScreenState extends State<TenantScreen>
           ),
         ),
         content: Text(
-          '${localizations.deleteConfirmMsg(tenantName)}',
+          localizations.deleteConfirmMsg(tenantName),
           style: TextStyle(
             color: theme.colorScheme.onSurfaceVariant,
           ),
