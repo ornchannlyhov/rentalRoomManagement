@@ -14,6 +14,7 @@ class BuildingCard extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final VoidCallback? onViewDetails;
+  final bool showImage; // NEW: Control whether to show image
 
   const BuildingCard({
     super.key,
@@ -23,6 +24,7 @@ class BuildingCard extends StatelessWidget {
     this.onEdit,
     this.onDelete,
     this.onViewDetails,
+    this.showImage = false, // Default: no image (for main list)
   });
 
   @override
@@ -39,6 +41,7 @@ class BuildingCard extends StatelessWidget {
       onEdit: onEdit,
       onDelete: onDelete,
       onViewDetails: onViewDetails,
+      showImage: showImage,
     );
   }
 }
@@ -51,6 +54,7 @@ class _AnimatedCardContent extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final VoidCallback? onViewDetails;
+  final bool showImage;
 
   const _AnimatedCardContent({
     required this.building,
@@ -60,6 +64,7 @@ class _AnimatedCardContent extends StatelessWidget {
     this.onEdit,
     this.onDelete,
     this.onViewDetails,
+    required this.showImage,
   });
 
   void _showMoreOptionsBottomSheet(BuildContext context) {
@@ -190,7 +195,7 @@ class _AnimatedCardContent extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final hasImages = building.buildingImages.isNotEmpty;
-
+    
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
       elevation: 1,
@@ -206,17 +211,18 @@ class _AnimatedCardContent extends StatelessWidget {
           child: Row(
             children: [
               // ========================================
-              // LEFT: Building Image/Icon Avatar
+              // LEFT: Building Image/Icon Avatar (conditionally shown)
               // ========================================
-              _BuildingAvatar(
-                building: building,
-                hasImages: hasImages,
-              ),
-              
-              const SizedBox(width: 12),
+              if (showImage) ...[
+                _BuildingAvatar(
+                  building: building,
+                  hasImages: hasImages,
+                ),
+                const SizedBox(width: 12),
+              ],
 
               // ========================================
-              // MIDDLE: Building Info (Original Layout)
+              // MIDDLE: Building Info
               // ========================================
               Expanded(
                 child: Column(
@@ -480,7 +486,7 @@ class _BuildingIconPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    // final theme = Theme.of(context);
     
     // Generate a unique color based on building name
     final int hash = buildingName.hashCode;
@@ -509,7 +515,7 @@ class _BuildingIconPlaceholder extends StatelessWidget {
 }
 
 // ========================================
-// COMPACT CIRCULAR INDICATOR (unchanged)
+// COMPACT CIRCULAR INDICATOR
 // ========================================
 class _CompactCircularIndicator extends StatelessWidget {
   final List<Room> rooms;
