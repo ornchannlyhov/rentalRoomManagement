@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/tenant.dart';
 import 'package:joul_v2/data/models/enum/gender.dart';
@@ -34,6 +35,90 @@ class TenantCard extends StatelessWidget {
       case Gender.other:
         return 'assets/placeholder/lgbtq+_avatar.png';
     }
+  }
+
+  Widget _buildProfileImage({
+    required double size,
+    required BorderRadius borderRadius,
+  }) {
+    // If tenant has a profile image, use it
+    if (tenant.tenantProfile != null && tenant.tenantProfile!.isNotEmpty) {
+      final isNetworkImage = tenant.tenantProfile!.startsWith('http');
+      
+      if (isNetworkImage) {
+        // Network image from API
+        return ClipRRect(
+          borderRadius: borderRadius,
+          child: Image.network(
+            tenant.tenantProfile!,
+            height: size,
+            width: size,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(
+                height: size,
+                width: size,
+                color: Colors.grey[300],
+                child: Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  ),
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              // Fallback to default avatar on error
+              return Image.asset(
+                getAvatar(),
+                height: size,
+                width: size,
+                fit: BoxFit.cover,
+              );
+            },
+          ),
+        );
+      } else {
+        // Local file image
+        return ClipRRect(
+          borderRadius: borderRadius,
+          child: Image.file(
+            File(tenant.tenantProfile!),
+            height: size,
+            width: size,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              // Fallback to default avatar on error
+              return Image.asset(
+                getAvatar(),
+                height: size,
+                width: size,
+                fit: BoxFit.cover,
+              );
+            },
+          ),
+        );
+      }
+    }
+    
+    // Default avatar based on gender
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: Image.asset(
+        getAvatar(),
+        height: size,
+        width: size,
+        fit: BoxFit.cover,
+      ),
+    );
   }
 
   String _getMenuOptionText(BuildContext context, TenantMenuOption option) {
@@ -109,14 +194,9 @@ class TenantCard extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Row(
                   children: [
-                    ClipRRect(
+                    _buildProfileImage(
+                      size: 40,
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.asset(
-                        getAvatar(),
-                        height: 40,
-                        width: 40,
-                        fit: BoxFit.cover,
-                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -233,14 +313,9 @@ class TenantCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            ClipRRect(
+            _buildProfileImage(
+              size: 70,
               borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                getAvatar(),
-                height: 70,
-                width: 70,
-                fit: BoxFit.cover,
-              ),
             ),
             const SizedBox(width: 16),
             Expanded(
