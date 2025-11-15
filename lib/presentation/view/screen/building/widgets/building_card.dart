@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/data/models/building.dart';
@@ -188,6 +189,7 @@ class _AnimatedCardContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
+    final hasImages = building.buildingImages.isNotEmpty;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
@@ -203,6 +205,19 @@ class _AnimatedCardContent extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
+              // ========================================
+              // LEFT: Building Image/Icon Avatar
+              // ========================================
+              _BuildingAvatar(
+                building: building,
+                hasImages: hasImages,
+              ),
+              
+              const SizedBox(width: 12),
+
+              // ========================================
+              // MIDDLE: Building Info (Original Layout)
+              // ========================================
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,9 +306,11 @@ class _AnimatedCardContent extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
 
-              // Right side content: circular indicator and options
+              // ========================================
+              // RIGHT: Circular indicator and options
+              // ========================================
               Column(
                 children: [
                   _CompactCircularIndicator(rooms: rooms),
@@ -373,6 +390,127 @@ class _AnimatedCardContent extends StatelessWidget {
   }
 }
 
+// ========================================
+// BUILDING AVATAR (Left side image/icon)
+// ========================================
+class _BuildingAvatar extends StatelessWidget {
+  final Building building;
+  final bool hasImages;
+
+  const _BuildingAvatar({
+    required this.building,
+    required this.hasImages,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: 70,
+      height: 70,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.outline.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: hasImages
+          ? _BuildingImage(imagePath: building.buildingImages.first)
+          : _BuildingIconPlaceholder(buildingName: building.name),
+    );
+  }
+}
+
+// ========================================
+// BUILDING IMAGE
+// ========================================
+class _BuildingImage extends StatelessWidget {
+  final String imagePath;
+
+  const _BuildingImage({required this.imagePath});
+
+  @override
+  Widget build(BuildContext context) {
+    final isLocalFile = !imagePath.startsWith('http');
+
+    return isLocalFile
+        ? Image.file(
+            File(imagePath),
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return _BuildingIconPlaceholder(buildingName: 'Building');
+            },
+          )
+        : Image.network(
+            imagePath,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                        : null,
+                  ),
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return _BuildingIconPlaceholder(buildingName: 'Building');
+            },
+          );
+  }
+}
+
+// ========================================
+// BUILDING ICON PLACEHOLDER
+// ========================================
+class _BuildingIconPlaceholder extends StatelessWidget {
+  final String buildingName;
+
+  const _BuildingIconPlaceholder({required this.buildingName});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    // Generate a unique color based on building name
+    final int hash = buildingName.hashCode;
+    final List<Color> gradientColors = [
+      Color((hash & 0xFF000000) | 0x00FF7043),
+      Color((hash & 0xFF000000) | 0x00EF5350),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradientColors,
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.apartment_rounded,
+          size: 40,
+          color: Colors.white.withOpacity(0.9),
+        ),
+      ),
+    );
+  }
+}
+
+// ========================================
+// COMPACT CIRCULAR INDICATOR (unchanged)
+// ========================================
 class _CompactCircularIndicator extends StatelessWidget {
   final List<Room> rooms;
 

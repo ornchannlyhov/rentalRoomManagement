@@ -47,6 +47,15 @@ String _encodeTenants(List<Tenant> tenants) {
             name: tenant.name,
             phoneNumber: tenant.phoneNumber,
             gender: genderToString(tenant.gender),
+            chatId: tenant.chatId,
+            language: tenant.language,
+            lastInteractionDate: tenant.lastInteractionDate,
+            nextReminderDate: tenant.nextReminderDate,
+            isActive: tenant.isActive,
+            deposit: tenant.deposit,
+            tenantProfile: tenant.tenantProfile,
+            createdAt: tenant.createdAt,
+            updatedAt: tenant.updatedAt,
             roomId: tenant.room?.id,
             room: tenant.room != null
                 ? RoomDto(
@@ -59,10 +68,16 @@ String _encodeTenants(List<Tenant> tenants) {
                     building: tenant.room!.building != null
                         ? BuildingDto(
                             id: tenant.room!.building!.id,
+                            appUserId: tenant.room!.building!.appUserId,
                             name: tenant.room!.building!.name,
                             rentPrice: tenant.room!.building!.rentPrice,
                             electricPrice: tenant.room!.building!.electricPrice,
                             waterPrice: tenant.room!.building!.waterPrice,
+                            buildingImages: tenant.room!.building!.buildingImages,
+                            services: tenant.room!.building!.services,
+                            createdAt: tenant.room!.building!.createdAt,
+                            updatedAt: tenant.room!.building!.updatedAt,
+                            passKey: tenant.room!.building!.passKey,
                           )
                         : null,
                   )

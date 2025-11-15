@@ -28,7 +28,6 @@ List<Receipt> _parseReceipts(String jsonString) {
 
 String _encodeReceipts(List<Receipt> receipts) {
   return jsonEncode(receipts.map((receipt) {
-    // Convert PaymentStatus enum to string
     final statusStr = receipt.paymentStatus.name.toLowerCase();
 
     final receiptDto = ReceiptDto(
@@ -52,10 +51,16 @@ String _encodeReceipts(List<Receipt> receipts) {
               building: receipt.room!.building != null
                   ? BuildingDto(
                       id: receipt.room!.building!.id,
+                      appUserId: receipt.room!.building!.appUserId,
                       name: receipt.room!.building!.name,
                       rentPrice: receipt.room!.building!.rentPrice,
                       electricPrice: receipt.room!.building!.electricPrice,
                       waterPrice: receipt.room!.building!.waterPrice,
+                      buildingImages: receipt.room!.building!.buildingImages,
+                      services: receipt.room!.building!.services,
+                      createdAt: receipt.room!.building!.createdAt,
+                      updatedAt: receipt.room!.building!.updatedAt,
+                      passKey: receipt.room!.building!.passKey,
                     )
                   : null,
             )

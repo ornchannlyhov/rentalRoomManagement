@@ -133,31 +133,45 @@ class _TenantFormState extends State<TenantForm> {
     }
   }
 
-  void _save() {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
+ 
+void _save() {
+  if (_formKey.currentState!.validate()) {
+    _formKey.currentState!.save();
 
-      // Find the selected room object from the ID
-      Room? selectedRoom;
-      if (selectedRoomId != null) {
-        selectedRoom = allRooms.firstWhere(
+    // Find the selected room object from the ID
+    Room? selectedRoom;
+    if (selectedRoomId != null) {
+      selectedRoom = allRooms.firstWhere(
+        (room) => room.id == selectedRoomId,
+        orElse: () => availableRooms.firstWhere(
           (room) => room.id == selectedRoomId,
-          orElse: () => availableRooms.firstWhere(
-            (room) => room.id == selectedRoomId,
-          ),
-        );
-      }
-
-      final newTenant = Tenant(
-        id: isEditing ? widget.tenant!.id : DateTime.now().toString(),
-        name: name,
-        phoneNumber: phoneNumber,
-        room: selectedRoom,
-        gender: gender,
+        ),
       );
-      Navigator.pop(context, newTenant);
     }
+
+    // When editing, preserve existing data
+    // When creating, use default values
+    final newTenant = Tenant(
+      id: isEditing ? widget.tenant!.id : 'temp_${DateTime.now().millisecondsSinceEpoch}',
+      name: name,
+      phoneNumber: phoneNumber,
+      gender: gender,
+      room: selectedRoom,
+      // NEW FIELDS - Preserve existing or use defaults
+      chatId: widget.tenant?.chatId, // Preserve existing chatId (nullable)
+      language: widget.tenant?.language ?? 'english', // Preserve or default to 'english'
+      lastInteractionDate: widget.tenant?.lastInteractionDate ?? DateTime.now(), // Preserve or now
+      nextReminderDate: widget.tenant?.nextReminderDate, // Preserve existing (nullable)
+      isActive: widget.tenant?.isActive ?? true, // Preserve or default to true
+      deposit: widget.tenant?.deposit ?? 0.0, // Preserve or default to 0.0
+      tenantProfile: widget.tenant?.tenantProfile, // Preserve existing profile image (nullable)
+      createdAt: widget.tenant?.createdAt ?? DateTime.now(), // Preserve or now
+      updatedAt: DateTime.now(), // Always update to now when saving
+    );
+
+    Navigator.pop(context, newTenant);
   }
+}
 
   String _getGenderText(BuildContext context, Gender g) {
     final localizations = AppLocalizations.of(context)!;
