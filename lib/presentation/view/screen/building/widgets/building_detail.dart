@@ -61,7 +61,6 @@ class _BuildingDetailState extends State<BuildingDetail> {
           context.read<ReportProvider>().load(),
         ]);
 
-        final l10n = AppLocalizations.of(context)!;
         GlobalSnackBar.show(
           context: context,
           message: "Current offline load data from device", 
@@ -813,6 +812,8 @@ class _BuildingDetailState extends State<BuildingDetail> {
               building: widget.building,
               onEdit: _editBuilding,
               onDelete: _deleteBuilding,
+                showImage: true, 
+              
             ),
           ),
 

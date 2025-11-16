@@ -494,12 +494,10 @@ class _ReceiptFormState extends State<ReceiptForm> {
                   NumberTextFormField(
                     controller: lastWaterUsedController,
                     label: l10n.waterM3,
-                    onSaved: (value) => lastWaterUsed = int.parse(value!),
                   ),
                   NumberTextFormField(
                     controller: lastElectricUsedController,
                     label: l10n.electricityKWh,
-                    onSaved: (value) => lastElectricUsed = int.parse(value!),
                   ),
 
                   const SizedBox(height: 8),
@@ -508,12 +506,10 @@ class _ReceiptFormState extends State<ReceiptForm> {
                   NumberTextFormField(
                     controller: thisWaterUsedController,
                     label: l10n.waterM3,
-                    onSaved: (value) => thisWaterUsed = int.parse(value!),
                   ),
                   NumberTextFormField(
                     controller: thisElectricUsedController,
                     label: l10n.electricityKWh,
-                    onSaved: (value) => thisElectricUsed = int.parse(value!),
                   ),
                   const SizedBox(height: 16),
 

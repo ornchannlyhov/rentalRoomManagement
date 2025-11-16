@@ -123,7 +123,6 @@ class _RoomFormState extends State<RoomForm> {
               NumberTextFormField(
                 initialValue: price.toString(),
                 label: l10n.rentPriceLabel,
-                onSaved: (value) => price = double.parse(value!),
               ),
               const SizedBox(height: 24),
               Row(

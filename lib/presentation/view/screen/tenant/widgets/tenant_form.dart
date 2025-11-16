@@ -1,9 +1,11 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl_phone_field/country_picker_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:joul_v2/data/models/enum/gender.dart';
 import 'package:joul_v2/data/models/room.dart';
 import 'package:joul_v2/data/models/tenant.dart';
@@ -30,6 +32,8 @@ class TenantForm extends StatefulWidget {
 
 class _TenantFormState extends State<TenantForm> {
   final _formKey = GlobalKey<FormState>();
+  final ImagePicker _picker = ImagePicker();
+  late TextEditingController _depositController;
 
   List<Room> availableRooms = [];
   List<Room> allRooms = [];
@@ -40,6 +44,9 @@ class _TenantFormState extends State<TenantForm> {
   String? selectedRoomId;
   late Gender gender;
   String? selectedBuildingId;
+  String? tenantProfile;
+  XFile? _selectedImage;
+  late double deposit;
 
   bool get isEditing => widget.mode == Mode.editing;
 
@@ -47,6 +54,7 @@ class _TenantFormState extends State<TenantForm> {
   void initState() {
     super.initState();
     selectedBuildingId = widget.selectedBuildingId;
+    _depositController = TextEditingController();
 
     if (isEditing && widget.tenant != null) {
       final tenant = widget.tenant!;
@@ -55,6 +63,9 @@ class _TenantFormState extends State<TenantForm> {
       phoneNumber = tenant.phoneNumber;
       selectedRoomId = tenant.room?.id;
       gender = tenant.gender;
+      deposit = tenant.deposit;
+      _depositController.text = tenant.deposit.toString();
+      tenantProfile = tenant.tenantProfile;
       if (tenant.room?.building != null) {
         selectedBuildingId = tenant.room!.building!.id;
       }
@@ -64,12 +75,20 @@ class _TenantFormState extends State<TenantForm> {
       phoneNumber = '';
       selectedRoomId = null;
       gender = Gender.male;
+      deposit = 0.0;
+      _depositController.text = '';
+      tenantProfile = null;
     }
 
-    // Load rooms after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadRooms();
     });
+  }
+
+  @override
+  void dispose() {
+    _depositController.dispose();
+    super.dispose();
   }
 
   void _loadRooms() {
@@ -84,7 +103,6 @@ class _TenantFormState extends State<TenantForm> {
 
       availableRooms = roomProvider.getAvailableRooms();
 
-      // Include the current room in availableRooms if editing
       if (isEditing && widget.tenant?.room != null) {
         final currentRoom = allRooms.firstWhere(
           (room) => room.id == widget.tenant!.room!.id,
@@ -95,10 +113,8 @@ class _TenantFormState extends State<TenantForm> {
         }
       }
 
-      // Filter rooms by selected building if provided
       _filterRoomsByBuilding();
 
-      // Ensure selectedRoomId is valid for the current building filter
       if (selectedRoomId != null &&
           selectedBuildingId != null &&
           !availableRooms.any((room) =>
@@ -121,7 +137,6 @@ class _TenantFormState extends State<TenantForm> {
       availableRooms = roomProvider.getAvailableRooms();
     }
 
-    // Include current room if editing
     if (isEditing && widget.tenant?.room != null) {
       final currentRoom = allRooms.firstWhere(
         (room) => room.id == widget.tenant!.room!.id,
@@ -133,11 +148,33 @@ class _TenantFormState extends State<TenantForm> {
     }
   }
 
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        setState(() {
+          _selectedImage = image;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to pick image: $e')),
+        );
+      }
+    }
+  }
+
   void _save() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      // Find the selected room object from the ID
       Room? selectedRoom;
       if (selectedRoomId != null) {
         selectedRoom = allRooms.firstWhere(
@@ -148,13 +185,27 @@ class _TenantFormState extends State<TenantForm> {
         );
       }
 
+      // ✅ Prepare file object
+      File? imageFile;
+      if (_selectedImage != null) {
+        imageFile = File(_selectedImage!.path);
+      }
+
       final newTenant = Tenant(
-        id: isEditing ? widget.tenant!.id : DateTime.now().toString(),
+        id: isEditing
+            ? widget.tenant!.id
+            : 'temp_${DateTime.now().millisecondsSinceEpoch}',
         name: name,
         phoneNumber: phoneNumber,
-        room: selectedRoom,
         gender: gender,
+        room: selectedRoom,
+        chatId: widget.tenant?.chatId,
+        language: widget.tenant?.language ?? 'english',
+        deposit: double.tryParse(_depositController.text) ?? 0.0,
+        tenantProfile: _selectedImage?.path,
+        imageFile: imageFile,
       );
+
       Navigator.pop(context, newTenant);
     }
   }
@@ -171,6 +222,77 @@ class _TenantFormState extends State<TenantForm> {
     }
   }
 
+  Widget _buildProfileImagePicker(ThemeData theme) {
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: _pickImage,
+          child: Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: theme.colorScheme.outline.withOpacity(0.3),
+                width: 2,
+              ),
+            ),
+            child: _selectedImage != null
+                ? ClipOval(
+                    child: Image.file(
+                      File(_selectedImage!.path),
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : tenantProfile != null && tenantProfile!.isNotEmpty
+                    ? ClipOval(
+                        child: tenantProfile!.startsWith('http')
+                            ? Image.network(
+                                tenantProfile!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  );
+                                },
+                              )
+                            : Image.file(
+                                File(tenantProfile!),
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  );
+                                },
+                              ),
+                      )
+                    : Icon(
+                        Icons.add_a_photo,
+                        size: 40,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextButton.icon(
+          onPressed: _pickImage,
+          icon: const Icon(Icons.photo_library, size: 18),
+          label: Text(
+            _selectedImage != null || tenantProfile != null
+                ? 'Change Photo'
+                : 'Add Photo',
+            style: theme.textTheme.bodySmall,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -183,8 +305,8 @@ class _TenantFormState extends State<TenantForm> {
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
-        title: Text(isEditing 
-            ? localizations.editTenant 
+        title: Text(isEditing
+            ? localizations.editTenant
             : localizations.createNewTenant),
         actions: [
           IconButton(
@@ -199,7 +321,6 @@ class _TenantFormState extends State<TenantForm> {
           success: (buildings) {
             return roomProvider.roomsState.when(
               success: (rooms) {
-                // Update rooms when provider data changes
                 if (allRooms.isEmpty || allRooms.length != rooms.length) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     _loadRooms();
@@ -210,7 +331,8 @@ class _TenantFormState extends State<TenantForm> {
                   key: _formKey,
                   child: ListView(
                     children: [
-                      // Building Filter
+                      Center(child: _buildProfileImagePicker(theme)),
+                      const SizedBox(height: 24),
                       DropdownButtonFormField<String?>(
                         value: selectedBuildingId,
                         items: [
@@ -237,8 +359,6 @@ class _TenantFormState extends State<TenantForm> {
                           setState(() {
                             selectedBuildingId = newValue;
                             _filterRoomsByBuilding();
-
-                            // Clear room selection if it doesn't match the new building
                             if (selectedRoomId != null &&
                                 !availableRooms
                                     .any((room) => room.id == selectedRoomId)) {
@@ -276,7 +396,6 @@ class _TenantFormState extends State<TenantForm> {
                         validator: (value) => null,
                       ),
                       fieldSpacing,
-                      // Name Field
                       TextFormField(
                         initialValue: name,
                         decoration: InputDecoration(
@@ -292,15 +411,11 @@ class _TenantFormState extends State<TenantForm> {
                         onSaved: (value) => name = value!,
                       ),
                       fieldSpacing,
-                      // Phone Number Field with Country Picker
                       IntlPhoneField(
+                        // The key change is here: using the standard InputDecoration
                         decoration: InputDecoration(
                           labelText: localizations.phoneNumber,
                           labelStyle: theme.textTheme.bodyMedium,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
                         ),
                         initialCountryCode: 'KH',
                         initialValue: phoneNumber.startsWith('+')
@@ -346,35 +461,6 @@ class _TenantFormState extends State<TenantForm> {
                         ),
                       ),
                       fieldSpacing,
-                      // Room Dropdown
-                      DropdownButtonFormField<String?>(
-                        value: selectedRoomId,
-                        items: availableRooms.map((room) {
-                          return DropdownMenuItem<String?>(
-                            value: room.id,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('${localizations.room}: ${room.roomNumber}'),
-                                Text('- ${room.building?.name ?? ''}'),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (String? value) {
-                          setState(() {
-                            selectedRoomId = value;
-                          });
-                        },
-                        decoration: InputDecoration(
-                          labelText: localizations.room,
-                          labelStyle: theme.textTheme.bodyMedium,
-                        ),
-                        validator: (value) =>
-                            value == null ? localizations.pleaseSelectRoom : null,
-                      ),
-                      fieldSpacing,
-                      // Gender Selection
                       DropdownButtonFormField<Gender>(
                         value: gender,
                         decoration: InputDecoration(
@@ -392,8 +478,54 @@ class _TenantFormState extends State<TenantForm> {
                         onChanged: (value) => setState(() => gender = value!),
                         onSaved: (value) => gender = value!,
                       ),
+                      fieldSpacing,
+                      DropdownButtonFormField<String?>(
+                        value: selectedRoomId,
+                        items: availableRooms.map((room) {
+                          return DropdownMenuItem<String?>(
+                            value: room.id,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                    '${localizations.room}: ${room.roomNumber}'),
+                                Text('- ${room.building?.name ?? ''}'),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (String? value) {
+                          setState(() {
+                            selectedRoomId = value;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          labelText: localizations.room,
+                          labelStyle: theme.textTheme.bodyMedium,
+                        ),
+                        validator: (value) => value == null
+                            ? localizations.pleaseSelectRoom
+                            : null,
+                      ),
+                      fieldSpacing,
+                      TextFormField(
+                        controller: _depositController,
+                        decoration: InputDecoration(
+                          labelText: 'Deposit',
+                          labelStyle: theme.textTheme.bodyMedium,
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        validator: (value) {
+                          if (value != null &&
+                              value.isNotEmpty &&
+                              double.tryParse(value) == null) {
+                            return 'Please enter a valid number';
+                          }
+                          return null;
+                        },
+                      ),
                       const SizedBox(height: 24),
-                      // Save Button
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
@@ -404,8 +536,8 @@ class _TenantFormState extends State<TenantForm> {
                               foregroundColor: theme.colorScheme.onPrimary,
                             ),
                             child: Text(
-                              isEditing 
-                                  ? localizations.updateTenant 
+                              isEditing
+                                  ? localizations.updateTenant
                                   : localizations.createTenant,
                               style: const TextStyle(color: Colors.white),
                             ),

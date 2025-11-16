@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/tenant.dart';
 import 'package:joul_v2/data/models/enum/gender.dart';
@@ -34,6 +35,90 @@ class TenantCard extends StatelessWidget {
       case Gender.other:
         return 'assets/placeholder/lgbtq+_avatar.png';
     }
+  }
+
+  Widget _buildProfileImage({
+    required double size,
+    required BorderRadius borderRadius,
+  }) {
+    // If tenant has a profile image, use it
+    if (tenant.tenantProfile != null && tenant.tenantProfile!.isNotEmpty) {
+      final isNetworkImage = tenant.tenantProfile!.startsWith('http');
+
+      if (isNetworkImage) {
+        // Network image from API
+        return ClipRRect(
+          borderRadius: borderRadius,
+          child: Image.network(
+            tenant.tenantProfile!,
+            height: size,
+            width: size,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(
+                height: size,
+                width: size,
+                color: Colors.grey[300],
+                child: Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  ),
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              // Fallback to default avatar on error
+              return Image.asset(
+                getAvatar(),
+                height: size,
+                width: size,
+                fit: BoxFit.cover,
+              );
+            },
+          ),
+        );
+      } else {
+        // Local file image
+        return ClipRRect(
+          borderRadius: borderRadius,
+          child: Image.file(
+            File(tenant.tenantProfile!),
+            height: size,
+            width: size,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              // Fallback to default avatar on error
+              return Image.asset(
+                getAvatar(),
+                height: size,
+                width: size,
+                fit: BoxFit.cover,
+              );
+            },
+          ),
+        );
+      }
+    }
+
+    // Default avatar based on gender
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: Image.asset(
+        getAvatar(),
+        height: size,
+        width: size,
+        fit: BoxFit.cover,
+      ),
+    );
   }
 
   String _getMenuOptionText(BuildContext context, TenantMenuOption option) {
@@ -109,14 +194,9 @@ class TenantCard extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Row(
                   children: [
-                    ClipRRect(
+                    _buildProfileImage(
+                      size: 40,
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.asset(
-                        getAvatar(),
-                        height: 40,
-                        width: 40,
-                        fit: BoxFit.cover,
-                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -214,91 +294,116 @@ class TenantCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    return GestureDetector(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withOpacity(0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                getAvatar(),
-                height: 70,
-                width: 70,
-                fit: BoxFit.cover,
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: SizedBox(
+          height: 120,
+          child: Row(
+            children: [
+              // Profile image on the left
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: _buildProfileImage(
+                  size: 88,
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    tenant.name,
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 18,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${localizations.building}: ${tenant.room?.building?.name ?? localizations.unknownRoom}',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.7),
-                      fontSize: 12,
-                    ),
-                  ),
-                  Text(
-                    localizations.roomNumberLabel(tenant.room?.roomNumber ?? localizations.notAvailable),
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.7),
-                      fontSize: 12,
-                    ),
-                  ),
-                  Text(
-                    '${localizations.phoneNumber}: ${tenant.phoneNumber}',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.7),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (onMenuSelected != null)
-              GestureDetector(
-                onTap: () => _showOptionsBottomSheet(context),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.more_horiz,
-                    color: colorScheme.onSurface.withOpacity(0.6),
-                    size: 24,
+
+              // Tenant details
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        tenant.name,
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: colorScheme.onSurface,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildInfoRow(
+                        context,
+                        // Assumes 'building' key exists in your localizations
+                        'Building',
+                        tenant.room?.building?.name ??
+                            localizations.unknownRoom,
+                      ),
+                      const SizedBox(height: 4),
+                      _buildInfoRow(
+                        context,
+                        localizations.room,
+                        tenant.room?.roomNumber ?? localizations.notAvailable,
+                      ),
+                      const SizedBox(height: 4),
+                      _buildInfoRow(
+                        context,
+                        // Assumes 'phone' key exists in your localizations
+                        'Phone',
+                        tenant.phoneNumber,
+                      ),
+                    ],
                   ),
                 ),
               ),
-          ],
+
+              // Menu button
+              if (onMenuSelected != null)
+                IconButton(
+                  icon: const Icon(Icons.more_vert_rounded),
+                  color: colorScheme.onSurfaceVariant,
+                  onPressed: () => _showOptionsBottomSheet(context),
+                ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  // Updated to use text labels instead of icons
+  Widget _buildInfoRow(BuildContext context, String label, String value) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$label:',
+          style: textTheme.bodySmall?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            value,
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurface.withOpacity(0.9),
+              fontSize: 12,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }

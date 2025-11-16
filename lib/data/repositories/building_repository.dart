@@ -17,10 +17,15 @@ String _encodeBuildings(List<Building> buildings) {
   return jsonEncode(buildings
       .map((b) => BuildingDto(
             id: b.id,
+            appUserId: b.appUserId,
             name: b.name,
             rentPrice: b.rentPrice,
             electricPrice: b.electricPrice,
             waterPrice: b.waterPrice,
+            buildingImages: b.buildingImages,
+            services: b.services,
+            passKey: b.passKey,
+            rooms: null,
           ).toJson())
       .toList());
 }
@@ -166,25 +171,24 @@ class BuildingRepository {
   Future<void> _addPendingChange(
     String type,
     Map<String, dynamic> data,
-    String endpoint,
-  ) async {
-    // Check for duplicate pending changes to avoid queuing the same operation multiple times
+    String endpoint, {
+    String? filePath,
+    String? fileFieldName,
+  }) async {
+    // Check for duplicate pending changes
     final isDuplicate = _pendingChanges.any((change) {
       if (change['type'] != type || change['endpoint'] != endpoint) {
         return false;
       }
 
-      // For creates with localId, check if localId matches
       if (type == 'create' && data['localId'] != null) {
         return change['data']['localId'] == data['localId'];
       }
 
-      // For updates/deletes, check if id matches
       if (data['id'] != null) {
         return change['data']['id'] == data['id'];
       }
 
-      // Fallback: compare full data
       return jsonEncode(change['data']) == jsonEncode(data);
     });
 
@@ -201,19 +205,22 @@ class BuildingRepository {
       'endpoint': endpoint,
       'timestamp': DateTime.now().toIso8601String(),
       'retryCount': 0,
+      if (filePath != null) 'filePath': filePath,
+      if (fileFieldName != null) 'fileFieldName': fileFieldName,
     });
 
     if (kDebugMode) {
-      print('Added pending change: $type $endpoint');
+      print(
+          'Added pending change: $type $endpoint${filePath != null ? ' with file' : ''}');
     }
   }
 
   Future<Building> createBuilding(Building newBuilding) async {
     final requestData = {
       'name': newBuilding.name,
-      'rentPrice': newBuilding.rentPrice,
-      'electricPrice': newBuilding.electricPrice,
-      'waterPrice': newBuilding.waterPrice,
+      'rentPrice': newBuilding.rentPrice.toString(),
+      'electricPrice': newBuilding.electricPrice.toString(),
+      'waterPrice': newBuilding.waterPrice.toString(),
     };
 
     final result = await _syncHelper.create<Building>(
@@ -225,13 +232,14 @@ class BuildingRepository {
       },
       addPendingChange: (type, endpoint, data) => _addPendingChange(
         type,
-        {
-          ...data,
-          'localId': newBuilding.id
-        }, // Include localId for offline mapping
+        {...data, 'localId': newBuilding.id},
         endpoint,
+        filePath: newBuilding.imageFile?.path,
+        fileFieldName: 'buildingImage',
       ),
       offlineModel: newBuilding,
+      file: newBuilding.imageFile,
+      fileFieldName: 'buildingImage',
     );
 
     await save();
@@ -267,7 +275,11 @@ class BuildingRepository {
         type,
         data,
         endpoint,
+        filePath: updatedBuilding.imageFile?.path, 
+        fileFieldName: 'buildingImage', 
       ),
+      file: updatedBuilding.imageFile, 
+      fileFieldName: 'buildingImage', 
     );
 
     await save();

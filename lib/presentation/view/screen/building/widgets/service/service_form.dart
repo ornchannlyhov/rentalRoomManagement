@@ -107,7 +107,6 @@ class _ServiceFormState extends State<ServiceForm> {
               NumberTextFormField(
                 initialValue: price.toString(),
                 label: l10n.servicePriceLabel,  // ← Changed this line
-                onSaved: (value) => price = double.parse(value!),
               ),
               const SizedBox(height: 12),
               Row(

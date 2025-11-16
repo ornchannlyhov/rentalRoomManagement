@@ -1,4 +1,3 @@
-
 import 'package:joul_v2/data/dtos/building_dto.dart';
 import 'package:joul_v2/data/dtos/tenant_dto.dart';
 import 'package:joul_v2/data/models/building.dart';
@@ -14,7 +13,7 @@ class RoomDto {
   final BuildingDto? building;
   final TenantDto? tenant;
   final List<dynamic>? receipts;
-  final List<dynamic>? reports; 
+  final List<dynamic>? reports;
 
   RoomDto({
     required this.id,
@@ -98,8 +97,10 @@ class RoomDto {
     if (building != null) {
       room.building = building!.toBuilding();
     } else if (buildingId != null && buildingId!.isNotEmpty) {
+      // FIXED: Updated to match new Building constructor with required fields
       room.building = Building(
         id: buildingId!,
+        appUserId: '', // Placeholder - will be populated when full building data is loaded
         name: '',
         rentPrice: 0.0,
         electricPrice: 0.0,

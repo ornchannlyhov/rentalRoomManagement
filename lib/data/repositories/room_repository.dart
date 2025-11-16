@@ -42,10 +42,14 @@ String _encodeRooms(List<Room> rooms) {
             building: room.building != null
                 ? BuildingDto(
                     id: room.building!.id,
+                    appUserId: room.building!.appUserId,
                     name: room.building!.name,
                     rentPrice: room.building!.rentPrice,
                     electricPrice: room.building!.electricPrice,
                     waterPrice: room.building!.waterPrice,
+                    buildingImages: room.building!.buildingImages,
+                    services: room.building!.services,
+                    passKey: room.building!.passKey,
                   )
                 : null,
             tenant: room.tenant != null
@@ -54,6 +58,10 @@ String _encodeRooms(List<Room> rooms) {
                     name: room.tenant!.name,
                     phoneNumber: room.tenant!.phoneNumber,
                     gender: room.tenant!.gender.toString().split('.').last,
+                    chatId: room.tenant!.chatId,
+                    language: room.tenant!.language,
+                    deposit: room.tenant!.deposit,
+                    tenantProfile: room.tenant!.tenantProfile,
                     roomId: room.id,
                   )
                 : null,
@@ -62,6 +70,7 @@ String _encodeRooms(List<Room> rooms) {
         .toList(),
   );
 }
+
 
 List<Map<String, dynamic>> _parsePendingChanges(String jsonString) {
   return List<Map<String, dynamic>>.from(jsonDecode(jsonString));
