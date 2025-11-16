@@ -3,36 +3,71 @@ import 'package:joul_v2/data/models/building.dart';
 
 class BuildingDto {
   final String id;
+  final String appUserId;
   final String name;
   final String? passKey;
   final double rentPrice;
   final double electricPrice;
   final double waterPrice;
+  final List<String> buildingImages;
+  final List<dynamic> services;
+  final DateTime createdAt;
+  final DateTime updatedAt;
   final List<RoomDto>? rooms;
 
   BuildingDto({
     required this.id,
+    required this.appUserId,
     required this.name,
     this.passKey,
     required this.rentPrice,
     required this.electricPrice,
     required this.waterPrice,
+    List<String>? buildingImages,
+    List<dynamic>? services,
+    required this.createdAt,
+    required this.updatedAt,
     this.rooms,
-  });
+  })  : buildingImages = buildingImages ?? [],
+        services = services ?? [];
 
   factory BuildingDto.fromJson(Map<String, dynamic> json) {
     return BuildingDto(
-        id: json['id']?.toString() ?? '',
-        name: json['name']?.toString() ?? '',
-        passKey: json['passkey']?.toString(),
-        rentPrice: _parseDouble(json['rentPrice']),
-        electricPrice: _parseDouble(json['electricPrice']),
-        waterPrice: _parseDouble(json['waterPrice']),
-        rooms: json['rooms'] != null
-            ? (json['rooms'] as List)
-                .map((r) => RoomDto.fromJson(r as Map<String, dynamic>))
-                .toList()
-            : null);
+      id: json['id']?.toString() ?? '',
+      appUserId: json['appUserId']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      passKey: json['passkey']?.toString(),
+      rentPrice: _parseDouble(json['rentPrice']),
+      electricPrice: _parseDouble(json['electricPrice']),
+      waterPrice: _parseDouble(json['waterPrice']),
+      buildingImages: json['buildingImages'] != null
+          ? (json['buildingImages'] as List).map((e) => e.toString()).toList()
+          : [],
+      services: json['services'] as List? ?? [],
+      createdAt: _parseDateTime(json['createdAt']),
+      updatedAt: _parseDateTime(json['updatedAt']),
+      rooms: json['rooms'] != null
+          ? (json['rooms'] as List)
+              .map((r) => RoomDto.fromJson(r as Map<String, dynamic>))
+              .toList()
+          : null,
+    );
+  }
+
+  factory BuildingDto.fromBuilding(Building building) {
+    return BuildingDto(
+      id: building.id,
+      appUserId: building.appUserId,
+      name: building.name,
+      passKey: building.passKey,
+      rentPrice: building.rentPrice,
+      electricPrice: building.electricPrice,
+      waterPrice: building.waterPrice,
+      buildingImages: building.buildingImages,
+      services: building.services,
+      createdAt: building.createdAt,
+      updatedAt: building.updatedAt,
+    );
   }
 
   static double _parseDouble(dynamic value) {
@@ -44,14 +79,27 @@ class BuildingDto {
     return 0.0;
   }
 
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is String) {
+      return DateTime.tryParse(value) ?? DateTime.now();
+    }
+    return DateTime.now();
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'appUserId': appUserId,
       'name': name,
       if (passKey != null) 'passkey': passKey,
       'rentPrice': rentPrice,
       'electricPrice': electricPrice,
       'waterPrice': waterPrice,
+      'buildingImages': buildingImages,
+      'services': services,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
       if (rooms != null) 'rooms': rooms!.map((r) => r.toJson()).toList(),
     };
   }
@@ -68,11 +116,16 @@ class BuildingDto {
   Building toBuilding() {
     return Building(
       id: id,
+      appUserId: appUserId,
       name: name,
       rentPrice: rentPrice,
       electricPrice: electricPrice,
       waterPrice: waterPrice,
       passKey: passKey,
+      buildingImages: buildingImages,
+      services: services,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
       rooms: rooms?.map((r) => r.toRoom()).toList() ?? [],
     );
   }

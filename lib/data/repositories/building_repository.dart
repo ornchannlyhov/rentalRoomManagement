@@ -17,13 +17,21 @@ String _encodeBuildings(List<Building> buildings) {
   return jsonEncode(buildings
       .map((b) => BuildingDto(
             id: b.id,
+            appUserId: b.appUserId,
             name: b.name,
             rentPrice: b.rentPrice,
             electricPrice: b.electricPrice,
             waterPrice: b.waterPrice,
+            buildingImages: b.buildingImages,
+            services: b.services,
+            createdAt: b.createdAt,
+            updatedAt: b.updatedAt,
+            passKey: b.passKey,
+            rooms: null,
           ).toJson())
       .toList());
 }
+
 
 List<Map<String, dynamic>> _parsePendingChanges(String jsonString) {
   return List<Map<String, dynamic>>.from(jsonDecode(jsonString));
