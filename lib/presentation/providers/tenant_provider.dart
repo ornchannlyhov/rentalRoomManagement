@@ -1,5 +1,3 @@
-// TenantProvider - With AsyncValue State Management
-
 import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/tenant.dart';
 import 'package:joul_v2/data/repositories/tenant_repository.dart';
@@ -41,6 +39,28 @@ class TenantProvider with ChangeNotifier {
       _tenantsState = AsyncValue.error(e, _tenantsState.data);
     }
     notifyListeners();
+  }
+
+  /// Sync tenants from API
+  Future<void> syncTenants() async {
+    _tenantsState = AsyncValue.loading(_tenantsState.data);
+    notifyListeners();
+
+    try {
+      await _tenantRepository.syncFromApi();
+
+      // Hydrate relationships after sync
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      await load();
+    } catch (e) {
+      _tenantsState = AsyncValue.error(e, _tenantsState.data);
+      notifyListeners();
+      rethrow;
+    }
   }
 
   Future<void> createTenant(Tenant tenant) async {

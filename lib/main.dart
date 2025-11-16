@@ -137,11 +137,13 @@ Future<void> main() async {
     buildingProvider: buildingProvider,
   ));
 
-  final notificationProvider = NotificationProvider(receiptRepository, navigatorKey);
-  notificationProvider.setupListeners(); 
+  final notificationProvider = NotificationProvider(
+      receiptRepository, navigatorKey,
+      repositoryManager: repositoryManager);
+  notificationProvider.setupListeners();
 
   runApp(MyApp(
-    navigatorKey: navigatorKey, 
+    navigatorKey: navigatorKey,
     authProvider: authProvider,
     repositoryManager: repositoryManager,
     roomProvider: roomProvider,
@@ -219,7 +221,7 @@ Future<void> _loadProvidersInBackground({
 }
 
 class MyApp extends StatefulWidget {
-  final GlobalKey<NavigatorState> navigatorKey; 
+  final GlobalKey<NavigatorState> navigatorKey;
   final AuthProvider authProvider;
   final RepositoryManager repositoryManager;
   final RoomProvider roomProvider;
@@ -233,7 +235,7 @@ class MyApp extends StatefulWidget {
 
   const MyApp({
     super.key,
-    required this.navigatorKey, 
+    required this.navigatorKey,
     required this.authProvider,
     required this.repositoryManager,
     required this.roomProvider,
@@ -290,7 +292,7 @@ class _MyAppState extends State<MyApp> {
           }
 
           return MaterialApp(
-            navigatorKey: widget.navigatorKey, 
+            navigatorKey: widget.navigatorKey,
             title: 'JOUL',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,

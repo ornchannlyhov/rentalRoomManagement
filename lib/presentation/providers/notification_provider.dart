@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:joul_v2/core/helpers/asyn_value.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
+import 'package:joul_v2/core/helpers/repository_manager.dart';
 import 'package:joul_v2/data/models/receipt.dart';
 import 'package:joul_v2/data/repositories/receipt_repository.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_detail.dart';
 
 class NotificationProvider with ChangeNotifier {
   final ReceiptRepository _receiptRepository;
+  final RepositoryManager? _repositoryManager;
   final GlobalKey<NavigatorState> navigatorKey;
   final ApiHelper _apiHelper = ApiHelper.instance;
 
@@ -19,7 +21,11 @@ class NotificationProvider with ChangeNotifier {
   bool _hasUnread = false;
   bool _isInitialized = false;
 
-  NotificationProvider(this._receiptRepository, this.navigatorKey);
+  NotificationProvider(
+    this._receiptRepository,
+    this.navigatorKey, {
+    RepositoryManager? repositoryManager,
+  }) : _repositoryManager = repositoryManager;
 
   AsyncValue<List<Receipt>> get newReceipts => _newReceipts;
   bool get hasUnread => _hasUnread;
@@ -38,12 +44,14 @@ class NotificationProvider with ChangeNotifier {
         final allReceipts = _receiptRepository.getAllReceipts();
 
         final notificationReceipts = receiptIds
-            .map((id) => allReceipts.firstWhere(
-                  (r) => r.id == id,
-                  orElse: () => null as Receipt,
-                ))
-            .where((r) => r != null)
-            .cast<Receipt>()
+            .map((id) {
+              try {
+                return allReceipts.firstWhere((r) => r.id == id);
+              } catch (_) {
+                return null;
+              }
+            })
+            .whereType<Receipt>()
             .toList();
 
         _newReceipts = AsyncValue.success(notificationReceipts);
@@ -75,12 +83,15 @@ class NotificationProvider with ChangeNotifier {
 
   /// Initialize Firebase listeners for notifications
   void setupListeners() {
+    // Show dialog when app is open
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.data['type'] == 'NEW_RECEIPT') {
         _handleReceiptNotification(message.data, showNavigation: false);
+        _showForegroundNotificationDialog(message);
       }
     });
 
+    // App opened from notification
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       if (message.data['type'] == 'NEW_RECEIPT') {
         _handleReceiptNotification(message.data, showNavigation: true);
@@ -88,6 +99,59 @@ class NotificationProvider with ChangeNotifier {
     });
 
     _handleInitialMessage();
+  }
+
+  /// Show notification dialog when app is in foreground
+  void _showForegroundNotificationDialog(RemoteMessage message) {
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
+    final title = message.notification?.title ?? 'New Receipt';
+    final body =
+        message.notification?.body ?? 'You have received a new receipt';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.receipt_long,
+                color: Theme.of(dialogContext).colorScheme.primary,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(body),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Dismiss'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _handleReceiptNotification(message.data, showNavigation: true);
+              },
+              child: const Text('View'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   /// Handles notification when app launches from terminated state
@@ -116,15 +180,21 @@ class NotificationProvider with ChangeNotifier {
       notifyListeners();
 
       await _receiptRepository.syncFromApi();
-      final allReceipts = _receiptRepository.getAllReceipts();
-      final receipt = allReceipts.firstWhere(
-        (r) => r.id == receiptId,
-        orElse: () => null as Receipt,
-      );
 
-      if (receipt == null) {
+      // Hydrate relationships after sync
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      final allReceipts = _receiptRepository.getAllReceipts();
+      Receipt? receipt;
+      try {
+        receipt = allReceipts.firstWhere((r) => r.id == receiptId);
+      } catch (_) {
+        // Receipt not found after sync, exit early
         _newReceipts = AsyncValue.error(
-          'Receipt not found.',
+          Exception('Receipt not found: $receiptId'),
           _newReceipts.previousData,
         );
         notifyListeners();
@@ -132,7 +202,7 @@ class NotificationProvider with ChangeNotifier {
       }
 
       final currentList = _newReceipts.previousData ?? [];
-      final exists = currentList.any((r) => r.id == receipt.id);
+      final exists = currentList.any((r) => r.id == receipt!.id);
 
       if (!exists) {
         _newReceipts = AsyncValue.success([receipt, ...currentList]);
@@ -147,7 +217,7 @@ class NotificationProvider with ChangeNotifier {
       if (showNavigation && navigatorKey.currentContext != null) {
         navigatorKey.currentState?.push(
           MaterialPageRoute(
-            builder: (_) => ReceiptDetailScreen(receipt: receipt),
+            builder: (_) => ReceiptDetailScreen(receipt: receipt!),
           ),
         );
       }

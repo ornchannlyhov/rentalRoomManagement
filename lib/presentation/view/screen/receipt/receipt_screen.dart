@@ -51,7 +51,6 @@ class _ReceiptScreenState extends State<ReceiptScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
-      // REMOVED: _setupNotificationListeners() - Now handled in main.dart
     });
   }
 
@@ -62,19 +61,36 @@ class _ReceiptScreenState extends State<ReceiptScreen>
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
+
     final receiptProvider = context.read<ReceiptProvider>();
     final buildingProvider = context.read<BuildingProvider>();
     final roomProvider = context.read<RoomProvider>();
     final serviceProvider = context.read<ServiceProvider>();
 
-    await Future.wait([
-      receiptProvider.load(),
-      buildingProvider.load(),
-      roomProvider.load(),
-      serviceProvider.load(),
-    ]);
+    try {
+      // Try to sync from API (online)
+      await Future.wait([
+        receiptProvider.syncReceipts(),
+        buildingProvider.syncBuildings(),
+        roomProvider.syncRooms(),
+        serviceProvider.syncServices(),
+      ]);
+    } catch (e) {
+      // If sync fails (offline), fall back to local cache
+      if (mounted) {
+        await Future.wait([
+          receiptProvider.load(),
+          buildingProvider.load(),
+          roomProvider.load(),
+          serviceProvider.load(),
+        ]);
+      }
+    }
 
-    if (mounted) _animationController.forward();
+    if (mounted) {
+      _animationController.forward();
+    }
   }
 
   Future<void> _navigateToAddReceipt(List<Receipt> allReceipts) async {

@@ -36,6 +36,28 @@ class ReportProvider with ChangeNotifier {
     }
   }
 
+  /// Sync reports from API
+  Future<void> syncReports() async {
+    _reportsState = AsyncValue.loading(_reportsState.bestData);
+    notifyListeners();
+
+    try {
+      await _reportRepository.syncFromApi();
+
+      // Hydrate relationships after sync
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      await load();
+    } catch (e) {
+      _reportsState = AsyncValue.error(e, _reportsState.bestData);
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   Future<void> updateReportStatus(String reportId, String status) async {
     _reportsState = AsyncValue.loading(_reportsState.bestData);
     notifyListeners();

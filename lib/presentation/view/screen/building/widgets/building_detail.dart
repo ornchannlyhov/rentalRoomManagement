@@ -41,22 +41,33 @@ class _BuildingDetailState extends State<BuildingDetail> {
   ScreenType _currentScreen = ScreenType.room;
   ReportStatus? _statusFilter;
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadData();
-    });
-  }
-
   Future<void> _loadData() async {
     if (!mounted) return;
-    await Future.wait([
-      context.read<RoomProvider>().load(),
-      context.read<ServiceProvider>().load(),
-      context.read<TenantProvider>().load(),
-      context.read<ReportProvider>().load(),
-    ]);
+
+
+    try {
+      await Future.wait([
+        context.read<RoomProvider>().syncRooms(),
+        context.read<ServiceProvider>().syncServices(),
+        context.read<TenantProvider>().syncTenants(),
+        context.read<ReportProvider>().syncReports(),
+      ]);
+    } catch (e) {
+      if (mounted) {
+        await Future.wait([
+          context.read<RoomProvider>().load(),
+          context.read<ServiceProvider>().load(),
+          context.read<TenantProvider>().load(),
+          context.read<ReportProvider>().load(),
+        ]);
+
+        final l10n = AppLocalizations.of(context)!;
+        GlobalSnackBar.show(
+          context: context,
+          message: "Current offline load data from device", 
+        );
+      }
+    }
   }
 
   // ==================== ROOM METHODS ====================
@@ -204,7 +215,8 @@ class _BuildingDetailState extends State<BuildingDetail> {
                 color: _getStatusColor(context, status),
               ),
               selected: report.status == status,
-              selectedTileColor: _getStatusColor(context, status).withOpacity(0.1),
+              selectedTileColor:
+                  _getStatusColor(context, status).withOpacity(0.1),
               onTap: () => Navigator.pop(context, status),
             );
           }).toList(),
@@ -215,9 +227,9 @@ class _BuildingDetailState extends State<BuildingDetail> {
     if (newStatus != null && newStatus != report.status && mounted) {
       try {
         await context.read<ReportProvider>().updateReportStatus(
-          report.id,
-          newStatus.toApiString(),
-        );
+              report.id,
+              newStatus.toApiString(),
+            );
         if (mounted) {
           final l10n = AppLocalizations.of(context)!;
           GlobalSnackBar.show(
@@ -236,8 +248,6 @@ class _BuildingDetailState extends State<BuildingDetail> {
       }
     }
   }
-
-
 
   // ==================== REPORT HELPER METHODS ====================
   Color _getStatusColor(BuildContext context, ReportStatus status) {
@@ -494,7 +504,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
           error: (error) => _buildErrorState(error, _loadData),
           success: (reports) {
             final l10n = AppLocalizations.of(context)!;
-            
+
             // Filter by building
             var buildingReports = reports
                 .where((r) => r.room?.building?.id == widget.building.id)
@@ -510,15 +520,14 @@ class _BuildingDetailState extends State<BuildingDetail> {
             if (buildingReports.isEmpty) {
               return _buildEmptyStateWithRefresh(
                 icon: Icons.report_outlined,
-                title: _statusFilter != null 
+                title: _statusFilter != null
                     ? l10n.noFilteredReports(_getStatusLabel(_statusFilter!))
                     : l10n.noReports,
                 subtitle: _statusFilter != null
                     ? l10n.noFilteredReportsSubtitle
                     : l10n.noReportsSubtitle,
-                actionText: _statusFilter != null 
-                    ? l10n.clearFilter
-                    : l10n.refresh,
+                actionText:
+                    _statusFilter != null ? l10n.clearFilter : l10n.refresh,
                 onAction: _statusFilter != null
                     ? () => setState(() => _statusFilter = null)
                     : _loadData,
@@ -609,7 +618,8 @@ class _BuildingDetailState extends State<BuildingDetail> {
       direction: DismissDirection.endToStart,
       confirmDismiss: (_) => _showConfirmDialog(
         title: l10n.deleteReport,
-        content: l10n.deleteReportConfirmFrom(report.tenant?.name ?? l10n.unknownTenant),
+        content: l10n
+            .deleteReportConfirmFrom(report.tenant?.name ?? l10n.unknownTenant),
       ),
       onDismissed: (_) => _deleteReport(index, report),
       child: Padding(
@@ -832,96 +842,101 @@ class _BuildingDetailState extends State<BuildingDetail> {
                 Row(
                   children: [
                     // Filter button (only for reports)
-      if (_currentScreen == ScreenType.report)
-  Padding(
-    padding: const EdgeInsets.only(right: 8),
-    child: DropdownButtonHideUnderline(
-      child: DropdownButton<ReportStatus?>(
-        value: _statusFilter,
-        icon: Icon(
-          Icons.filter_alt,
-          size: 20,
-          color: Colors.black, // BLACK ICON ALWAYS
-        ),
-        dropdownColor: theme.colorScheme.surface,
-        style: TextStyle(
-          color: theme.colorScheme.onSurface,
-          fontSize: 14,
-        ),
-        elevation: 8,
-        borderRadius: BorderRadius.circular(12),
-        isDense: true,
-        hint: Text(
-          l10n.allReports,
-          style: TextStyle(
-            color: _statusFilter == null
-                ? theme.colorScheme.onSurfaceVariant
-                : theme.colorScheme.onSurface,
-          ),
-        ),
-        // FULL CONTROL — NO GREY, LOCALIZED TEXT
-        selectedItemBuilder: (BuildContext context) {
-          return [
-            // "All Reports" — null
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.clear_all, size: 18, color: theme.colorScheme.onSurfaceVariant),
-                const SizedBox(width: 8),
-                Text(l10n.allReports),
-              ],
-            ),
-            // Each status — localized
-            ...ReportStatus.values.map((status) {
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _getStatusIcon(status),
-                    size: 18,
-                    color: _getStatusColor(context, status),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(_getStatusLabel(status)),
-                ],
-              );
-            }),
-          ];
-        },
-        items: [
-          DropdownMenuItem<ReportStatus?>(
-            value: null,
-            child: Row(
-              children: [
-                const Icon(Icons.clear_all, size: 18),
-                const SizedBox(width: 8),
-                Text(l10n.allReports),
-              ],
-            ),
-          ),
-          ...ReportStatus.values.map((status) => DropdownMenuItem(
-                value: status,
-                child: Row(
-                  children: [
-                    Icon(
-                      _getStatusIcon(status),
-                      size: 18,
-                      color: _getStatusColor(context, status),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(_getStatusLabel(status)),
-                  ],
-                ),
-              )),
-        ],
-        onChanged: (ReportStatus? newValue) {
-          setState(() {
-            _statusFilter = newValue;
-          });
-        },
-      ),
-    ),
-  ),
+                    if (_currentScreen == ScreenType.report)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<ReportStatus?>(
+                            value: _statusFilter,
+                            icon: Icon(
+                              Icons.filter_alt,
+                              size: 20,
+                              color: Colors.black, // BLACK ICON ALWAYS
+                            ),
+                            dropdownColor: theme.colorScheme.surface,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface,
+                              fontSize: 14,
+                            ),
+                            elevation: 8,
+                            borderRadius: BorderRadius.circular(12),
+                            isDense: true,
+                            hint: Text(
+                              l10n.allReports,
+                              style: TextStyle(
+                                color: _statusFilter == null
+                                    ? theme.colorScheme.onSurfaceVariant
+                                    : theme.colorScheme.onSurface,
+                              ),
+                            ),
+                            // FULL CONTROL — NO GREY, LOCALIZED TEXT
+                            selectedItemBuilder: (BuildContext context) {
+                              return [
+                                // "All Reports" — null
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.clear_all,
+                                        size: 18,
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant),
+                                    const SizedBox(width: 8),
+                                    Text(l10n.allReports),
+                                  ],
+                                ),
+                                // Each status — localized
+                                ...ReportStatus.values.map((status) {
+                                  return Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _getStatusIcon(status),
+                                        size: 18,
+                                        color: _getStatusColor(context, status),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(_getStatusLabel(status)),
+                                    ],
+                                  );
+                                }),
+                              ];
+                            },
+                            items: [
+                              DropdownMenuItem<ReportStatus?>(
+                                value: null,
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.clear_all, size: 18),
+                                    const SizedBox(width: 8),
+                                    Text(l10n.allReports),
+                                  ],
+                                ),
+                              ),
+                              ...ReportStatus.values
+                                  .map((status) => DropdownMenuItem(
+                                        value: status,
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              _getStatusIcon(status),
+                                              size: 18,
+                                              color: _getStatusColor(
+                                                  context, status),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(_getStatusLabel(status)),
+                                          ],
+                                        ),
+                                      )),
+                            ],
+                            onChanged: (ReportStatus? newValue) {
+                              setState(() {
+                                _statusFilter = newValue;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
 
                     // Add button (only for rooms and services, not reports)
                     if (_currentScreen != ScreenType.report)

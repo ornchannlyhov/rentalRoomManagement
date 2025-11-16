@@ -68,16 +68,31 @@ class _TenantScreenState extends State<TenantScreen>
 
   /// Loads all necessary data (tenants, rooms, buildings) from providers.
   Future<void> _loadData() async {
+    if (!mounted) return;
+
     final tenantProvider = context.read<TenantProvider>();
     final roomProvider = context.read<RoomProvider>();
     final buildingProvider = context.read<BuildingProvider>();
 
-    await Future.wait([
-      tenantProvider.load(),
-      roomProvider.load(),
-      buildingProvider.load(),
-    ]);
-    _animationController.forward();
+    try {
+      await Future.wait([
+        tenantProvider.syncTenants(),
+        roomProvider.syncRooms(),
+        buildingProvider.syncBuildings(),
+      ]);
+    } catch (e) {
+      if (mounted) {
+        await Future.wait([
+          tenantProvider.load(),
+          roomProvider.load(),
+          buildingProvider.load(),
+        ]);
+      }
+    }
+
+    if (mounted) {
+      _animationController.forward();
+    }
   }
 
   /// Filters tenants based on search query or building selection
@@ -106,7 +121,7 @@ class _TenantScreenState extends State<TenantScreen>
   /// Handles the process of adding a new tenant.
   Future<void> _addTenantToRoom(BuildContext context) async {
     final localizations = AppLocalizations.of(context)!;
-    
+
     final newTenant = await Navigator.of(context).push<Tenant>(
       MaterialPageRoute(
         builder: (ctx) => TenantForm(
@@ -149,7 +164,7 @@ class _TenantScreenState extends State<TenantScreen>
   /// Handles the process of editing an existing tenant.
   Future<void> _editTenant(BuildContext context, Tenant tenant) async {
     final localizations = AppLocalizations.of(context)!;
-    
+
     final updatedTenant = await Navigator.of(context).push<Tenant>(
       MaterialPageRoute(
         builder: (ctx) => TenantForm(
@@ -211,7 +226,7 @@ class _TenantScreenState extends State<TenantScreen>
   /// Handles changing a tenant's room.
   void _changeRoom(BuildContext context, Tenant tenant) {
     final localizations = AppLocalizations.of(context)!;
-    
+
     showDialog(
       context: context,
       builder: (ctx) => RoomChangeDialog(
@@ -275,7 +290,7 @@ class _TenantScreenState extends State<TenantScreen>
   Future<void> _deleteTenant(
       BuildContext context, int index, Tenant tenant) async {
     final localizations = AppLocalizations.of(context)!;
-    
+
     final shouldDelete = await _showConfirmDeleteDialog(context, tenant.name);
 
     if (shouldDelete == true && mounted) {
@@ -314,7 +329,7 @@ class _TenantScreenState extends State<TenantScreen>
       BuildContext context, String tenantName) {
     final theme = Theme.of(context);
     final localizations = AppLocalizations.of(context)!;
-    
+
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
