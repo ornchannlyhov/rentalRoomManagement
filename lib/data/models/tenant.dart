@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:joul_v2/data/models/enum/gender.dart';
 import 'package:joul_v2/data/models/room.dart';
 
@@ -8,14 +9,12 @@ class Tenant {
   final Gender gender;
   final String? chatId;
   final String language;
-  final DateTime lastInteractionDate;
-  final DateTime? nextReminderDate;
-  final bool isActive;
   final double deposit;
   final String? tenantProfile;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+
   Room? room;
+
+  File? imageFile;
 
   Tenant({
     required this.id,
@@ -24,14 +23,10 @@ class Tenant {
     required this.gender,
     this.chatId,
     required this.language,
-    required this.lastInteractionDate,
-    this.nextReminderDate,
-    required this.isActive,
     required this.deposit,
     this.tenantProfile,
-    required this.createdAt,
-    required this.updatedAt,
     this.room,
+    this.imageFile, 
   });
 
   Tenant copyWith({
@@ -49,6 +44,7 @@ class Tenant {
     DateTime? createdAt,
     DateTime? updatedAt,
     Room? room,
+    File? imageFile, 
   }) {
     return Tenant(
       id: id ?? this.id,
@@ -57,14 +53,10 @@ class Tenant {
       gender: gender ?? this.gender,
       chatId: chatId ?? this.chatId,
       language: language ?? this.language,
-      lastInteractionDate: lastInteractionDate ?? this.lastInteractionDate,
-      nextReminderDate: nextReminderDate ?? this.nextReminderDate,
-      isActive: isActive ?? this.isActive,
       deposit: deposit ?? this.deposit,
       tenantProfile: tenantProfile ?? this.tenantProfile,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
       room: room ?? this.room,
+      imageFile: imageFile ?? this.imageFile, 
     );
   }
 }

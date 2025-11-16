@@ -2118,6 +2118,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Next'**
   String get nextButton;
+
+  /// No description provided for @notificationRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification removed'**
+  String get notificationRemoved;
+
+  /// No description provided for @notificationsCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'All notifications cleared'**
+  String get notificationsCleared;
+
+  /// No description provided for @noNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications'**
+  String get noNotifications;
+
+  /// No description provided for @newReceiptNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'New receipt notifications will appear here'**
+  String get newReceiptNotification;
+
+  /// No description provided for @clearAllNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all notifications?'**
+  String get clearAllNotifications;
+
+  /// No description provided for @clearNotificationsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This will remove all notification items. You can still view receipts in the Receipts tab.'**
+  String get clearNotificationsMessage;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

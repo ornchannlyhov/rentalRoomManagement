@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
 
 /// Result of a sync operation
@@ -18,7 +20,7 @@ class SyncResult<T> {
 class SyncOperationHelper {
   final ApiHelper _apiHelper = ApiHelper.instance;
 
-  /// Execute a CREATE operation with offline support
+  /// Execute a CREATE operation with offline support (with optional file)
   Future<SyncResult<T>> create<T>({
     required String endpoint,
     required Map<String, dynamic> data,
@@ -30,36 +32,50 @@ class SyncOperationHelper {
       Map<String, dynamic> data,
     ) addPendingChange,
     T? offlineModel,
+    File? file, 
+    String? fileFieldName, 
   }) async {
     if (await _apiHelper.hasNetwork()) {
       final token = await _apiHelper.storage.read(key: 'auth_token');
       if (token != null) {
         try {
-          // Add timeout to prevent hanging requests
-          final response = await _apiHelper.dio.post(
-            '${_apiHelper.baseUrl}$endpoint',
-            data: data,
-            options: Options(
-              headers: {'Authorization': 'Bearer $token'},
-              sendTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 10),
-            ),
-            cancelToken: _apiHelper.cancelToken,
-          );
+          Response? response;
 
-          if (response.data['cancelled'] == true) {
+          if (file != null && fileFieldName != null) {
+            response = await _apiHelper.uploadWithFile(
+              endpoint: endpoint,
+              data: data,
+              file: file,
+              fileFieldName: fileFieldName,
+              method: 'POST',
+            );
+          } else {
+            // Regular JSON POST
+            response = await _apiHelper.dio.post(
+              '${_apiHelper.baseUrl}$endpoint',
+              data: data,
+              options: Options(
+                headers: {'Authorization': 'Bearer $token'},
+                sendTimeout: const Duration(seconds: 10),
+                receiveTimeout: const Duration(seconds: 10),
+              ),
+              cancelToken: _apiHelper.cancelToken,
+            );
+          }
+
+          if (response?.data['cancelled'] == true) {
             throw Exception('Request cancelled');
           }
 
-          if (response.statusCode == 201) {
-            final createdItem = fromJson(response.data['data']);
+          if (response?.statusCode == 201 || response?.statusCode == 200) {
+            final createdItem = fromJson(response!.data['data']);
             await addToCache(createdItem);
             return SyncResult(
                 success: true, data: createdItem, wasOnline: true);
           }
-          
-          // Non-201 response - treat as failure
-          throw Exception('Unexpected status code: ${response.statusCode}');
+
+          // Non-201/200 response - treat as failure
+          throw Exception('Unexpected status code: ${response?.statusCode}');
         } on DioException catch (e) {
           // Only queue if it's a definite network failure
           // Don't queue on 4xx/5xx errors (server processed it)
@@ -69,9 +85,10 @@ class SyncOperationHelper {
               await addToCache(offlineModel);
             }
             await addPendingChange('create', endpoint, data);
-            return SyncResult(success: true, data: offlineModel, wasOnline: false);
+            return SyncResult(
+                success: true, data: offlineModel, wasOnline: false);
           }
-          
+
           // Server error - don't queue, propagate error
           rethrow;
         } catch (e) {
@@ -89,7 +106,7 @@ class SyncOperationHelper {
     return SyncResult(success: true, data: offlineModel, wasOnline: false);
   }
 
-  /// Execute an UPDATE operation with offline support
+  /// Execute an UPDATE operation with offline support (with optional file)
   Future<SyncResult<void>> update({
     required String endpoint,
     required Map<String, dynamic> data,
@@ -99,6 +116,8 @@ class SyncOperationHelper {
       String endpoint,
       Map<String, dynamic> data,
     ) addPendingChange,
+    File? file, 
+    String? fileFieldName, 
   }) async {
     bool syncedOnline = false;
 
@@ -106,22 +125,35 @@ class SyncOperationHelper {
       final token = await _apiHelper.storage.read(key: 'auth_token');
       if (token != null) {
         try {
-          final response = await _apiHelper.dio.put(
-            '${_apiHelper.baseUrl}$endpoint',
-            data: data,
-            options: Options(
-              headers: {'Authorization': 'Bearer $token'},
-              sendTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 10),
-            ),
-            cancelToken: _apiHelper.cancelToken,
-          );
+          Response? response;
 
-          if (response.data['cancelled'] != true &&
-              response.statusCode == 200) {
+          if (file != null && fileFieldName != null) {
+            response = await _apiHelper.uploadWithFile(
+              endpoint: endpoint,
+              data: data,
+              file: file,
+              fileFieldName: fileFieldName,
+              method: 'PUT',
+            );
+          } else {
+            // Regular JSON PUT
+            response = await _apiHelper.dio.put(
+              '${_apiHelper.baseUrl}$endpoint',
+              data: data,
+              options: Options(
+                headers: {'Authorization': 'Bearer $token'},
+                sendTimeout: const Duration(seconds: 10),
+                receiveTimeout: const Duration(seconds: 10),
+              ),
+              cancelToken: _apiHelper.cancelToken,
+            );
+          }
+
+          if (response?.data['cancelled'] != true &&
+              response?.statusCode == 200) {
             syncedOnline = true;
-          } else if (response.statusCode != 200) {
-            throw Exception('Unexpected status code: ${response.statusCode}');
+          } else if (response?.statusCode != 200) {
+            throw Exception('Unexpected status code: ${response?.statusCode}');
           }
         } on DioException catch (e) {
           // Only queue on network failures, not server errors
@@ -242,52 +274,88 @@ class SyncOperationHelper {
     return SyncResult(success: false, wasOnline: true);
   }
 
-  /// Apply a pending change to the API
+  /// Apply a pending change to the API (with file support)
   Future<bool> applyPendingChange(Map<String, dynamic> change) async {
     final token = await _apiHelper.storage.read(key: 'auth_token');
     if (token == null) return false;
 
     final type = change['type'];
-    final data = change['data'];
+    final data = change['data'] as Map<String, dynamic>;
     final endpoint = change['endpoint'];
+    final filePath = change['filePath'] as String?; 
+    final fileFieldName =
+        change['fileFieldName'] as String?;
 
     if (endpoint == null) return false;
 
+    File? file;
+    if (filePath != null && fileFieldName != null) {
+      final fileExists = await File(filePath).exists();
+      if (fileExists) {
+        file = File(filePath);
+      } else {
+        if (kDebugMode) {
+          print('Warning: File not found at $filePath, syncing without file');
+        }
+      }
+    }
+
     try {
-      Response response;
-      
+      Response? response;
+
       switch (type) {
         case 'create':
-          response = await _apiHelper.dio.post(
-            '${_apiHelper.baseUrl}$endpoint',
-            data: data,
-            options: Options(
-              headers: {'Authorization': 'Bearer $token'},
-              sendTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 10),
-              // Important: Handle 409 Conflict for duplicates
-              validateStatus: (status) => status! < 500,
-            ),
-          );
-          
+          if (file != null && fileFieldName != null) {
+            response = await _apiHelper.uploadWithFile(
+              endpoint: endpoint,
+              data: data,
+              file: file,
+              fileFieldName: fileFieldName,
+              method: 'POST',
+            );
+          } else {
+            response = await _apiHelper.dio.post(
+              '${_apiHelper.baseUrl}$endpoint',
+              data: data,
+              options: Options(
+                headers: {'Authorization': 'Bearer $token'},
+                sendTimeout: const Duration(seconds: 10),
+                receiveTimeout: const Duration(seconds: 10),
+                validateStatus: (status) => status! < 500,
+              ),
+            );
+          }
+
           // 201 = success, 409 = already exists (treat as success)
-          return response.statusCode == 201 || response.statusCode == 409;
-          
+          return response?.statusCode == 201 ||
+              response?.statusCode == 200 ||
+              response?.statusCode == 409;
+
         case 'update':
-          response = await _apiHelper.dio.put(
-            '${_apiHelper.baseUrl}$endpoint',
-            data: data,
-            options: Options(
-              headers: {'Authorization': 'Bearer $token'},
-              sendTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 10),
-              validateStatus: (status) => status! < 500,
-            ),
-          );
-          
+          if (file != null && fileFieldName != null) {
+            response = await _apiHelper.uploadWithFile(
+              endpoint: endpoint,
+              data: data,
+              file: file,
+              fileFieldName: fileFieldName,
+              method: 'PUT',
+            );
+          } else {
+            response = await _apiHelper.dio.put(
+              '${_apiHelper.baseUrl}$endpoint',
+              data: data,
+              options: Options(
+                headers: {'Authorization': 'Bearer $token'},
+                sendTimeout: const Duration(seconds: 10),
+                receiveTimeout: const Duration(seconds: 10),
+                validateStatus: (status) => status! < 500,
+              ),
+            );
+          }
+
           // 200 = success, 404 = already deleted (treat as success)
-          return response.statusCode == 200 || response.statusCode == 404;
-          
+          return response?.statusCode == 200 || response?.statusCode == 404;
+
         case 'delete':
           response = await _apiHelper.dio.delete(
             '${_apiHelper.baseUrl}$endpoint',
@@ -298,14 +366,17 @@ class SyncOperationHelper {
               validateStatus: (status) => status! < 500,
             ),
           );
-          
+
           // 200 = success, 404 = already deleted (treat as success)
           return response.statusCode == 200 || response.statusCode == 404;
-          
+
         default:
           return false;
       }
     } on DioException catch (e) {
+      if (kDebugMode) {
+        print('Error applying pending change: ${e.message}');
+      }
       // Only fail on network errors, not 4xx/5xx
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.sendTimeout ||
@@ -313,10 +384,13 @@ class SyncOperationHelper {
           e.type == DioExceptionType.connectionError) {
         return false;
       }
-      
+
       // Server errors - consider the operation failed
       return false;
     } catch (e) {
+      if (kDebugMode) {
+        print('Unexpected error applying pending change: $e');
+      }
       return false;
     }
   }

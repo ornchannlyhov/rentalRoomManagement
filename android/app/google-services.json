@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "862813610442",
+    "project_id": "joul-f22e0",
+    "storage_bucket": "joul-f22e0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:862813610442:android:92a69ca4ec43b686e3ef33",
+        "android_client_info": {
+          "package_name": "com.example.joul_v2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAryT6QK3TEBTQuHV_RoeQLjoiOKSM51WQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:862813610442:android:6761b2fb71a8ce53e3ef33",
+        "android_client_info": {
+          "package_name": "com.ornchannlyhov.joul"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAryT6QK3TEBTQuHV_RoeQLjoiOKSM51WQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

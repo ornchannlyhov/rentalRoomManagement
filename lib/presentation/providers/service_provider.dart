@@ -1,5 +1,3 @@
-// ServiceProvider - With AsyncValue State Management
-
 import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/service.dart';
 import 'package:joul_v2/data/repositories/service_repository.dart';
@@ -41,6 +39,28 @@ class ServiceProvider with ChangeNotifier {
       _servicesState = AsyncValue.error(e, _servicesState.data);
     }
     notifyListeners();
+  }
+
+  /// Sync services from API
+  Future<void> syncServices() async {
+    _servicesState = AsyncValue.loading(_servicesState.data);
+    notifyListeners();
+
+    try {
+      await _serviceRepository.syncFromApi();
+
+      // Hydrate relationships after sync
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      await load();
+    } catch (e) {
+      _servicesState = AsyncValue.error(e, _servicesState.data);
+      notifyListeners();
+      rethrow;
+    }
   }
 
   Future<void> createService(Service service) async {

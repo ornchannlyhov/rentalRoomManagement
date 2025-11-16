@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:joul_v2/data/dtos/room_dto.dart';
 import 'package:joul_v2/data/models/building.dart';
 
@@ -11,9 +12,8 @@ class BuildingDto {
   final double waterPrice;
   final List<String> buildingImages;
   final List<dynamic> services;
-  final DateTime createdAt;
-  final DateTime updatedAt;
   final List<RoomDto>? rooms;
+  final File? imageFile;
 
   BuildingDto({
     required this.id,
@@ -25,9 +25,8 @@ class BuildingDto {
     required this.waterPrice,
     List<String>? buildingImages,
     List<dynamic>? services,
-    required this.createdAt,
-    required this.updatedAt,
     this.rooms,
+    this.imageFile, 
   })  : buildingImages = buildingImages ?? [],
         services = services ?? [];
 
@@ -44,8 +43,6 @@ class BuildingDto {
           ? (json['buildingImages'] as List).map((e) => e.toString()).toList()
           : [],
       services: json['services'] as List? ?? [],
-      createdAt: _parseDateTime(json['createdAt']),
-      updatedAt: _parseDateTime(json['updatedAt']),
       rooms: json['rooms'] != null
           ? (json['rooms'] as List)
               .map((r) => RoomDto.fromJson(r as Map<String, dynamic>))
@@ -65,8 +62,7 @@ class BuildingDto {
       waterPrice: building.waterPrice,
       buildingImages: building.buildingImages,
       services: building.services,
-      createdAt: building.createdAt,
-      updatedAt: building.updatedAt,
+      imageFile: building.imageFile, 
     );
   }
 
@@ -77,14 +73,6 @@ class BuildingDto {
       return double.tryParse(value) ?? 0.0;
     }
     return 0.0;
-  }
-
-  static DateTime _parseDateTime(dynamic value) {
-    if (value == null) return DateTime.now();
-    if (value is String) {
-      return DateTime.tryParse(value) ?? DateTime.now();
-    }
-    return DateTime.now();
   }
 
   Map<String, dynamic> toJson() {
@@ -98,8 +86,6 @@ class BuildingDto {
       'waterPrice': waterPrice,
       'buildingImages': buildingImages,
       'services': services,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
       if (rooms != null) 'rooms': rooms!.map((r) => r.toJson()).toList(),
     };
   }
@@ -124,9 +110,8 @@ class BuildingDto {
       passKey: passKey,
       buildingImages: buildingImages,
       services: services,
-      createdAt: createdAt,
-      updatedAt: updatedAt,
       rooms: rooms?.map((r) => r.toRoom()).toList() ?? [],
+      imageFile: imageFile, 
     );
   }
 }

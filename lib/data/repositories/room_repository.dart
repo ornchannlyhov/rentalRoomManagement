@@ -49,8 +49,6 @@ String _encodeRooms(List<Room> rooms) {
                     waterPrice: room.building!.waterPrice,
                     buildingImages: room.building!.buildingImages,
                     services: room.building!.services,
-                    createdAt: room.building!.createdAt,
-                    updatedAt: room.building!.updatedAt,
                     passKey: room.building!.passKey,
                   )
                 : null,
@@ -62,13 +60,8 @@ String _encodeRooms(List<Room> rooms) {
                     gender: room.tenant!.gender.toString().split('.').last,
                     chatId: room.tenant!.chatId,
                     language: room.tenant!.language,
-                    lastInteractionDate: room.tenant!.lastInteractionDate,
-                    nextReminderDate: room.tenant!.nextReminderDate,
-                    isActive: room.tenant!.isActive,
                     deposit: room.tenant!.deposit,
                     tenantProfile: room.tenant!.tenantProfile,
-                    createdAt: room.tenant!.createdAt,
-                    updatedAt: room.tenant!.updatedAt,
                     roomId: room.id,
                   )
                 : null,

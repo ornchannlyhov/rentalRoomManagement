@@ -136,13 +136,24 @@ class _BuildingScreenState extends State<BuildingScreen>
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
+
     final buildingProvider = context.read<BuildingProvider>();
     final serviceProvider = context.read<ServiceProvider>();
 
-    await Future.wait([
-      buildingProvider.load(),
-      serviceProvider.load(),
-    ]);
+    try {
+      await Future.wait([
+        buildingProvider.syncBuildings(),
+        serviceProvider.syncServices(),
+      ]);
+    } catch (e) {
+      if (mounted) {
+        await Future.wait([
+          buildingProvider.load(),
+          serviceProvider.load(),
+        ]);
+      }
+    }
 
     if (mounted) {
       _animationController.forward();

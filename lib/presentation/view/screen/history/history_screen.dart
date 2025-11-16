@@ -162,7 +162,7 @@ class MonthFilterChips extends StatelessWidget {
                 color: isSelected
                     ? Colors.transparent
                     : theme.colorScheme.onSurface.withOpacity(0.4),
-                width: 0.1,
+                width: 0.5,
               ),
             ),
           );
@@ -224,13 +224,28 @@ class _HistoryScreenState extends State<HistoryScreen>
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
+
     final receiptProvider = context.read<ReceiptProvider>();
     final buildingProvider = context.read<BuildingProvider>();
-    await Future.wait([
-      receiptProvider.load(),
-      buildingProvider.load(),
-    ]);
-    _animationController.forward();
+
+    try {
+      await Future.wait([
+        receiptProvider.syncReceipts(),
+        buildingProvider.syncBuildings(),
+      ]);
+    } catch (e) {
+      if (mounted) {
+        await Future.wait([
+          receiptProvider.load(),
+          buildingProvider.load(),
+        ]);
+      }
+    }
+
+    if (mounted) {
+      _animationController.forward();
+    }
   }
 
   Future<void> _viewDetail(BuildContext context, Receipt receipt) async {

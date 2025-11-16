@@ -27,7 +27,7 @@ class TenantDetail extends StatelessWidget {
     // If tenant has a profile image, use it
     if (tenant.tenantProfile != null && tenant.tenantProfile!.isNotEmpty) {
       final isNetworkImage = tenant.tenantProfile!.startsWith('http');
-      
+
       if (isNetworkImage) {
         // Network image from API
         return CircleAvatar(
@@ -90,7 +90,7 @@ class TenantDetail extends StatelessWidget {
         );
       }
     }
-    
+
     // Default avatar based on gender
     return CircleAvatar(
       radius: radius,
@@ -108,11 +108,6 @@ class TenantDetail extends StatelessWidget {
       case Gender.other:
         return localizations.other;
     }
-  }
-
-  String _getStatusText(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
-    return tenant.isActive ? 'Active' : 'Inactive';
   }
 
   @override
@@ -166,43 +161,6 @@ class TenantDetail extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: tenant.isActive
-                              ? Colors.green.withOpacity(0.2)
-                              : Colors.grey.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              tenant.isActive
-                                  ? Icons.check_circle
-                                  : Icons.cancel,
-                              size: 14,
-                              color: tenant.isActive
-                                  ? Colors.green[700]
-                                  : Colors.grey[700],
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _getStatusText(context),
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: tenant.isActive
-                                    ? Colors.green[700]
-                                    : Colors.grey[700],
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
                 ],
@@ -250,47 +208,10 @@ class TenantDetail extends StatelessWidget {
               '\$${tenant.deposit.toStringAsFixed(2)}',
             ),
 
-            const SizedBox(height: 8),
-            _buildDivider(theme),
-            const SizedBox(height: 8),
-
-            // Account Information Section
-            _buildSectionHeader(theme, 'Account Information'),
-            _buildInfoRow(
-              theme,
-              'Created At',
-              _formatDate(tenant.createdAt),
-            ),
-            _buildInfoRow(
-              theme,
-              'Last Updated',
-              _formatDate(tenant.updatedAt),
-            ),
-            _buildInfoRow(
-              theme,
-              'Last Interaction',
-              _formatDate(tenant.lastInteractionDate),
-            ),
-            if (tenant.nextReminderDate != null)
-              _buildInfoRow(
-                theme,
-                'Next Reminder',
-                _formatDate(tenant.nextReminderDate!),
-              ),
-            if (tenant.chatId != null)
-              _buildInfoRow(
-                theme,
-                'Chat ID',
-                tenant.chatId!,
-              ),
           ],
         ),
       ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 
   Widget _buildDivider(ThemeData theme) {

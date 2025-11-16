@@ -68,12 +68,18 @@ class Receipt {
   double get totalServicePrice =>
       services.fold(0.0, (total, service) => total + service.price);
 
+  /// Get the rent price - prioritizes room's unique price, falls back to building's default rent price
   double get roomPrice {
     _validateRoom();
-    return room!.price;
+    // If room has a unique price (non-zero), use it
+    // Otherwise, fall back to building's default rent price
+    if (room!.price > 0) {
+      return room!.price;
+    }
+    return room!.building!.rentPrice;
   }
 
-  /// Calculate total price including utilities, services and room
+  /// Calculate total price including utilities, services and rent
   double get totalPrice =>
       waterPrice + electricPrice + totalServicePrice + roomPrice;
 

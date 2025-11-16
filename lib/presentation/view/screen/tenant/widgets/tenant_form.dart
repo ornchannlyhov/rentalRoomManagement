@@ -33,6 +33,7 @@ class TenantForm extends StatefulWidget {
 class _TenantFormState extends State<TenantForm> {
   final _formKey = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
+  late TextEditingController _depositController;
 
   List<Room> availableRooms = [];
   List<Room> allRooms = [];
@@ -45,6 +46,7 @@ class _TenantFormState extends State<TenantForm> {
   String? selectedBuildingId;
   String? tenantProfile;
   XFile? _selectedImage;
+  late double deposit;
 
   bool get isEditing => widget.mode == Mode.editing;
 
@@ -52,6 +54,7 @@ class _TenantFormState extends State<TenantForm> {
   void initState() {
     super.initState();
     selectedBuildingId = widget.selectedBuildingId;
+    _depositController = TextEditingController();
 
     if (isEditing && widget.tenant != null) {
       final tenant = widget.tenant!;
@@ -60,6 +63,8 @@ class _TenantFormState extends State<TenantForm> {
       phoneNumber = tenant.phoneNumber;
       selectedRoomId = tenant.room?.id;
       gender = tenant.gender;
+      deposit = tenant.deposit;
+      _depositController.text = tenant.deposit.toString();
       tenantProfile = tenant.tenantProfile;
       if (tenant.room?.building != null) {
         selectedBuildingId = tenant.room!.building!.id;
@@ -70,13 +75,20 @@ class _TenantFormState extends State<TenantForm> {
       phoneNumber = '';
       selectedRoomId = null;
       gender = Gender.male;
+      deposit = 0.0;
+      _depositController.text = '';
       tenantProfile = null;
     }
 
-    // Load rooms after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadRooms();
     });
+  }
+
+  @override
+  void dispose() {
+    _depositController.dispose();
+    super.dispose();
   }
 
   void _loadRooms() {
@@ -91,7 +103,6 @@ class _TenantFormState extends State<TenantForm> {
 
       availableRooms = roomProvider.getAvailableRooms();
 
-      // Include the current room in availableRooms if editing
       if (isEditing && widget.tenant?.room != null) {
         final currentRoom = allRooms.firstWhere(
           (room) => room.id == widget.tenant!.room!.id,
@@ -102,10 +113,8 @@ class _TenantFormState extends State<TenantForm> {
         }
       }
 
-      // Filter rooms by selected building if provided
       _filterRoomsByBuilding();
 
-      // Ensure selectedRoomId is valid for the current building filter
       if (selectedRoomId != null &&
           selectedBuildingId != null &&
           !availableRooms.any((room) =>
@@ -128,7 +137,6 @@ class _TenantFormState extends State<TenantForm> {
       availableRooms = roomProvider.getAvailableRooms();
     }
 
-    // Include current room if editing
     if (isEditing && widget.tenant?.room != null) {
       final currentRoom = allRooms.firstWhere(
         (room) => room.id == widget.tenant!.room!.id,
@@ -167,7 +175,6 @@ class _TenantFormState extends State<TenantForm> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      // Find the selected room object from the ID
       Room? selectedRoom;
       if (selectedRoomId != null) {
         selectedRoom = allRooms.firstWhere(
@@ -178,10 +185,10 @@ class _TenantFormState extends State<TenantForm> {
         );
       }
 
-      // Use selected image path if new image was picked, otherwise keep existing
-      String? profilePath = tenantProfile;
+      // ✅ Prepare file object
+      File? imageFile;
       if (_selectedImage != null) {
-        profilePath = _selectedImage!.path;
+        imageFile = File(_selectedImage!.path);
       }
 
       final newTenant = Tenant(
@@ -194,14 +201,9 @@ class _TenantFormState extends State<TenantForm> {
         room: selectedRoom,
         chatId: widget.tenant?.chatId,
         language: widget.tenant?.language ?? 'english',
-        lastInteractionDate:
-            widget.tenant?.lastInteractionDate ?? DateTime.now(),
-        nextReminderDate: widget.tenant?.nextReminderDate,
-        isActive: widget.tenant?.isActive ?? true,
-        deposit: widget.tenant?.deposit ?? 0.0,
-        tenantProfile: profilePath,
-        createdAt: widget.tenant?.createdAt ?? DateTime.now(),
-        updatedAt: DateTime.now(),
+        deposit: double.tryParse(_depositController.text) ?? 0.0,
+        tenantProfile: _selectedImage?.path,
+        imageFile: imageFile,
       );
 
       Navigator.pop(context, newTenant);
@@ -303,8 +305,9 @@ class _TenantFormState extends State<TenantForm> {
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
-        title: Text(
-            isEditing ? localizations.editTenant : localizations.createNewTenant),
+        title: Text(isEditing
+            ? localizations.editTenant
+            : localizations.createNewTenant),
         actions: [
           IconButton(
             onPressed: () => Navigator.pop(context),
@@ -318,7 +321,6 @@ class _TenantFormState extends State<TenantForm> {
           success: (buildings) {
             return roomProvider.roomsState.when(
               success: (rooms) {
-                // Update rooms when provider data changes
                 if (allRooms.isEmpty || allRooms.length != rooms.length) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     _loadRooms();
@@ -329,11 +331,8 @@ class _TenantFormState extends State<TenantForm> {
                   key: _formKey,
                   child: ListView(
                     children: [
-                      // Profile Image Picker
                       Center(child: _buildProfileImagePicker(theme)),
                       const SizedBox(height: 24),
-
-                      // Building Filter
                       DropdownButtonFormField<String?>(
                         value: selectedBuildingId,
                         items: [
@@ -360,8 +359,6 @@ class _TenantFormState extends State<TenantForm> {
                           setState(() {
                             selectedBuildingId = newValue;
                             _filterRoomsByBuilding();
-
-                            // Clear room selection if it doesn't match the new building
                             if (selectedRoomId != null &&
                                 !availableRooms
                                     .any((room) => room.id == selectedRoomId)) {
@@ -399,7 +396,6 @@ class _TenantFormState extends State<TenantForm> {
                         validator: (value) => null,
                       ),
                       fieldSpacing,
-                      // Name Field
                       TextFormField(
                         initialValue: name,
                         decoration: InputDecoration(
@@ -415,15 +411,11 @@ class _TenantFormState extends State<TenantForm> {
                         onSaved: (value) => name = value!,
                       ),
                       fieldSpacing,
-                      // Phone Number Field with Country Picker
                       IntlPhoneField(
+                        // The key change is here: using the standard InputDecoration
                         decoration: InputDecoration(
                           labelText: localizations.phoneNumber,
                           labelStyle: theme.textTheme.bodyMedium,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
                         ),
                         initialCountryCode: 'KH',
                         initialValue: phoneNumber.startsWith('+')
@@ -469,7 +461,6 @@ class _TenantFormState extends State<TenantForm> {
                         ),
                       ),
                       fieldSpacing,
-                      // Gender Selection
                       DropdownButtonFormField<Gender>(
                         value: gender,
                         decoration: InputDecoration(
@@ -488,7 +479,6 @@ class _TenantFormState extends State<TenantForm> {
                         onSaved: (value) => gender = value!,
                       ),
                       fieldSpacing,
-                      // Room Dropdown
                       DropdownButtonFormField<String?>(
                         value: selectedRoomId,
                         items: availableRooms.map((room) {
@@ -517,8 +507,25 @@ class _TenantFormState extends State<TenantForm> {
                             ? localizations.pleaseSelectRoom
                             : null,
                       ),
+                      fieldSpacing,
+                      TextFormField(
+                        controller: _depositController,
+                        decoration: InputDecoration(
+                          labelText: 'Deposit',
+                          labelStyle: theme.textTheme.bodyMedium,
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        validator: (value) {
+                          if (value != null &&
+                              value.isNotEmpty &&
+                              double.tryParse(value) == null) {
+                            return 'Please enter a valid number';
+                          }
+                          return null;
+                        },
+                      ),
                       const SizedBox(height: 24),
-                      // Save Button
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [

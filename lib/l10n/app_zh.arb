@@ -549,5 +549,11 @@
   "chooseLanguageTitle": "选择您的语言",
   "chooseLanguageSubtitle": "选择您的首选语言",
   "continueButton": "继续",
-  "nextButton": "下一步"
+  "nextButton": "下一步",
+  "notificationRemoved": "通知已删除",
+  "notificationsCleared": "所有通知已清除",
+  "noNotifications": "暂无通知",
+  "newReceiptNotification": "新的收据通知将显示在这里",
+  "clearAllNotifications": "清除所有通知？",
+  "clearNotificationsMessage": "这将删除所有通知项目。您仍然可以在收据标签中查看收据。"
 }

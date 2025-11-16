@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:joul_v2/data/models/room.dart';
 
 class Building {
@@ -10,10 +11,8 @@ class Building {
   final String? passKey;
   final List<String> buildingImages;
   final List<dynamic> services;
-  final DateTime createdAt;
-  final DateTime updatedAt;
   List<Room> rooms;
-
+  File? imageFile;
   Building({
     required this.id,
     required this.appUserId,
@@ -21,14 +20,12 @@ class Building {
     required this.rentPrice,
     required this.electricPrice,
     required this.waterPrice,
-    String? passKey,
+    this.passKey,
     List<String>? buildingImages,
     List<dynamic>? services,
-    required this.createdAt,
-    required this.updatedAt,
     List<Room>? rooms,
-  })  : passKey = passKey,
-        buildingImages = buildingImages ?? [],
+    this.imageFile,
+  })  : buildingImages = buildingImages ?? [],
         services = services ?? [],
         rooms = rooms ?? [];
 }

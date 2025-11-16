@@ -105,8 +105,6 @@ class RoomDto {
         rentPrice: 0.0,
         electricPrice: 0.0,
         waterPrice: 0.0,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
         rooms: [],
       );
     }

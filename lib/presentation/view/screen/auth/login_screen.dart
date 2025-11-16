@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:joul_v2/core/services/fcm_service.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/data/repositories/auth_repository.dart';
@@ -229,6 +230,10 @@ class _LoginScreenState extends State<LoginScreen> {
           loading: () {},
           success: (user) async {
             if (user != null && authProvider.isAuthenticated()) {
+              FCMService.initialize().catchError((e) {
+                debugPrint('FCM token upload failed: $e');
+              });
+
               if (await ApiHelper.instance.hasNetwork()) {
                 await repositoryManager.syncAll();
               }

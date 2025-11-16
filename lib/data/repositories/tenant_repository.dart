@@ -49,13 +49,8 @@ String _encodeTenants(List<Tenant> tenants) {
             gender: genderToString(tenant.gender),
             chatId: tenant.chatId,
             language: tenant.language,
-            lastInteractionDate: tenant.lastInteractionDate,
-            nextReminderDate: tenant.nextReminderDate,
-            isActive: tenant.isActive,
             deposit: tenant.deposit,
             tenantProfile: tenant.tenantProfile,
-            createdAt: tenant.createdAt,
-            updatedAt: tenant.updatedAt,
             roomId: tenant.room?.id,
             room: tenant.room != null
                 ? RoomDto(
@@ -73,10 +68,9 @@ String _encodeTenants(List<Tenant> tenants) {
                             rentPrice: tenant.room!.building!.rentPrice,
                             electricPrice: tenant.room!.building!.electricPrice,
                             waterPrice: tenant.room!.building!.waterPrice,
-                            buildingImages: tenant.room!.building!.buildingImages,
+                            buildingImages:
+                                tenant.room!.building!.buildingImages,
                             services: tenant.room!.building!.services,
-                            createdAt: tenant.room!.building!.createdAt,
-                            updatedAt: tenant.room!.building!.updatedAt,
                             passKey: tenant.room!.building!.passKey,
                           )
                         : null,
@@ -261,36 +255,30 @@ class TenantRepository {
   Future<void> _addPendingChange(
     String type,
     Map<String, dynamic> data,
-    String endpoint,
-  ) async {
+    String endpoint, {
+    String? filePath,
+    String? fileFieldName,
+  }) async {
     // Check for duplicate pending changes
     final isDuplicate = _pendingChanges.any((change) {
       if (change['type'] != type || change['endpoint'] != endpoint) {
         return false;
       }
 
-      // For creates with localId, check if localId matches
       if (type == 'create' && data['localId'] != null) {
         return change['data']['localId'] == data['localId'];
       }
 
-      // For updates/deletes, check if id matches
       if (data['id'] != null) {
         return change['data']['id'] == data['id'];
       }
 
-      // For tenants, also check by phoneNumber (tenants are unique per phone number)
-      if (type == 'create' && data['phoneNumber'] != null) {
-        return change['data']['phoneNumber'] == data['phoneNumber'];
-      }
-
-      // Fallback: compare full data
       return jsonEncode(change['data']) == jsonEncode(data);
     });
 
     if (isDuplicate) {
       if (kDebugMode) {
-        print('Skipping duplicate tenant pending change: $type $endpoint');
+        print('Skipping duplicate pending change: $type $endpoint');
       }
       return;
     }
@@ -301,22 +289,26 @@ class TenantRepository {
       'endpoint': endpoint,
       'timestamp': DateTime.now().toIso8601String(),
       'retryCount': 0,
+      if (filePath != null) 'filePath': filePath,
+      if (fileFieldName != null) 'fileFieldName': fileFieldName,
     });
 
     if (kDebugMode) {
-      print('Added tenant pending change: $type $endpoint');
+      print(
+          'Added pending change: $type $endpoint${filePath != null ? ' with file' : ''}');
     }
   }
 
-  Future<void> createTenant(Tenant newTenant) async {
+  Future<Tenant> createTenant(Tenant newTenant) async {
     final requestData = {
       'name': newTenant.name,
       'phoneNumber': newTenant.phoneNumber,
       'gender': _genderToString(newTenant.gender),
+      'deposit': newTenant.deposit.toString(),
       if (newTenant.room != null) 'roomId': newTenant.room!.id,
     };
 
-    await _syncHelper.create<Tenant>(
+    final result = await _syncHelper.create<Tenant>(
       endpoint: '/tenants',
       data: requestData,
       fromJson: (json) {
@@ -343,16 +335,18 @@ class TenantRepository {
       },
       addPendingChange: (type, endpoint, data) => _addPendingChange(
         type,
-        {
-          ...data,
-          'localId': newTenant.id
-        }, // Include localId for offline mapping
+        {...data, 'localId': newTenant.id},
         endpoint,
+        filePath: newTenant.imageFile?.path,
+        fileFieldName: 'tenantProfile',
       ),
       offlineModel: newTenant,
+      file: newTenant.imageFile,
+      fileFieldName: 'tenantProfile',
     );
 
     await save();
+    return result.data ?? newTenant;
   }
 
   Future<void> updateTenant(Tenant updatedTenant) async {
@@ -360,6 +354,7 @@ class TenantRepository {
       'name': updatedTenant.name,
       'phoneNumber': updatedTenant.phoneNumber,
       'gender': _genderToString(updatedTenant.gender),
+      'deposit': updatedTenant.deposit.toString(),
       if (updatedTenant.room != null) 'roomId': updatedTenant.room!.id,
     };
 
@@ -381,7 +376,11 @@ class TenantRepository {
         type,
         data,
         endpoint,
+        filePath: updatedTenant.imageFile?.path, 
+        fileFieldName: 'tenantProfile', 
       ),
+      file: updatedTenant.imageFile, 
+      fileFieldName: 'tenantProfile', 
     );
 
     await save();

@@ -45,6 +45,28 @@ class BuildingProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Sync buildings from API
+  Future<void> syncBuildings() async {
+    _buildingsState = AsyncValue.loading(_buildingsState.data);
+    notifyListeners();
+
+    try {
+      await _buildingRepository.syncFromApi();
+
+      // Hydrate relationships after sync
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      await load();
+    } catch (e) {
+      _buildingsState = AsyncValue.error(e, _buildingsState.data);
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   /// Create building with its rooms (cross-repository operation)
   Future<void> createBuilding(Building building) async {
     try {
@@ -129,7 +151,6 @@ class BuildingProvider with ChangeNotifier {
     }
     notifyListeners();
   }
-
 
   List<Building> searchBuildings(String query) {
     return _buildingRepository.searchBuildings(query);

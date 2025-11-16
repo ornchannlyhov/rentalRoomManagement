@@ -46,6 +46,28 @@ class RoomProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Sync rooms from API
+  Future<void> syncRooms() async {
+    _roomsState = AsyncValue.loading(_roomsState.data);
+    notifyListeners();
+
+    try {
+      await _roomRepository.syncFromApi();
+
+      // Hydrate relationships after sync
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      await load();
+    } catch (e) {
+      _roomsState = AsyncValue.error(e, _roomsState.data);
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   Future<void> createRoom(Room room) async {
     try {
       _roomsState = AsyncValue.loading(_roomsState.data);

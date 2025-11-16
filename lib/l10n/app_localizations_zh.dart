@@ -1104,4 +1104,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get nextButton => '下一步';
+
+  @override
+  String get notificationRemoved => '通知已删除';
+
+  @override
+  String get notificationsCleared => '所有通知已清除';
+
+  @override
+  String get noNotifications => '暂无通知';
+
+  @override
+  String get newReceiptNotification => '新的收据通知将显示在这里';
+
+  @override
+  String get clearAllNotifications => '清除所有通知？';
+
+  @override
+  String get clearNotificationsMessage => '这将删除所有通知项目。您仍然可以在收据标签中查看收据。';
 }

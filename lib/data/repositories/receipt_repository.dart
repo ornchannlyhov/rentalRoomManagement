@@ -58,8 +58,6 @@ String _encodeReceipts(List<Receipt> receipts) {
                       waterPrice: receipt.room!.building!.waterPrice,
                       buildingImages: receipt.room!.building!.buildingImages,
                       services: receipt.room!.building!.services,
-                      createdAt: receipt.room!.building!.createdAt,
-                      updatedAt: receipt.room!.building!.updatedAt,
                       passKey: receipt.room!.building!.passKey,
                     )
                   : null,

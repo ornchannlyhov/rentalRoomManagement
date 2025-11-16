@@ -1104,4 +1104,22 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get nextButton => 'បន្ទាប់';
+
+  @override
+  String get notificationRemoved => 'បានលុបការជូនដំណឹង';
+
+  @override
+  String get notificationsCleared => 'បានលុបការជូនដំណឹងទាំងអស់';
+
+  @override
+  String get noNotifications => 'មិនមានការជូនដំណឹងទេ';
+
+  @override
+  String get newReceiptNotification => 'ការជូនដំណឹងអំពីបង្កាន់ដៃថ្មីនឹងបង្ហាញនៅទីនេះ';
+
+  @override
+  String get clearAllNotifications => 'លុបការជូនដំណឹងទាំងអស់មែនទេ?';
+
+  @override
+  String get clearNotificationsMessage => 'ការរើសលុបនេះនឹងលុបការជូនដំណឹងទាំងអស់។ អ្នកនៅតែអាចមើលបង្កាន់ដៃនៅផ្ទាំងបង្កាន់ដៃបាន។';
 }
