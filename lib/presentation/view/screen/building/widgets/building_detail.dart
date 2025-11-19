@@ -187,24 +187,24 @@ class _BuildingDetailState extends State<BuildingDetail> {
       }
     }
   }
-
-  Future<void> _changeReportStatus(Report report) async {
-    final l10n = AppLocalizations.of(context)!;
-    final newStatus = await showDialog<ReportStatus>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+Future<void> _changeReportStatus(Report report) async {
+  final l10n = AppLocalizations.of(context)!;
+  final newStatus = await showDialog<ReportStatus>(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      title: Text(
+        l10n.changeStatus,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface,
+          fontWeight: FontWeight.w600,
         ),
-        title: Text(
-          l10n.changeStatus,
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        content: Column(
+      ),
+      content: SingleChildScrollView(  // ✅ ADD THIS
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: ReportStatus.values.map((status) {
             return ListTile(
@@ -220,33 +220,34 @@ class _BuildingDetailState extends State<BuildingDetail> {
             );
           }).toList(),
         ),
-      ),
-    );
+      ),  // ✅ CLOSE SingleChildScrollView
+    ),
+  );
 
-    if (newStatus != null && newStatus != report.status && mounted) {
-      try {
-        await context.read<ReportProvider>().updateReportStatus(
-              report.id,
-              newStatus.toApiString(),
-            );
-        if (mounted) {
-          final l10n = AppLocalizations.of(context)!;
-          GlobalSnackBar.show(
-            context: context,
-            message: l10n.reportStatusUpdated(_getStatusLabel(newStatus)),
+  if (newStatus != null && newStatus != report.status && mounted) {
+    try {
+      await context.read<ReportProvider>().updateReportStatus(
+            report.id,
+            newStatus.toApiString(),
           );
-        }
-      } catch (e) {
-        if (mounted) {
-          final l10n = AppLocalizations.of(context)!;
-          GlobalSnackBar.show(
-            context: context,
-            message: l10n.reportStatusUpdateFailed,
-          );
-        }
+      if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        GlobalSnackBar.show(
+          context: context,
+          message: l10n.reportStatusUpdated(_getStatusLabel(newStatus)),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        GlobalSnackBar.show(
+          context: context,
+          message: l10n.reportStatusUpdateFailed,
+        );
       }
     }
   }
+}
 
   // ==================== REPORT HELPER METHODS ====================
   Color _getStatusColor(BuildContext context, ReportStatus status) {

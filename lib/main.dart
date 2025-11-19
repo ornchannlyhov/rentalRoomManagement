@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:joul_v2/core/services/fcm_service.dart';
 import 'package:joul_v2/presentation/view/screen/auth/login_screen.dart';
 import 'package:joul_v2/presentation/view/screen/auth/onboard_screen.dart';
 import 'package:joul_v2/presentation/view/screen/auth/register_screen.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:joul_v2/presentation/providers/notification_provider.dart';
 import 'package:joul_v2/data/repositories/report_repository.dart';
 import 'package:joul_v2/data/repositories/auth_repository.dart';
@@ -33,29 +30,23 @@ import 'package:joul_v2/core/theme/app_theme.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'dart:async';
-import 'firebase_options.dart';
-
-// --- Firebase background handler ---
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  debugPrint('📱 Background message received: ${message.data}');
-}
+import 'dart:io' show Platform; // <- to detect Windows
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  // Only initialize Firebase on supported platforms
+  if (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS) {
+    // import these only for mobile/web if needed
+    // import 'package:firebase_core/firebase_core.dart';
+    // import 'package:firebase_messaging/firebase_messaging.dart';
+    // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    // await _initializeFCMPermissions();
+  }
 
   await dotenv.load(fileName: ".env");
   await initializeDateFormatting();
-
-  await _initializeFCMPermissions();
 
   final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -88,10 +79,6 @@ Future<void> main() async {
     repositoryManager: repositoryManager,
   );
   await authProvider.load();
-
-  if (authProvider.isAuthenticated()) {
-    _syncFCMTokenIfLoggedIn(authProvider);
-  }
 
   // --- Load data in background ---
   final loadDataFuture = _loadDataInBackground(
@@ -127,7 +114,6 @@ Future<void> main() async {
     repositoryManager: repositoryManager,
   );
 
-  // Load providers in background
   unawaited(_loadProvidersInBackground(
     roomProvider: roomProvider,
     serviceProvider: serviceProvider,
@@ -157,30 +143,6 @@ Future<void> main() async {
   ));
 }
 
-Future<void> _initializeFCMPermissions() async {
-  final settings = await FirebaseMessaging.instance.requestPermission(
-    alert: true,
-    badge: true,
-    sound: true,
-  );
-
-  if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-    FCMService.setupTokenRefreshListener();
-  } else {
-    debugPrint('⚠️ Notification permissions denied');
-  }
-}
-
-/// If user is already logged in on app start, sync FCM token
-void _syncFCMTokenIfLoggedIn(AuthProvider authProvider) {
-  Future.delayed(const Duration(milliseconds: 500), () async {
-    try {
-      await FCMService.initialize();
-    } catch (e) {
-      debugPrint('❌ Failed to sync FCM token: $e');
-    }
-  });
-}
 
 Future<void> _loadDataInBackground({
   required RepositoryManager repositoryManager,
