@@ -29,14 +29,14 @@ class _BuildingFormState extends State<BuildingForm> {
   final _formKey = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
 
-  // Use TextEditingControllers to manage form field state
   late TextEditingController _nameController;
   late TextEditingController _rentPriceController;
   late TextEditingController _electricPriceController;
   late TextEditingController _waterPriceController;
   late TextEditingController _roomQuantityController;
 
-  late List<String> buildingImages;
+  // Changed to match model: Single optional string
+  String? buildingImagePath;
 
   bool get isEditing => widget.mode == Mode.editing;
 
@@ -44,28 +44,29 @@ class _BuildingFormState extends State<BuildingForm> {
   void initState() {
     super.initState();
 
-    // Initialize controllers
     _nameController = TextEditingController();
     _rentPriceController = TextEditingController();
     _electricPriceController = TextEditingController();
     _waterPriceController = TextEditingController();
     _roomQuantityController = TextEditingController();
 
-    buildingImages = [];
+    buildingImagePath = null;
 
     if (isEditing && widget.building != null) {
       final building = widget.building!;
-      // Set initial text for controllers in editing mode
       _nameController.text = building.name;
       _rentPriceController.text = building.rentPrice.toString();
       _electricPriceController.text = building.electricPrice.toString();
       _waterPriceController.text = building.waterPrice.toString();
       _roomQuantityController.text = building.rooms.length.toString();
-      buildingImages = List.from(building.buildingImages);
+
+      if (building.buildingImage != null &&
+          building.buildingImage!.isNotEmpty) {
+        buildingImagePath = building.buildingImage;
+      }
     }
   }
 
-  // Always dispose controllers to prevent memory leaks
   @override
   void dispose() {
     _nameController.dispose();
@@ -86,9 +87,11 @@ class _BuildingFormState extends State<BuildingForm> {
       final roomQuantity = int.tryParse(_roomQuantityController.text) ?? 0;
 
       File? imageFile;
-      if (buildingImages.isNotEmpty &&
-          !buildingImages.first.startsWith('http')) {
-        imageFile = File(buildingImages.first);
+
+      if (buildingImagePath != null) {
+        if (!buildingImagePath!.startsWith('http')) {
+          imageFile = File(buildingImagePath!);
+        }
       }
 
       List<Room> finalRooms = [];
@@ -101,10 +104,10 @@ class _BuildingFormState extends State<BuildingForm> {
         rentPrice: rentPrice,
         electricPrice: electricPrice,
         waterPrice: waterPrice,
-        buildingImages: buildingImages,
+        buildingImage: buildingImagePath,
         services: widget.building?.services ?? [],
         rooms: const [],
-        imageFile: imageFile, 
+        imageFile: imageFile,
       );
 
       if (isEditing && widget.building != null) {
@@ -140,13 +143,13 @@ class _BuildingFormState extends State<BuildingForm> {
         rentPrice: rentPrice,
         electricPrice: electricPrice,
         waterPrice: waterPrice,
-        buildingImages: buildingImages,
+        buildingImage: buildingImagePath,
         services: widget.building?.services ?? [],
         rooms: finalRooms,
-        imageFile: imageFile, 
+        imageFile: imageFile,
       );
 
-      Navigator.pop(context, newBuilding); 
+      Navigator.pop(context, newBuilding);
     }
   }
 
@@ -161,7 +164,7 @@ class _BuildingFormState extends State<BuildingForm> {
 
       if (image != null) {
         setState(() {
-          buildingImages.add(image.path);
+          buildingImagePath = image.path;
         });
       }
     } catch (e) {
@@ -173,9 +176,9 @@ class _BuildingFormState extends State<BuildingForm> {
     }
   }
 
-  void _removeImage(int index) {
+  void _removeImage() {
     setState(() {
-      buildingImages.removeAt(index);
+      buildingImagePath = null;
     });
   }
 
@@ -210,7 +213,7 @@ class _BuildingFormState extends State<BuildingForm> {
           child: ListView(
             children: [
               TextFormField(
-                controller: _nameController, // Use controller
+                controller: _nameController,
                 decoration: InputDecoration(
                   labelText: l10n.buildingName,
                   labelStyle: theme.textTheme.bodyMedium,
@@ -222,17 +225,15 @@ class _BuildingFormState extends State<BuildingForm> {
                   }
                   return null;
                 },
-                // onSaved is no longer needed
               ),
               const SizedBox(height: 16),
               NumberTextFormField(
-                controller: _rentPriceController, // Use controller
+                controller: _rentPriceController,
                 label: l10n.rentPriceLabel,
-                // onSaved is no longer needed
               ),
               const SizedBox(height: 16),
               NumberTextFormField(
-                controller: _roomQuantityController, // Use controller
+                controller: _roomQuantityController,
                 label: isEditing ? l10n.currentRoomCount : l10n.roomCount,
                 enabled: !isEditing,
                 validator: (value) {
@@ -275,96 +276,85 @@ class _BuildingFormState extends State<BuildingForm> {
                 ),
               const SizedBox(height: 4),
               NumberTextFormField(
-                controller: _electricPriceController, // Use controller
+                controller: _electricPriceController,
                 label: l10n.electricPricePerKwh,
               ),
               const SizedBox(height: 16),
               NumberTextFormField(
-                controller: _waterPriceController, // Use controller
+                controller: _waterPriceController,
                 label: l10n.waterPricePerCubicMeter,
               ),
               const SizedBox(height: 16),
               Text(
-                'Building Images',
+                'Building Image',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 8),
-              if (buildingImages.isNotEmpty)
-                SizedBox(
-                  height: 120,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: buildingImages.length,
-                    itemBuilder: (context, index) {
-                      final imagePath = buildingImages[index];
-                      final isNetworkImage = imagePath.startsWith('http');
 
-                      Widget imageWidget;
-                      if (isNetworkImage) {
-                        imageWidget = Image.network(
-                          imagePath,
-                          width: 120,
-                          height: 120,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              width: 120,
-                              height: 120,
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              child: const Icon(Icons.broken_image),
-                            );
-                          },
-                        );
-                      } else {
-                        imageWidget = Image.file(
-                          File(imagePath),
-                          width: 120,
-                          height: 120,
-                          fit: BoxFit.cover,
-                        );
-                      }
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: Stack(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: imageWidget,
+              if (buildingImagePath != null)
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: buildingImagePath!.startsWith('http')
+                          ? Image.network(
+                              buildingImagePath!,
+                              width: double.infinity,
+                              height: 200,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: double.infinity,
+                                  height: 200,
+                                  color:
+                                      theme.colorScheme.surfaceContainerHighest,
+                                  child:
+                                      const Icon(Icons.broken_image, size: 50),
+                                );
+                              },
+                            )
+                          : Image.file(
+                              File(buildingImagePath!),
+                              width: double.infinity,
+                              height: 200,
+                              fit: BoxFit.cover,
                             ),
-                            Positioned(
-                              top: 4,
-                              right: 4,
-                              child: IconButton(
-                                icon: const Icon(Icons.close,
-                                    color: Colors.white),
-                                style: IconButton.styleFrom(
-                                  backgroundColor: Colors.black54,
-                                  padding: const EdgeInsets.all(4),
-                                ),
-                                onPressed: () => _removeImage(index),
-                              ),
-                            ),
-                          ],
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.black54,
+                          padding: const EdgeInsets.all(8),
                         ),
-                      );
-                    },
-                  ),
+                        onPressed: _removeImage,
+                      ),
+                    ),
+                  ],
                 ),
+
               const SizedBox(height: 8),
+
+              // Pick/Replace image button
               OutlinedButton.icon(
                 onPressed: _pickImage,
-                icon: const Icon(Icons.add_photo_alternate),
+                icon: Icon(buildingImagePath == null
+                    ? Icons.add_photo_alternate
+                    : Icons.edit),
                 label: Text(
-                  buildingImages.isEmpty
-                      ? 'Add Building Images'
-                      : 'Add More Images',
+                  buildingImagePath == null
+                      ? 'Add Building Image'
+                      : 'Replace Image',
                 ),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: theme.colorScheme.primary),
                 ),
               ),
+
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,

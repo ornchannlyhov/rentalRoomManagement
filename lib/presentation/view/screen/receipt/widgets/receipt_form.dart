@@ -118,38 +118,6 @@ class _ReceiptFormState extends State<ReceiptForm> {
     super.dispose();
   }
 
-  Future<void> _loadLastMonthData() async {
-    if (selectedRoom == null) return;
-
-    final currentReceiptDate = date;
-    final previousReceiptsForRoom = widget.receipts
-        .where((r) =>
-            r.room?.id == selectedRoom!.id &&
-            r.date.isBefore(currentReceiptDate))
-        .toList();
-
-    previousReceiptsForRoom.sort((a, b) => b.date.compareTo(a.date));
-
-    Receipt? mostRecentPreviousReceipt;
-    if (previousReceiptsForRoom.isNotEmpty) {
-      mostRecentPreviousReceipt = previousReceiptsForRoom.first;
-    }
-
-    setState(() {
-      if (mostRecentPreviousReceipt != null) {
-        lastWaterUsed = mostRecentPreviousReceipt.thisWaterUsed;
-        lastElectricUsed = mostRecentPreviousReceipt.thisElectricUsed;
-        selectedServices = List.from(mostRecentPreviousReceipt.services);
-      } else {
-        lastWaterUsed = 0;
-        lastElectricUsed = 0;
-        selectedServices = [];
-      }
-      lastWaterUsedController.text = lastWaterUsed.toString();
-      lastElectricUsedController.text = lastElectricUsed.toString();
-    });
-  }
-
   void _save(BuildContext context) {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
@@ -451,15 +419,13 @@ class _ReceiptFormState extends State<ReceiptForm> {
                         ),
                       );
                     }).toList(),
-                    onChanged: (value) async {
+                    onChanged: (value) {
                       setState(() => selectedRoom = value);
-                      await _loadLastMonthData();
                     },
                     decoration: InputDecoration(
                       labelText: l10n.selectRoom,
-                      hintText: filteredRooms.isEmpty
-                          ? l10n.noOccupiedRooms
-                          : null,
+                      hintText:
+                          filteredRooms.isEmpty ? l10n.noOccupiedRooms : null,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(
@@ -490,7 +456,8 @@ class _ReceiptFormState extends State<ReceiptForm> {
                   const SizedBox(height: 16),
 
                   // Water and Electricity Usage
-                  Text(l10n.previousMonthUsage, style: theme.textTheme.titleMedium),
+                  Text(l10n.previousMonthUsage,
+                      style: theme.textTheme.titleMedium),
                   NumberTextFormField(
                     controller: lastWaterUsedController,
                     label: l10n.waterM3,
@@ -502,7 +469,8 @@ class _ReceiptFormState extends State<ReceiptForm> {
 
                   const SizedBox(height: 8),
 
-                  Text(l10n.currentMonthUsage, style: theme.textTheme.titleMedium),
+                  Text(l10n.currentMonthUsage,
+                      style: theme.textTheme.titleMedium),
                   NumberTextFormField(
                     controller: thisWaterUsedController,
                     label: l10n.waterM3,

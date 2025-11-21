@@ -54,8 +54,8 @@ Future<void> main() async {
 
   await dotenv.load(fileName: ".env");
   await initializeDateFormatting();
-
   await _initializeFCMPermissions();
+  // await FlutterSecureStorage().deleteAll();
 
   final navigatorKey = GlobalKey<NavigatorState>();
 

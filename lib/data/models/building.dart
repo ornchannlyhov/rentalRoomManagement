@@ -9,10 +9,13 @@ class Building {
   final double electricPrice;
   final double waterPrice;
   final String? passKey;
-  final List<String> buildingImages;
+
+  final String? buildingImage;
+
   final List<dynamic> services;
   List<Room> rooms;
   File? imageFile;
+
   Building({
     required this.id,
     required this.appUserId,
@@ -21,11 +24,10 @@ class Building {
     required this.electricPrice,
     required this.waterPrice,
     this.passKey,
-    List<String>? buildingImages,
+    this.buildingImage, 
     List<dynamic>? services,
     List<Room>? rooms,
     this.imageFile,
-  })  : buildingImages = buildingImages ?? [],
-        services = services ?? [],
+  })  : services = services ?? [],
         rooms = rooms ?? [];
 }

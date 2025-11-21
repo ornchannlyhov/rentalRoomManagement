@@ -56,7 +56,7 @@ String _encodeReceipts(List<Receipt> receipts) {
                       rentPrice: receipt.room!.building!.rentPrice,
                       electricPrice: receipt.room!.building!.electricPrice,
                       waterPrice: receipt.room!.building!.waterPrice,
-                      buildingImages: receipt.room!.building!.buildingImages,
+                      buildingImage: receipt.room!.building!.buildingImage,
                       services: receipt.room!.building!.services,
                       passKey: receipt.room!.building!.passKey,
                     )
