@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
+import 'package:joul_v2/core/theme/app_theme.dart';
 
 class UtilityAnalysisCard extends StatelessWidget {
   const UtilityAnalysisCard({
@@ -25,6 +26,9 @@ class UtilityAnalysisCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
     return Card(
+      color: Theme.of(context).brightness == Brightness.dark
+          ? AppTheme.cardColorDark
+          : null,
       margin: isBuildingSpecific ? const EdgeInsets.only(top: 8) : null,
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

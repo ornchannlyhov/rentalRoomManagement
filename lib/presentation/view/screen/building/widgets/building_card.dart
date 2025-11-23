@@ -6,6 +6,7 @@ import 'package:joul_v2/data/models/enum/room_status.dart';
 import 'package:joul_v2/data/models/room.dart';
 import 'package:joul_v2/presentation/providers/room_provider.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
+import 'package:joul_v2/core/theme/app_theme.dart';
 
 class BuildingCard extends StatelessWidget {
   final Building building;
@@ -199,6 +200,9 @@ class _AnimatedCardContent extends StatelessWidget {
   Widget _buildListCard(BuildContext context, ThemeData theme,
       AppLocalizations l10n, bool hasImages) {
     return Card(
+      color: Theme.of(context).brightness == Brightness.dark
+          ? AppTheme.cardColorDark
+          : null,
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -276,6 +280,9 @@ class _AnimatedCardContent extends StatelessWidget {
   Widget _buildDetailCard(BuildContext context, ThemeData theme,
       AppLocalizations l10n, bool hasImages) {
     return Card(
+      color: Theme.of(context).brightness == Brightness.dark
+          ? AppTheme.cardColorDark
+          : null,
       margin: const EdgeInsets.all(0),
       elevation: 2,
       shape: RoundedRectangleBorder(

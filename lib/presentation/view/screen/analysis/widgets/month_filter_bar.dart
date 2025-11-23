@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
+import 'package:joul_v2/core/theme/app_theme.dart';
 
 class MonthFilterBar extends StatelessWidget {
-  const MonthFilterBar({super.key, 
+  const MonthFilterBar({
+    super.key,
     required this.selectedMonth,
     required this.onMonthChanged,
     required this.monthNames,
@@ -39,7 +41,8 @@ class MonthFilterBar extends StatelessWidget {
                     Row(
                       children: [
                         Text(localizations.year,
-                            style: const TextStyle(fontWeight: FontWeight.bold)),
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
                         Expanded(
                           child: DropdownButton<int>(
                             value: tempSelectedMonth.year,
@@ -137,6 +140,9 @@ class MonthFilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
     return Card(
+      color: Theme.of(context).brightness == Brightness.dark
+          ? AppTheme.cardColorDark
+          : null,
       child: Padding(
         padding: const EdgeInsets.all(4),
         child: Row(

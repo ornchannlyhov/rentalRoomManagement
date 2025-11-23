@@ -61,6 +61,8 @@ dependencies:
   firebase_core: ^4.2.1
   firebase_messaging: ^16.0.4
   image_picker: ^1.1.0
+  flutter_markdown: ^0.7.7+1
+  flutter_widget_from_html: ^0.17.1
 
 dev_dependencies:
   flutter_test:

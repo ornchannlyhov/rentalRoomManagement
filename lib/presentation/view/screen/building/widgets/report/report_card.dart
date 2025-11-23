@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/report.dart';
 import 'package:joul_v2/data/models/enum/report_status.dart';
 import 'package:joul_v2/data/models/enum/report_priority.dart';
+import 'package:joul_v2/core/theme/app_theme.dart';
 
 enum ReportMenuOption { changeStatus, delete }
 
@@ -91,7 +92,9 @@ class ReportCard extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      color: colorScheme.surfaceContainerHighest,
+      color: theme.brightness == Brightness.dark
+          ? AppTheme.cardColorDark
+          : colorScheme.surfaceContainerHighest,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
@@ -151,7 +154,8 @@ class ReportCard extends StatelessWidget {
                           value: ReportMenuOption.changeStatus,
                           child: Row(
                             children: [
-                              Icon(Icons.edit, size: 20, color: colorScheme.primary),
+                              Icon(Icons.edit,
+                                  size: 20, color: colorScheme.primary),
                               const SizedBox(width: 12),
                               const Text('Change Status'),
                             ],
@@ -161,7 +165,8 @@ class ReportCard extends StatelessWidget {
                           value: ReportMenuOption.delete,
                           child: Row(
                             children: [
-                              Icon(Icons.delete, size: 20, color: colorScheme.error),
+                              Icon(Icons.delete,
+                                  size: 20, color: colorScheme.error),
                               const SizedBox(width: 12),
                               const Text('Delete'),
                             ],
@@ -172,7 +177,7 @@ class ReportCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              
+
               // Problem description
               Container(
                 padding: const EdgeInsets.all(12),
@@ -229,7 +234,7 @@ class ReportCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  
+
                   // Priority badge
                   Container(
                     padding: const EdgeInsets.symmetric(

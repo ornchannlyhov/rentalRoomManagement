@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:joul_v2/core/theme/app_theme.dart';
 
 /// Skeleton loader matching the exact BuildingCard layout
 class BuildingCardSkeleton extends StatelessWidget {
@@ -9,6 +10,8 @@ class BuildingCardSkeleton extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
+      color:
+          theme.brightness == Brightness.dark ? AppTheme.cardColorDark : null,
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -31,7 +34,7 @@ class BuildingCardSkeleton extends StatelessWidget {
                     borderRadius: 6,
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Key label
                   _SkeletonBox(
                     width: 110,
@@ -39,7 +42,7 @@ class BuildingCardSkeleton extends StatelessWidget {
                     borderRadius: 4,
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Rent price with icon
                   Row(
                     children: [
@@ -57,7 +60,7 @@ class BuildingCardSkeleton extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Utility prices row
                   Row(
                     children: [
@@ -104,7 +107,7 @@ class BuildingCardSkeleton extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      
+
                       // Water price
                       Flexible(
                         child: Container(
@@ -152,16 +155,16 @@ class BuildingCardSkeleton extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(width: 16),
-            
+
             // Right side - Circle and menu
             Column(
               children: [
                 // Circular progress
                 _SkeletonCircle(size: 100),
                 const SizedBox(height: 12),
-                
+
                 // Three dots menu
                 _SkeletonBox(
                   width: 32,
@@ -192,7 +195,7 @@ class _SkeletonBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       width: width,
       height: height,
@@ -213,7 +216,7 @@ class _SkeletonCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       width: size,
       height: size,

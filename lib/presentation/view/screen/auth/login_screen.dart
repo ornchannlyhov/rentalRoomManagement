@@ -1,14 +1,14 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
-import 'package:joul_v2/core/services/fcm_service.dart';
+import 'package:flutter/services.dart';
+import 'package:joul_v2/core/utils/phone_formatter.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/data/repositories/auth_repository.dart';
-import 'package:joul_v2/core/helpers/api_helper.dart';
-import 'package:joul_v2/core/helpers/repository_manager.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
 import 'package:joul_v2/presentation/view/screen/auth/widget/custom_text_feild.dart';
+import 'package:joul_v2/presentation/view/screen/auth/otp_verification_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,14 +19,11 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
+  final _phoneController = TextEditingController();
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -35,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final localizations = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 245, 245, 245),
+      backgroundColor: const Color.fromARGB(255, 245, 245, 245),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -68,49 +65,22 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: Colors.grey.shade600,
                   ),
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 24),
                 CustomTextField(
-                  controller: _emailController,
-                  label: localizations.emailLabel,
-                  hintText: localizations.emailHint,
-                  prefixIcon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
+                  controller: _phoneController,
+                  label: 'Phone Number',
+                  hintText: '010 123 456',
+                  prefixIcon: Icons.phone_android,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return localizations.emailHint;
+                      return 'Please enter your phone number';
                     }
-                    if (!value.contains('@')) {
-                      return localizations.emailValidationInvalid;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                CustomTextField(
-                  controller: _passwordController,
-                  label: localizations.passwordLabel,
-                  hintText: localizations.passwordHint,
-                  prefixIcon: Icons.lock_outline,
-                  obscureText: _obscurePassword,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                      color: Colors.grey.shade600,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return localizations.passwordHint;
-                    }
-                    if (value.length < 6) {
-                      return localizations.passwordValidationLength;
+                    if (!PhoneFormatter.isValid(value)) {
+                      return localizations.invalidPhoneNumber;
                     }
                     return null;
                   },
@@ -122,18 +92,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: authProvider.user.isLoading
+                        onPressed: authProvider.loginState.isLoading
                             ? null
                             : () => _handleLogin(authProvider),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF10B981),
-                          foregroundColor: Color.fromARGB(255, 245, 245, 245),
+                          foregroundColor:
+                              const Color.fromARGB(255, 245, 245, 245),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                           elevation: 2,
                         ),
-                        child: authProvider.user.isLoading
+                        child: authProvider.loginState.isLoading
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
@@ -144,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               )
                             : Text(
-                                localizations.loginButton,
+                                'Request OTP',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -159,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   builder: (context, authProvider, child) {
                     return authProvider.loginState.when(
                       loading: () => const SizedBox.shrink(),
-                      success: (isLoggedIn) => const SizedBox.shrink(),
+                      success: (isSuccess) => const SizedBox.shrink(),
                       error: (error) => Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
@@ -215,34 +186,29 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin(AuthProvider authProvider) async {
     if (_formKey.currentState!.validate()) {
-      final repositoryManager =
-          Provider.of<RepositoryManager>(context, listen: false);
+      final formattedPhone =
+          PhoneFormatter.format(_phoneController.text.trim());
 
-      final request = LoginRequest(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
+      if (formattedPhone == null) {
+        // Should be caught by validator, but just in case
+        return;
+      }
+
+      final request = LoginOtpRequest(
+        phoneNumber: formattedPhone,
       );
 
-      await authProvider.login(request);
+      await authProvider.requestLoginOtp(request);
 
-      if (mounted) {
-        authProvider.user.when(
-          loading: () {},
-          success: (user) async {
-            if (user != null && authProvider.isAuthenticated()) {
-              FCMService.initialize().catchError((e) {
-                debugPrint('FCM token upload failed: $e');
-              });
-
-              if (await ApiHelper.instance.hasNetwork()) {
-                await repositoryManager.syncAll();
-              }
-              Navigator.pushReplacementNamed(context, '/');
-            }
-          },
-          error: (error) {
-            // Error is already shown in the UI through Consumer
-          },
+      if (mounted && authProvider.otpSent) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OtpVerificationScreen(
+              phoneNumber: formattedPhone,
+              isLogin: true,
+            ),
+          ),
         );
       }
     }

@@ -695,5 +695,16 @@
   "noNotifications": "No notifications",
   "newReceiptNotification": "New receipt notifications will appear here",
   "clearAllNotifications": "Clear all notifications?",
-  "clearNotificationsMessage": "This will remove all notification items. You can still view receipts in the Receipts tab."
+  "clearNotificationsMessage": "This will remove all notification items. You can still view receipts in the Receipts tab.",
+  "phoneNumberLabel": "Phone Number",
+  "phoneNumberHint": "010 123 456",
+  "invalidPhoneNumber": "Invalid phone number format",
+  "requestOtp": "Request OTP",
+  "verificationCode": "Verification Code",
+  "enterCodeSentTo": "Please enter the code sent to",
+  "verify": "Verify",
+  "didNotReceiveCode": "Didn't receive code? ",
+  "resend": "Resend",
+  "invalidOtp": "Please enter a valid 6-digit code",
+  "otpResent": "OTP Resent"
 }

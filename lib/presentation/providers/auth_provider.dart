@@ -28,17 +28,21 @@ class AuthProvider with ChangeNotifier {
   AsyncValue<User?> _user = const AsyncValue.loading();
   AsyncValue<bool> _loginState = const AsyncValue.success(false);
   AsyncValue<bool> _registerState = const AsyncValue.success(false);
+  AsyncValue<bool> _otpState = const AsyncValue.success(false);
   AsyncValue<bool> _passwordUpdateState = const AsyncValue.success(false);
   bool _sessionHasExpired = false;
   bool _showNetworkError = false;
+  bool _otpSent = false;
 
   // Getters
   AsyncValue<User?> get user => _user;
   AsyncValue<bool> get loginState => _loginState;
   AsyncValue<bool> get registerState => _registerState;
+  AsyncValue<bool> get otpState => _otpState;
   AsyncValue<bool> get passwordUpdateState => _passwordUpdateState;
   bool get sessionHasExpired => _sessionHasExpired;
   bool get showNetworkError => _showNetworkError;
+  bool get otpSent => _otpSent;
 
   // Initialize app - check if user is logged in
   Future<void> load() async {
@@ -66,39 +70,90 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Register
-  Future<void> register(RegisterRequest request) async {
+  // --- Registration Flow ---
+
+  Future<void> requestRegisterOtp(RegisterOtpRequest request) async {
     _registerState = const AsyncValue.loading();
+    _otpSent = false;
     notifyListeners();
 
     try {
-      final newUser = await _repository.register(request);
-      _user = AsyncValue.success(newUser);
+      await _repository.requestRegisterOtp(request);
+      _otpSent = true;
       _registerState = const AsyncValue.success(true);
     } catch (e) {
-      _user = const AsyncValue.success(null);
+      _otpSent = false;
       _registerState = AsyncValue.error(_mapExceptionToMessage(e));
     }
 
     notifyListeners();
   }
 
-  // Login
-  Future<void> login(LoginRequest request) async {
-    _loginState = const AsyncValue.loading();
+  Future<void> verifyRegisterOtp(VerifyRegisterOtpRequest request) async {
+    _otpState = const AsyncValue.loading();
     notifyListeners();
 
     try {
-      final loggedInUser = await _repository.login(request);
-      _user = AsyncValue.success(loggedInUser);
-      _loginState = const AsyncValue.success(true);
+      final newUser = await _repository.verifyRegisterOtp(request);
+      _user = AsyncValue.success(newUser);
+      _otpState = const AsyncValue.success(true);
+      _otpSent = false; // Reset after successful verification
     } catch (e) {
-      _user = const AsyncValue.success(null); 
-      _loginState =
-          AsyncValue.error(_mapExceptionToMessage(e));
+      _user = const AsyncValue.success(null);
+      _otpState = AsyncValue.error(_mapExceptionToMessage(e));
     }
 
     notifyListeners();
+  }
+
+  // --- Login Flow ---
+
+  Future<void> requestLoginOtp(LoginOtpRequest request) async {
+    _loginState = const AsyncValue.loading();
+    _otpSent = false;
+    notifyListeners();
+
+    try {
+      await _repository.requestLoginOtp(request);
+      _otpSent = true;
+      _loginState = const AsyncValue.success(true);
+    } catch (e) {
+      _otpSent = false;
+      _loginState = AsyncValue.error(_mapExceptionToMessage(e));
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> verifyLoginOtp(VerifyLoginOtpRequest request) async {
+    _otpState = const AsyncValue.loading();
+    notifyListeners();
+
+    try {
+      final loggedInUser = await _repository.verifyLoginOtp(request);
+      _user = AsyncValue.success(loggedInUser);
+      _otpState = const AsyncValue.success(true);
+      _otpSent = false; // Reset after successful verification
+    } catch (e) {
+      _user = const AsyncValue.success(null);
+      _otpState = AsyncValue.error(_mapExceptionToMessage(e));
+    }
+
+    notifyListeners();
+  }
+
+  // --- Common OTP ---
+
+  Future<void> resendOtp(String phoneNumber) async {
+    // We don't necessarily need to change state to loading for resend,
+    // but we could show a toast or snackbar.
+    // For now, let's just make the call.
+    try {
+      await _repository.resendOtp(phoneNumber);
+    } catch (e) {
+      // Handle error if needed, maybe expose a separate stream or state for resend errors
+      debugPrint("Resend OTP failed: $e");
+    }
   }
 
   // Update password
@@ -131,6 +186,8 @@ class AuthProvider with ChangeNotifier {
       if (!_disposed) {
         _user = const AsyncValue.success(null);
         _loginState = const AsyncValue.success(false);
+        _otpState = const AsyncValue.success(false);
+        _otpSent = false;
         _sessionHasExpired = false;
         notifyListeners();
       }
@@ -190,6 +247,12 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Reset OTP state
+  void resetOtpState() {
+    _otpState = const AsyncValue.success(false);
+    notifyListeners();
+  }
+
   // Reset password update state
   void resetPasswordUpdateState() {
     _passwordUpdateState = const AsyncValue.success(false);
@@ -204,6 +267,9 @@ class AuthProvider with ChangeNotifier {
     }
     if (_registerState.isLoading) {
       _registerState = const AsyncValue.success(false);
+    }
+    if (_otpState.isLoading) {
+      _otpState = const AsyncValue.success(false);
     }
     notifyListeners();
   }
@@ -242,6 +308,8 @@ class AuthProvider with ChangeNotifier {
     } else if (errorMessage.contains('Logout failed')) {
       return "Logout failed. Please try again.";
     } else if (errorMessage.contains('Password')) {
+      return errorMessage.replaceAll('Exception: ', '');
+    } else if (errorMessage.contains('OTP')) {
       return errorMessage.replaceAll('Exception: ', '');
     }
 

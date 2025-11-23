@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/service.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
+import 'package:joul_v2/core/theme/app_theme.dart';
 
 // Enum for menu options
 enum ServiceMenuOption {
@@ -190,7 +191,9 @@ class ServiceCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
         decoration: BoxDecoration(
-          color: colorScheme.surface,
+          color: theme.brightness == Brightness.dark
+              ? AppTheme.cardColorDark
+              : colorScheme.surface,
           borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
