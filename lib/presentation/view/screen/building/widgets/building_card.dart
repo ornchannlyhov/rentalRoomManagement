@@ -236,7 +236,9 @@ class _AnimatedCardContent extends StatelessWidget {
                       top: 8,
                       left: 8,
                       child: Material(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppTheme.cardColorDark
+                            : Colors.black.withOpacity(0.3),
                         borderRadius: BorderRadius.circular(12),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(12),
@@ -352,7 +354,9 @@ class _AnimatedCardContent extends StatelessWidget {
                   top: 8,
                   right: 8,
                   child: Material(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppTheme.cardColorDark
+                        : Colors.black.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(12),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
@@ -420,20 +424,64 @@ class _AnimatedCardContent extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildCompactUtilityChip(
-                        context,
-                        Icons.flash_on_rounded,
-                        "\$${building.electricPrice.toStringAsFixed(2)}",
-                        Colors.amber,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.flash_on_rounded,
+                              color: Colors.amber,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              "\$${building.electricPrice.toStringAsFixed(2)}",
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: Colors.amber,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildCompactUtilityChip(
-                        context,
-                        Icons.water_drop_rounded,
-                        "\$${building.waterPrice.toStringAsFixed(2)}",
-                        Colors.blue,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.water_drop_rounded,
+                              color: Colors.blue,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              "\$${building.waterPrice.toStringAsFixed(2)}",
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],

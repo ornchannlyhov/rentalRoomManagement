@@ -30,6 +30,8 @@ class AuthProvider with ChangeNotifier {
   AsyncValue<bool> _registerState = const AsyncValue.success(false);
   AsyncValue<bool> _otpState = const AsyncValue.success(false);
   AsyncValue<bool> _passwordUpdateState = const AsyncValue.success(false);
+  AsyncValue<bool> _passwordResetState = const AsyncValue.success(false);
+  AsyncValue<bool> _passwordResetVerifyState = const AsyncValue.success(false);
   bool _sessionHasExpired = false;
   bool _showNetworkError = false;
   bool _otpSent = false;
@@ -40,6 +42,8 @@ class AuthProvider with ChangeNotifier {
   AsyncValue<bool> get registerState => _registerState;
   AsyncValue<bool> get otpState => _otpState;
   AsyncValue<bool> get passwordUpdateState => _passwordUpdateState;
+  AsyncValue<bool> get passwordResetState => _passwordResetState;
+  AsyncValue<bool> get passwordResetVerifyState => _passwordResetVerifyState;
   bool get sessionHasExpired => _sessionHasExpired;
   bool get showNetworkError => _showNetworkError;
   bool get otpSent => _otpSent;
@@ -72,13 +76,13 @@ class AuthProvider with ChangeNotifier {
 
   // --- Registration Flow ---
 
-  Future<void> requestRegisterOtp(RegisterOtpRequest request) async {
+  Future<void> requestRegistration(RequestRegistrationRequest request) async {
     _registerState = const AsyncValue.loading();
     _otpSent = false;
     notifyListeners();
 
     try {
-      await _repository.requestRegisterOtp(request);
+      await _repository.requestRegistration(request);
       _otpSent = true;
       _registerState = const AsyncValue.success(true);
     } catch (e) {
@@ -89,12 +93,12 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> verifyRegisterOtp(VerifyRegisterOtpRequest request) async {
+  Future<void> verifyRegistration(VerifyRegistrationRequest request) async {
     _otpState = const AsyncValue.loading();
     notifyListeners();
 
     try {
-      final newUser = await _repository.verifyRegisterOtp(request);
+      final newUser = await _repository.verifyRegistration(request);
       _user = AsyncValue.success(newUser);
       _otpState = const AsyncValue.success(true);
       _otpSent = false; // Reset after successful verification
@@ -108,50 +112,66 @@ class AuthProvider with ChangeNotifier {
 
   // --- Login Flow ---
 
-  Future<void> requestLoginOtp(LoginOtpRequest request) async {
+  Future<void> login(LoginRequest request) async {
     _loginState = const AsyncValue.loading();
-    _otpSent = false;
     notifyListeners();
 
     try {
-      await _repository.requestLoginOtp(request);
-      _otpSent = true;
+      final loggedInUser = await _repository.login(request);
+      _user = AsyncValue.success(loggedInUser);
       _loginState = const AsyncValue.success(true);
     } catch (e) {
-      _otpSent = false;
+      _user = const AsyncValue.success(null);
       _loginState = AsyncValue.error(_mapExceptionToMessage(e));
     }
 
     notifyListeners();
   }
 
-  Future<void> verifyLoginOtp(VerifyLoginOtpRequest request) async {
-    _otpState = const AsyncValue.loading();
+  // --- Password Reset Flow ---
+
+  Future<void> requestPasswordReset(RequestPasswordResetRequest request) async {
+    _passwordResetState = const AsyncValue.loading();
+    _otpSent = false;
     notifyListeners();
 
     try {
-      final loggedInUser = await _repository.verifyLoginOtp(request);
-      _user = AsyncValue.success(loggedInUser);
-      _otpState = const AsyncValue.success(true);
-      _otpSent = false; // Reset after successful verification
+      await _repository.requestPasswordReset(request);
+      _otpSent = true;
+      _passwordResetState = const AsyncValue.success(true);
     } catch (e) {
-      _user = const AsyncValue.success(null);
-      _otpState = AsyncValue.error(_mapExceptionToMessage(e));
+      _otpSent = false;
+      _passwordResetState = AsyncValue.error(_mapExceptionToMessage(e));
     }
 
     notifyListeners();
   }
 
-  // --- Common OTP ---
+  Future<void> verifyPasswordReset(VerifyPasswordResetRequest request) async {
+    _passwordResetVerifyState = const AsyncValue.loading();
+    notifyListeners();
 
-  Future<void> resendOtp(String phoneNumber) async {
-    // We don't necessarily need to change state to loading for resend,
-    // but we could show a toast or snackbar.
-    // For now, let's just make the call.
     try {
-      await _repository.resendOtp(phoneNumber);
+      await _repository.verifyPasswordReset(request);
+      _passwordResetVerifyState = const AsyncValue.success(true);
+      _otpSent = false;
     } catch (e) {
-      // Handle error if needed, maybe expose a separate stream or state for resend errors
+      _passwordResetVerifyState = AsyncValue.error(_mapExceptionToMessage(e));
+    }
+
+    notifyListeners();
+  }
+
+  // --- Resend OTP ---
+
+  Future<void> resendOtp(String phoneNumber, String purpose) async {
+    try {
+      final request = ResendOtpRequest(
+        phoneNumber: phoneNumber,
+        purpose: purpose,
+      );
+      await _repository.resendOtp(request);
+    } catch (e) {
       debugPrint("Resend OTP failed: $e");
     }
   }
@@ -166,6 +186,7 @@ class AuthProvider with ChangeNotifier {
       _passwordUpdateState = const AsyncValue.success(true);
     } catch (e) {
       _passwordUpdateState = AsyncValue.error(_mapExceptionToMessage(e));
+      rethrow;
     }
 
     notifyListeners();
@@ -253,13 +274,18 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Reset password update state
-  void resetPasswordUpdateState() {
-    _passwordUpdateState = const AsyncValue.success(false);
+  // Reset password reset state
+  void resetPasswordResetState() {
+    _passwordResetState = const AsyncValue.success(false);
     notifyListeners();
   }
 
-  // Error handling
+  // Reset password reset verify state
+  void resetPasswordResetVerifyState() {
+    _passwordResetVerifyState = const AsyncValue.success(false);
+    notifyListeners();
+  }
+
   void acknowledgeNetworkError() {
     _showNetworkError = false;
     if (_loginState.isLoading) {
@@ -270,6 +296,12 @@ class AuthProvider with ChangeNotifier {
     }
     if (_otpState.isLoading) {
       _otpState = const AsyncValue.success(false);
+    }
+    if (_passwordResetState.isLoading) {
+      _passwordResetState = const AsyncValue.success(false);
+    }
+    if (_passwordResetVerifyState.isLoading) {
+      _passwordResetVerifyState = const AsyncValue.success(false);
     }
     notifyListeners();
   }

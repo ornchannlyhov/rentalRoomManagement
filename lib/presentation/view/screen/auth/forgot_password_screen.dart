@@ -8,30 +8,22 @@ import 'package:provider/provider.dart';
 import 'package:joul_v2/data/repositories/auth_repository.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
 import 'package:joul_v2/presentation/view/screen/auth/widget/custom_text_feild.dart';
-import 'package:joul_v2/presentation/view/screen/auth/otp_verification_screen.dart';
+import 'package:joul_v2/presentation/view/screen/auth/password_reset_verification_screen.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
-    _nameController.dispose();
     _phoneController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -57,7 +49,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  localizations.createAccount,
+                  'Forgot Password',
                   style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -66,26 +58,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  localizations.signUpPrompt,
+                  'Enter your phone number to receive a verification code',
                   style: const TextStyle(
                     fontSize: 16,
                     color: Color(0xFF757575),
                   ),
                 ),
                 const SizedBox(height: 24),
-                CustomTextField(
-                  controller: _nameController,
-                  label: localizations.fullNameLabel,
-                  hintText: localizations.fullNameHint,
-                  prefixIcon: Icons.person_outline,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return localizations.fullNameHint;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
                 CustomTextField(
                   controller: _phoneController,
                   label: 'Phone Number',
@@ -105,66 +84,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 20),
-                CustomTextField(
-                  controller: _passwordController,
-                  label: 'Password',
-                  hintText: 'Enter your password',
-                  prefixIcon: Icons.lock_outline,
-                  obscureText: _obscurePassword,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                      color: const Color(0xFF9E9E9E),
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a password';
-                    }
-                    if (value.length < 8) {
-                      return 'Password must be at least 8 characters';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                CustomTextField(
-                  controller: _confirmPasswordController,
-                  label: 'Confirm Password',
-                  hintText: 'Confirm your password',
-                  prefixIcon: Icons.lock_outline,
-                  obscureText: _obscureConfirmPassword,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureConfirmPassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                      color: const Color(0xFF9E9E9E),
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscureConfirmPassword = !_obscureConfirmPassword;
-                      });
-                    },
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
-                    }
-                    if (value != _passwordController.text) {
-                      return 'Passwords do not match';
-                    }
-                    return null;
-                  },
-                ),
                 const SizedBox(height: 32),
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, child) {
@@ -172,9 +91,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: authProvider.registerState.isLoading
+                        onPressed: authProvider.passwordResetState.isLoading
                             ? null
-                            : () => _handleRegister(authProvider),
+                            : () => _handleSendOtp(authProvider),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF10B981),
                           foregroundColor:
@@ -184,7 +103,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           elevation: 2,
                         ),
-                        child: authProvider.registerState.isLoading
+                        child: authProvider.passwordResetState.isLoading
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
@@ -195,7 +114,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                               )
                             : Text(
-                                'Register',
+                                'Send OTP',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -208,9 +127,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 16),
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, child) {
-                    return authProvider.registerState.when(
+                    return authProvider.passwordResetState.when(
                       loading: () => const SizedBox.shrink(),
-                      success: (user) => const SizedBox.shrink(),
+                      success: (success) => const SizedBox.shrink(),
                       error: (error) => Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
@@ -230,32 +149,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     );
                   },
                 ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '${localizations.haveAccount} ',
-                      style: const TextStyle(
-                        color: Color(0xFF757575),
-                        fontSize: 14,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushReplacementNamed(context, '/login');
-                      },
-                      child: Text(
-                        localizations.loginLink,
-                        style: const TextStyle(
-                          color: Color(0xFF10B981),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
@@ -264,7 +157,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  void _handleRegister(AuthProvider authProvider) async {
+  void _handleSendOtp(AuthProvider authProvider) async {
     if (_formKey.currentState!.validate()) {
       final formattedPhone =
           PhoneFormatter.format(_phoneController.text.trim());
@@ -273,25 +166,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return;
       }
 
-      final request = RequestRegistrationRequest(
-        username: _nameController.text.trim(),
+      final request = RequestPasswordResetRequest(
         phoneNumber: formattedPhone,
-        password: _passwordController.text,
-        confirmPassword: _confirmPasswordController.text,
       );
 
-      await authProvider.requestRegistration(request);
+      await authProvider.requestPasswordReset(request);
 
       if (mounted && authProvider.otpSent) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OtpVerificationScreen(
+            builder: (context) => PasswordResetVerificationScreen(
               phoneNumber: formattedPhone,
-              username: _nameController.text.trim(),
-              password: _passwordController.text,
-              isLogin: false,
-              purpose: 'register',
             ),
           ),
         );

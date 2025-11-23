@@ -368,7 +368,9 @@ class TenantCard extends StatelessWidget {
               if (onMenuSelected != null)
                 IconButton(
                   icon: const Icon(Icons.more_vert_rounded),
-                  color: colorScheme.onSurfaceVariant,
+                  color: theme.brightness == Brightness.dark
+                      ? colorScheme.onSurface.withOpacity(0.7)
+                      : colorScheme.onSurfaceVariant,
                   onPressed: () => _showOptionsBottomSheet(context),
                 ),
             ],

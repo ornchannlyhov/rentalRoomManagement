@@ -146,7 +146,9 @@ class ReportCard extends StatelessWidget {
                     PopupMenuButton<ReportMenuOption>(
                       icon: Icon(
                         Icons.more_vert,
-                        color: colorScheme.onSurfaceVariant,
+                        color: theme.brightness == Brightness.dark
+                            ? colorScheme.onSurface.withOpacity(0.7)
+                            : colorScheme.onSurfaceVariant,
                       ),
                       onSelected: onMenuSelected,
                       itemBuilder: (context) => [

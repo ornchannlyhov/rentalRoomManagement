@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,85 +10,11 @@ import 'package:joul_v2/presentation/providers/receipt_provider.dart';
 import 'package:joul_v2/presentation/providers/building_provider.dart';
 import 'package:joul_v2/presentation/view/app_widgets/building_filter_dropdown.dart';
 import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
+import 'package:joul_v2/presentation/view/app_widgets/search_bar_widget.dart';
 import 'package:joul_v2/presentation/view/screen/history/widgets/history_state.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_detail.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_card.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_form.dart';
-
-class ReceiptSearchBar extends StatelessWidget {
-  const ReceiptSearchBar({
-    super.key,
-    required this.isSearching,
-    required this.searchController,
-    required this.searchQuery,
-    required this.onSearchQueryChanged,
-    required this.onClearSearch,
-  });
-
-  final bool isSearching;
-  final TextEditingController searchController;
-  final String searchQuery;
-  final ValueChanged<String> onSearchQueryChanged;
-  final VoidCallback onClearSearch;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      height: isSearching ? 56 : 0,
-      child: isSearching
-          ? Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: theme.shadowColor.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: searchController,
-                decoration: InputDecoration(
-                  hintText: l10n.searchReceiptHint,
-                  hintStyle: TextStyle(
-                    color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  suffixIcon: searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(
-                            Icons.clear,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          onPressed: onClearSearch,
-                        )
-                      : null,
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 16,
-                  ),
-                ),
-                style: TextStyle(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                onChanged: onSearchQueryChanged,
-              ))
-          : const SizedBox.shrink(),
-    );
-  }
-}
 
 /// A widget for filtering receipts by month.
 class MonthFilterChips extends StatelessWidget {
@@ -723,10 +647,11 @@ class _HistoryScreenState extends State<HistoryScreen>
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 2),
         child: Column(
           children: [
-            ReceiptSearchBar(
+            SearchBarWidget(
               isSearching: _isSearching,
               searchController: _searchController,
               searchQuery: _searchQuery,
+              hintText: l10n.searchReceiptHint,
               onSearchQueryChanged: (value) {
                 setState(() {
                   _searchQuery = value;

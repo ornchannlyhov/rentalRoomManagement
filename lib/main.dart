@@ -34,6 +34,7 @@ import 'package:joul_v2/core/theme/app_theme.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'dart:async';
+import 'package:joul_v2/core/globals.dart';
 import 'firebase_options.dart';
 
 // --- Firebase background handler ---
@@ -297,6 +298,7 @@ class _MyAppState extends State<MyApp> {
           }
 
           return MaterialApp(
+            scaffoldMessengerKey: rootScaffoldMessengerKey,
             navigatorKey: widget.navigatorKey,
             title: 'JOUL',
             debugShowCheckedModeBanner: false,

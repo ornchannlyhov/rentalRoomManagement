@@ -1,4 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/data/models/building.dart';
@@ -6,86 +5,12 @@ import 'package:joul_v2/data/models/enum/mode.dart';
 import 'package:joul_v2/presentation/providers/building_provider.dart';
 import 'package:joul_v2/presentation/providers/service_provider.dart';
 import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
+import 'package:joul_v2/presentation/view/app_widgets/search_bar_widget.dart';
 import 'package:joul_v2/presentation/view/screen/building/widgets/building_card.dart';
 import 'package:joul_v2/presentation/view/screen/building/widgets/building_detail.dart';
 import 'package:joul_v2/presentation/view/screen/building/widgets/building_form.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 import 'widgets/skeleton_building.dart';
-
-class BuildingSearchBar extends StatelessWidget {
-  const BuildingSearchBar({
-    super.key,
-    required this.isSearching,
-    required this.searchController,
-    required this.searchQuery,
-    required this.onSearchQueryChanged,
-    required this.onClearSearch,
-  });
-
-  final bool isSearching;
-  final TextEditingController searchController;
-  final String searchQuery;
-  final ValueChanged<String> onSearchQueryChanged;
-  final VoidCallback onClearSearch;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      height: isSearching ? 56 : 0,
-      child: isSearching
-          ? Container(
-              margin: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: theme.shadowColor.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: searchController,
-                decoration: InputDecoration(
-                  hintText: l10n.searchBuildings,
-                  hintStyle: TextStyle(
-                    color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  suffixIcon: searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(
-                            Icons.clear,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          onPressed: onClearSearch,
-                        )
-                      : null,
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 16,
-                  ),
-                ),
-                style: TextStyle(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                onChanged: onSearchQueryChanged,
-              ))
-          : const SizedBox.shrink(),
-    );
-  }
-}
 
 class BuildingScreen extends StatefulWidget {
   const BuildingScreen({super.key});
@@ -634,21 +559,25 @@ class _BuildingScreenState extends State<BuildingScreen>
       ),
       body: Column(
         children: [
-          BuildingSearchBar(
-            isSearching: _isSearching,
-            searchController: _searchController,
-            searchQuery: _searchQuery,
-            onSearchQueryChanged: (value) {
-              setState(() {
-                _searchQuery = value;
-              });
-            },
-            onClearSearch: () {
-              _searchController.clear();
-              setState(() {
-                _searchQuery = '';
-              });
-            },
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SearchBarWidget(
+              isSearching: _isSearching,
+              searchController: _searchController,
+              searchQuery: _searchQuery,
+              hintText: l10n.searchBuildings,
+              onSearchQueryChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+              onClearSearch: () {
+                _searchController.clear();
+                setState(() {
+                  _searchQuery = '';
+                });
+              },
+            ),
           ),
           Expanded(
             child: Selector<BuildingProvider, dynamic>(
