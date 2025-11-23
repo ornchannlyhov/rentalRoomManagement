@@ -1,14 +1,14 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
-import 'package:joul_v2/core/services/fcm_service.dart';
+import 'package:flutter/services.dart';
+import 'package:joul_v2/core/utils/phone_formatter.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/data/repositories/auth_repository.dart';
-import 'package:joul_v2/core/helpers/api_helper.dart';
-import 'package:joul_v2/core/helpers/repository_manager.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
 import 'package:joul_v2/presentation/view/screen/auth/widget/custom_text_feild.dart';
+import 'package:joul_v2/presentation/view/screen/auth/otp_verification_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -20,18 +20,12 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
+  final _phoneController = TextEditingController();
 
   @override
   void dispose() {
     _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -39,7 +33,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 245, 245, 245),
+      backgroundColor: const Color.fromARGB(255, 245, 245, 245),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -72,7 +66,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     color: Colors.grey.shade600,
                   ),
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 24),
                 CustomTextField(
                   controller: _nameController,
                   label: localizations.fullNameLabel,
@@ -87,77 +81,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 20),
                 CustomTextField(
-                  controller: _emailController,
-                  label: localizations.emailLabel,
-                  hintText: localizations.emailHint,
-                  prefixIcon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
+                  controller: _phoneController,
+                  label: 'Phone Number',
+                  hintText: '010 123 456',
+                  prefixIcon: Icons.phone_android,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return localizations.emailHint;
+                      return 'Please enter your phone number';
                     }
-                    if (!value.contains('@')) {
-                      return localizations.emailValidationInvalid;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                CustomTextField(
-                  controller: _passwordController,
-                  label: localizations.passwordLabel,
-                  hintText: localizations.passwordHint,
-                  prefixIcon: Icons.lock_outline,
-                  obscureText: _obscurePassword,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                      color: Colors.grey.shade600,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return localizations.passwordHint;
-                    }
-                    if (value.length < 6) {
-                      return localizations.passwordValidationLength;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                CustomTextField(
-                  controller: _confirmPasswordController,
-                  label: localizations.confirmPasswordLabel,
-                  hintText: localizations.confirmPasswordHint,
-                  prefixIcon: Icons.lock_outline,
-                  obscureText: _obscureConfirmPassword,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureConfirmPassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                      color: Colors.grey.shade600,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscureConfirmPassword = !_obscureConfirmPassword;
-                      });
-                    },
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return localizations.confirmPasswordHint;
-                    }
-                    if (value != _passwordController.text) {
-                      return localizations.passwordsDoNotMatch;
+                    if (!PhoneFormatter.isValid(value)) {
+                      return localizations.invalidPhoneNumber;
                     }
                     return null;
                   },
@@ -169,18 +106,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: authProvider.user.isLoading
+                        onPressed: authProvider.registerState.isLoading
                             ? null
                             : () => _handleRegister(authProvider),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF10B981),
-                          foregroundColor: Color.fromARGB(255, 245, 245, 245),
+                          foregroundColor:
+                              const Color.fromARGB(255, 245, 245, 245),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                           elevation: 2,
                         ),
-                        child: authProvider.user.isLoading
+                        child: authProvider.registerState.isLoading
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
@@ -191,7 +129,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                               )
                             : Text(
-                                localizations.registerButton,
+                                'Request OTP',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -262,34 +200,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _handleRegister(AuthProvider authProvider) async {
     if (_formKey.currentState!.validate()) {
-      final repositoryManager =
-          Provider.of<RepositoryManager>(context, listen: false);
+      final formattedPhone =
+          PhoneFormatter.format(_phoneController.text.trim());
 
-      final request = RegisterRequest(
+      if (formattedPhone == null) {
+        return;
+      }
+
+      final request = RegisterOtpRequest(
         username: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
+        phoneNumber: formattedPhone,
       );
 
-      await authProvider.register(request);
+      await authProvider.requestRegisterOtp(request);
 
-      if (mounted) {
-        authProvider.user.when(
-          loading: () {},
-          success: (user) async {
-            if (user != null && authProvider.isAuthenticated()) {
-              // Upload FCM token to backend (permissions already granted in main.dart)
-              FCMService.initialize().catchError((e) {
-                debugPrint('FCM token upload failed: $e');
-              });
-
-              if (await ApiHelper.instance.hasNetwork()) {
-                await repositoryManager.syncAll();
-              }
-              Navigator.pushReplacementNamed(context, '/');
-            }
-          },
-          error: (error) {},
+      if (mounted && authProvider.otpSent) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OtpVerificationScreen(
+              phoneNumber: formattedPhone,
+              username: _nameController.text.trim(),
+              isLogin: false,
+            ),
+          ),
         );
       }
     }

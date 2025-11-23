@@ -7,6 +7,7 @@ import 'package:joul_v2/presentation/providers/receipt_provider.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/receipt_confirmation_screen.dart';
 import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
+import 'package:joul_v2/core/theme/app_theme.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -352,6 +353,8 @@ class _NotificationCard extends StatelessWidget {
       ),
       onDismissed: (_) => onDismiss(),
       child: Card(
+        color:
+            theme.brightness == Brightness.dark ? AppTheme.cardColorDark : null,
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
         elevation: 2,
         shadowColor: Colors.black.withOpacity(0.1),

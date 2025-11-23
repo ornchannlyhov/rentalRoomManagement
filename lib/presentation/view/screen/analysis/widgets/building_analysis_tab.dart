@@ -3,6 +3,7 @@ import 'package:joul_v2/data/models/receipt.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:joul_v2/presentation/view/screen/analysis/widgets/month_filter_bar.dart';
 import 'package:joul_v2/presentation/view/screen/analysis/widgets/utility_analysis_card.dart';
+import 'package:joul_v2/core/theme/app_theme.dart';
 
 class BuildingAnalysisTab extends StatelessWidget {
   const BuildingAnalysisTab({
@@ -59,6 +60,9 @@ class BuildingAnalysisTab extends StatelessWidget {
                 getTotalExpectedRevenue(buildingReceipts);
 
             return Card(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppTheme.cardColorDark
+                  : null,
               margin: const EdgeInsets.only(bottom: 16),
               child: Column(
                 children: [

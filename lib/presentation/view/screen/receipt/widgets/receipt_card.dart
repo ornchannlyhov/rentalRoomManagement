@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:joul_v2/data/models/receipt.dart';
 import 'package:joul_v2/data/models/enum/payment_status.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
+import 'package:joul_v2/core/theme/app_theme.dart';
 
 class ReceiptCard extends StatefulWidget {
   final Receipt receipt;
@@ -61,7 +62,9 @@ class _ReceiptCardState extends State<ReceiptCard> {
         padding: const EdgeInsets.all(12.0),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8.0),
-          color: theme.colorScheme.surfaceContainerHighest,
+          color: theme.brightness == Brightness.dark
+              ? AppTheme.cardColorDark
+              : theme.colorScheme.surfaceContainerHighest,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.2),

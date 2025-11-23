@@ -5,6 +5,7 @@ import 'package:joul_v2/data/models/receipt.dart';
 import 'package:joul_v2/presentation/providers/building_provider.dart';
 import 'package:joul_v2/presentation/view/app_widgets/building_filter_dropdown.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
+import 'package:joul_v2/core/theme/app_theme.dart';
 
 class ReceiptSummaryCard extends StatelessWidget {
   const ReceiptSummaryCard({
@@ -98,8 +99,12 @@ class ReceiptSummaryCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              colorScheme.surface,
-              colorScheme.surface.withOpacity(0.95),
+              theme.brightness == Brightness.dark
+                  ? AppTheme.cardColorDark
+                  : colorScheme.surface,
+              theme.brightness == Brightness.dark
+                  ? AppTheme.cardColorDark.withOpacity(0.95)
+                  : colorScheme.surface.withOpacity(0.95),
             ],
           ),
         ),

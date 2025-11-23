@@ -4,6 +4,7 @@ import 'package:joul_v2/data/repositories/currency_repositoy.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:joul_v2/presentation/view/screen/analysis/widgets/month_filter_bar.dart';
 import 'package:joul_v2/presentation/view/screen/analysis/widgets/utility_analysis_card.dart';
+import 'package:joul_v2/core/theme/app_theme.dart';
 
 class FinancialOverviewTab extends StatelessWidget {
   const FinancialOverviewTab({
@@ -211,6 +212,9 @@ class _RevenueOverviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
     return Card(
+      color: Theme.of(context).brightness == Brightness.dark
+          ? AppTheme.cardColorDark
+          : null,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
