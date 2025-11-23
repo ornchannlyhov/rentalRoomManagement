@@ -122,14 +122,33 @@ class _ReceiptFormState extends State<ReceiptForm> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
+      // Parse values from text controllers
+      final parsedLastWaterUsed =
+          int.tryParse(lastWaterUsedController.text) ?? 0;
+      final parsedLastElectricUsed =
+          int.tryParse(lastElectricUsedController.text) ?? 0;
+      final parsedThisWaterUsed =
+          int.tryParse(thisWaterUsedController.text) ?? 0;
+      final parsedThisElectricUsed =
+          int.tryParse(thisElectricUsedController.text) ?? 0;
+
+      // Preserve tenant if room hasn't changed and tenant is missing
+      // This is crucial because RoomProvider might return rooms without tenant data,
+      // but we need the tenantId for the update to work correctly on the backend.
+      if (isEditing &&
+          widget.receipt != null &&
+          selectedRoom?.id == widget.receipt!.room?.id) {
+        selectedRoom?.tenant = widget.receipt!.room?.tenant;
+      }
+
       final newReceipt = Receipt(
         id: id,
         date: date,
         dueDate: dueDate,
-        lastWaterUsed: lastWaterUsed,
-        lastElectricUsed: lastElectricUsed,
-        thisWaterUsed: thisWaterUsed,
-        thisElectricUsed: thisElectricUsed,
+        lastWaterUsed: parsedLastWaterUsed,
+        lastElectricUsed: parsedLastElectricUsed,
+        thisWaterUsed: parsedThisWaterUsed,
+        thisElectricUsed: parsedThisElectricUsed,
         paymentStatus: paymentStatus,
         room: selectedRoom,
         services: selectedServices,
@@ -140,7 +159,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
       } else {
         context.read<ReceiptProvider>().createReceipt(newReceipt);
       }
-      Navigator.pop(context);
+      Navigator.pop(context, newReceipt);
     }
   }
 

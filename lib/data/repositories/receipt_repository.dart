@@ -443,6 +443,9 @@ class ReceiptRepository {
     if (newReceipt.room!.building == null) {
       throw Exception('Room must have a building reference');
     }
+    if (newReceipt.room!.tenant == null) {
+      throw Exception('Room must have a tenant reference');
+    }
 
     final serviceIds = newReceipt.services.isNotEmpty
         ? newReceipt.services.map((s) => s.id).toList()
@@ -450,6 +453,7 @@ class ReceiptRepository {
 
     final requestData = {
       'roomId': newReceipt.room!.id,
+      'tenantId': newReceipt.room!.tenant!.id,
       'date': newReceipt.date.toIso8601String(),
       'dueDate': newReceipt.dueDate.toIso8601String(),
       'lastWaterUsed': newReceipt.lastWaterUsed,
@@ -466,7 +470,11 @@ class ReceiptRepository {
       fromJson: (json) {
         final dto = ReceiptDto.fromJson(json);
         final receipt = dto.toReceipt();
+
+        // ALWAYS preserve the room and building from the request to ensure prices are available
+        // The API response may not include building prices (electricPrice, waterPrice, rentPrice)
         receipt.room = newReceipt.room;
+
         return receipt;
       },
       addToCache: (receipt) async {
@@ -500,8 +508,34 @@ class ReceiptRepository {
         ? updatedReceipt.services.map((s) => s.id).toList()
         : updatedReceipt.serviceIds;
 
+    // Find old receipt to preserve tenantId if needed
+    Receipt? oldReceipt;
+    try {
+      oldReceipt = _receiptCache.firstWhere((r) => r.id == updatedReceipt.id);
+    } catch (_) {}
+
+    String? tenantIdToUse;
+    if (updatedReceipt.room?.tenant?.id != null) {
+      tenantIdToUse = updatedReceipt.room!.tenant!.id;
+    } else if (oldReceipt != null &&
+        oldReceipt.room?.id == updatedReceipt.room?.id &&
+        oldReceipt.room?.tenant?.id != null) {
+      tenantIdToUse = oldReceipt.room!.tenant!.id;
+    }
+
+    if (kDebugMode) {
+      print(
+          'DEBUG: ReceiptRepository - Updating receipt: ${updatedReceipt.id}');
+      print(
+          'DEBUG: ReceiptRepository - updatedReceipt.room.tenant.id: ${updatedReceipt.room?.tenant?.id}');
+      print(
+          'DEBUG: ReceiptRepository - oldReceipt.room.tenant.id: ${oldReceipt?.room?.tenant?.id}');
+      print('DEBUG: ReceiptRepository - Tenant ID to use: $tenantIdToUse');
+    }
+
     final requestData = {
       if (updatedReceipt.room?.id != null) 'roomId': updatedReceipt.room!.id,
+      if (tenantIdToUse != null) 'tenantId': tenantIdToUse,
       'date': updatedReceipt.date.toIso8601String(),
       'dueDate': updatedReceipt.dueDate.toIso8601String(),
       'lastWaterUsed': updatedReceipt.lastWaterUsed,
@@ -511,6 +545,10 @@ class ReceiptRepository {
       'paymentStatus': updatedReceipt.paymentStatus.toString().split('.').last,
       'serviceIds': jsonEncode(serviceIds),
     };
+
+    if (kDebugMode) {
+      print('DEBUG: ReceiptRepository - Request Data: $requestData');
+    }
 
     await _syncHelper.update(
       endpoint: '/receipts/${updatedReceipt.id}',
@@ -546,7 +584,45 @@ class ReceiptRepository {
       addPendingChange: (type, endpoint, data) =>
           _addPendingChange(type, data, endpoint),
     );
+
     await save();
+  }
+
+  /// Confirm receipt and trigger PDF generation/sending
+  Future<void> confirmReceipt(String receiptId) async {
+    if (!await _apiHelper.hasNetwork()) {
+      throw Exception('No internet connection');
+    }
+
+    final token = await _apiHelper.storage.read(key: 'auth_token');
+    if (token == null) {
+      throw Exception('Not authenticated');
+    }
+
+    try {
+      final response = await _apiHelper.dio.post(
+        '${_apiHelper.baseUrl}/receipts/$receiptId/confirm',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+        cancelToken: _apiHelper.cancelToken,
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to confirm receipt: ${response.statusMessage}');
+      }
+
+      if (kDebugMode) {
+        print('✅ Receipt confirmed and PDF sent to tenant: $receiptId');
+      }
+    } on DioException catch (e) {
+      if (e.response?.data['message'] != null) {
+        throw Exception(e.response!.data['message']);
+      }
+      rethrow;
+    }
   }
 
   Future<void> deleteLastYearReceipts() async {

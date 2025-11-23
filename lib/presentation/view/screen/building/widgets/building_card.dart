@@ -186,7 +186,8 @@ class _AnimatedCardContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final hasImages = building.buildingImage!.isNotEmpty;
+    final hasImages =
+        building.buildingImage != null && building.buildingImage!.isNotEmpty;
 
     if (!showImage) {
       return _buildListCard(context, theme, l10n, hasImages);
@@ -223,7 +224,7 @@ class _AnimatedCardContent extends StatelessWidget {
                       ),
                       child: hasImages
                           ? _BuildingImage(
-                              imagePath: building.buildingImage?? '')
+                              imagePath: building.buildingImage ?? '')
                           : _BuildingGradientPlaceholder(
                               buildingName: building.name),
                     ),
@@ -301,7 +302,7 @@ class _AnimatedCardContent extends StatelessWidget {
                     topRight: Radius.circular(20),
                   ),
                   child: hasImages
-                      ? _BuildingImage(imagePath: building.buildingImage?? '')
+                      ? _BuildingImage(imagePath: building.buildingImage ?? '')
                       : _BuildingGradientPlaceholder(
                           buildingName: building.name),
                 ),
