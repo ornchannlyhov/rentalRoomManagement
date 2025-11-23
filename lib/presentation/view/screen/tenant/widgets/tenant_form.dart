@@ -372,8 +372,8 @@ class _TenantFormState extends State<TenantForm> {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
                               color:
-                                  theme.colorScheme.onSurface.withOpacity(0.4),
-                              width: 0.1,
+                                  theme.colorScheme.onSurface.withOpacity(0.2),
+                              width: 1,
                             ),
                           ),
                           filled: true,

@@ -10,7 +10,9 @@ class BuildingDto {
   final double rentPrice;
   final double electricPrice;
   final double waterPrice;
-  final List<String> buildingImages;
+
+  final String? buildingImage;
+
   final List<dynamic> services;
   final List<RoomDto>? rooms;
   final File? imageFile;
@@ -23,12 +25,11 @@ class BuildingDto {
     required this.rentPrice,
     required this.electricPrice,
     required this.waterPrice,
-    List<String>? buildingImages,
+    this.buildingImage, 
     List<dynamic>? services,
     this.rooms,
-    this.imageFile, 
-  })  : buildingImages = buildingImages ?? [],
-        services = services ?? [];
+    this.imageFile,
+  }) : services = services ?? [];
 
   factory BuildingDto.fromJson(Map<String, dynamic> json) {
     return BuildingDto(
@@ -39,9 +40,9 @@ class BuildingDto {
       rentPrice: _parseDouble(json['rentPrice']),
       electricPrice: _parseDouble(json['electricPrice']),
       waterPrice: _parseDouble(json['waterPrice']),
-      buildingImages: json['buildingImages'] != null
-          ? (json['buildingImages'] as List).map((e) => e.toString()).toList()
-          : [],
+      buildingImage: json['buildingImage']?.toString() ??
+          json['buildingImages']?.toString(),
+
       services: json['services'] as List? ?? [],
       rooms: json['rooms'] != null
           ? (json['rooms'] as List)
@@ -60,9 +61,12 @@ class BuildingDto {
       rentPrice: building.rentPrice,
       electricPrice: building.electricPrice,
       waterPrice: building.waterPrice,
-      buildingImages: building.buildingImages,
+
+      // CHANGED: Map String to String
+      buildingImage: building.buildingImage,
+
       services: building.services,
-      imageFile: building.imageFile, 
+      imageFile: building.imageFile,
     );
   }
 
@@ -84,7 +88,10 @@ class BuildingDto {
       'rentPrice': rentPrice,
       'electricPrice': electricPrice,
       'waterPrice': waterPrice,
-      'buildingImages': buildingImages,
+
+      // CHANGED: Sending string
+      'buildingImage': buildingImage,
+
       'services': services,
       if (rooms != null) 'rooms': rooms!.map((r) => r.toJson()).toList(),
     };
@@ -96,6 +103,8 @@ class BuildingDto {
       'rentPrice': rentPrice,
       'electricPrice': electricPrice,
       'waterPrice': waterPrice,
+      // You might want to include buildingImage here too if it's part of the update request
+      if (buildingImage != null) 'buildingImage': buildingImage,
     };
   }
 
@@ -108,10 +117,13 @@ class BuildingDto {
       electricPrice: electricPrice,
       waterPrice: waterPrice,
       passKey: passKey,
-      buildingImages: buildingImages,
+
+      // CHANGED: Map String to String
+      buildingImage: buildingImage,
+
       services: services,
       rooms: rooms?.map((r) => r.toRoom()).toList() ?? [],
-      imageFile: imageFile, 
+      imageFile: imageFile,
     );
   }
 }

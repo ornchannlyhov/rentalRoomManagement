@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:joul_v2/core/services/fcm_service.dart';
+import 'package:joul_v2/core/services/local_notification_service.dart';
 import 'package:joul_v2/presentation/view/screen/auth/login_screen.dart';
 import 'package:joul_v2/presentation/view/screen/auth/onboard_screen.dart';
 import 'package:joul_v2/presentation/view/screen/auth/register_screen.dart';
@@ -54,8 +55,9 @@ Future<void> main() async {
 
   await dotenv.load(fileName: ".env");
   await initializeDateFormatting();
-
   await _initializeFCMPermissions();
+  await LocalNotificationService.initialize();
+  // await FlutterSecureStorage().deleteAll();
 
   final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -128,19 +130,22 @@ Future<void> main() async {
   );
 
   // Load providers in background
-  unawaited(_loadProvidersInBackground(
+  await _loadProvidersInBackground(
     roomProvider: roomProvider,
     serviceProvider: serviceProvider,
     tenantProvider: tenantProvider,
     receiptProvider: receiptProvider,
     reportProvider: reportProvider,
     buildingProvider: buildingProvider,
-  ));
+  );
 
   final notificationProvider = NotificationProvider(
       receiptRepository, navigatorKey,
       repositoryManager: repositoryManager);
   notificationProvider.setupListeners();
+
+  // Load notifications AFTER receipt provider is loaded to ensure we can map IDs to objects
+  await notificationProvider.loadNotifications();
 
   runApp(MyApp(
     navigatorKey: navigatorKey,

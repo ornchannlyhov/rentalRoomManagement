@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:joul_v2/data/models/receipt.dart';
 import 'package:joul_v2/presentation/providers/notification_provider.dart';
-import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_detail.dart';
+import 'package:joul_v2/presentation/providers/receipt_provider.dart';
+import 'package:joul_v2/presentation/view/screen/receipt/receipt_confirmation_screen.dart';
+import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 
 class NotificationScreen extends StatefulWidget {
@@ -57,85 +59,133 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ),
         ],
       ),
-      body: Consumer<NotificationProvider>(
-        builder: (context, notificationProvider, child) {
-          final receiptsAsync = notificationProvider.newReceipts;
+      body: Builder(builder: (context) {
+        return Stack(
+          children: [
+            if (theme.brightness == Brightness.light)
+              _BackgroundGradient(
+                height: _calculateBackgroundHeight(context),
+                color: theme.colorScheme.primary,
+              ),
+            Consumer<NotificationProvider>(
+              builder: (context, notificationProvider, child) {
+                final receiptsAsync = notificationProvider.newReceipts;
 
-          return receiptsAsync.when(
-            loading: () => const Center(
-              child: CircularProgressIndicator(),
+                return receiptsAsync.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                  error: (error) => _buildErrorState(context, error),
+                  success: (receipts) {
+                    if (receipts.isEmpty) {
+                      return _buildEmptyState(context);
+                    }
+
+                    return ListView.builder(
+                      itemCount: receipts.length,
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                      itemBuilder: (context, index) {
+                        final receipt = receipts[index];
+                        return _NotificationCard(
+                          receipt: receipt,
+                          onTap: () {
+                            // Get fresh receipt from provider to ensure status is up to date
+                            final allReceipts = context
+                                .read<ReceiptProvider>()
+                                .receiptsState
+                                .data;
+                            final freshReceipt = allReceipts?.firstWhere(
+                                  (r) => r.id == receipt.id,
+                                  orElse: () => receipt,
+                                ) ??
+                                receipt;
+
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ReceiptConfirmationScreen(
+                                    receipt: freshReceipt),
+                              ),
+                            );
+                          },
+                          onDismiss: () {
+                            notificationProvider.removeNotification(receipt.id);
+                            GlobalSnackBar.show(
+                              message: l10n.notificationRemoved,
+                              context: context,
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                );
+              },
             ),
-            error: (error) => _buildErrorState(context, error),
-            success: (receipts) {
-              if (receipts.isEmpty) {
-                return _buildEmptyState(context);
-              }
-
-              return ListView.builder(
-                itemCount: receipts.length,
-                padding: const EdgeInsets.all(8),
-                itemBuilder: (context, index) {
-                  final receipt = receipts[index];
-                  return _NotificationCard(
-                    receipt: receipt,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => ReceiptDetailScreen(receipt: receipt),
-                        ),
-                      );
-                    },
-                    onDismiss: () {
-                      notificationProvider.removeNotification(receipt.id);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(l10n.notificationRemoved),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                  );
-                },
-              );
-            },
-          );
-        },
-      ),
+          ],
+        );
+      }),
     );
+  }
+
+  double _calculateBackgroundHeight(BuildContext context) {
+    final appBarHeight = Scaffold.of(context).appBarMaxHeight ?? kToolbarHeight;
+    const summaryCardHeight = 200.0;
+    return appBarHeight + summaryCardHeight - 150;
   }
 
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
 
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.notifications_none_rounded,
-            size: 80,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No notifications',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w600,
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 48),
-            child: Text(
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.notifications_none_rounded,
+                size: 48,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No notifications',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
               'New receipt notifications will appear here',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[500],
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -220,11 +270,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
             onPressed: () {
               context.read<NotificationProvider>().clearNotifications();
               Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(l10n.notificationsCleared),
-                  duration: const Duration(seconds: 2),
-                ),
+              GlobalSnackBar.show(
+                message: l10n.notificationsCleared,
+                context: context,
               );
             },
             style: FilledButton.styleFrom(
@@ -237,6 +285,33 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _BackgroundGradient extends StatelessWidget {
+  const _BackgroundGradient({required this.height, required this.color});
+
+  final double height;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (_, __) => Container(
+        height: height,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              color,
+              color.withOpacity(0.0),
+            ],
+            stops: const [0.0, 1.0],
+          ),
+        ),
       ),
     );
   }
@@ -326,7 +401,8 @@ class _NotificationCard extends StatelessWidget {
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              receipt.room?.building?.name ?? "Unknown Building",
+                              receipt.room?.building?.name ??
+                                  "Unknown Building",
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.w500,
                               ),

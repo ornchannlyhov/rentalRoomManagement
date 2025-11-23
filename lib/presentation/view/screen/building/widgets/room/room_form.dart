@@ -106,7 +106,9 @@ class _RoomFormState extends State<RoomForm> {
                     color: theme.colorScheme.onSurface,
                   ),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: theme.colorScheme.outline),
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.onSurface.withOpacity(0.2),
+                    ),
                   ),
                   focusedBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: theme.colorScheme.primary),
