@@ -26,7 +26,6 @@ class _ServiceFormState extends State<ServiceForm> {
   final _formKey = GlobalKey<FormState>();
   late String name;
   late double price;
-  late String unit;
 
   bool get isEditing => widget.mode == Mode.editing;
 
@@ -40,7 +39,6 @@ class _ServiceFormState extends State<ServiceForm> {
     } else {
       name = '';
       price = 0.0;
-      unit = '';
     }
   }
 
@@ -68,6 +66,9 @@ class _ServiceFormState extends State<ServiceForm> {
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
+        iconTheme: theme.iconTheme.copyWith(
+          color: theme.iconTheme.color ?? theme.colorScheme.onPrimary,
+        ),
         title: Text(
           isEditing ? l10n.editService : l10n.createNewService,
           style: theme.appBarTheme.titleTextStyle ??
@@ -75,9 +76,8 @@ class _ServiceFormState extends State<ServiceForm> {
                 color: theme.colorScheme.onSurface,
               ),
         ),
-        iconTheme: theme.iconTheme.copyWith(
-          color: theme.iconTheme.color ?? theme.colorScheme.onPrimary,
-        ),
+        elevation: theme.appBarTheme.elevation ?? 0,
+        shadowColor: theme.appBarTheme.shadowColor,
         actions: [
           IconButton(
             onPressed: () => Navigator.pop(context),
@@ -96,31 +96,54 @@ class _ServiceFormState extends State<ServiceForm> {
                 initialValue: name,
                 decoration: InputDecoration(
                   labelText: l10n.serviceName,
-                  labelStyle: TextStyle(color: theme.colorScheme.onSurface),
+                  labelStyle: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.onSurface.withOpacity(0.2),
+                    ),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: theme.colorScheme.primary),
+                  ),
+                ),
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurface,
                 ),
                 onSaved: (value) => name = value!,
                 validator: (value) =>
                     value!.isEmpty ? l10n.serviceNameRequired : null,
               ),
-              const SizedBox(height: 12),
-              // FIXED: Use servicePriceLabel instead of servicePrice()
+              const SizedBox(height: 16),
               NumberTextFormField(
                 initialValue: price.toString(),
-                label: l10n.servicePriceLabel,  // ← Changed this line
+                label: l10n.servicePriceLabel,
+                onSaved: (value) {
+                  if (value != null && value.isNotEmpty) {
+                    price = double.tryParse(value) ?? 0.0;
+                  }
+                },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  ElevatedButton(
+                  ElevatedButton.icon(
                     onPressed: _save,
+                    icon: const Icon(
+                      Icons.save,
+                      color: Colors.white,
+                    ),
+                    label: Text(
+                      l10n.save,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.primary,
                       foregroundColor: theme.colorScheme.onPrimary,
-                    ),
-                    child: Text(
-                      isEditing ? l10n.save : l10n.addService,
-                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
                 ],

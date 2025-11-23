@@ -12,13 +12,17 @@ import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
 class OtpVerificationScreen extends StatefulWidget {
   final String phoneNumber;
   final String? username; // Only for registration
+  final String? password; // Only for registration
   final bool isLogin;
+  final String? purpose; // "register" or "reset_password"
 
   const OtpVerificationScreen({
     super.key,
     required this.phoneNumber,
     this.username,
+    this.password,
     required this.isLogin,
+    this.purpose,
   });
 
   @override
@@ -118,7 +122,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               ),
               const SizedBox(height: 32),
               Text(
-                'Verification Code',
+                'Email Verification',
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -129,9 +133,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               Text(
                 '${'Please enter the code sent to'} ${widget.phoneNumber}',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 16,
-                  color: Colors.grey.shade600,
+                  color: Color(0xFF757575),
                 ),
               ),
               const SizedBox(height: 48),
@@ -151,18 +155,24 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                         FilteringTextInputFormatter.digitsOnly,
                       ],
                       style: const TextStyle(
-                          fontSize: 24, fontWeight: FontWeight.bold),
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1F2937),
+                      ),
                       decoration: InputDecoration(
                         contentPadding: EdgeInsets.zero,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
+                          borderSide:
+                              const BorderSide(color: Color(0xFFE0E0E0)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: const BorderSide(
                               color: Color(0xFF10B981), width: 2),
                         ),
+                        filled: true,
+                        fillColor: const Color(0xFFFFFFFF),
                       ),
                       onChanged: (value) => _onCodeChanged(value, index),
                     ),
@@ -220,14 +230,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       padding: const EdgeInsets.all(12),
                       margin: const EdgeInsets.only(bottom: 24),
                       decoration: BoxDecoration(
-                        color: Colors.red.shade50,
+                        color: const Color(0xFFFFEBEE),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.shade300),
+                        border: Border.all(color: const Color(0xFFE57373)),
                       ),
                       child: Text(
                         error.toString().replaceAll('Exception: ', ''),
-                        style: TextStyle(
-                          color: Colors.red.shade700,
+                        style: const TextStyle(
+                          color: Color(0xFFC62828),
                           fontSize: 14,
                         ),
                         textAlign: TextAlign.center,
@@ -241,8 +251,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 children: [
                   Text(
                     "Didn't receive code? ",
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
+                    style: const TextStyle(
+                      color: Color(0xFF757575),
                       fontSize: 14,
                     ),
                   ),
@@ -291,18 +301,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         Provider.of<RepositoryManager>(context, listen: false);
 
     if (widget.isLogin) {
-      final request = VerifyLoginOtpRequest(
-        phoneNumber: widget.phoneNumber,
-        otp: otp,
-      );
-      await authProvider.verifyLoginOtp(request);
+      // Login is directly via username/password now - this screen is NOT used for login anymore
+      // This case should not occur with the new API, but kept for backwards compatibility
+      return;
     } else {
-      final request = VerifyRegisterOtpRequest(
+      final request = VerifyRegistrationRequest(
         phoneNumber: widget.phoneNumber,
         otp: otp,
         username: widget.username!,
+        password: widget.password!,
       );
-      await authProvider.verifyRegisterOtp(request);
+      await authProvider.verifyRegistration(request);
     }
 
     if (mounted) {
@@ -331,7 +340,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   void _resendOtp(BuildContext context) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    await authProvider.resendOtp(widget.phoneNumber);
+    final purpose = widget.purpose ?? (widget.isLogin ? 'login' : 'register');
+    await authProvider.resendOtp(widget.phoneNumber, purpose);
     _startTimer();
     if (mounted) {
       GlobalSnackBar.show(

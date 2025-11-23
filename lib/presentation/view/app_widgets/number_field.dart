@@ -7,6 +7,7 @@ class NumberTextFormField extends StatelessWidget {
   final String label;
   final String? initialValue;
   final String? Function(String?)? validator;
+  final void Function(String?)? onSaved;
   final bool enabled;
 
   const NumberTextFormField({
@@ -15,6 +16,7 @@ class NumberTextFormField extends StatelessWidget {
     required this.label,
     this.initialValue,
     this.validator,
+    this.onSaved,
     this.enabled = true,
   });
 
@@ -63,6 +65,7 @@ class NumberTextFormField extends StatelessWidget {
             }
             return null;
           },
+      onSaved: onSaved,
     );
   }
 }

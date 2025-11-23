@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/data/models/enum/mode.dart';
@@ -11,12 +9,12 @@ import 'package:joul_v2/presentation/providers/room_provider.dart';
 import 'package:joul_v2/presentation/providers/tenant_provider.dart';
 import 'package:joul_v2/presentation/view/app_widgets/building_filter_dropdown.dart';
 import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
+import 'package:joul_v2/presentation/view/app_widgets/search_bar_widget.dart';
 import 'package:joul_v2/presentation/view/screen/tenant/widgets/room_change_dialog.dart';
 import 'package:joul_v2/presentation/view/screen/tenant/widgets/tenant_card.dart';
 import 'package:joul_v2/presentation/view/screen/tenant/widgets/tenant_detail.dart';
 import 'package:joul_v2/presentation/view/screen/tenant/widgets/tenant_form.dart';
 import 'package:joul_v2/presentation/view/screen/tenant/widgets/tenant_list.dart';
-import 'package:joul_v2/presentation/view/screen/tenant/widgets/tenant_search_bar.dart';
 import 'package:joul_v2/presentation/view/screen/tenant/widgets/tenant_state.dart';
 
 class TenantScreen extends StatefulWidget {
@@ -471,10 +469,11 @@ class _TenantScreenState extends State<TenantScreen>
           // Search Bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TenantSearchBar(
+            child: SearchBarWidget(
               isSearching: _isSearching,
               searchController: _searchController,
               searchQuery: _searchQuery,
+              hintText: localizations.searchTenantHint,
               onSearchQueryChanged: (value) {
                 setState(() {
                   _searchQuery = value;

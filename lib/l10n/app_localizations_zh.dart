@@ -1122,4 +1122,70 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get clearNotificationsMessage => '这将删除所有通知项目。您仍然可以在收据标签中查看收据。';
+
+  @override
+  String get phoneNumberLabel => 'Phone Number';
+
+  @override
+  String get phoneNumberHint => '010 123 456';
+
+  @override
+  String get requestOtp => 'Request OTP';
+
+  @override
+  String get verificationCode => 'Verification Code';
+
+  @override
+  String get enterCodeSentTo => 'Please enter the code sent to';
+
+  @override
+  String get verify => 'Verify';
+
+  @override
+  String get didNotReceiveCode => 'Didn\'t receive code? ';
+
+  @override
+  String get resend => 'Resend';
+
+  @override
+  String get invalidOtp => 'Please enter a valid 6-digit code';
+
+  @override
+  String get otpResent => 'OTP Resent';
+
+  @override
+  String get faqs => 'FAQs';
+
+  @override
+  String get reportProblem => 'Report Problem';
+
+  @override
+  String get describeProblem => 'Describe the problem';
+
+  @override
+  String get reportSent => 'Report sent successfully';
+
+  @override
+  String get send => 'Send';
+
+  @override
+  String get changePassword => 'Change Password';
+
+  @override
+  String get oldPassword => 'Old Password';
+
+  @override
+  String get newPassword => 'New Password';
+
+  @override
+  String get updatePassword => 'Update Password';
+
+  @override
+  String get passwordUpdated => 'Password updated successfully';
+
+  @override
+  String get pleaseEnterPassword => 'Please enter password';
+
+  @override
+  String get passwordTooShort => 'Password must be at least 6 characters';
 }

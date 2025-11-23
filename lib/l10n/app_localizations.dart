@@ -244,7 +244,7 @@ abstract class AppLocalizations {
   /// Validation message for problem description field
   ///
   /// In en, this message translates to:
-  /// **'Please enter a problem description'**
+  /// **'Please describe the problem you are facing'**
   String get enterProblemDescription;
 
   /// Text shown when report has no tenant assigned
@@ -886,7 +886,7 @@ abstract class AppLocalizations {
   /// No description provided for @invalidPhoneNumber.
   ///
   /// In en, this message translates to:
-  /// **'Invalid phone number'**
+  /// **'Invalid phone number format'**
   String get invalidPhoneNumber;
 
   /// No description provided for @searchCountry.
@@ -2154,6 +2154,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This will remove all notification items. You can still view receipts in the Receipts tab.'**
   String get clearNotificationsMessage;
+
+  /// No description provided for @phoneNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone Number'**
+  String get phoneNumberLabel;
+
+  /// No description provided for @phoneNumberHint.
+  ///
+  /// In en, this message translates to:
+  /// **'010 123 456'**
+  String get phoneNumberHint;
+
+  /// No description provided for @requestOtp.
+  ///
+  /// In en, this message translates to:
+  /// **'Request OTP'**
+  String get requestOtp;
+
+  /// No description provided for @verificationCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification Code'**
+  String get verificationCode;
+
+  /// No description provided for @enterCodeSentTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the code sent to'**
+  String get enterCodeSentTo;
+
+  /// No description provided for @verify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get verify;
+
+  /// No description provided for @didNotReceiveCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Didn\'t receive code? '**
+  String get didNotReceiveCode;
+
+  /// No description provided for @resend.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend'**
+  String get resend;
+
+  /// No description provided for @invalidOtp.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid 6-digit code'**
+  String get invalidOtp;
+
+  /// No description provided for @otpResent.
+  ///
+  /// In en, this message translates to:
+  /// **'OTP Resent'**
+  String get otpResent;
+
+  /// No description provided for @faqs.
+  ///
+  /// In en, this message translates to:
+  /// **'FAQs'**
+  String get faqs;
+
+  /// No description provided for @reportProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'Report Problem'**
+  String get reportProblem;
+
+  /// No description provided for @describeProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the problem'**
+  String get describeProblem;
+
+  /// No description provided for @reportSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Report sent successfully'**
+  String get reportSent;
+
+  /// No description provided for @send.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get send;
+
+  /// No description provided for @changePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Password'**
+  String get changePassword;
+
+  /// No description provided for @oldPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Old Password'**
+  String get oldPassword;
+
+  /// No description provided for @newPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New Password'**
+  String get newPassword;
+
+  /// No description provided for @updatePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Password'**
+  String get updatePassword;
+
+  /// No description provided for @passwordUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated successfully'**
+  String get passwordUpdated;
+
+  /// No description provided for @pleaseEnterPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter password'**
+  String get pleaseEnterPassword;
+
+  /// No description provided for @passwordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 6 characters'**
+  String get passwordTooShort;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
