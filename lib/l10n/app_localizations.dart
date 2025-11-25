@@ -1204,7 +1204,7 @@ abstract class AppLocalizations {
   /// No description provided for @oldDataTitle.
   ///
   /// In en, this message translates to:
-  /// **'Old Data'**
+  /// **'History'**
   String get oldDataTitle;
 
   /// No description provided for @searchReceiptHint.
