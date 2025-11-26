@@ -90,17 +90,20 @@ class ReportDto {
   }
 
 
-  ReportStatus _mapStatus(String? value) {
-    switch (value?.toLowerCase()) {
-      case 'resolved':
-        return ReportStatus.resolved;
-      case 'inprogress':
-      case 'in_progress':
-        return ReportStatus.inProgress;
-      default:
-        return ReportStatus.pending;
-    }
+ ReportStatus _mapStatus(String? value) {
+  switch (value?.toLowerCase()) {
+    case 'resolved':
+      return ReportStatus.resolved;
+    case 'inprogress':
+    case 'in_progress':
+      return ReportStatus.inProgress;
+    case 'closed':
+      return ReportStatus.closed;
+    case 'pending':
+    default:
+      return ReportStatus.pending;
   }
+}
 
   ReportPriority _mapPriority(String? value) {
     switch (value?.toLowerCase()) {

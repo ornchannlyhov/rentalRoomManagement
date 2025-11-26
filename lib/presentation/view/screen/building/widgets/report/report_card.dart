@@ -19,16 +19,15 @@ class ReportCard extends StatelessWidget {
   });
 
   Color _getPriorityColor(BuildContext context, ReportPriority priority) {
-    final colorScheme = Theme.of(context).colorScheme;
     switch (priority) {
       case ReportPriority.urgent:
-        return colorScheme.error;
+        return Colors.red.shade700;
       case ReportPriority.high:
-        return Colors.red;
+        return Colors.orange.shade700;
       case ReportPriority.medium:
-        return Colors.orange;
+        return Colors.amber.shade700;
       case ReportPriority.low:
-        return Colors.green;
+        return Colors.green.shade700;
     }
   }
 
@@ -51,9 +50,9 @@ class ReportCard extends StatelessWidget {
       case ReportStatus.pending:
         return Icons.pending_outlined;
       case ReportStatus.inProgress:
-        return Icons.autorenew;
+        return Icons.autorenew_rounded;
       case ReportStatus.resolved:
-        return Icons.check_circle_outline;
+        return Icons.check_circle_outline_rounded;
       case ReportStatus.closed:
         return Icons.cancel_outlined;
     }
@@ -85,6 +84,111 @@ class ReportCard extends StatelessWidget {
     }
   }
 
+  void _showOptionsBottomSheet(BuildContext context) {
+    final theme = Theme.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.outline.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.report_problem_rounded,
+                        color: theme.colorScheme.primary,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            report.tenant?.name ?? 'Unknown Tenant',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (report.room != null)
+                            Text(
+                              'Room ${report.room!.roomNumber}',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Menu options
+              if (onMenuSelected != null) ...[
+                ListTile(
+                  leading: Icon(
+                    Icons.edit_rounded,
+                    color: theme.colorScheme.primary,
+                  ),
+                  title: const Text('Change Status'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onMenuSelected?.call(ReportMenuOption.changeStatus);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.delete_rounded,
+                    color: Colors.red,
+                  ),
+                  title: const Text('Delete'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onMenuSelected?.call(ReportMenuOption.delete);
+                  },
+                ),
+              ],
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -96,28 +200,38 @@ class ReportCard extends StatelessWidget {
           ? AppTheme.cardColorDark
           : colorScheme.surfaceContainerHighest,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: colorScheme.outline.withOpacity(0.2),
-        ),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header: Tenant info and menu
               Row(
                 children: [
-                  CircleAvatar(
-                    backgroundColor: colorScheme.primaryContainer,
-                    child: Icon(
-                      Icons.person,
-                      color: colorScheme.onPrimaryContainer,
-                      size: 20,
+                  // Tenant avatar with gradient
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          _getPriorityColor(context, report.priority).withOpacity(0.8),
+                          _getPriorityColor(context, report.priority),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.person_rounded,
+                      color: Colors.white,
+                      size: 24,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -129,16 +243,21 @@ class ReportCard extends StatelessWidget {
                           report.tenant?.name ?? 'Unknown Tenant',
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: colorScheme.onSurface,
+                            letterSpacing: -0.3,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        if (report.room != null)
+                        if (report.room != null) ...[
+                          const SizedBox(height: 2),
                           Text(
                             'Room ${report.room!.roomNumber}',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
+                              color: colorScheme.onSurface.withOpacity(0.7),
+                              fontSize: 11,
                             ),
                           ),
+                        ],
                       ],
                     ),
                   ),
@@ -174,7 +293,7 @@ class ReportCard extends StatelessWidget {
                             ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
                 ],
               ),
@@ -182,10 +301,14 @@ class ReportCard extends StatelessWidget {
 
               // Problem description
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: colorScheme.surface,
-                  borderRadius: BorderRadius.circular(8),
+                  color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: colorScheme.outline.withOpacity(0.1),
+                    width: 1,
+                  ),
                 ),
                 child: Text(
                   report.problemDescription,
@@ -196,79 +319,95 @@ class ReportCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
               // Status and Priority badges
               Row(
                 children: [
                   // Status badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(context, report.status)
-                          .withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: _getStatusColor(context, report.status),
-                        width: 1,
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
                       ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _getStatusIcon(report.status),
-                          size: 14,
-                          color: _getStatusColor(context, report.status),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(context, report.status)
+                            .withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _getStatusColor(context, report.status)
+                              .withOpacity(0.3),
+                          width: 1,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _getStatusLabel(report.status),
-                          style: theme.textTheme.labelSmall?.copyWith(
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _getStatusIcon(report.status),
+                            size: 14,
                             color: _getStatusColor(context, report.status),
-                            fontWeight: FontWeight.w600,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              _getStatusLabel(report.status),
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: _getStatusColor(context, report.status),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
 
                   // Priority badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getPriorityColor(context, report.priority)
-                          .withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: _getPriorityColor(context, report.priority),
-                        width: 1,
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
                       ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.flag,
-                          size: 14,
-                          color: _getPriorityColor(context, report.priority),
+                      decoration: BoxDecoration(
+                        color: _getPriorityColor(context, report.priority)
+                            .withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _getPriorityColor(context, report.priority)
+                              .withOpacity(0.3),
+                          width: 1,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _getPriorityLabel(report.priority),
-                          style: theme.textTheme.labelSmall?.copyWith(
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.flag_rounded,
+                            size: 14,
                             color: _getPriorityColor(context, report.priority),
-                            fontWeight: FontWeight.w600,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              _getPriorityLabel(report.priority),
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: _getPriorityColor(context, report.priority),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -276,12 +415,16 @@ class ReportCard extends StatelessWidget {
 
               // Notes (if present)
               if (report.notes != null && report.notes!.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(8),
+                    color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: colorScheme.outline.withOpacity(0.1),
+                      width: 1,
+                    ),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,

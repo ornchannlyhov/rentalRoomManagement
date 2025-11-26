@@ -213,7 +213,7 @@ class ReportRepository {
 
   // LANDLORD FUNCTION: Update report status only
   Future<void> updateReportStatus(String reportId, String status) async {
-    final endpoint = '/reports/$reportId/status';
+    final endpoint = '/reports/$reportId';
     final requestData = {'status': status};
 
     await _syncHelper.update(

@@ -593,7 +593,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tryDifferentKeyword => 'Try a different keyword';
 
   @override
-  String get oldDataTitle => 'Old Data';
+  String get oldDataTitle => 'History';
 
   @override
   String get searchReceiptHint => 'Search receipts...';
