@@ -6,6 +6,7 @@ import 'package:joul_v2/data/models/enum/room_status.dart';
 import 'package:joul_v2/data/models/room.dart';
 import 'package:joul_v2/presentation/providers/room_provider.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
+import 'package:joul_v2/core/theme/app_theme.dart';
 
 class BuildingCard extends StatelessWidget {
   final Building building;
@@ -186,7 +187,8 @@ class _AnimatedCardContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final hasImages = building.buildingImages.isNotEmpty;
+    final hasImages =
+        building.buildingImage != null && building.buildingImage!.isNotEmpty;
 
     if (!showImage) {
       return _buildListCard(context, theme, l10n, hasImages);
@@ -198,6 +200,9 @@ class _AnimatedCardContent extends StatelessWidget {
   Widget _buildListCard(BuildContext context, ThemeData theme,
       AppLocalizations l10n, bool hasImages) {
     return Card(
+      color: Theme.of(context).brightness == Brightness.dark
+          ? AppTheme.cardColorDark
+          : null,
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -223,7 +228,7 @@ class _AnimatedCardContent extends StatelessWidget {
                       ),
                       child: hasImages
                           ? _BuildingImage(
-                              imagePath: building.buildingImages.first)
+                              imagePath: building.buildingImage ?? '')
                           : _BuildingGradientPlaceholder(
                               buildingName: building.name),
                     ),
@@ -231,7 +236,9 @@ class _AnimatedCardContent extends StatelessWidget {
                       top: 8,
                       left: 8,
                       child: Material(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppTheme.cardColorDark
+                            : Colors.black.withOpacity(0.3),
                         borderRadius: BorderRadius.circular(12),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(12),
@@ -275,6 +282,9 @@ class _AnimatedCardContent extends StatelessWidget {
   Widget _buildDetailCard(BuildContext context, ThemeData theme,
       AppLocalizations l10n, bool hasImages) {
     return Card(
+      color: Theme.of(context).brightness == Brightness.dark
+          ? AppTheme.cardColorDark
+          : null,
       margin: const EdgeInsets.all(0),
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -301,7 +311,7 @@ class _AnimatedCardContent extends StatelessWidget {
                     topRight: Radius.circular(20),
                   ),
                   child: hasImages
-                      ? _BuildingImage(imagePath: building.buildingImages.first)
+                      ? _BuildingImage(imagePath: building.buildingImage ?? '')
                       : _BuildingGradientPlaceholder(
                           buildingName: building.name),
                 ),
@@ -344,7 +354,9 @@ class _AnimatedCardContent extends StatelessWidget {
                   top: 8,
                   right: 8,
                   child: Material(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppTheme.cardColorDark
+                        : Colors.black.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(12),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
@@ -412,20 +424,64 @@ class _AnimatedCardContent extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildCompactUtilityChip(
-                        context,
-                        Icons.flash_on_rounded,
-                        "\$${building.electricPrice.toStringAsFixed(2)}",
-                        Colors.amber,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.flash_on_rounded,
+                              color: Colors.amber,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              "\$${building.electricPrice.toStringAsFixed(2)}",
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: Colors.amber,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildCompactUtilityChip(
-                        context,
-                        Icons.water_drop_rounded,
-                        "\$${building.waterPrice.toStringAsFixed(2)}",
-                        Colors.blue,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.water_drop_rounded,
+                              color: Colors.blue,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              "\$${building.waterPrice.toStringAsFixed(2)}",
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],

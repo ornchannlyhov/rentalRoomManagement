@@ -185,7 +185,6 @@ class _TenantFormState extends State<TenantForm> {
         );
       }
 
-      // ✅ Prepare file object
       File? imageFile;
       if (_selectedImage != null) {
         imageFile = File(_selectedImage!.path);
@@ -297,7 +296,6 @@ class _TenantFormState extends State<TenantForm> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final localizations = AppLocalizations.of(context)!;
-    const fieldSpacing = SizedBox(height: 12);
     final buildingProvider = context.watch<BuildingProvider>();
     final roomProvider = context.watch<RoomProvider>();
 
@@ -305,18 +303,28 @@ class _TenantFormState extends State<TenantForm> {
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
-        title: Text(isEditing
-            ? localizations.editTenant
-            : localizations.createNewTenant),
+        iconTheme: theme.iconTheme.copyWith(
+          color: theme.iconTheme.color ?? theme.colorScheme.onPrimary,
+        ),
+        title: Text(
+          isEditing ? localizations.editTenant : localizations.createNewTenant,
+          style: theme.appBarTheme.titleTextStyle ??
+              theme.textTheme.titleLarge?.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
+        ),
+        elevation: theme.appBarTheme.elevation ?? 0,
+        shadowColor: theme.appBarTheme.shadowColor,
         actions: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.cancel),
+            icon: Icon(Icons.cancel, color: theme.colorScheme.onSurface),
+            tooltip: localizations.cancel,
           ),
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16.0),
         child: buildingProvider.buildingsState.when(
           success: (buildings) {
             return roomProvider.roomsState.when(
@@ -333,6 +341,8 @@ class _TenantFormState extends State<TenantForm> {
                     children: [
                       Center(child: _buildProfileImagePicker(theme)),
                       const SizedBox(height: 24),
+                      
+                      // Building Filter Dropdown
                       DropdownButtonFormField<String?>(
                         value: selectedBuildingId,
                         items: [
@@ -371,9 +381,8 @@ class _TenantFormState extends State<TenantForm> {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                              color:
-                                  theme.colorScheme.onSurface.withOpacity(0.4),
-                              width: 0.1,
+                              color: theme.colorScheme.onSurface.withOpacity(0.2),
+                              width: 1,
                             ),
                           ),
                           filled: true,
@@ -395,12 +404,69 @@ class _TenantFormState extends State<TenantForm> {
                         ),
                         validator: (value) => null,
                       ),
-                      fieldSpacing,
+                      const SizedBox(height: 16),
+
+                      // Room Dropdown
+                      DropdownButtonFormField<String?>(
+                        value: selectedRoomId,
+                        items: availableRooms.map((room) {
+                          return DropdownMenuItem<String?>(
+                            value: room.id,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('${localizations.room}: ${room.roomNumber}'),
+                                Text('- ${room.building?.name ?? ''}'),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (String? value) {
+                          setState(() {
+                            selectedRoomId = value;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          labelText: localizations.room,
+                          labelStyle: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurface,
+                          ),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.onSurface.withOpacity(0.2),
+                            ),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: theme.colorScheme.primary),
+                          ),
+                        ),
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                        ),
+                        validator: (value) =>
+                            value == null ? localizations.pleaseSelectRoom : null,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Name Field
                       TextFormField(
                         initialValue: name,
                         decoration: InputDecoration(
                           labelText: localizations.tenantNameLabel,
-                          labelStyle: theme.textTheme.bodyMedium,
+                          labelStyle: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurface,
+                          ),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.onSurface.withOpacity(0.2),
+                            ),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: theme.colorScheme.primary),
+                          ),
+                        ),
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurface,
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -410,12 +476,26 @@ class _TenantFormState extends State<TenantForm> {
                         },
                         onSaved: (value) => name = value!,
                       ),
-                      fieldSpacing,
+                      const SizedBox(height: 16),
+
+                      // Phone Number Field
                       IntlPhoneField(
-                        // The key change is here: using the standard InputDecoration
                         decoration: InputDecoration(
                           labelText: localizations.phoneNumber,
-                          labelStyle: theme.textTheme.bodyMedium,
+                          labelStyle: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurface,
+                          ),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.onSurface.withOpacity(0.2),
+                            ),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: theme.colorScheme.primary),
+                          ),
+                        ),
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurface,
                         ),
                         initialCountryCode: 'KH',
                         initialValue: phoneNumber.startsWith('+')
@@ -460,12 +540,27 @@ class _TenantFormState extends State<TenantForm> {
                           padding: const EdgeInsets.all(16),
                         ),
                       ),
-                      fieldSpacing,
+                      const SizedBox(height: 16),
+
+                      // Gender Dropdown
                       DropdownButtonFormField<Gender>(
                         value: gender,
                         decoration: InputDecoration(
                           labelText: localizations.gender,
-                          labelStyle: theme.textTheme.bodyMedium,
+                          labelStyle: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurface,
+                          ),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.onSurface.withOpacity(0.2),
+                            ),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: theme.colorScheme.primary),
+                          ),
+                        ),
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurface,
                         ),
                         items: Gender.values
                             .map(
@@ -478,41 +573,27 @@ class _TenantFormState extends State<TenantForm> {
                         onChanged: (value) => setState(() => gender = value!),
                         onSaved: (value) => gender = value!,
                       ),
-                      fieldSpacing,
-                      DropdownButtonFormField<String?>(
-                        value: selectedRoomId,
-                        items: availableRooms.map((room) {
-                          return DropdownMenuItem<String?>(
-                            value: room.id,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                    '${localizations.room}: ${room.roomNumber}'),
-                                Text('- ${room.building?.name ?? ''}'),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (String? value) {
-                          setState(() {
-                            selectedRoomId = value;
-                          });
-                        },
-                        decoration: InputDecoration(
-                          labelText: localizations.room,
-                          labelStyle: theme.textTheme.bodyMedium,
-                        ),
-                        validator: (value) => value == null
-                            ? localizations.pleaseSelectRoom
-                            : null,
-                      ),
-                      fieldSpacing,
+                      const SizedBox(height: 16),
+
+                      // Deposit Field
                       TextFormField(
                         controller: _depositController,
                         decoration: InputDecoration(
                           labelText: 'Deposit',
-                          labelStyle: theme.textTheme.bodyMedium,
+                          labelStyle: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurface,
+                          ),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.onSurface.withOpacity(0.2),
+                            ),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: theme.colorScheme.primary),
+                          ),
+                        ),
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurface,
                         ),
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
@@ -526,20 +607,28 @@ class _TenantFormState extends State<TenantForm> {
                         },
                       ),
                       const SizedBox(height: 24),
+
+                      // Save Button
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          ElevatedButton(
+                          ElevatedButton.icon(
                             onPressed: _save,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primary,
-                              foregroundColor: theme.colorScheme.onPrimary,
+                            icon: const Icon(
+                              Icons.save,
+                              color: Colors.white,
                             ),
-                            child: Text(
+                            label: Text(
                               isEditing
                                   ? localizations.updateTenant
                                   : localizations.createTenant,
-                              style: const TextStyle(color: Colors.white),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.colorScheme.primary,
+                              foregroundColor: theme.colorScheme.onPrimary,
                             ),
                           ),
                         ],
@@ -548,19 +637,7 @@ class _TenantFormState extends State<TenantForm> {
                   ),
                 );
               },
-              loading: () => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 16),
-                    Text(
-                      localizations.loading,
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
-              ),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (error) => Center(
                 child: Text(
                   '${localizations.errorLoadingRooms}: $error',
@@ -569,19 +646,7 @@ class _TenantFormState extends State<TenantForm> {
               ),
             );
           },
-          loading: () => Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                Text(
-                  localizations.loading,
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ],
-            ),
-          ),
+          loading: () => const Center(child: CircularProgressIndicator()),
           error: (error) => Center(
             child: Text(
               '${localizations.errorLoadingBuildings}: $error',

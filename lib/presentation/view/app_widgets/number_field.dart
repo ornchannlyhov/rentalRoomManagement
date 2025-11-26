@@ -7,6 +7,7 @@ class NumberTextFormField extends StatelessWidget {
   final String label;
   final String? initialValue;
   final String? Function(String?)? validator;
+  final void Function(String?)? onSaved;
   final bool enabled;
 
   const NumberTextFormField({
@@ -15,6 +16,7 @@ class NumberTextFormField extends StatelessWidget {
     required this.label,
     this.initialValue,
     this.validator,
+    this.onSaved,
     this.enabled = true,
   });
 
@@ -22,7 +24,7 @@ class NumberTextFormField extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final baseColor = theme.colorScheme.onSurface;
-    final localizations = AppLocalizations.of(context)!; 
+    final localizations = AppLocalizations.of(context)!;
 
     return TextFormField(
       controller: controller,
@@ -36,8 +38,8 @@ class NumberTextFormField extends StatelessWidget {
         enabledBorder: UnderlineInputBorder(
           borderSide: BorderSide(
             color: enabled
-                ? theme.colorScheme.outline
-                : theme.colorScheme.outline.withOpacity(0.5),
+                ? baseColor.withOpacity(0.2)
+                : baseColor.withOpacity(0.1),
           ),
         ),
         focusedBorder: UnderlineInputBorder(
@@ -63,6 +65,7 @@ class NumberTextFormField extends StatelessWidget {
             }
             return null;
           },
+      onSaved: onSaved,
     );
   }
 }

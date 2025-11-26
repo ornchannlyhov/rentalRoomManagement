@@ -79,6 +79,8 @@ class TenantProvider with ChangeNotifier {
       _tenantsState = AsyncValue.success(tenants);
     } catch (e) {
       _tenantsState = AsyncValue.error(e, _tenantsState.data);
+      notifyListeners();
+      rethrow; // Propagate error to caller
     }
     notifyListeners();
   }
@@ -99,6 +101,8 @@ class TenantProvider with ChangeNotifier {
       _tenantsState = AsyncValue.success(tenants);
     } catch (e) {
       _tenantsState = AsyncValue.error(e, _tenantsState.data);
+      notifyListeners();
+      rethrow; // Propagate error to caller
     }
     notifyListeners();
   }
@@ -119,6 +123,8 @@ class TenantProvider with ChangeNotifier {
       _tenantsState = AsyncValue.success(tenants);
     } catch (e) {
       _tenantsState = AsyncValue.error(e, _tenantsState.data);
+      notifyListeners();
+      rethrow; // Propagate error to caller
     }
     notifyListeners();
   }

@@ -28,17 +28,25 @@ class AuthProvider with ChangeNotifier {
   AsyncValue<User?> _user = const AsyncValue.loading();
   AsyncValue<bool> _loginState = const AsyncValue.success(false);
   AsyncValue<bool> _registerState = const AsyncValue.success(false);
+  AsyncValue<bool> _otpState = const AsyncValue.success(false);
   AsyncValue<bool> _passwordUpdateState = const AsyncValue.success(false);
+  AsyncValue<bool> _passwordResetState = const AsyncValue.success(false);
+  AsyncValue<bool> _passwordResetVerifyState = const AsyncValue.success(false);
   bool _sessionHasExpired = false;
   bool _showNetworkError = false;
+  bool _otpSent = false;
 
   // Getters
   AsyncValue<User?> get user => _user;
   AsyncValue<bool> get loginState => _loginState;
   AsyncValue<bool> get registerState => _registerState;
+  AsyncValue<bool> get otpState => _otpState;
   AsyncValue<bool> get passwordUpdateState => _passwordUpdateState;
+  AsyncValue<bool> get passwordResetState => _passwordResetState;
+  AsyncValue<bool> get passwordResetVerifyState => _passwordResetVerifyState;
   bool get sessionHasExpired => _sessionHasExpired;
   bool get showNetworkError => _showNetworkError;
+  bool get otpSent => _otpSent;
 
   // Initialize app - check if user is logged in
   Future<void> load() async {
@@ -66,24 +74,44 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Register
-  Future<void> register(RegisterRequest request) async {
+  // --- Registration Flow ---
+
+  Future<void> requestRegistration(RequestRegistrationRequest request) async {
     _registerState = const AsyncValue.loading();
+    _otpSent = false;
     notifyListeners();
 
     try {
-      final newUser = await _repository.register(request);
-      _user = AsyncValue.success(newUser);
+      await _repository.requestRegistration(request);
+      _otpSent = true;
       _registerState = const AsyncValue.success(true);
     } catch (e) {
-      _user = const AsyncValue.success(null);
+      _otpSent = false;
       _registerState = AsyncValue.error(_mapExceptionToMessage(e));
     }
 
     notifyListeners();
   }
 
-  // Login
+  Future<void> verifyRegistration(VerifyRegistrationRequest request) async {
+    _otpState = const AsyncValue.loading();
+    notifyListeners();
+
+    try {
+      final newUser = await _repository.verifyRegistration(request);
+      _user = AsyncValue.success(newUser);
+      _otpState = const AsyncValue.success(true);
+      _otpSent = false; // Reset after successful verification
+    } catch (e) {
+      _user = const AsyncValue.success(null);
+      _otpState = AsyncValue.error(_mapExceptionToMessage(e));
+    }
+
+    notifyListeners();
+  }
+
+  // --- Login Flow ---
+
   Future<void> login(LoginRequest request) async {
     _loginState = const AsyncValue.loading();
     notifyListeners();
@@ -93,12 +121,59 @@ class AuthProvider with ChangeNotifier {
       _user = AsyncValue.success(loggedInUser);
       _loginState = const AsyncValue.success(true);
     } catch (e) {
-      _user = const AsyncValue.success(null); 
-      _loginState =
-          AsyncValue.error(_mapExceptionToMessage(e));
+      _user = const AsyncValue.success(null);
+      _loginState = AsyncValue.error(_mapExceptionToMessage(e));
     }
 
     notifyListeners();
+  }
+
+  // --- Password Reset Flow ---
+
+  Future<void> requestPasswordReset(RequestPasswordResetRequest request) async {
+    _passwordResetState = const AsyncValue.loading();
+    _otpSent = false;
+    notifyListeners();
+
+    try {
+      await _repository.requestPasswordReset(request);
+      _otpSent = true;
+      _passwordResetState = const AsyncValue.success(true);
+    } catch (e) {
+      _otpSent = false;
+      _passwordResetState = AsyncValue.error(_mapExceptionToMessage(e));
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> verifyPasswordReset(VerifyPasswordResetRequest request) async {
+    _passwordResetVerifyState = const AsyncValue.loading();
+    notifyListeners();
+
+    try {
+      await _repository.verifyPasswordReset(request);
+      _passwordResetVerifyState = const AsyncValue.success(true);
+      _otpSent = false;
+    } catch (e) {
+      _passwordResetVerifyState = AsyncValue.error(_mapExceptionToMessage(e));
+    }
+
+    notifyListeners();
+  }
+
+  // --- Resend OTP ---
+
+  Future<void> resendOtp(String phoneNumber, String purpose) async {
+    try {
+      final request = ResendOtpRequest(
+        phoneNumber: phoneNumber,
+        purpose: purpose,
+      );
+      await _repository.resendOtp(request);
+    } catch (e) {
+      debugPrint("Resend OTP failed: $e");
+    }
   }
 
   // Update password
@@ -111,6 +186,7 @@ class AuthProvider with ChangeNotifier {
       _passwordUpdateState = const AsyncValue.success(true);
     } catch (e) {
       _passwordUpdateState = AsyncValue.error(_mapExceptionToMessage(e));
+      rethrow;
     }
 
     notifyListeners();
@@ -131,6 +207,8 @@ class AuthProvider with ChangeNotifier {
       if (!_disposed) {
         _user = const AsyncValue.success(null);
         _loginState = const AsyncValue.success(false);
+        _otpState = const AsyncValue.success(false);
+        _otpSent = false;
         _sessionHasExpired = false;
         notifyListeners();
       }
@@ -190,13 +268,24 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Reset password update state
-  void resetPasswordUpdateState() {
-    _passwordUpdateState = const AsyncValue.success(false);
+  // Reset OTP state
+  void resetOtpState() {
+    _otpState = const AsyncValue.success(false);
     notifyListeners();
   }
 
-  // Error handling
+  // Reset password reset state
+  void resetPasswordResetState() {
+    _passwordResetState = const AsyncValue.success(false);
+    notifyListeners();
+  }
+
+  // Reset password reset verify state
+  void resetPasswordResetVerifyState() {
+    _passwordResetVerifyState = const AsyncValue.success(false);
+    notifyListeners();
+  }
+
   void acknowledgeNetworkError() {
     _showNetworkError = false;
     if (_loginState.isLoading) {
@@ -204,6 +293,15 @@ class AuthProvider with ChangeNotifier {
     }
     if (_registerState.isLoading) {
       _registerState = const AsyncValue.success(false);
+    }
+    if (_otpState.isLoading) {
+      _otpState = const AsyncValue.success(false);
+    }
+    if (_passwordResetState.isLoading) {
+      _passwordResetState = const AsyncValue.success(false);
+    }
+    if (_passwordResetVerifyState.isLoading) {
+      _passwordResetVerifyState = const AsyncValue.success(false);
     }
     notifyListeners();
   }
@@ -242,6 +340,8 @@ class AuthProvider with ChangeNotifier {
     } else if (errorMessage.contains('Logout failed')) {
       return "Logout failed. Please try again.";
     } else if (errorMessage.contains('Password')) {
+      return errorMessage.replaceAll('Exception: ', '');
+    } else if (errorMessage.contains('OTP')) {
       return errorMessage.replaceAll('Exception: ', '');
     }
 

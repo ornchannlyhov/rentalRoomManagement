@@ -91,7 +91,8 @@ class RoomCard extends StatelessWidget {
 
               // Header
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
                     Container(
@@ -131,7 +132,8 @@ class RoomCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                l10n.roomStatus(status ? l10n.rented : l10n.available),
+                                l10n.roomStatus(
+                                    status ? l10n.rented : l10n.available),
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: colorScheme.onSurfaceVariant,
                                   fontSize: 14,
@@ -214,7 +216,9 @@ class RoomCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
         decoration: BoxDecoration(
-          color: colorScheme.surface,
+          color: theme.brightness == Brightness.dark
+              ? AppTheme.cardColorDark
+              : colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
@@ -276,7 +280,10 @@ class RoomCard extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                          color: theme.brightness == Brightness.dark
+                              ? AppTheme.cardColorDark
+                              : colorScheme.surfaceContainerHighest
+                                  .withOpacity(0.5),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(

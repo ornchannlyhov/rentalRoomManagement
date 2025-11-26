@@ -7,6 +7,7 @@ class AppTheme {
   static const Color surface = Color(0xFFFAFAFA);
   static const Color surfaceDark = Color.fromARGB(255, 40, 40, 40);
   static const Color backgroundColorDark = Color.fromARGB(255, 41, 40, 40);
+  static const Color cardColorDark = Color.fromARGB(255, 45, 45, 45);
   static const Color success = Color(0xFF37B954);
   static const Color dangerColor = Color(0xFFFF0606);
   static const Color secondaryDanger = Color(0xFFF4E1E1);
@@ -44,6 +45,24 @@ class AppTheme {
       textTheme: _buildKantumruyProTextTheme(
         base.textTheme,
       ).apply(bodyColor: Colors.black, displayColor: Colors.black),
+      inputDecorationTheme: InputDecorationTheme(
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.black.withOpacity(0.2),
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: primaryColor, width: 2),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.black.withOpacity(0.2),
+          ),
+        ),
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -76,6 +95,24 @@ class AppTheme {
       textTheme: _buildKantumruyProTextTheme(
         base.textTheme,
       ).apply(bodyColor: Colors.white, displayColor: Colors.white),
+      inputDecorationTheme: InputDecorationTheme(
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.white.withOpacity(0.2),
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: primaryColor, width: 2),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.white.withOpacity(0.2),
+          ),
+        ),
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,

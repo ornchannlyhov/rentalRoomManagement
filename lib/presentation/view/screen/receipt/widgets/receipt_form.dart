@@ -118,50 +118,37 @@ class _ReceiptFormState extends State<ReceiptForm> {
     super.dispose();
   }
 
-  Future<void> _loadLastMonthData() async {
-    if (selectedRoom == null) return;
-
-    final currentReceiptDate = date;
-    final previousReceiptsForRoom = widget.receipts
-        .where((r) =>
-            r.room?.id == selectedRoom!.id &&
-            r.date.isBefore(currentReceiptDate))
-        .toList();
-
-    previousReceiptsForRoom.sort((a, b) => b.date.compareTo(a.date));
-
-    Receipt? mostRecentPreviousReceipt;
-    if (previousReceiptsForRoom.isNotEmpty) {
-      mostRecentPreviousReceipt = previousReceiptsForRoom.first;
-    }
-
-    setState(() {
-      if (mostRecentPreviousReceipt != null) {
-        lastWaterUsed = mostRecentPreviousReceipt.thisWaterUsed;
-        lastElectricUsed = mostRecentPreviousReceipt.thisElectricUsed;
-        selectedServices = List.from(mostRecentPreviousReceipt.services);
-      } else {
-        lastWaterUsed = 0;
-        lastElectricUsed = 0;
-        selectedServices = [];
-      }
-      lastWaterUsedController.text = lastWaterUsed.toString();
-      lastElectricUsedController.text = lastElectricUsed.toString();
-    });
-  }
-
   void _save(BuildContext context) {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+
+      // Parse values from text controllers
+      final parsedLastWaterUsed =
+          int.tryParse(lastWaterUsedController.text) ?? 0;
+      final parsedLastElectricUsed =
+          int.tryParse(lastElectricUsedController.text) ?? 0;
+      final parsedThisWaterUsed =
+          int.tryParse(thisWaterUsedController.text) ?? 0;
+      final parsedThisElectricUsed =
+          int.tryParse(thisElectricUsedController.text) ?? 0;
+
+      // Preserve tenant if room hasn't changed and tenant is missing
+      // This is crucial because RoomProvider might return rooms without tenant data,
+      // but we need the tenantId for the update to work correctly on the backend.
+      if (isEditing &&
+          widget.receipt != null &&
+          selectedRoom?.id == widget.receipt!.room?.id) {
+        selectedRoom?.tenant = widget.receipt!.room?.tenant;
+      }
 
       final newReceipt = Receipt(
         id: id,
         date: date,
         dueDate: dueDate,
-        lastWaterUsed: lastWaterUsed,
-        lastElectricUsed: lastElectricUsed,
-        thisWaterUsed: thisWaterUsed,
-        thisElectricUsed: thisElectricUsed,
+        lastWaterUsed: parsedLastWaterUsed,
+        lastElectricUsed: parsedLastElectricUsed,
+        thisWaterUsed: parsedThisWaterUsed,
+        thisElectricUsed: parsedThisElectricUsed,
         paymentStatus: paymentStatus,
         room: selectedRoom,
         services: selectedServices,
@@ -172,7 +159,7 @@ class _ReceiptFormState extends State<ReceiptForm> {
       } else {
         context.read<ReceiptProvider>().createReceipt(newReceipt);
       }
-      Navigator.pop(context);
+      Navigator.pop(context, newReceipt);
     }
   }
 
@@ -451,15 +438,13 @@ class _ReceiptFormState extends State<ReceiptForm> {
                         ),
                       );
                     }).toList(),
-                    onChanged: (value) async {
+                    onChanged: (value) {
                       setState(() => selectedRoom = value);
-                      await _loadLastMonthData();
                     },
                     decoration: InputDecoration(
                       labelText: l10n.selectRoom,
-                      hintText: filteredRooms.isEmpty
-                          ? l10n.noOccupiedRooms
-                          : null,
+                      hintText:
+                          filteredRooms.isEmpty ? l10n.noOccupiedRooms : null,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(
@@ -490,7 +475,8 @@ class _ReceiptFormState extends State<ReceiptForm> {
                   const SizedBox(height: 16),
 
                   // Water and Electricity Usage
-                  Text(l10n.previousMonthUsage, style: theme.textTheme.titleMedium),
+                  Text(l10n.previousMonthUsage,
+                      style: theme.textTheme.titleMedium),
                   NumberTextFormField(
                     controller: lastWaterUsedController,
                     label: l10n.waterM3,
@@ -502,7 +488,8 @@ class _ReceiptFormState extends State<ReceiptForm> {
 
                   const SizedBox(height: 8),
 
-                  Text(l10n.currentMonthUsage, style: theme.textTheme.titleMedium),
+                  Text(l10n.currentMonthUsage,
+                      style: theme.textTheme.titleMedium),
                   NumberTextFormField(
                     controller: thisWaterUsedController,
                     label: l10n.waterM3,

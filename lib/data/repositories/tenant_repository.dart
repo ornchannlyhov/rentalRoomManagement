@@ -68,8 +68,7 @@ String _encodeTenants(List<Tenant> tenants) {
                             rentPrice: tenant.room!.building!.rentPrice,
                             electricPrice: tenant.room!.building!.electricPrice,
                             waterPrice: tenant.room!.building!.waterPrice,
-                            buildingImages:
-                                tenant.room!.building!.buildingImages,
+                            buildingImage: tenant.room!.building!.buildingImage,
                             services: tenant.room!.building!.services,
                             passKey: tenant.room!.building!.passKey,
                           )
@@ -376,11 +375,11 @@ class TenantRepository {
         type,
         data,
         endpoint,
-        filePath: updatedTenant.imageFile?.path, 
-        fileFieldName: 'tenantProfile', 
+        filePath: updatedTenant.imageFile?.path,
+        fileFieldName: 'tenantProfile',
       ),
-      file: updatedTenant.imageFile, 
-      fileFieldName: 'tenantProfile', 
+      file: updatedTenant.imageFile,
+      fileFieldName: 'tenantProfile',
     );
 
     await save();

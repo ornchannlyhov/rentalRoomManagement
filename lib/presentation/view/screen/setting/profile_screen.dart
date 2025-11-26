@@ -6,6 +6,14 @@ import 'package:provider/provider.dart';
 import 'package:joul_v2/presentation/providers/theme_provider.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
 import 'package:joul_v2/data/models/user.dart';
+import 'package:joul_v2/presentation/view/screen/setting/widgets/profile_header.dart';
+import 'package:joul_v2/presentation/view/screen/setting/widgets/settings_group.dart';
+import 'package:joul_v2/presentation/view/screen/setting/widgets/settings_item.dart';
+import 'package:joul_v2/presentation/view/screen/setting/widgets/logout_button.dart';
+import 'package:joul_v2/presentation/view/screen/setting/help_support_screen.dart';
+import 'package:joul_v2/presentation/view/screen/setting/about_app_screen.dart';
+import 'package:joul_v2/data/repositories/auth_repository.dart';
+import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -170,25 +178,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
         SliverToBoxAdapter(
           child: Column(
             children: [
-              _buildModernProfileHeader(context, isDarkMode, colorScheme, user),
-              _buildSettingsSection(
-                context,
-                isDarkMode,
-                colorScheme,
-                [
-                  _buildSettingsItem(
-                    context: context,
-                    isDarkMode: isDarkMode,
-                    colorScheme: colorScheme,
-                    icon: Icons.person_outline,
-                    title: localizations.accountSettings,
+              ProfileHeader(user: user, isDarkMode: isDarkMode),
+              SettingsGroup(
+                isDarkMode: isDarkMode,
+                items: [
+                  SettingsItem(
+                    icon: Icons.lock_outline,
+                    title: localizations.changePassword,
                     subtitle: localizations.accountSettingsSubtitle,
-                    onTap: () {},
+                    onTap: () => _showChangePasswordBottomSheet(
+                        context, isDarkMode, colorScheme, authProvider),
                   ),
-                  _buildSettingsItem(
-                    context: context,
-                    isDarkMode: isDarkMode,
-                    colorScheme: colorScheme,
+                  SettingsItem(
                     icon: Icons.payment,
                     title: localizations.subscriptions,
                     subtitle: localizations.subscriptionsSubtitle,
@@ -196,15 +197,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ),
-              _buildSettingsSection(
-                context,
-                isDarkMode,
-                colorScheme,
-                [
-                  _buildSettingsItem(
-                    context: context,
-                    isDarkMode: isDarkMode,
-                    colorScheme: colorScheme,
+              SettingsGroup(
+                isDarkMode: isDarkMode,
+                items: [
+                  SettingsItem(
                     icon: Icons.palette_outlined,
                     title: localizations.appearance,
                     subtitle: getAppearanceSubtitle(),
@@ -219,10 +215,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       themeProvider.toggleTheme();
                     },
                   ),
-                  _buildSettingsItem(
-                    context: context,
-                    isDarkMode: isDarkMode,
-                    colorScheme: colorScheme,
+                  SettingsItem(
                     icon: Icons.language_outlined,
                     title: localizations.language,
                     subtitle: getLanguageSubtitle(),
@@ -231,34 +224,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ),
-              _buildSettingsSection(
-                context,
-                isDarkMode,
-                colorScheme,
-                [
-                  _buildSettingsItem(
-                    context: context,
-                    isDarkMode: isDarkMode,
-                    colorScheme: colorScheme,
+              SettingsGroup(
+                isDarkMode: isDarkMode,
+                items: [
+                  SettingsItem(
                     icon: Icons.help_outline,
                     title: localizations.helpAndSupport,
                     subtitle: localizations.helpAndSupportSubtitle,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HelpSupportScreen(),
+                        ),
+                      );
+                    },
                   ),
-                  _buildSettingsItem(
-                    context: context,
-                    isDarkMode: isDarkMode,
-                    colorScheme: colorScheme,
+                  SettingsItem(
                     icon: Icons.info_outline,
                     title: localizations.about,
                     subtitle: localizations.version("1.2.3"),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AboutAppScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
               const SizedBox(height: 30),
-              _buildLogoutButton(
-                  context, isDarkMode, colorScheme, authProvider),
+              LogoutButton(
+                onPressed: () => _showLogoutDialog(
+                    context, isDarkMode, colorScheme, authProvider),
+              ),
               const SizedBox(height: 50),
             ],
           ),
@@ -267,211 +268,249 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildModernProfileHeader(BuildContext context, bool isDarkMode,
-      ColorScheme colorScheme, User user) {
+  void _showChangePasswordBottomSheet(BuildContext context, bool isDarkMode,
+      ColorScheme colorScheme, AuthProvider authProvider) {
     final localizations = AppLocalizations.of(context)!;
-    return Container(
-      margin: const EdgeInsets.all(20),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: isDarkMode
-                ? Colors.black.withOpacity(0.3)
-                : Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: colorScheme.primary,
-            ),
-            child: const Icon(
-              Icons.person,
-              color: Colors.white,
-              size: 36,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user.username ?? localizations.unknownUser,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
-                  ),
+    final oldPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          bool obscureOldPassword = true;
+          bool obscureNewPassword = true;
+          bool obscureConfirmPassword = true;
+          String? errorMessage;
+
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  user.email ?? localizations.noEmailProvided,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.orangeAccent.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
+                    color: colorScheme.surface,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
                   ),
-                  child: Text(
-                    localizations.premiumMember,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.orange.shade700,
+                  padding: const EdgeInsets.all(20),
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: colorScheme.onSurface.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          localizations.changePassword,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 20),
+                        _buildPasswordField(
+                          controller: oldPasswordController,
+                          label: localizations.oldPassword,
+                          icon: Icons.lock_outline,
+                          isObscured: obscureOldPassword,
+                          onToggleVisibility: () {
+                            setState(() {
+                              obscureOldPassword = !obscureOldPassword;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return localizations.pleaseEnterPassword;
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        _buildPasswordField(
+                          controller: newPasswordController,
+                          label: localizations.newPassword,
+                          icon: Icons.lock_reset,
+                          isObscured: obscureNewPassword,
+                          onToggleVisibility: () {
+                            setState(() {
+                              obscureNewPassword = !obscureNewPassword;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return localizations.pleaseEnterPassword;
+                            }
+                            if (value.length < 6) {
+                              return localizations.passwordTooShort;
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        _buildPasswordField(
+                          controller: confirmPasswordController,
+                          label: localizations.confirmPasswordLabel,
+                          icon: Icons.check_circle_outline,
+                          isObscured: obscureConfirmPassword,
+                          onToggleVisibility: () {
+                            setState(() {
+                              obscureConfirmPassword = !obscureConfirmPassword;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return localizations.pleaseEnterPassword;
+                            }
+                            if (value != newPasswordController.text) {
+                              return localizations.passwordsDoNotMatch;
+                            }
+                            return null;
+                          },
+                        ),
+                        if (errorMessage != null) ...[
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                  color: Colors.red.withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.error_outline,
+                                    color: Colors.red, size: 20),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    errorMessage!,
+                                    style: const TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: () async {
+                            setState(() {
+                              errorMessage = null;
+                            });
+
+                            if (formKey.currentState!.validate()) {
+                              try {
+                                await authProvider.updatePassword(
+                                  UpdatePasswordRequest(
+                                    oldPassword: oldPasswordController.text,
+                                    newPassword: newPasswordController.text,
+                                    confirmPassword:
+                                        confirmPasswordController.text,
+                                  ),
+                                );
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                  GlobalSnackBar.show(
+                                    context: context,
+                                    message: localizations.passwordUpdated,
+                                    isError: false,
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  setState(() {
+                                    errorMessage = e
+                                        .toString()
+                                        .replaceAll('Exception: ', '');
+                                  });
+                                }
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: colorScheme.primary,
+                            foregroundColor: colorScheme.onPrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: authProvider.passwordUpdateState.isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(localizations.updatePassword),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: Icon(
-              Icons.edit_outlined,
-              color: colorScheme.onSurface.withOpacity(0.6),
-              size: 20,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingsSection(BuildContext context, bool isDarkMode,
-      ColorScheme colorScheme, List<Widget> items) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: isDarkMode
-                ? Colors.black.withOpacity(0.3)
-                : Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Column(
-        children: items.map((item) {
-          int index = items.indexOf(item);
-          bool isLast = index == items.length - 1;
-
-          return Column(
-            children: [
-              item,
-              if (!isLast)
-                Divider(
-                  height: 1,
-                  indent: 60,
-                  color: colorScheme.onSurface.withOpacity(0.1),
-                ),
-            ],
+              );
+            },
           );
-        }).toList(),
+        },
       ),
     );
   }
 
-  Widget _buildSettingsItem({
-    required BuildContext context,
-    required bool isDarkMode,
-    required ColorScheme colorScheme,
+  Widget _buildPasswordField({
+    required TextEditingController controller,
+    required String label,
     required IconData icon,
-    required String title,
-    required String subtitle,
-    Widget? trailing,
-    required VoidCallback onTap,
+    required bool isObscured,
+    required VoidCallback onToggleVisibility,
+    String? Function(String?)? validator,
   }) {
-    return ListTile(
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: colorScheme.onSurface.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(8),
+    return TextFormField(
+      controller: controller,
+      obscureText: isObscured,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(
-          icon,
-          size: 20,
-          color: colorScheme.onSurface.withOpacity(0.7),
+        prefixIcon: Icon(icon),
+        suffixIcon: IconButton(
+          icon: Icon(
+            isObscured
+                ? Icons.visibility_outlined
+                : Icons.visibility_off_outlined,
+          ),
+          onPressed: onToggleVisibility,
         ),
       ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: colorScheme.onSurface,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(
-          fontSize: 14,
-          color: colorScheme.onSurface.withOpacity(0.6),
-        ),
-      ),
-      trailing: trailing ??
-          Icon(
-            Icons.arrow_forward_ios,
-            size: 14,
-            color: colorScheme.onSurface.withOpacity(0.4),
-          ),
-    );
-  }
-
-  Widget _buildLogoutButton(BuildContext context, bool isDarkMode,
-      ColorScheme colorScheme, AuthProvider authProvider) {
-    final localizations = AppLocalizations.of(context)!;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      width: double.infinity,
-      child: TextButton(
-        onPressed: () =>
-            _showLogoutDialog(context, isDarkMode, colorScheme, authProvider),
-        style: TextButton.styleFrom(
-          backgroundColor: Colors.red.withOpacity(0.1),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          side: BorderSide(
-            color: Colors.red.withOpacity(0.2),
-            width: 1,
-          ),
-        ),
-        child: Text(
-          localizations.signOut,
-          style: const TextStyle(
-            color: Colors.red,
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
+      validator: validator,
     );
   }
 

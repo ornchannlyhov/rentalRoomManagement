@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/tenant.dart';
 import 'package:joul_v2/data/models/enum/gender.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
+import 'package:joul_v2/core/theme/app_theme.dart';
 
 // Enum for menu options
 enum TenantMenuOption {
@@ -295,6 +296,8 @@ class TenantCard extends StatelessWidget {
     final textTheme = theme.textTheme;
 
     return Card(
+      color:
+          theme.brightness == Brightness.dark ? AppTheme.cardColorDark : null,
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -365,7 +368,9 @@ class TenantCard extends StatelessWidget {
               if (onMenuSelected != null)
                 IconButton(
                   icon: const Icon(Icons.more_vert_rounded),
-                  color: colorScheme.onSurfaceVariant,
+                  color: theme.brightness == Brightness.dark
+                      ? colorScheme.onSurface.withOpacity(0.7)
+                      : colorScheme.onSurfaceVariant,
                   onPressed: () => _showOptionsBottomSheet(context),
                 ),
             ],

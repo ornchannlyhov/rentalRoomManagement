@@ -1,14 +1,15 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
-import 'package:joul_v2/core/services/fcm_service.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:joul_v2/data/repositories/auth_repository.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
 import 'package:joul_v2/core/helpers/repository_manager.dart';
+import 'package:joul_v2/core/services/fcm_service.dart';
+import 'package:joul_v2/data/repositories/auth_repository.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
 import 'package:joul_v2/presentation/view/screen/auth/widget/custom_text_feild.dart';
+import 'package:joul_v2/presentation/view/screen/auth/forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,13 +20,13 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -35,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final localizations = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 245, 245, 245),
+      backgroundColor: const Color.fromARGB(255, 245, 245, 245),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -63,24 +64,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 8),
                 Text(
                   localizations.signInPrompt,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 16,
-                    color: Colors.grey.shade600,
+                    color: Color(0xFF757575),
                   ),
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 24),
                 CustomTextField(
-                  controller: _emailController,
-                  label: localizations.emailLabel,
-                  hintText: localizations.emailHint,
-                  prefixIcon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
+                  controller: _identifierController,
+                  label: 'Username or Phone Number',
+                  hintText: 'Enter username or phone',
+                  prefixIcon: Icons.person_outline,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return localizations.emailHint;
-                    }
-                    if (!value.contains('@')) {
-                      return localizations.emailValidationInvalid;
+                      return 'Please enter your username or phone number';
                     }
                     return null;
                   },
@@ -88,8 +85,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _passwordController,
-                  label: localizations.passwordLabel,
-                  hintText: localizations.passwordHint,
+                  label: 'Password',
+                  hintText: 'Enter your password',
                   prefixIcon: Icons.lock_outline,
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
@@ -97,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       _obscurePassword
                           ? Icons.visibility_off
                           : Icons.visibility,
-                      color: Colors.grey.shade600,
+                      color: const Color(0xFF9E9E9E),
                     ),
                     onPressed: () {
                       setState(() {
@@ -107,10 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return localizations.passwordHint;
-                    }
-                    if (value.length < 6) {
-                      return localizations.passwordValidationLength;
+                      return 'Please enter your password';
                     }
                     return null;
                   },
@@ -122,18 +116,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: authProvider.user.isLoading
+                        onPressed: authProvider.loginState.isLoading
                             ? null
                             : () => _handleLogin(authProvider),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF10B981),
-                          foregroundColor: Color.fromARGB(255, 245, 245, 245),
+                          foregroundColor:
+                              const Color.fromARGB(255, 245, 245, 245),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                           elevation: 2,
                         ),
-                        child: authProvider.user.isLoading
+                        child: authProvider.loginState.isLoading
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
@@ -144,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               )
                             : Text(
-                                localizations.loginButton,
+                                'Login',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -159,19 +154,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   builder: (context, authProvider, child) {
                     return authProvider.loginState.when(
                       loading: () => const SizedBox.shrink(),
-                      success: (isLoggedIn) => const SizedBox.shrink(),
+                      success: (isSuccess) => const SizedBox.shrink(),
                       error: (error) => Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.red.shade50,
+                          color: const Color(0xFFFFEBEE),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.red.shade300),
+                          border: Border.all(color: const Color(0xFFE57373)),
                         ),
                         child: Text(
                           error.toString().replaceAll('Exception: ', ''),
-                          style: TextStyle(
-                            color: Colors.red.shade700,
+                          style: const TextStyle(
+                            color: Color(0xFFC62828),
                             fontSize: 14,
                           ),
                         ),
@@ -179,14 +174,35 @@ class _LoginScreenState extends State<LoginScreen> {
                     );
                   },
                 ),
+                const SizedBox(height: 16),
+                Center(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordScreen(),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      'Forgot Password?',
+                      style: TextStyle(
+                        color: Color(0xFF10B981),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       '${localizations.noAccount} ',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
+                      style: const TextStyle(
+                        color: Color(0xFF757575),
                         fontSize: 14,
                       ),
                     ),
@@ -215,35 +231,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin(AuthProvider authProvider) async {
     if (_formKey.currentState!.validate()) {
-      final repositoryManager =
-          Provider.of<RepositoryManager>(context, listen: false);
-
       final request = LoginRequest(
-        email: _emailController.text.trim(),
+        identifier: _identifierController.text.trim(),
         password: _passwordController.text,
       );
 
       await authProvider.login(request);
 
-      if (mounted) {
-        authProvider.user.when(
-          loading: () {},
-          success: (user) async {
-            if (user != null && authProvider.isAuthenticated()) {
-              FCMService.initialize().catchError((e) {
-                debugPrint('FCM token upload failed: $e');
-              });
+      if (mounted && authProvider.isAuthenticated()) {
+        final repositoryManager =
+            Provider.of<RepositoryManager>(context, listen: false);
 
-              if (await ApiHelper.instance.hasNetwork()) {
-                await repositoryManager.syncAll();
-              }
-              Navigator.pushReplacementNamed(context, '/');
-            }
-          },
-          error: (error) {
-            // Error is already shown in the UI through Consumer
-          },
-        );
+        FCMService.initialize().catchError((e) {
+          debugPrint('FCM token upload failed: $e');
+        });
+
+        if (await ApiHelper.instance.hasNetwork()) {
+          await repositoryManager.syncAll();
+        }
+
+        // Clear stack and go to home
+        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
       }
     }
   }

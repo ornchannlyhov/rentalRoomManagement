@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/report.dart';
 import 'package:joul_v2/data/models/enum/report_status.dart';
 import 'package:joul_v2/data/models/enum/report_priority.dart';
+import 'package:joul_v2/core/theme/app_theme.dart';
 
 enum ReportMenuOption { changeStatus, delete }
 
@@ -194,8 +195,10 @@ class ReportCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-      elevation: 1,
+      elevation: 0,
+      color: theme.brightness == Brightness.dark
+          ? AppTheme.cardColorDark
+          : colorScheme.surfaceContainerHighest,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -259,18 +262,35 @@ class ReportCard extends StatelessWidget {
                     ),
                   ),
                   if (onMenuSelected != null)
-                    Material(
-                      color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(12),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: () => _showOptionsBottomSheet(context),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          child: Icon(
-                            Icons.more_vert_rounded,
-                            color: colorScheme.onSurface.withOpacity(0.6),
-                            size: 20,
+                    PopupMenuButton<ReportMenuOption>(
+                      icon: Icon(
+                        Icons.more_vert,
+                        color: theme.brightness == Brightness.dark
+                            ? colorScheme.onSurface.withOpacity(0.7)
+                            : colorScheme.onSurfaceVariant,
+                      ),
+                      onSelected: onMenuSelected,
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: ReportMenuOption.changeStatus,
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit,
+                                  size: 20, color: colorScheme.primary),
+                              const SizedBox(width: 12),
+                              const Text('Change Status'),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: ReportMenuOption.delete,
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete,
+                                  size: 20, color: colorScheme.error),
+                              const SizedBox(width: 12),
+                              const Text('Delete'),
+                            ],
                           ),
                         ),
                       ),

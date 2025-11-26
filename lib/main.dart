@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:joul_v2/core/services/fcm_service.dart';
+import 'package:joul_v2/core/services/local_notification_service.dart';
 import 'package:joul_v2/presentation/view/screen/auth/login_screen.dart';
 import 'package:joul_v2/presentation/view/screen/auth/onboard_screen.dart';
 import 'package:joul_v2/presentation/view/screen/auth/register_screen.dart';
@@ -121,12 +123,15 @@ Future<void> main() async {
     receiptProvider: receiptProvider,
     reportProvider: reportProvider,
     buildingProvider: buildingProvider,
-  ));
+  );
 
   final notificationProvider = NotificationProvider(
       receiptRepository, navigatorKey,
       repositoryManager: repositoryManager);
   notificationProvider.setupListeners();
+
+  // Load notifications AFTER receipt provider is loaded to ensure we can map IDs to objects
+  await notificationProvider.loadNotifications();
 
   runApp(MyApp(
     navigatorKey: navigatorKey,
@@ -254,6 +259,7 @@ class _MyAppState extends State<MyApp> {
           }
 
           return MaterialApp(
+            scaffoldMessengerKey: rootScaffoldMessengerKey,
             navigatorKey: widget.navigatorKey,
             title: 'JOUL',
             debugShowCheckedModeBanner: false,

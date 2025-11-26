@@ -129,8 +129,8 @@ class _FilterButtonState extends State<FilterByPaymentButton> {
       ),
       child: Row(
         children: [
-          _buildFilterOption(context, PaymentStatus.pending),
           _buildFilterOption(context, PaymentStatus.paid),
+          _buildFilterOption(context, PaymentStatus.pending),
           _buildFilterOption(context, PaymentStatus.overdue),
         ],
       ),

@@ -145,6 +145,18 @@ class ReceiptProvider with ChangeNotifier {
     }
   }
 
+  /// Confirm receipt and trigger PDF generation/sending to tenant
+  Future<void> confirmReceipt(String receiptId) async {
+    try {
+      await _receiptRepository.confirmReceipt(receiptId);
+
+      // Optionally refresh receipts to get updated status
+      await syncReceipts();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> syncReceipts({
     String? roomId,
     String? tenantId,

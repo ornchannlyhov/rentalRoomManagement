@@ -54,13 +54,15 @@ dependencies:
   connectivity_plus: ^7.0.0
   dio: ^5.9.0
   collection: ^1.19.1
-  # flutter_local_notifications: ^19.5.0
+  flutter_local_notifications: ^17.0.0
   flutter_native_splash: ^2.4.7
   intl_phone_field: ^3.2.0
   flutter_secure_storage: ^9.2.4
   firebase_core: ^4.2.1
   firebase_messaging: ^16.0.4
   image_picker: ^1.1.0
+  flutter_markdown: ^0.7.7+1
+  flutter_widget_from_html: ^0.17.1
 
 dev_dependencies:
   flutter_test:

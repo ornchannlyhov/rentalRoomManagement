@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
@@ -11,49 +12,130 @@ class StorageKeys {
   static const tokenExpiry = 'token_expiry';
 }
 
-class RegisterRequest {
+class RequestRegistrationRequest {
+  final String phoneNumber;
   final String username;
-  final String email;
+  final String password;
+  final String confirmPassword;
+
+  RequestRegistrationRequest({
+    required this.phoneNumber,
+    required this.username,
+    required this.password,
+    required this.confirmPassword,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'phoneNumber': phoneNumber,
+        'username': username,
+        'password': password,
+        'confirmPassword': confirmPassword,
+      };
+}
+
+class VerifyRegistrationRequest {
+  final String phoneNumber;
+  final String otp;
+  final String username;
   final String password;
 
-  RegisterRequest({
+  VerifyRegistrationRequest({
+    required this.phoneNumber,
+    required this.otp,
     required this.username,
-    required this.email,
     required this.password,
   });
 
   Map<String, dynamic> toJson() => {
+        'phoneNumber': phoneNumber,
+        'otp': otp,
         'username': username,
-        'email': email,
         'password': password,
       };
 }
 
 class LoginRequest {
-  final String email;
+  final String identifier;
   final String password;
 
-  LoginRequest({required this.email, required this.password});
+  LoginRequest({
+    required this.identifier,
+    required this.password,
+  });
 
   Map<String, dynamic> toJson() => {
-        'email': email,
+        'identifier': identifier,
         'password': password,
+      };
+}
+
+class RequestPasswordResetRequest {
+  final String phoneNumber;
+
+  RequestPasswordResetRequest({required this.phoneNumber});
+
+  Map<String, dynamic> toJson() => {
+        'phoneNumber': phoneNumber,
+      };
+}
+
+class VerifyPasswordResetRequest {
+  final String phoneNumber;
+  final String otp;
+  final String newPassword;
+  final String confirmPassword;
+
+  VerifyPasswordResetRequest({
+    required this.phoneNumber,
+    required this.otp,
+    required this.newPassword,
+    required this.confirmPassword,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'phoneNumber': phoneNumber,
+        'otp': otp,
+        'newPassword': newPassword,
+        'confirmPassword': confirmPassword,
+      };
+}
+
+class ResendOtpRequest {
+  final String phoneNumber;
+  final String purpose;
+
+  ResendOtpRequest({
+    required this.phoneNumber,
+    required this.purpose,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'phoneNumber': phoneNumber,
+        'purpose': purpose,
       };
 }
 
 class UpdatePasswordRequest {
   final String oldPassword;
   final String newPassword;
+  final String? confirmPassword;
 
   UpdatePasswordRequest({
     required this.oldPassword,
     required this.newPassword,
+    this.confirmPassword,
   });
 
-  Map<String, dynamic> toJson() => {
-        'oldPassword': oldPassword,
-        'newPassword': newPassword,
-      };
+  Map<String, dynamic> toJson() {
+    final data = {
+      'oldPassword': oldPassword,
+      'newPassword': newPassword,
+    };
+    if (confirmPassword != null) {
+      data['confirmPassword'] = confirmPassword!;
+    }
+    return data;
+  }
 }
 
 class UpdateFCMTokenRequest {
@@ -175,11 +257,12 @@ class AuthRepository {
     await _apiHelper.storage.delete(key: StorageKeys.tokenExpiry);
   }
 
-  /// Register user (requires network)
-  Future<User> register(RegisterRequest request) async {
+  // --- Registration Flow ---
+
+  /// Request registration with password (OTP sent to phone)
+  Future<void> requestRegistration(RequestRegistrationRequest request) async {
     if (!await _hasNetwork()) {
-      throw Exception(
-          "No internet connection. Registration requires network access.");
+      throw Exception("No internet connection.");
     }
 
     final url = '${_apiHelper.baseUrl}/auth/register';
@@ -187,79 +270,185 @@ class AuthRepository {
     try {
       final response = await _apiHelper.dio.post(url, data: request.toJson());
 
-      if (response.statusCode == 201 && response.data['success'] == true) {
-        final token = response.data['token'] as String;
-        final userDto = UserDto.fromJson(response.data['user']);
-
-        await _apiHelper.storage.write(key: StorageKeys.token, value: token);
-        await _apiHelper.storage.write(
-          key: StorageKeys.user,
-          value: jsonEncode(userDto.toJson()),
-        );
-        await _updateTokenExpiry();
-
-        _logger.i('User registered successfully');
-        return User(
-          id: userDto.id,
-          username: userDto.username,
-          email: userDto.email,
-          fcmToken: userDto.fcmToken,
-          token: token,
-        );
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          response.data['success'] == true) {
+        _logger.i('OTP sent successfully for registration');
       } else {
-        throw Exception('Registration failed: ${response.data}');
+        throw Exception(
+            response.data['message'] ?? 'Failed to request registration');
       }
     } on DioException catch (e) {
-      _logger.e('Registration error: ${e.message}');
-      final errorMessage = e.response?.data['message'] ??
-          e.response?.data['error'] ??
-          e.message ??
-          'Registration failed';
-      throw Exception(errorMessage);
+      _handleDioError(e, 'Registration request failed');
     }
   }
 
-  /// Login user (requires network)
+  /// Verify OTP and create account with password
+  Future<User> verifyRegistration(VerifyRegistrationRequest request) async {
+    if (!await _hasNetwork()) {
+      throw Exception("No internet connection.");
+    }
+
+    final url = '${_apiHelper.baseUrl}/auth/register/verify';
+
+    try {
+      _logger.i(
+          'Verifying registration for ${request.phoneNumber} with OTP ${request.otp}');
+      final response = await _apiHelper.dio.post(url, data: request.toJson());
+      _logger.d(
+          'Verify Registration Response: ${response.statusCode} - ${response.data}');
+
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          response.data['success'] == true) {
+        return await _handleAuthResponse(response.data);
+      } else {
+        final message = response.data['message'] ?? 'Verification failed';
+        _logger.w('Verification failed: $message');
+        throw Exception(message);
+      }
+    } on DioException catch (e) {
+      _logger.e(
+          'DioException during verify registration: ${e.message} - ${e.response?.data}');
+      _handleDioError(e, 'Verification failed');
+      throw Exception('Unreachable'); // Should be handled by _handleDioError
+    }
+  }
+
+  // --- Login Flow ---
+
+  /// Login with username/phone and password
   Future<User> login(LoginRequest request) async {
     if (!await _hasNetwork()) {
-      throw Exception("No internet connection. Login requires network access.");
+      throw Exception("No internet connection.");
     }
 
     final url = '${_apiHelper.baseUrl}/auth/login';
 
     try {
+      _logger.i('Attempting login for ${request.identifier}');
+      final response = await _apiHelper.dio.post(url, data: request.toJson());
+      _logger.d('Login Response: ${response.statusCode} - ${response.data}');
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return await _handleAuthResponse(response.data);
+      } else {
+        final message = response.data['message'] ?? 'Login failed';
+        _logger.w('Login failed: $message');
+        throw Exception(message);
+      }
+    } on DioException catch (e) {
+      _logger
+          .e('DioException during login: ${e.message} - ${e.response?.data}');
+      _handleDioError(e, 'Login failed');
+      throw Exception('Unreachable');
+    }
+  }
+
+  // --- Password Reset Flow ---
+
+  /// Request password reset OTP
+  Future<void> requestPasswordReset(RequestPasswordResetRequest request) async {
+    if (!await _hasNetwork()) {
+      throw Exception("No internet connection.");
+    }
+
+    final url = '${_apiHelper.baseUrl}/auth/password/reset';
+
+    try {
       final response = await _apiHelper.dio.post(url, data: request.toJson());
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        final token = response.data['token'] as String;
-        final userDto = UserDto.fromJson(response.data['user']);
-
-        await _apiHelper.storage.write(key: StorageKeys.token, value: token);
-        await _apiHelper.storage.write(
-          key: StorageKeys.user,
-          value: jsonEncode(userDto.toJson()),
-        );
-        await _updateTokenExpiry();
-
-        _logger.i('User logged in successfully');
-        return User(
-          id: userDto.id,
-          username: userDto.username,
-          email: userDto.email,
-          fcmToken: userDto.fcmToken,
-          token: token,
-        );
+        _logger.i('Password reset OTP sent successfully');
       } else {
-        throw Exception('Login failed: ${response.data}');
+        throw Exception(response.data['message'] ?? 'Failed to send reset OTP');
       }
     } on DioException catch (e) {
-      _logger.e('Login error: ${e.message}');
-      final errorMessage = e.response?.data['message'] ??
-          e.response?.data['error'] ??
-          e.message ??
-          'Login failed';
-      throw Exception(errorMessage);
+      _handleDioError(e, 'Password reset request failed');
     }
+  }
+
+  /// Verify OTP and reset password
+  Future<void> verifyPasswordReset(VerifyPasswordResetRequest request) async {
+    if (!await _hasNetwork()) {
+      throw Exception("No internet connection.");
+    }
+
+    final url = '${_apiHelper.baseUrl}/auth/password/reset/verify';
+
+    try {
+      final response = await _apiHelper.dio.post(url, data: request.toJson());
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        _logger.i('Password reset successfully');
+      } else {
+        throw Exception(response.data['message'] ?? 'Password reset failed');
+      }
+    } on DioException catch (e) {
+      _handleDioError(e, 'Password reset verification failed');
+    }
+  }
+
+  /// Resend OTP with purpose
+  Future<void> resendOtp(ResendOtpRequest request) async {
+    if (!await _hasNetwork()) {
+      throw Exception("No internet connection.");
+    }
+
+    final url = '${_apiHelper.baseUrl}/auth/otp/resend';
+
+    try {
+      final response = await _apiHelper.dio.post(url, data: request.toJson());
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        _logger.i('OTP resent successfully');
+      } else {
+        throw Exception(response.data['message'] ?? 'Failed to resend OTP');
+      }
+    } on DioException catch (e) {
+      _handleDioError(e, 'Resend OTP failed');
+    }
+  }
+
+  // --- Helper Methods ---
+
+  Future<User> _handleAuthResponse(Map<String, dynamic> data) async {
+    _logger.d('Auth Response Data: $data');
+
+    if (data['token'] == null) {
+      throw Exception(
+          'Authentication failed: Token missing in server response');
+    }
+    if (data['user'] == null) {
+      throw Exception(
+          'Authentication failed: User data missing in server response');
+    }
+
+    final token = data['token'] as String;
+    final userDto = UserDto.fromJson(data['user']);
+
+    await _apiHelper.storage.write(key: StorageKeys.token, value: token);
+    await _apiHelper.storage.write(
+      key: StorageKeys.user,
+      value: jsonEncode(userDto.toJson()),
+    );
+    await _updateTokenExpiry();
+
+    _logger.i('User authenticated successfully');
+    return User(
+      id: userDto.id,
+      username: userDto.username,
+      email: userDto.email,
+      fcmToken: userDto.fcmToken,
+      token: token,
+    );
+  }
+
+  void _handleDioError(DioException e, String defaultMessage) {
+    _logger.e('$defaultMessage: ${e.message}');
+    final errorMessage = e.response?.data['message'] ??
+        e.response?.data['error'] ??
+        e.message ??
+        defaultMessage;
+    throw Exception(errorMessage);
   }
 
   /// Update password (requires network)
@@ -274,9 +463,10 @@ class AuthRepository {
       throw Exception("Not authenticated.");
     }
 
-    final url = '${_apiHelper.baseUrl}/auth/update-password';
+    final url = '${_apiHelper.baseUrl}/auth/password/update';
 
     try {
+      _logger.i('Updating password at $url with data: ${request.toJson()}');
       final response = await _apiHelper.dio.put(
         url,
         data: request.toJson(),
@@ -285,7 +475,7 @@ class AuthRepository {
         ),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && response.data['success'] == true) {
         _logger.i('Password updated successfully');
       } else {
         final error = response.data['message'] ?? 'Password update failed';
@@ -438,7 +628,7 @@ class AuthRepository {
       return;
     }
 
-    final url = '${_apiHelper.baseUrl}/auth/update-fcm-token';
+    final url = '${_apiHelper.baseUrl}/auth/fcm-token';
     final request = UpdateFCMTokenRequest(fcmToken: fcmToken);
 
     try {

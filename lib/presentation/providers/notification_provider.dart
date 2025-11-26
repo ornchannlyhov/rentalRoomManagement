@@ -7,6 +7,8 @@ import 'package:joul_v2/core/helpers/repository_manager.dart';
 import 'package:joul_v2/data/models/receipt.dart';
 import 'package:joul_v2/data/repositories/receipt_repository.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_detail.dart';
+import 'package:joul_v2/presentation/view/screen/receipt/receipt_confirmation_screen.dart';
+import 'package:joul_v2/core/services/local_notification_service.dart';
 
 class NotificationProvider with ChangeNotifier {
   final ReceiptRepository _receiptRepository;
@@ -83,17 +85,31 @@ class NotificationProvider with ChangeNotifier {
 
   /// Initialize Firebase listeners for notifications
   void setupListeners() {
-    // Show dialog when app is open
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      if (message.data['type'] == 'NEW_RECEIPT') {
-        _handleReceiptNotification(message.data, showNavigation: false);
-        _showForegroundNotificationDialog(message);
+    // Listen to local notification taps
+    LocalNotificationService.onNotificationTap.listen((payload) {
+      if (payload != null) {
+        try {
+          final data = jsonDecode(payload) as Map<String, dynamic>;
+          _handleReceiptNotification(data, showNavigation: true);
+        } catch (e) {
+          print('Error parsing notification payload: $e');
+        }
       }
     });
 
-    // App opened from notification
+    // Show notification when app is open (foreground)
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      final type = message.data['type'];
+      if (type == 'NEW_RECEIPT' || type == 'NEW_USAGE_INPUT') {
+        _handleReceiptNotification(message.data, showNavigation: false);
+        _showForegroundNotification(message);
+      }
+    });
+
+    // App opened from notification (background)
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      if (message.data['type'] == 'NEW_RECEIPT') {
+      final type = message.data['type'];
+      if (type == 'NEW_RECEIPT' || type == 'NEW_USAGE_INPUT') {
         _handleReceiptNotification(message.data, showNavigation: true);
       }
     });
@@ -101,63 +117,28 @@ class NotificationProvider with ChangeNotifier {
     _handleInitialMessage();
   }
 
-  /// Show notification dialog when app is in foreground
-  void _showForegroundNotificationDialog(RemoteMessage message) {
-    final context = navigatorKey.currentContext;
-    if (context == null) return;
-
+  /// Show local notification when app is in foreground
+  Future<void> _showForegroundNotification(RemoteMessage message) async {
     final title = message.notification?.title ?? 'New Receipt';
     final body =
         message.notification?.body ?? 'You have received a new receipt';
 
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.receipt_long,
-                color: Theme.of(dialogContext).colorScheme.primary,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 18,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: Text(body),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Dismiss'),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                _handleReceiptNotification(message.data, showNavigation: true);
-              },
-              child: const Text('View'),
-            ),
-          ],
-        );
-      },
+    // Pass data as payload for tap handling
+    final payload = jsonEncode(message.data);
+
+    await LocalNotificationService.showNotification(
+      id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title: title,
+      body: body,
+      payload: payload,
     );
   }
 
   /// Handles notification when app launches from terminated state
   Future<void> _handleInitialMessage() async {
     final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-    if (initialMessage?.data['type'] == 'NEW_RECEIPT') {
+    final type = initialMessage?.data['type'];
+    if (type == 'NEW_RECEIPT' || type == 'NEW_USAGE_INPUT') {
       Future.delayed(
         const Duration(milliseconds: 500),
         () => _handleReceiptNotification(
@@ -173,6 +154,7 @@ class NotificationProvider with ChangeNotifier {
     required bool showNavigation,
   }) async {
     final receiptId = data['receiptId'];
+    final notificationType = data['type'];
     if (receiptId == null) return;
 
     try {
@@ -215,11 +197,22 @@ class NotificationProvider with ChangeNotifier {
       notifyListeners();
 
       if (showNavigation && navigatorKey.currentContext != null) {
-        navigatorKey.currentState?.push(
-          MaterialPageRoute(
-            builder: (_) => ReceiptDetailScreen(receipt: receipt!),
-          ),
-        );
+        // Navigate to different screens based on notification type
+        if (notificationType == 'NEW_USAGE_INPUT') {
+          // Navigate to confirmation screen for usage inputs
+          navigatorKey.currentState?.push(
+            MaterialPageRoute(
+              builder: (_) => ReceiptConfirmationScreen(receipt: receipt!),
+            ),
+          );
+        } else {
+          // Default to detail screen for regular receipts
+          navigatorKey.currentState?.push(
+            MaterialPageRoute(
+              builder: (_) => ReceiptDetailScreen(receipt: receipt!),
+            ),
+          );
+        }
       }
     } catch (e) {
       _newReceipts = AsyncValue.error(e, _newReceipts.previousData);

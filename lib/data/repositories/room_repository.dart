@@ -47,7 +47,7 @@ String _encodeRooms(List<Room> rooms) {
                     rentPrice: room.building!.rentPrice,
                     electricPrice: room.building!.electricPrice,
                     waterPrice: room.building!.waterPrice,
-                    buildingImages: room.building!.buildingImages,
+                    buildingImage: room.building!.buildingImage,
                     services: room.building!.services,
                     passKey: room.building!.passKey,
                   )

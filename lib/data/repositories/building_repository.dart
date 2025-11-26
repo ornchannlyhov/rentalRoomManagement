@@ -22,7 +22,7 @@ String _encodeBuildings(List<Building> buildings) {
             rentPrice: b.rentPrice,
             electricPrice: b.electricPrice,
             waterPrice: b.waterPrice,
-            buildingImages: b.buildingImages,
+            buildingImage: b.buildingImage,
             services: b.services,
             passKey: b.passKey,
             rooms: null,
@@ -275,11 +275,11 @@ class BuildingRepository {
         type,
         data,
         endpoint,
-        filePath: updatedBuilding.imageFile?.path, 
-        fileFieldName: 'buildingImage', 
+        filePath: updatedBuilding.imageFile?.path,
+        fileFieldName: 'buildingImage',
       ),
-      file: updatedBuilding.imageFile, 
-      fileFieldName: 'buildingImage', 
+      file: updatedBuilding.imageFile,
+      fileFieldName: 'buildingImage',
     );
 
     await save();
