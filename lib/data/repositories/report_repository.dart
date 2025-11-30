@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:joul_v2/data/models/enum/report_priority.dart';
 import 'package:joul_v2/data/models/enum/report_status.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
@@ -17,11 +16,10 @@ String _encodeReports(List<Report> reports) {
   return jsonEncode(reports
       .map((r) => ReportDto(
             id: r.id,
-            tenantId: r.tenant?.id ?? '',
-            roomId: r.room?.id,
+            tenantId: r.tenantId,
+            roomId: r.roomId,
             problemDescription: r.problemDescription,
             status: r.status.toApiString(),
-            priority: r.priority.toApiString(),
             language: r.language.toApiString(),
             notes: r.notes,
           ).toJson())
@@ -211,9 +209,8 @@ class ReportRepository {
     }
   }
 
-  // LANDLORD FUNCTION: Update report status only
   Future<void> updateReportStatus(String reportId, String status) async {
-    final endpoint = '/reports/$reportId';
+    final endpoint = '/reports/$reportId/status'; // ✅ Use status endpoint
     final requestData = {'status': status};
 
     await _syncHelper.update(
@@ -239,7 +236,6 @@ class ReportRepository {
     await save();
   }
 
-  // LANDLORD FUNCTION: Delete report
   Future<void> deleteReport(String reportId) async {
     await _syncHelper.delete(
       endpoint: '/reports/$reportId',
@@ -257,25 +253,12 @@ class ReportRepository {
     await save();
   }
 
-  // READ-ONLY FUNCTIONS FOR LANDLORD
   List<Report> getAllReports() {
     return List.unmodifiable(_reportCache);
   }
 
-  List<Report> getReportsByTenant(String tenantId) {
-    return _reportCache.where((r) => r.tenant?.id == tenantId).toList();
-  }
-
-  List<Report> getReportsByRoom(String roomId) {
-    return _reportCache.where((r) => r.room?.id == roomId).toList();
-  }
-
   List<Report> getReportsByStatus(ReportStatus status) {
     return _reportCache.where((r) => r.status == status).toList();
-  }
-
-  List<Report> getReportsByPriority(ReportPriority priority) {
-    return _reportCache.where((r) => r.priority == priority).toList();
   }
 
   List<Report> getReportsByBuilding(String buildingId) {
@@ -284,36 +267,6 @@ class ReportRepository {
         .toList();
   }
 
-  Report? getReportById(String reportId) {
-    try {
-      return _reportCache.firstWhere((r) => r.id == reportId);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  Map<ReportStatus, int> getReportCountsByStatus() {
-    final counts = <ReportStatus, int>{};
-    for (var status in ReportStatus.values) {
-      counts[status] = _reportCache.where((r) => r.status == status).length;
-    }
-    return counts;
-  }
-
-  Map<ReportPriority, int> getReportCountsByPriority() {
-    final counts = <ReportPriority, int>{};
-    for (var priority in ReportPriority.values) {
-      counts[priority] =
-          _reportCache.where((r) => r.priority == priority).length;
-    }
-    return counts;
-  }
-
   bool hasPendingChanges() => _pendingChanges.isNotEmpty;
   int getPendingChangesCount() => _pendingChanges.length;
-
-  /// Get list of pending changes for debugging/display
-  List<Map<String, dynamic>> getPendingChanges() {
-    return List.unmodifiable(_pendingChanges);
-  }
 }

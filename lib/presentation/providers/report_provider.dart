@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/report.dart';
 import 'package:joul_v2/data/models/enum/report_status.dart';
-import 'package:joul_v2/data/models/enum/report_priority.dart';
 import 'package:joul_v2/data/repositories/report_repository.dart';
 import 'package:joul_v2/core/helpers/asyn_value.dart';
 import 'package:joul_v2/core/helpers/repository_manager.dart';
@@ -98,35 +97,12 @@ class ReportProvider with ChangeNotifier {
     }
   }
 
-  List<Report> getReportsByTenant(String tenantId) {
-    return _reportRepository.getReportsByTenant(tenantId);
-  }
-
-  List<Report> getReportsByRoom(String roomId) {
-    return _reportRepository.getReportsByRoom(roomId);
-  }
-
   List<Report> getReportsByStatus(ReportStatus status) {
     return _reportRepository.getReportsByStatus(status);
-  }
-
-  List<Report> getReportsByPriority(ReportPriority priority) {
-    return _reportRepository.getReportsByPriority(priority);
   }
 
   List<Report> getReportsByBuilding(String buildingId) {
     return _reportRepository.getReportsByBuilding(buildingId);
   }
 
-  Report? getReportById(String reportId) {
-    return _reportRepository.getReportById(reportId);
-  }
-
-  Map<ReportStatus, int> getReportCountsByStatus() {
-    return _reportRepository.getReportCountsByStatus();
-  }
-
-  Map<ReportPriority, int> getReportCountsByPriority() {
-    return _reportRepository.getReportCountsByPriority();
-  }
 }

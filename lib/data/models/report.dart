@@ -1,5 +1,4 @@
 import 'package:joul_v2/data/models/enum/report_language.dart';
-import 'package:joul_v2/data/models/enum/report_priority.dart';
 import 'package:joul_v2/data/models/enum/report_status.dart';
 import 'package:joul_v2/data/models/tenant.dart';
 import 'package:joul_v2/data/models/room.dart';
@@ -8,17 +7,19 @@ class Report {
   final String id;
   final String problemDescription;
   ReportStatus status;
-  ReportPriority priority;
   ReportLanguage language;
   String? notes;
+  final String tenantId;
+  final String? roomId;
   Tenant? tenant;
   Room? room;
 
   Report({
     required this.id,
+    required this.tenantId,
+    this.roomId,
     required this.problemDescription,
     required this.status,
-    required this.priority,
     required this.language,
     this.notes,
     this.tenant,
@@ -27,9 +28,10 @@ class Report {
 
   Report copyWith({
     String? id,
+    String? tenantId,
+    String? roomId,
     String? problemDescription,
     ReportStatus? status,
-    ReportPriority? priority,
     ReportLanguage? language,
     String? notes,
     Tenant? tenant,
@@ -37,9 +39,10 @@ class Report {
   }) {
     return Report(
       id: id ?? this.id,
+      tenantId: tenantId ?? this.tenantId,
+      roomId: roomId ?? this.roomId,
       problemDescription: problemDescription ?? this.problemDescription,
       status: status ?? this.status,
-      priority: priority ?? this.priority,
       language: language ?? this.language,
       notes: notes ?? this.notes,
       tenant: tenant ?? this.tenant,
@@ -47,5 +50,3 @@ class Report {
     );
   }
 }
-
-

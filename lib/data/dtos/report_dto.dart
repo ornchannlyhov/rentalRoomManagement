@@ -1,7 +1,6 @@
 import 'package:joul_v2/data/dtos/room_dto.dart';
 import 'package:joul_v2/data/dtos/tenant_dto.dart';
 import 'package:joul_v2/data/models/enum/report_language.dart';
-import 'package:joul_v2/data/models/enum/report_priority.dart';
 import 'package:joul_v2/data/models/enum/report_status.dart';
 import 'package:joul_v2/data/models/report.dart';
 
@@ -11,7 +10,6 @@ class ReportDto {
   final String? roomId;
   final String problemDescription;
   final String status;
-  final String? priority;
   final String? language;
   final String? notes;
   final TenantDto? tenant;
@@ -23,7 +21,6 @@ class ReportDto {
     this.roomId,
     required this.problemDescription,
     required this.status,
-    this.priority,
     this.language,
     this.notes,
     this.tenant,
@@ -37,7 +34,6 @@ class ReportDto {
       roomId: json['roomId']?.toString(),
       problemDescription: json['problemDescription']?.toString() ?? '',
       status: json['status']?.toString() ?? 'pending',
-      priority: json['priority']?.toString(),
       language: json['language']?.toString(),
       notes: json['notes']?.toString(),
       tenant: json['tenant'] != null
@@ -56,7 +52,6 @@ class ReportDto {
       if (roomId != null) 'roomId': roomId,
       'problemDescription': problemDescription,
       'status': status,
-      if (priority != null) 'priority': priority,
       if (language != null) 'language': language,
       if (notes != null) 'notes': notes,
       if (tenant != null) 'tenant': tenant!.toJson(),
@@ -70,7 +65,6 @@ class ReportDto {
       if (roomId != null) 'roomId': roomId,
       'problemDescription': problemDescription,
       'status': status,
-      if (priority != null) 'priority': priority,
       'language': language ?? 'english',
       if (notes != null) 'notes': notes,
     };
@@ -79,9 +73,10 @@ class ReportDto {
   Report toReport() {
     return Report(
       id: id,
+      tenantId: tenantId,
+      roomId: roomId,
       problemDescription: problemDescription,
       status: _mapStatus(status),
-      priority: _mapPriority(priority),
       language: _mapLanguage(language),
       notes: notes,
       tenant: tenant?.toTenant(),
@@ -89,32 +84,13 @@ class ReportDto {
     );
   }
 
-
- ReportStatus _mapStatus(String? value) {
-  switch (value?.toLowerCase()) {
-    case 'resolved':
-      return ReportStatus.resolved;
-    case 'inprogress':
-    case 'in_progress':
-      return ReportStatus.inProgress;
-    case 'closed':
-      return ReportStatus.closed;
-    case 'pending':
-    default:
-      return ReportStatus.pending;
-  }
-}
-
-  ReportPriority _mapPriority(String? value) {
+  ReportStatus _mapStatus(String? value) {
     switch (value?.toLowerCase()) {
-      case 'high':
-        return ReportPriority.high;
-      case 'medium':
-        return ReportPriority.medium;
-      case 'low':
-        return ReportPriority.low;
+      case 'resolved':
+        return ReportStatus.resolved;
+      case 'pending':
       default:
-        return ReportPriority.medium; 
+        return ReportStatus.pending;
     }
   }
 
