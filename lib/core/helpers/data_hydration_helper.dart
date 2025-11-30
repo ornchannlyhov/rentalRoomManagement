@@ -1,4 +1,3 @@
-
 import 'package:joul_v2/data/models/building.dart';
 import 'package:joul_v2/data/models/receipt.dart';
 import 'package:joul_v2/data/models/report.dart';
@@ -8,7 +7,6 @@ import 'package:joul_v2/data/models/tenant.dart';
 
 /// Helper class to rebuild object references after API sync
 class DataHydrationHelper {
-
   // Raw lists
   List<Building> buildings;
   List<Room> rooms;
@@ -130,7 +128,7 @@ class DataHydrationHelper {
     }
   }
 
-  /// Step 5: Hydrate receipts with full object graphs 
+  /// Step 5: Hydrate receipts with full object graphs
   void hydrateReceipts(List<Receipt> receipts) {
     for (var receipt in receipts) {
       final roomId = receipt.room?.id;
@@ -159,22 +157,36 @@ class DataHydrationHelper {
   }
 
   /// Step 6: Hydrate reports with full object graphs
+  /// Step 6: Hydrate reports with full object graphs
   void hydrateReports(List<Report> reports) {
     for (var report in reports) {
-      final tenantId = report.tenant?.id;
-      if (tenantId != null && tenantId.isNotEmpty) {
-        final fullTenant = _tenantMap[tenantId]; 
-        report.tenant = fullTenant;
-      } else {
-        report.tenant = null;
+      // Hydrate room relationship
+      final roomId = report.roomId;
+      if (roomId != null && roomId.isNotEmpty) {
+        final fullRoom = _roomMap[roomId];
+        if (fullRoom != null) {
+          report.room = fullRoom;
+        }
       }
 
-      final roomId = report.room?.id;
-      if (roomId != null && roomId.isNotEmpty) {
-        final fullRoom = _roomMap[roomId]; 
-        report.room = fullRoom;
-      } else {
-        report.room = null;
+      // Hydrate tenant relationship intelligently
+      final tenantId = report.tenantId;
+      if (tenantId.isNotEmpty) {
+        final cachedTenant = _tenantMap[tenantId];
+        final apiTenant = report.tenant;
+
+        if (cachedTenant != null && apiTenant != null) {
+          if (cachedTenant.room != null) {
+            apiTenant.room = cachedTenant.room;
+          }
+          report.tenant = apiTenant;
+        } else if (cachedTenant != null) {
+          report.tenant = cachedTenant;
+        } else if (apiTenant != null) {
+          report.tenant = apiTenant;
+        } else {
+          report.tenant = null;
+        }
       }
     }
   }

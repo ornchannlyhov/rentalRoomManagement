@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 
 class HelpSupportScreen extends StatefulWidget {
@@ -54,37 +53,79 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
   }
 
   Widget _buildFaqsTab(BuildContext context) {
-    // Mock data for FAQs - supporting both HTML and Markdown-like syntax via HtmlWidget
-    const faqsContent = '''
-      <h3>How do I reset my password?</h3>
-      <p>You can reset your password by going to the login screen and clicking on "Forgot Password".</p>
-      
-      <h3>How do I contact support?</h3>
-      <p>You can contact support via the "Report Problem" tab or email us at support@joul.com.</p>
-      
-      <h3>Is my data secure?</h3>
-      <p>Yes, we use industry-standard encryption to protect your data.</p>
-      
-      <h3>Markdown Style Test</h3>
-      <p>This is <b>bold</b> text and this is <i>italic</i> text.</p>
-      <ul>
-        <li>List item 1</li>
-        <li>List item 2</li>
-      </ul>
-    ''';
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: HtmlWidget(
-        faqsContent,
-        textStyle: Theme.of(context).textTheme.bodyMedium,
+    final faqs = [
+      _FaqItem(
+        question: "How do I reset my password?",
+        answer:
+            "You can reset your password by going to the login screen and clicking on 'Forgot Password'. Follow the instructions sent to your email to create a new password.",
       ),
+      _FaqItem(
+        question: "How do I contact support?",
+        answer:
+            "You can contact support via the 'Report Problem' tab in this screen, or email us directly at support@joul.com. We aim to respond within 24 hours.",
+      ),
+      _FaqItem(
+        question: "Is my data secure?",
+        answer:
+            "Yes, we use industry-standard encryption to protect your data. Your personal information and building data are stored securely and are never shared with third parties without your consent.",
+      ),
+      _FaqItem(
+        question: "How do I add a new tenant?",
+        answer:
+            "Navigate to the Building Detail screen, select the 'Tenants' tab (if available) or go to a Room and assign a tenant. You can also use the main 'Tenants' screen to manage all tenants.",
+      ),
+      _FaqItem(
+        question: "Can I manage multiple buildings?",
+        answer:
+            "Yes! The app supports managing multiple buildings. You can switch between buildings from the home screen or the buildings list.",
+      ),
+    ];
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: faqs.length,
+      itemBuilder: (context, index) {
+        final faq = faqs[index];
+        return Card(
+          elevation: 0,
+          margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: ExpansionTile(
+            title: Text(
+              faq.question,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            expandedCrossAxisAlignment: CrossAxisAlignment.start,
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
+            collapsedBackgroundColor: Colors.transparent,
+            shape: const Border(), // Remove default border
+            children: [
+              Text(
+                faq.answer,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.5,
+                    ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildReportProblemTab(BuildContext context,
       AppLocalizations localizations, ColorScheme colorScheme) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -108,7 +149,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
               fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.3),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () {
               // TODO: Implement send report logic
@@ -133,4 +174,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
       ),
     );
   }
+}
+
+class _FaqItem {
+  final String question;
+  final String answer;
+
+  _FaqItem({required this.question, required this.answer});
 }

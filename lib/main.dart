@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:joul_v2/core/services/fcm_service.dart';
-import 'package:joul_v2/core/services/local_notification_service.dart';
+import 'package:joul_v2/core/globals.dart';
 import 'package:joul_v2/presentation/view/screen/auth/login_screen.dart';
 import 'package:joul_v2/presentation/view/screen/auth/onboard_screen.dart';
 import 'package:joul_v2/presentation/view/screen/auth/register_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:joul_v2/core/helper_widgets/auth_wraper.dart';
+import 'package:joul_v2/core/helper_widgets/splash_screen.dart';
 import 'package:joul_v2/presentation/providers/notification_provider.dart';
 import 'package:joul_v2/data/repositories/report_repository.dart';
 import 'package:joul_v2/data/repositories/auth_repository.dart';
@@ -18,8 +19,6 @@ import 'package:joul_v2/data/repositories/service_repository.dart';
 import 'package:joul_v2/data/repositories/tenant_repository.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
 import 'package:joul_v2/core/helpers/repository_manager.dart';
-import 'package:joul_v2/core/helper_widgets/auth_wraper.dart';
-import 'package:joul_v2/core/helper_widgets/splash_screen.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
 import 'package:joul_v2/presentation/providers/building_provider.dart';
 import 'package:joul_v2/presentation/providers/receipt_provider.dart';
@@ -32,7 +31,7 @@ import 'package:joul_v2/core/theme/app_theme.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'dart:async';
-import 'dart:io' show Platform; // <- to detect Windows
+import 'dart:io' show Platform;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -123,7 +122,7 @@ Future<void> main() async {
     receiptProvider: receiptProvider,
     reportProvider: reportProvider,
     buildingProvider: buildingProvider,
-  );
+  ));
 
   final notificationProvider = NotificationProvider(
       receiptRepository, navigatorKey,
@@ -147,7 +146,6 @@ Future<void> main() async {
     notificationProvider: notificationProvider,
   ));
 }
-
 
 Future<void> _loadDataInBackground({
   required RepositoryManager repositoryManager,
