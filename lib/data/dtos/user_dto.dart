@@ -33,7 +33,8 @@ class UserDto {
       token: json['token']?.toString(),
       buildings: json['buildings'] != null
           ? (json['buildings'] as List)
-              .map((b) => BuildingDto.fromJson(b as Map<String, dynamic>))
+              .map((b) =>
+                  BuildingDto.fromJson(Map<String, dynamic>.from(b as Map)))
               .toList()
           : null,
     );

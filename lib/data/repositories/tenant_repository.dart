@@ -7,109 +7,39 @@ import 'package:joul_v2/data/models/enum/gender.dart';
 import 'package:joul_v2/data/dtos/tenant_dto.dart';
 import 'package:joul_v2/data/dtos/room_dto.dart';
 import 'package:joul_v2/data/dtos/building_dto.dart';
-
-// Top-level functions for compute() isolation
-List<Tenant> _parseTenants(String jsonString) {
-  final List<dynamic> jsonData = jsonDecode(jsonString);
-  return jsonData.map((json) {
-    final tenantDto = TenantDto.fromJson(json);
-    final tenant = tenantDto.toTenant();
-
-    if (tenantDto.room != null) {
-      tenant.room = tenantDto.room!.toRoom();
-      if (tenantDto.room!.building != null) {
-        tenant.room!.building = tenantDto.room!.building!.toBuilding();
-      }
-      if (tenant.room != null) {
-        tenant.room!.tenant = tenant;
-      }
-    }
-
-    return tenant;
-  }).toList();
-}
-
-String _encodeTenants(List<Tenant> tenants) {
-  String genderToString(Gender gender) {
-    switch (gender) {
-      case Gender.male:
-        return 'male';
-      case Gender.female:
-        return 'female';
-      default:
-        return 'other';
-    }
-  }
-
-  return jsonEncode(tenants
-      .map((tenant) => TenantDto(
-            id: tenant.id,
-            name: tenant.name,
-            phoneNumber: tenant.phoneNumber,
-            gender: genderToString(tenant.gender),
-            chatId: tenant.chatId,
-            language: tenant.language,
-            deposit: tenant.deposit,
-            tenantProfile: tenant.tenantProfile,
-            roomId: tenant.room?.id,
-            room: tenant.room != null
-                ? RoomDto(
-                    id: tenant.room!.id,
-                    roomNumber: tenant.room!.roomNumber,
-                    roomStatus:
-                        tenant.room!.roomStatus.toString().split('.').last,
-                    price: tenant.room!.price,
-                    buildingId: tenant.room!.building?.id,
-                    building: tenant.room!.building != null
-                        ? BuildingDto(
-                            id: tenant.room!.building!.id,
-                            appUserId: tenant.room!.building!.appUserId,
-                            name: tenant.room!.building!.name,
-                            rentPrice: tenant.room!.building!.rentPrice,
-                            electricPrice: tenant.room!.building!.electricPrice,
-                            waterPrice: tenant.room!.building!.waterPrice,
-                            buildingImage: tenant.room!.building!.buildingImage,
-                            services: tenant.room!.building!.services,
-                            passKey: tenant.room!.building!.passKey,
-                          )
-                        : null,
-                  )
-                : null,
-          ).toJson())
-      .toList());
-}
-
-List<Map<String, dynamic>> _parsePendingChanges(String jsonString) {
-  return List<Map<String, dynamic>>.from(jsonDecode(jsonString));
-}
+import 'package:joul_v2/core/services/database_service.dart';
 
 class TenantRepository {
-  final String storageKey = 'tenant_secure_data';
-  final String pendingChangesKey = 'tenant_pending_changes';
+  final DatabaseService _databaseService;
   final ApiHelper _apiHelper = ApiHelper.instance;
   final SyncOperationHelper _syncHelper = SyncOperationHelper();
 
   List<Tenant> _tenantCache = [];
   List<Map<String, dynamic>> _pendingChanges = [];
 
+  TenantRepository(this._databaseService);
+
   Future<void> load() async {
     try {
-      // Load tenants with compute() for better performance
-      final jsonString = await _apiHelper.storage.read(key: storageKey);
-      if (jsonString != null && jsonString.isNotEmpty) {
-        _tenantCache = await compute(_parseTenants, jsonString);
-      } else {
-        _tenantCache = [];
-      }
+      final tenantsList = _databaseService.tenantsBox.values.toList();
+      _tenantCache = tenantsList.map((e) {
+        final tenantDto = TenantDto.fromJson(Map<String, dynamic>.from(e));
+        final tenant = tenantDto.toTenant();
+        if (tenantDto.room != null) {
+          tenant.room = tenantDto.room!.toRoom();
+          if (tenantDto.room!.building != null) {
+            tenant.room!.building = tenantDto.room!.building!.toBuilding();
+          }
+          if (tenant.room != null) {
+            tenant.room!.tenant = tenant;
+          }
+        }
+        return tenant;
+      }).toList();
 
-      // Load pending changes with compute()
-      final pendingString =
-          await _apiHelper.storage.read(key: pendingChangesKey);
-      if (pendingString != null && pendingString.isNotEmpty) {
-        _pendingChanges = await compute(_parsePendingChanges, pendingString);
-      } else {
-        _pendingChanges = [];
-      }
+      final pendingList = _databaseService.tenantsPendingBox.values.toList();
+      _pendingChanges =
+          pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
     } catch (e) {
       throw Exception('Failed to load tenant data: $e');
     }
@@ -117,19 +47,49 @@ class TenantRepository {
 
   Future<void> save() async {
     try {
-      // Only save if there's actual data
-      if (_tenantCache.isNotEmpty) {
-        final jsonString = await compute(_encodeTenants, _tenantCache);
-        await _apiHelper.storage.write(key: storageKey, value: jsonString);
+      await _databaseService.tenantsBox.clear();
+      for (var i = 0; i < _tenantCache.length; i++) {
+        final tenant = _tenantCache[i];
+        final dto = TenantDto(
+          id: tenant.id,
+          name: tenant.name,
+          phoneNumber: tenant.phoneNumber,
+          gender: _genderToString(tenant.gender),
+          chatId: tenant.chatId,
+          language: tenant.language,
+          deposit: tenant.deposit,
+          tenantProfile: tenant.tenantProfile,
+          roomId: tenant.room?.id,
+          room: tenant.room != null
+              ? RoomDto(
+                  id: tenant.room!.id,
+                  roomNumber: tenant.room!.roomNumber,
+                  roomStatus:
+                      tenant.room!.roomStatus.toString().split('.').last,
+                  price: tenant.room!.price,
+                  buildingId: tenant.room!.building?.id,
+                  building: tenant.room!.building != null
+                      ? BuildingDto(
+                          id: tenant.room!.building!.id,
+                          appUserId: tenant.room!.building!.appUserId,
+                          name: tenant.room!.building!.name,
+                          rentPrice: tenant.room!.building!.rentPrice,
+                          electricPrice: tenant.room!.building!.electricPrice,
+                          waterPrice: tenant.room!.building!.waterPrice,
+                          buildingImage: tenant.room!.building!.buildingImage,
+                          services: tenant.room!.building!.services,
+                          passKey: tenant.room!.building!.passKey,
+                        )
+                      : null,
+                )
+              : null,
+        );
+        await _databaseService.tenantsBox.put(i, dto.toJson());
       }
 
-      // Save pending changes
-      if (_pendingChanges.isNotEmpty) {
-        final pendingJson = jsonEncode(_pendingChanges);
-        await _apiHelper.storage.write(
-          key: pendingChangesKey,
-          value: pendingJson,
-        );
+      await _databaseService.tenantsPendingBox.clear();
+      for (var i = 0; i < _pendingChanges.length; i++) {
+        await _databaseService.tenantsPendingBox.put(i, _pendingChanges[i]);
       }
     } catch (e) {
       throw Exception('Failed to save tenant data: $e');
@@ -137,8 +97,8 @@ class TenantRepository {
   }
 
   Future<void> clear() async {
-    await _apiHelper.storage.delete(key: storageKey);
-    await _apiHelper.storage.delete(key: pendingChangesKey);
+    await _databaseService.tenantsBox.clear();
+    await _databaseService.tenantsPendingBox.clear();
     _tenantCache.clear();
     _pendingChanges.clear();
   }
@@ -244,10 +204,7 @@ class TenantRepository {
     }
 
     if (successfulChanges.isNotEmpty || failedChanges.isNotEmpty) {
-      await _apiHelper.storage.write(
-        key: pendingChangesKey,
-        value: jsonEncode(_pendingChanges),
-      );
+      await save();
     }
   }
 

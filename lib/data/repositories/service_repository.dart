@@ -4,57 +4,29 @@ import 'package:joul_v2/core/helpers/api_helper.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
 import 'package:joul_v2/data/models/service.dart';
 import 'package:joul_v2/data/dtos/service_dto.dart';
-
-// Top-level functions for compute() isolation
-List<Service> _parseServices(String jsonString) {
-  final List<dynamic> jsonData = jsonDecode(jsonString);
-  return jsonData.map((json) => ServiceDto.fromJson(json).toService()).toList();
-}
-
-String _encodeServices(List<Service> services) {
-  return jsonEncode(services
-      .map((s) => ServiceDto(
-            id: s.id,
-            name: s.name,
-            price: s.price,
-            buildingId: s.buildingId,
-          ).toJson())
-      .toList());
-}
-
-List<Map<String, dynamic>> _parsePendingChanges(String jsonString) {
-  return List<Map<String, dynamic>>.from(jsonDecode(jsonString));
-}
+import 'package:joul_v2/core/services/database_service.dart';
 
 class ServiceRepository {
-  final String storageKey = 'service_secure_data';
-  final String pendingChangesKey = 'service_pending_changes';
+  final DatabaseService _databaseService;
   final ApiHelper _apiHelper = ApiHelper.instance;
   final SyncOperationHelper _syncHelper = SyncOperationHelper();
 
   List<Service> _serviceCache = [];
   List<Map<String, dynamic>> _pendingChanges = [];
 
-  ServiceRepository();
+  ServiceRepository(this._databaseService);
 
   Future<void> load() async {
     try {
-      // Load services with compute() for better performance
-      final jsonString = await _apiHelper.storage.read(key: storageKey);
-      if (jsonString != null && jsonString.isNotEmpty) {
-        _serviceCache = await compute(_parseServices, jsonString);
-      } else {
-        _serviceCache = [];
-      }
+      final servicesList = _databaseService.servicesBox.values.toList();
+      _serviceCache = servicesList
+          .map((e) =>
+              ServiceDto.fromJson(Map<String, dynamic>.from(e)).toService())
+          .toList();
 
-      // Load pending changes with compute()
-      final pendingString =
-          await _apiHelper.storage.read(key: pendingChangesKey);
-      if (pendingString != null && pendingString.isNotEmpty) {
-        _pendingChanges = await compute(_parsePendingChanges, pendingString);
-      } else {
-        _pendingChanges = [];
-      }
+      final pendingList = _databaseService.servicesPendingBox.values.toList();
+      _pendingChanges =
+          pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
     } catch (e) {
       throw Exception('Failed to load service data: $e');
     }
@@ -62,19 +34,20 @@ class ServiceRepository {
 
   Future<void> save() async {
     try {
-      // Only save if there's actual data
-      if (_serviceCache.isNotEmpty) {
-        final jsonString = await compute(_encodeServices, _serviceCache);
-        await _apiHelper.storage.write(key: storageKey, value: jsonString);
+      await _databaseService.servicesBox.clear();
+      for (var i = 0; i < _serviceCache.length; i++) {
+        final dto = ServiceDto(
+          id: _serviceCache[i].id,
+          name: _serviceCache[i].name,
+          price: _serviceCache[i].price,
+          buildingId: _serviceCache[i].buildingId,
+        );
+        await _databaseService.servicesBox.put(i, dto.toJson());
       }
 
-      // Save pending changes
-      if (_pendingChanges.isNotEmpty) {
-        final pendingJson = jsonEncode(_pendingChanges);
-        await _apiHelper.storage.write(
-          key: pendingChangesKey,
-          value: pendingJson,
-        );
+      await _databaseService.servicesPendingBox.clear();
+      for (var i = 0; i < _pendingChanges.length; i++) {
+        await _databaseService.servicesPendingBox.put(i, _pendingChanges[i]);
       }
     } catch (e) {
       throw Exception('Failed to save service data: $e');
@@ -82,8 +55,8 @@ class ServiceRepository {
   }
 
   Future<void> clear() async {
-    await _apiHelper.storage.delete(key: storageKey);
-    await _apiHelper.storage.delete(key: pendingChangesKey);
+    await _databaseService.servicesBox.clear();
+    await _databaseService.servicesPendingBox.clear();
     _serviceCache.clear();
     _pendingChanges.clear();
   }
@@ -156,10 +129,7 @@ class ServiceRepository {
     }
 
     if (successfulChanges.isNotEmpty || failedChanges.isNotEmpty) {
-      await _apiHelper.storage.write(
-        key: pendingChangesKey,
-        value: jsonEncode(_pendingChanges),
-      );
+      await save();
     }
   }
 

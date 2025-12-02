@@ -4,63 +4,29 @@ import 'package:joul_v2/core/helpers/api_helper.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
 import 'package:joul_v2/data/models/building.dart';
 import 'package:joul_v2/data/dtos/building_dto.dart';
-
-// Top-level functions for compute() isolation
-List<Building> _parseBuildings(String jsonString) {
-  final List<dynamic> jsonData = jsonDecode(jsonString);
-  return jsonData
-      .map((json) => BuildingDto.fromJson(json).toBuilding())
-      .toList();
-}
-
-String _encodeBuildings(List<Building> buildings) {
-  return jsonEncode(buildings
-      .map((b) => BuildingDto(
-            id: b.id,
-            appUserId: b.appUserId,
-            name: b.name,
-            rentPrice: b.rentPrice,
-            electricPrice: b.electricPrice,
-            waterPrice: b.waterPrice,
-            buildingImage: b.buildingImage,
-            services: b.services,
-            passKey: b.passKey,
-            rooms: null,
-          ).toJson())
-      .toList());
-}
-
-List<Map<String, dynamic>> _parsePendingChanges(String jsonString) {
-  return List<Map<String, dynamic>>.from(jsonDecode(jsonString));
-}
+import 'package:joul_v2/core/services/database_service.dart';
 
 class BuildingRepository {
-  final String storageKey = 'building_secure_data';
-  final String pendingChangesKey = 'building_pending_changes';
+  final DatabaseService _databaseService;
   final ApiHelper _apiHelper = ApiHelper.instance;
   final SyncOperationHelper _syncHelper = SyncOperationHelper();
 
   List<Building> _buildingCache = [];
   List<Map<String, dynamic>> _pendingChanges = [];
 
-  BuildingRepository();
+  BuildingRepository(this._databaseService);
 
   Future<void> load() async {
     try {
-      final jsonString = await _apiHelper.storage.read(key: storageKey);
-      if (jsonString != null && jsonString.isNotEmpty) {
-        _buildingCache = await compute(_parseBuildings, jsonString);
-      } else {
-        _buildingCache = [];
-      }
+      final buildingsList = _databaseService.buildingsBox.values.toList();
+      _buildingCache = buildingsList
+          .map((e) =>
+              BuildingDto.fromJson(Map<String, dynamic>.from(e)).toBuilding())
+          .toList();
 
-      final pendingString =
-          await _apiHelper.storage.read(key: pendingChangesKey);
-      if (pendingString != null && pendingString.isNotEmpty) {
-        _pendingChanges = await compute(_parsePendingChanges, pendingString);
-      } else {
-        _pendingChanges = [];
-      }
+      final pendingList = _databaseService.buildingsPendingBox.values.toList();
+      _pendingChanges =
+          pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
     } catch (e) {
       throw Exception('Failed to load building data: $e');
     }
@@ -68,17 +34,28 @@ class BuildingRepository {
 
   Future<void> save() async {
     try {
-      if (_buildingCache.isNotEmpty) {
-        final jsonString = await compute(_encodeBuildings, _buildingCache);
-        await _apiHelper.storage.write(key: storageKey, value: jsonString);
+      // Clear and save buildings
+      await _databaseService.buildingsBox.clear();
+      for (var i = 0; i < _buildingCache.length; i++) {
+        final dto = BuildingDto(
+          id: _buildingCache[i].id,
+          appUserId: _buildingCache[i].appUserId,
+          name: _buildingCache[i].name,
+          rentPrice: _buildingCache[i].rentPrice,
+          electricPrice: _buildingCache[i].electricPrice,
+          waterPrice: _buildingCache[i].waterPrice,
+          buildingImage: _buildingCache[i].buildingImage,
+          services: _buildingCache[i].services,
+          passKey: _buildingCache[i].passKey,
+          rooms: null,
+        );
+        await _databaseService.buildingsBox.put(i, dto.toJson());
       }
 
-      if (_pendingChanges.isNotEmpty) {
-        final pendingJson = jsonEncode(_pendingChanges);
-        await _apiHelper.storage.write(
-          key: pendingChangesKey,
-          value: pendingJson,
-        );
+      // Clear and save pending changes
+      await _databaseService.buildingsPendingBox.clear();
+      for (var i = 0; i < _pendingChanges.length; i++) {
+        await _databaseService.buildingsPendingBox.put(i, _pendingChanges[i]);
       }
     } catch (e) {
       throw Exception('Failed to save building data: $e');
@@ -86,8 +63,8 @@ class BuildingRepository {
   }
 
   Future<void> clear() async {
-    await _apiHelper.storage.delete(key: storageKey);
-    await _apiHelper.storage.delete(key: pendingChangesKey);
+    await _databaseService.buildingsBox.clear();
+    await _databaseService.buildingsPendingBox.clear();
     _buildingCache.clear();
     _pendingChanges.clear();
   }
@@ -161,10 +138,7 @@ class BuildingRepository {
 
     // Save updated pending changes
     if (successfulChanges.isNotEmpty || failedChanges.isNotEmpty) {
-      await _apiHelper.storage.write(
-        key: pendingChangesKey,
-        value: jsonEncode(_pendingChanges),
-      );
+      await save();
     }
   }
 

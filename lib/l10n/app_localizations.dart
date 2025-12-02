@@ -151,12 +151,6 @@ abstract class AppLocalizations {
   /// **'Welcome Back'**
   String get welcomeBack;
 
-  /// Label for a single report
-  ///
-  /// In en, this message translates to:
-  /// **'Report'**
-  String get report;
-
   /// No description provided for @signInPrompt.
   ///
   /// In en, this message translates to:
@@ -174,6 +168,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to delete tenant {tenant}?'**
   String deleteTenantConfirmMsg(String tenant);
+
+  /// Label for a single report
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get report;
 
   /// Label for multiple reports
   ///
@@ -244,7 +244,7 @@ abstract class AppLocalizations {
   /// Validation message for problem description field
   ///
   /// In en, this message translates to:
-  /// **'Please describe the problem you are facing'**
+  /// **'Please enter a problem description'**
   String get enterProblemDescription;
 
   /// Text shown when report has no tenant assigned
@@ -364,7 +364,7 @@ abstract class AppLocalizations {
   /// No description provided for @pleaseSelectRoom.
   ///
   /// In en, this message translates to:
-  /// **'Please select room'**
+  /// **'Please select a room'**
   String get pleaseSelectRoom;
 
   /// No description provided for @previousMonthUsage.
@@ -592,7 +592,7 @@ abstract class AppLocalizations {
   /// No description provided for @thankYouForUsingOurService.
   ///
   /// In en, this message translates to:
-  /// **'Thank you for using or service!'**
+  /// **'Thank you for using our service!'**
   String get thankYouForUsingOurService;
 
   /// No description provided for @currencyConversionFailed.
@@ -718,7 +718,7 @@ abstract class AppLocalizations {
   /// No description provided for @tryAgain.
   ///
   /// In en, this message translates to:
-  /// **'Try Again'**
+  /// **'Try again'**
   String get tryAgain;
 
   /// No description provided for @male.
@@ -871,6 +871,12 @@ abstract class AppLocalizations {
   /// **'Create New Tenant'**
   String get createNewTenant;
 
+  /// No description provided for @tenantNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get tenantNameLabel;
+
   /// No description provided for @pleaseEnterTenantName.
   ///
   /// In en, this message translates to:
@@ -886,7 +892,7 @@ abstract class AppLocalizations {
   /// No description provided for @invalidPhoneNumber.
   ///
   /// In en, this message translates to:
-  /// **'Invalid phone number format'**
+  /// **'Invalid phone number'**
   String get invalidPhoneNumber;
 
   /// No description provided for @searchCountry.
@@ -1081,11 +1087,11 @@ abstract class AppLocalizations {
   /// **'Building \"{name}\" deleted successfully'**
   String buildingDeletedSuccess(Object name);
 
-  /// Success message after deleting a building
+  /// No description provided for @buildingDeleted.
   ///
   /// In en, this message translates to:
-  /// **'Building {building} deleted successfully'**
-  String buildingDeleted(String building, Object name);
+  /// **'Building \"{name}\" deleted'**
+  String buildingDeleted(Object name);
 
   /// No description provided for @buildingDeleteFailed.
   ///
@@ -1120,7 +1126,7 @@ abstract class AppLocalizations {
   /// No description provided for @rentPricePerMonth.
   ///
   /// In en, this message translates to:
-  /// **'Monthly Rent Price'**
+  /// **'{price}\$/ month'**
   String rentPricePerMonth(Object price);
 
   /// No description provided for @passKey.
@@ -1278,12 +1284,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Room {number}'**
   String roomNumberLabel(Object number);
-
-  /// No description provided for @tenantNameLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Name'**
-  String get tenantNameLabel;
 
   /// No description provided for @roomStatus.
   ///
@@ -2155,12 +2155,6 @@ abstract class AppLocalizations {
   /// **'This will remove all notification items. You can still view receipts in the Receipts tab.'**
   String get clearNotificationsMessage;
 
-  /// No description provided for @phoneNumberLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Phone Number'**
-  String get phoneNumberLabel;
-
   /// No description provided for @phoneNumberHint.
   ///
   /// In en, this message translates to:
@@ -2286,6 +2280,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Password must be at least 6 characters'**
   String get passwordTooShort;
+
+  /// No description provided for @paymentSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Settings'**
+  String get paymentSettings;
+
+  /// No description provided for @paymentSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure payout methods'**
+  String get paymentSettingsSubtitle;
+
+  /// No description provided for @paymentConfigInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up how you want to receive payments from your tenants'**
+  String get paymentConfigInfo;
+
+  /// No description provided for @paymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Method'**
+  String get paymentMethod;
+
+  /// No description provided for @both.
+  ///
+  /// In en, this message translates to:
+  /// **'Both'**
+  String get both;
+
+  /// No description provided for @none.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get none;
+
+  /// No description provided for @enabledMethods.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled Methods'**
+  String get enabledMethods;
+
+  /// No description provided for @khqrSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'QR code payments'**
+  String get khqrSubtitle;
+
+  /// No description provided for @abaPayWaySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Online banking payments'**
+  String get abaPayWaySubtitle;
+
+  /// No description provided for @bankDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank Details'**
+  String get bankDetails;
+
+  /// No description provided for @bankName.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank Name'**
+  String get bankName;
+
+  /// No description provided for @enterBankName.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., ABA Bank'**
+  String get enterBankName;
+
+  /// No description provided for @accountNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Account Number'**
+  String get accountNumber;
+
+  /// No description provided for @enterAccountNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., 001122334'**
+  String get enterAccountNumber;
+
+  /// No description provided for @accountHolderName.
+  ///
+  /// In en, this message translates to:
+  /// **'Account Holder Name'**
+  String get accountHolderName;
+
+  /// No description provided for @enterAccountHolderName.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., John Doe'**
+  String get enterAccountHolderName;
+
+  /// No description provided for @pleaseEnterBankName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter bank name'**
+  String get pleaseEnterBankName;
+
+  /// No description provided for @pleaseEnterAccountNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter account number'**
+  String get pleaseEnterAccountNumber;
+
+  /// No description provided for @pleaseEnterAccountHolderName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter account holder name'**
+  String get pleaseEnterAccountHolderName;
+
+  /// No description provided for @savePaymentConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Configuration'**
+  String get savePaymentConfig;
+
+  /// No description provided for @updatePaymentConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Configuration'**
+  String get updatePaymentConfig;
+
+  /// No description provided for @paymentConfigSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment configuration saved successfully'**
+  String get paymentConfigSaved;
+
+  /// No description provided for @paymentConfigUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment configuration updated successfully'**
+  String get paymentConfigUpdated;
+
+  /// No description provided for @failedToLoadPaymentConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load payment configuration'**
+  String get failedToLoadPaymentConfig;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

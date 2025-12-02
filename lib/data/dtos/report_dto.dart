@@ -37,10 +37,10 @@ class ReportDto {
       language: json['language']?.toString(),
       notes: json['notes']?.toString(),
       tenant: json['tenant'] != null
-          ? TenantDto.fromJson(json['tenant'] as Map<String, dynamic>)
+          ? TenantDto.fromJson(Map<String, dynamic>.from(json['tenant'] as Map))
           : null,
       room: json['room'] != null
-          ? RoomDto.fromJson(json['room'] as Map<String, dynamic>)
+          ? RoomDto.fromJson(Map<String, dynamic>.from(json['room'] as Map))
           : null,
     );
   }

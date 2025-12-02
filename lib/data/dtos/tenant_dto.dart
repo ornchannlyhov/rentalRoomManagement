@@ -42,7 +42,7 @@ class TenantDto {
       tenantProfile: json['tenantProfile']?.toString(),
       roomId: json['roomId']?.toString(),
       room: json['room'] != null
-          ? RoomDto.fromJson(json['room'] as Map<String, dynamic>)
+          ? RoomDto.fromJson(Map<String, dynamic>.from(json['room'] as Map))
           : null,
     );
   }
@@ -94,7 +94,7 @@ class TenantDto {
       deposit: deposit,
       tenantProfile: tenantProfile,
       room: room?.toRoom(),
-      imageFile: imageFile, 
+      imageFile: imageFile,
     );
   }
 }

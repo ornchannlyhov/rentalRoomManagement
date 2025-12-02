@@ -5,58 +5,29 @@ import 'package:joul_v2/core/helpers/api_helper.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
 import 'package:joul_v2/data/models/report.dart';
 import 'package:joul_v2/data/dtos/report_dto.dart';
-
-// Top-level functions for compute() isolation
-List<Report> _parseReports(String jsonString) {
-  final List<dynamic> jsonData = jsonDecode(jsonString);
-  return jsonData.map((json) => ReportDto.fromJson(json).toReport()).toList();
-}
-
-String _encodeReports(List<Report> reports) {
-  return jsonEncode(reports
-      .map((r) => ReportDto(
-            id: r.id,
-            tenantId: r.tenantId,
-            roomId: r.roomId,
-            problemDescription: r.problemDescription,
-            status: r.status.toApiString(),
-            language: r.language.toApiString(),
-            notes: r.notes,
-          ).toJson())
-      .toList());
-}
-
-List<Map<String, dynamic>> _parsePendingChanges(String jsonString) {
-  return List<Map<String, dynamic>>.from(jsonDecode(jsonString));
-}
+import 'package:joul_v2/core/services/database_service.dart';
 
 class ReportRepository {
-  final String storageKey = 'report_secure_data';
-  final String pendingChangesKey = 'report_pending_changes';
+  final DatabaseService _databaseService;
   final ApiHelper _apiHelper = ApiHelper.instance;
   final SyncOperationHelper _syncHelper = SyncOperationHelper();
 
   List<Report> _reportCache = [];
   List<Map<String, dynamic>> _pendingChanges = [];
 
-  ReportRepository();
+  ReportRepository(this._databaseService);
 
   Future<void> load() async {
     try {
-      final jsonString = await _apiHelper.storage.read(key: storageKey);
-      if (jsonString != null && jsonString.isNotEmpty) {
-        _reportCache = await compute(_parseReports, jsonString);
-      } else {
-        _reportCache = [];
-      }
+      final reportsList = _databaseService.reportsBox.values.toList();
+      _reportCache = reportsList
+          .map((e) =>
+              ReportDto.fromJson(Map<String, dynamic>.from(e)).toReport())
+          .toList();
 
-      final pendingString =
-          await _apiHelper.storage.read(key: pendingChangesKey);
-      if (pendingString != null && pendingString.isNotEmpty) {
-        _pendingChanges = await compute(_parsePendingChanges, pendingString);
-      } else {
-        _pendingChanges = [];
-      }
+      final pendingList = _databaseService.reportsPendingBox.values.toList();
+      _pendingChanges =
+          pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
     } catch (e) {
       throw Exception('Failed to load report data: $e');
     }
@@ -64,19 +35,23 @@ class ReportRepository {
 
   Future<void> save() async {
     try {
-      // Only save if there's actual data
-      if (_reportCache.isNotEmpty) {
-        final jsonString = await compute(_encodeReports, _reportCache);
-        await _apiHelper.storage.write(key: storageKey, value: jsonString);
+      await _databaseService.reportsBox.clear();
+      for (var i = 0; i < _reportCache.length; i++) {
+        final dto = ReportDto(
+          id: _reportCache[i].id,
+          tenantId: _reportCache[i].tenantId,
+          roomId: _reportCache[i].roomId,
+          problemDescription: _reportCache[i].problemDescription,
+          status: _reportCache[i].status.toApiString(),
+          language: _reportCache[i].language.toApiString(),
+          notes: _reportCache[i].notes,
+        );
+        await _databaseService.reportsBox.put(i, dto.toJson());
       }
 
-      // Save pending changes
-      if (_pendingChanges.isNotEmpty) {
-        final pendingJson = jsonEncode(_pendingChanges);
-        await _apiHelper.storage.write(
-          key: pendingChangesKey,
-          value: pendingJson,
-        );
+      await _databaseService.reportsPendingBox.clear();
+      for (var i = 0; i < _pendingChanges.length; i++) {
+        await _databaseService.reportsPendingBox.put(i, _pendingChanges[i]);
       }
     } catch (e) {
       throw Exception('Failed to save report data: $e');
@@ -84,8 +59,8 @@ class ReportRepository {
   }
 
   Future<void> clear() async {
-    await _apiHelper.storage.delete(key: storageKey);
-    await _apiHelper.storage.delete(key: pendingChangesKey);
+    await _databaseService.reportsBox.clear();
+    await _databaseService.reportsPendingBox.clear();
     _reportCache.clear();
     _pendingChanges.clear();
   }
@@ -157,10 +132,7 @@ class ReportRepository {
     }
 
     if (successfulChanges.isNotEmpty || failedChanges.isNotEmpty) {
-      await _apiHelper.storage.write(
-        key: pendingChangesKey,
-        value: jsonEncode(_pendingChanges),
-      );
+      await save();
     }
   }
 

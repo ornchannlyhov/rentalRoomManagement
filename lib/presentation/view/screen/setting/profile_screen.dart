@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
+import 'package:joul_v2/presentation/view/screen/setting/payment_config_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/presentation/providers/theme_provider.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
@@ -194,6 +195,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: localizations.subscriptions,
                     subtitle: localizations.subscriptionsSubtitle,
                     onTap: () {},
+                  ),
+                  SettingsItem(
+                    icon: Icons.account_balance_wallet_outlined,
+                    title: localizations.paymentSettings,
+                    subtitle: localizations.paymentSettingsSubtitle,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PaymentConfigScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
