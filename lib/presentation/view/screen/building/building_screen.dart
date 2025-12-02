@@ -267,7 +267,7 @@ class _BuildingScreenState extends State<BuildingScreen>
 
     GlobalSnackBar.show(
       context: context,
-      message: l10n.buildingDeleted(building.name, building.id),
+      message: l10n.buildingDeleted(building.name),
     );
   }
 

@@ -7,103 +7,36 @@ import 'package:joul_v2/data/models/enum/room_status.dart';
 import 'package:joul_v2/data/dtos/room_dto.dart';
 import 'package:joul_v2/data/dtos/building_dto.dart';
 import 'package:joul_v2/data/dtos/tenant_dto.dart';
-
-// Top-level functions for compute() isolation
-List<Room> _parseRooms(String jsonString) {
-  final List<dynamic> jsonData = jsonDecode(jsonString);
-  return jsonData.map((json) {
-    final roomDto = RoomDto.fromJson(json);
-    final room = roomDto.toRoom();
-
-    if (roomDto.building != null) {
-      room.building = roomDto.building!.toBuilding();
-    }
-
-    if (roomDto.tenant != null) {
-      room.tenant = roomDto.tenant!.toTenant();
-    }
-
-    return room;
-  }).toList();
-}
-
-String _encodeRooms(List<Room> rooms) {
-  return jsonEncode(
-    rooms
-        .map(
-          (room) => RoomDto(
-            id: room.id,
-            roomNumber: room.roomNumber,
-            roomStatus: room.roomStatus == RoomStatus.occupied
-                ? 'occupied'
-                : 'available',
-            price: room.price,
-            buildingId: room.building?.id,
-            building: room.building != null
-                ? BuildingDto(
-                    id: room.building!.id,
-                    appUserId: room.building!.appUserId,
-                    name: room.building!.name,
-                    rentPrice: room.building!.rentPrice,
-                    electricPrice: room.building!.electricPrice,
-                    waterPrice: room.building!.waterPrice,
-                    buildingImage: room.building!.buildingImage,
-                    services: room.building!.services,
-                    passKey: room.building!.passKey,
-                  )
-                : null,
-            tenant: room.tenant != null
-                ? TenantDto(
-                    id: room.tenant!.id,
-                    name: room.tenant!.name,
-                    phoneNumber: room.tenant!.phoneNumber,
-                    gender: room.tenant!.gender.toString().split('.').last,
-                    chatId: room.tenant!.chatId,
-                    language: room.tenant!.language,
-                    deposit: room.tenant!.deposit,
-                    tenantProfile: room.tenant!.tenantProfile,
-                    roomId: room.id,
-                  )
-                : null,
-          ).toJson(),
-        )
-        .toList(),
-  );
-}
-
-
-List<Map<String, dynamic>> _parsePendingChanges(String jsonString) {
-  return List<Map<String, dynamic>>.from(jsonDecode(jsonString));
-}
+import 'package:joul_v2/core/services/database_service.dart';
 
 class RoomRepository {
-  final String storageKey = 'room_secure_data';
-  final String pendingChangesKey = 'room_pending_changes';
+  final DatabaseService _databaseService;
   final ApiHelper _apiHelper = ApiHelper.instance;
   final SyncOperationHelper _syncHelper = SyncOperationHelper();
 
   List<Room> _roomCache = [];
   List<Map<String, dynamic>> _pendingChanges = [];
 
-  RoomRepository();
+  RoomRepository(this._databaseService);
 
   Future<void> load() async {
     try {
-      final jsonString = await _apiHelper.storage.read(key: storageKey);
-      if (jsonString != null && jsonString.isNotEmpty) {
-        _roomCache = await compute(_parseRooms, jsonString);
-      } else {
-        _roomCache = [];
-      }
+      final roomsList = _databaseService.roomsBox.values.toList();
+      _roomCache = roomsList.map((e) {
+        final roomDto = RoomDto.fromJson(Map<String, dynamic>.from(e));
+        final room = roomDto.toRoom();
+        if (roomDto.building != null) {
+          room.building = roomDto.building!.toBuilding();
+        }
+        if (roomDto.tenant != null) {
+          room.tenant = roomDto.tenant!.toTenant();
+        }
+        return room;
+      }).toList();
 
-      final pendingString = await _apiHelper.storage.read(
-        key: pendingChangesKey,
-      );
-      if (pendingString != null && pendingString.isNotEmpty) {
-        _pendingChanges = await compute(_parsePendingChanges, pendingString);
-      } else {
-        _pendingChanges = [];
-      }
+      final pendingList = _databaseService.roomsPendingBox.values.toList();
+      _pendingChanges =
+          pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
     } catch (e) {
       throw Exception('Failed to load room data: $e');
     }
@@ -111,17 +44,50 @@ class RoomRepository {
 
   Future<void> save() async {
     try {
-      if (_roomCache.isNotEmpty) {
-        final jsonString = await compute(_encodeRooms, _roomCache);
-        await _apiHelper.storage.write(key: storageKey, value: jsonString);
+      await _databaseService.roomsBox.clear();
+      for (var i = 0; i < _roomCache.length; i++) {
+        final dto = RoomDto(
+          id: _roomCache[i].id,
+          roomNumber: _roomCache[i].roomNumber,
+          roomStatus: _roomCache[i].roomStatus == RoomStatus.occupied
+              ? 'occupied'
+              : 'available',
+          price: _roomCache[i].price,
+          buildingId: _roomCache[i].building?.id,
+          building: _roomCache[i].building != null
+              ? BuildingDto(
+                  id: _roomCache[i].building!.id,
+                  appUserId: _roomCache[i].building!.appUserId,
+                  name: _roomCache[i].building!.name,
+                  rentPrice: _roomCache[i].building!.rentPrice,
+                  electricPrice: _roomCache[i].building!.electricPrice,
+                  waterPrice: _roomCache[i].building!.waterPrice,
+                  buildingImage: _roomCache[i].building!.buildingImage,
+                  services: _roomCache[i].building!.services,
+                  passKey: _roomCache[i].building!.passKey,
+                )
+              : null,
+          tenant: _roomCache[i].tenant != null
+              ? TenantDto(
+                  id: _roomCache[i].tenant!.id,
+                  name: _roomCache[i].tenant!.name,
+                  phoneNumber: _roomCache[i].tenant!.phoneNumber,
+                  gender:
+                      _roomCache[i].tenant!.gender.toString().split('.').last,
+                  chatId: _roomCache[i].tenant!.chatId,
+                  language: _roomCache[i].tenant!.language,
+                  deposit: _roomCache[i].tenant!.deposit,
+                  tenantProfile: _roomCache[i].tenant!.tenantProfile,
+                  roomId: _roomCache[i].id,
+                )
+              : null,
+        );
+        await _databaseService.roomsBox.put(i, dto.toJson());
       }
 
-      if (_pendingChanges.isNotEmpty) {
-        final pendingJson = jsonEncode(_pendingChanges);
-        await _apiHelper.storage.write(
-          key: pendingChangesKey,
-          value: pendingJson,
-        );
+      await _databaseService.roomsPendingBox.clear();
+      for (var i = 0; i < _pendingChanges.length; i++) {
+        await _databaseService.roomsPendingBox.put(i, _pendingChanges[i]);
       }
     } catch (e) {
       throw Exception('Failed to save room data: $e');
@@ -129,8 +95,8 @@ class RoomRepository {
   }
 
   Future<void> clear() async {
-    await _apiHelper.storage.delete(key: storageKey);
-    await _apiHelper.storage.delete(key: pendingChangesKey);
+    await _databaseService.roomsBox.clear();
+    await _databaseService.roomsPendingBox.clear();
     _roomCache.clear();
     _pendingChanges.clear();
   }
@@ -216,10 +182,7 @@ class RoomRepository {
     }
 
     if (successfulChanges.isNotEmpty || failedChanges.isNotEmpty) {
-      await _apiHelper.storage.write(
-        key: pendingChangesKey,
-        value: jsonEncode(_pendingChanges),
-      );
+      await save();
     }
   }
 

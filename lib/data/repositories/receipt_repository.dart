@@ -16,77 +16,10 @@ import 'package:joul_v2/data/dtos/service_dto.dart';
 import 'package:dio/dio.dart';
 import 'package:joul_v2/data/models/service.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
-
-// --- Top-level compute helpers ---
-List<Receipt> _parseReceipts(String jsonString) {
-  final List<dynamic> jsonData = jsonDecode(jsonString);
-  return jsonData
-      .map((json) =>
-          ReceiptDto.fromJson(json as Map<String, dynamic>).toReceipt())
-      .toList();
-}
-
-String _encodeReceipts(List<Receipt> receipts) {
-  return jsonEncode(receipts.map((receipt) {
-    final statusStr = receipt.paymentStatus.name.toLowerCase();
-
-    final receiptDto = ReceiptDto(
-      id: receipt.id,
-      date: receipt.date,
-      dueDate: receipt.dueDate,
-      lastWaterUsed: receipt.lastWaterUsed,
-      lastElectricUsed: receipt.lastElectricUsed,
-      thisWaterUsed: receipt.thisWaterUsed,
-      thisElectricUsed: receipt.thisElectricUsed,
-      paymentStatus: statusStr,
-      roomId: receipt.room?.id,
-      roomNumber: receipt.room?.roomNumber,
-      room: receipt.room != null
-          ? RoomDto(
-              id: receipt.room!.id,
-              roomNumber: receipt.room!.roomNumber,
-              roomStatus: receipt.room!.roomStatus.toString().split('.').last,
-              price: receipt.room!.price,
-              buildingId: receipt.room!.building?.id,
-              building: receipt.room!.building != null
-                  ? BuildingDto(
-                      id: receipt.room!.building!.id,
-                      appUserId: receipt.room!.building!.appUserId,
-                      name: receipt.room!.building!.name,
-                      rentPrice: receipt.room!.building!.rentPrice,
-                      electricPrice: receipt.room!.building!.electricPrice,
-                      waterPrice: receipt.room!.building!.waterPrice,
-                      buildingImage: receipt.room!.building!.buildingImage,
-                      services: receipt.room!.building!.services,
-                      passKey: receipt.room!.building!.passKey,
-                    )
-                  : null,
-            )
-          : null,
-      services: receipt.services.isNotEmpty
-          ? receipt.services
-              .map((service) => ServiceDto(
-                    id: service.id,
-                    name: service.name,
-                    price: service.price,
-                    buildingId: service.buildingId,
-                  ))
-              .toList()
-          : null,
-      serviceIds: receipt.serviceIds.isNotEmpty ? receipt.serviceIds : null,
-    );
-
-    return receiptDto.toJson();
-  }).toList());
-}
-
-List<Map<String, dynamic>> _parsePendingChanges(String jsonString) {
-  return List<Map<String, dynamic>>.from(jsonDecode(jsonString));
-}
+import 'package:joul_v2/core/services/database_service.dart';
 
 class ReceiptRepository {
-  final String storageKey = 'receipt_secure_data';
-  final String pendingChangesKey = 'receipt_pending_changes';
+  final DatabaseService _databaseService;
   final ApiHelper _apiHelper = ApiHelper.instance;
   final SyncOperationHelper _syncHelper = SyncOperationHelper();
 
@@ -99,6 +32,7 @@ class ReceiptRepository {
   final TenantRepository _tenantRepository;
 
   ReceiptRepository(
+    this._databaseService,
     this._serviceRepository,
     this._buildingRepository,
     this._roomRepository,
@@ -106,39 +40,81 @@ class ReceiptRepository {
   );
 
   Future<void> load() async {
-    final jsonString = await _apiHelper.storage.read(key: storageKey);
-    if (jsonString != null && jsonString.isNotEmpty) {
-      _receiptCache = await compute(_parseReceipts, jsonString);
-    } else {
-      _receiptCache = [];
-    }
+    final receiptsList = _databaseService.receiptsBox.values.toList();
+    _receiptCache = receiptsList
+        .map((e) =>
+            ReceiptDto.fromJson(Map<String, dynamic>.from(e)).toReceipt())
+        .toList();
 
-    final pendingString = await _apiHelper.storage.read(key: pendingChangesKey);
-    if (pendingString != null && pendingString.isNotEmpty) {
-      _pendingChanges = await compute(_parsePendingChanges, pendingString);
-    } else {
-      _pendingChanges = [];
-    }
+    final pendingList = _databaseService.receiptsPendingBox.values.toList();
+    _pendingChanges =
+        pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
 
     await updateStatusToOverdue();
   }
 
   Future<void> save() async {
-    if (_receiptCache.isNotEmpty) {
-      final jsonString = await compute(_encodeReceipts, _receiptCache);
-      await _apiHelper.storage.write(key: storageKey, value: jsonString);
+    await _databaseService.receiptsBox.clear();
+    for (var i = 0; i < _receiptCache.length; i++) {
+      final receipt = _receiptCache[i];
+      final statusStr = receipt.paymentStatus.name.toLowerCase();
+      final dto = ReceiptDto(
+        id: receipt.id,
+        date: receipt.date,
+        dueDate: receipt.dueDate,
+        lastWaterUsed: receipt.lastWaterUsed,
+        lastElectricUsed: receipt.lastElectricUsed,
+        thisWaterUsed: receipt.thisWaterUsed,
+        thisElectricUsed: receipt.thisElectricUsed,
+        paymentStatus: statusStr,
+        roomId: receipt.room?.id,
+        roomNumber: receipt.room?.roomNumber,
+        room: receipt.room != null
+            ? RoomDto(
+                id: receipt.room!.id,
+                roomNumber: receipt.room!.roomNumber,
+                roomStatus: receipt.room!.roomStatus.toString().split('.').last,
+                price: receipt.room!.price,
+                buildingId: receipt.room!.building?.id,
+                building: receipt.room!.building != null
+                    ? BuildingDto(
+                        id: receipt.room!.building!.id,
+                        appUserId: receipt.room!.building!.appUserId,
+                        name: receipt.room!.building!.name,
+                        rentPrice: receipt.room!.building!.rentPrice,
+                        electricPrice: receipt.room!.building!.electricPrice,
+                        waterPrice: receipt.room!.building!.waterPrice,
+                        buildingImage: receipt.room!.building!.buildingImage,
+                        services: receipt.room!.building!.services,
+                        passKey: receipt.room!.building!.passKey,
+                      )
+                    : null,
+              )
+            : null,
+        services: receipt.services.isNotEmpty
+            ? receipt.services
+                .map((service) => ServiceDto(
+                      id: service.id,
+                      name: service.name,
+                      price: service.price,
+                      buildingId: service.buildingId,
+                    ))
+                .toList()
+            : null,
+        serviceIds: receipt.serviceIds.isNotEmpty ? receipt.serviceIds : null,
+      );
+      await _databaseService.receiptsBox.put(i, dto.toJson());
     }
 
-    if (_pendingChanges.isNotEmpty) {
-      final pendingJson = jsonEncode(_pendingChanges);
-      await _apiHelper.storage
-          .write(key: pendingChangesKey, value: pendingJson);
+    await _databaseService.receiptsPendingBox.clear();
+    for (var i = 0; i < _pendingChanges.length; i++) {
+      await _databaseService.receiptsPendingBox.put(i, _pendingChanges[i]);
     }
   }
 
   Future<void> clear() async {
-    await _apiHelper.storage.delete(key: storageKey);
-    await _apiHelper.storage.delete(key: pendingChangesKey);
+    await _databaseService.receiptsBox.clear();
+    await _databaseService.receiptsPendingBox.clear();
     _receiptCache.clear();
     _pendingChanges.clear();
   }
@@ -253,10 +229,7 @@ class ReceiptRepository {
     }
 
     if (successfulChanges.isNotEmpty || failedChanges.isNotEmpty) {
-      await _apiHelper.storage.write(
-        key: pendingChangesKey,
-        value: jsonEncode(_pendingChanges),
-      );
+      await save();
     }
   }
 

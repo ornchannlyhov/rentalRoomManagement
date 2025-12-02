@@ -35,10 +35,11 @@ class RoomDto {
       roomStatus: json['roomStatus']?.toString() ?? 'available',
       price: _parseDouble(json['price']),
       building: json['building'] != null
-          ? BuildingDto.fromJson(json['building'] as Map<String, dynamic>)
+          ? BuildingDto.fromJson(
+              Map<String, dynamic>.from(json['building'] as Map))
           : null,
       tenant: json['tenant'] != null
-          ? TenantDto.fromJson(json['tenant'] as Map<String, dynamic>)
+          ? TenantDto.fromJson(Map<String, dynamic>.from(json['tenant'] as Map))
           : null,
       receipts: json['receipts'] as List?,
       reports: json['reports'] as List?,
@@ -100,7 +101,8 @@ class RoomDto {
       // FIXED: Updated to match new Building constructor with required fields
       room.building = Building(
         id: buildingId!,
-        appUserId: '', // Placeholder - will be populated when full building data is loaded
+        appUserId:
+            '', // Placeholder - will be populated when full building data is loaded
         name: '',
         rentPrice: 0.0,
         electricPrice: 0.0,

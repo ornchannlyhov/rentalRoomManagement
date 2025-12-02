@@ -38,7 +38,8 @@ class ReceiptDto {
     List<ServiceDto>? services;
     if (json['services'] != null) {
       services = (json['services'] as List)
-          .map((item) => ServiceDto.fromJson(item as Map<String, dynamic>))
+          .map((item) =>
+              ServiceDto.fromJson(Map<String, dynamic>.from(item as Map)))
           .toList();
     }
 
@@ -60,7 +61,7 @@ class ReceiptDto {
       roomId: json['roomId'] as String?,
       roomNumber: json['roomNumber'] as String?,
       room: json['room'] != null
-          ? RoomDto.fromJson(json['room'] as Map<String, dynamic>)
+          ? RoomDto.fromJson(Map<String, dynamic>.from(json['room'] as Map))
           : null,
       services: services,
       serviceIds: serviceIds,

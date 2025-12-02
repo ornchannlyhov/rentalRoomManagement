@@ -25,7 +25,7 @@ class BuildingDto {
     required this.rentPrice,
     required this.electricPrice,
     required this.waterPrice,
-    this.buildingImage, 
+    this.buildingImage,
     List<dynamic>? services,
     this.rooms,
     this.imageFile,
@@ -42,11 +42,10 @@ class BuildingDto {
       waterPrice: _parseDouble(json['waterPrice']),
       buildingImage: json['buildingImage']?.toString() ??
           json['buildingImages']?.toString(),
-
       services: json['services'] as List? ?? [],
       rooms: json['rooms'] != null
           ? (json['rooms'] as List)
-              .map((r) => RoomDto.fromJson(r as Map<String, dynamic>))
+              .map((r) => RoomDto.fromJson(Map<String, dynamic>.from(r as Map)))
               .toList()
           : null,
     );

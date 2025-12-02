@@ -36,9 +36,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeBack => 'Welcome Back';
 
   @override
-  String get report => 'Report';
-
-  @override
   String get signInPrompt => 'Sign in to your account';
 
   @override
@@ -48,6 +45,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String deleteTenantConfirmMsg(String tenant) {
     return 'Are you sure you want to delete tenant $tenant?';
   }
+
+  @override
+  String get report => 'Report';
 
   @override
   String get reports => 'Reports';
@@ -83,7 +83,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get problemDescription => 'Problem Description';
 
   @override
-  String get enterProblemDescription => 'Please describe the problem you are facing';
+  String get enterProblemDescription => 'Please enter a problem description';
 
   @override
   String get noTenant => 'No Tenant';
@@ -143,7 +143,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noOccupiedRooms => 'No occupied rooms';
 
   @override
-  String get pleaseSelectRoom => 'Please select room';
+  String get pleaseSelectRoom => 'Please select a room';
 
   @override
   String get previousMonthUsage => 'Previous Month Usage';
@@ -261,7 +261,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get currencyServiceUnavailable => 'Currency service unavailable – showing base USD rate';
 
   @override
-  String get thankYouForUsingOurService => 'Thank you for using or service!';
+  String get thankYouForUsingOurService => 'Thank you for using our service!';
 
   @override
   String get currencyConversionFailed => 'Failed to convert currency';
@@ -324,7 +324,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorLoadingData => 'Error loading data';
 
   @override
-  String get tryAgain => 'Try Again';
+  String get tryAgain => 'Try again';
 
   @override
   String get male => 'Male';
@@ -410,13 +410,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createNewTenant => 'Create New Tenant';
 
   @override
+  String get tenantNameLabel => 'Name';
+
+  @override
   String get pleaseEnterTenantName => 'Please enter tenant name';
 
   @override
   String get pleaseEnterPhoneNumber => 'Please enter phone number';
 
   @override
-  String get invalidPhoneNumber => 'Invalid phone number format';
+  String get invalidPhoneNumber => 'Invalid phone number';
 
   @override
   String get searchCountry => 'Search country';
@@ -519,8 +522,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String buildingDeleted(String building, Object name) {
-    return 'Building $building deleted successfully';
+  String buildingDeleted(Object name) {
+    return 'Building \"$name\" deleted';
   }
 
   @override
@@ -542,7 +545,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String rentPricePerMonth(Object price) {
-    return 'Monthly Rent Price';
+    return '$price\$/ month';
   }
 
   @override
@@ -632,9 +635,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String roomNumberLabel(Object number) {
     return 'Room $number';
   }
-
-  @override
-  String get tenantNameLabel => 'Name';
 
   @override
   String roomStatus(Object status) {
@@ -1130,9 +1130,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearNotificationsMessage => 'This will remove all notification items. You can still view receipts in the Receipts tab.';
 
   @override
-  String get phoneNumberLabel => 'Phone Number';
-
-  @override
   String get phoneNumberHint => '010 123 456';
 
   @override
@@ -1194,4 +1191,79 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get passwordTooShort => 'Password must be at least 6 characters';
+
+  @override
+  String get paymentSettings => 'Payment Settings';
+
+  @override
+  String get paymentSettingsSubtitle => 'Configure payout methods';
+
+  @override
+  String get paymentConfigInfo => 'Set up how you want to receive payments from your tenants';
+
+  @override
+  String get paymentMethod => 'Payment Method';
+
+  @override
+  String get both => 'Both';
+
+  @override
+  String get none => 'None';
+
+  @override
+  String get enabledMethods => 'Enabled Methods';
+
+  @override
+  String get khqrSubtitle => 'QR code payments';
+
+  @override
+  String get abaPayWaySubtitle => 'Online banking payments';
+
+  @override
+  String get bankDetails => 'Bank Details';
+
+  @override
+  String get bankName => 'Bank Name';
+
+  @override
+  String get enterBankName => 'e.g., ABA Bank';
+
+  @override
+  String get accountNumber => 'Account Number';
+
+  @override
+  String get enterAccountNumber => 'e.g., 001122334';
+
+  @override
+  String get accountHolderName => 'Account Holder Name';
+
+  @override
+  String get enterAccountHolderName => 'e.g., John Doe';
+
+  @override
+  String get pleaseEnterBankName => 'Please enter bank name';
+
+  @override
+  String get pleaseEnterAccountNumber => 'Please enter account number';
+
+  @override
+  String get pleaseEnterAccountHolderName => 'Please enter account holder name';
+
+  @override
+  String get savePaymentConfig => 'Save Configuration';
+
+  @override
+  String get updatePaymentConfig => 'Update Configuration';
+
+  @override
+  String get paymentConfigSaved => 'Payment configuration saved successfully';
+
+  @override
+  String get paymentConfigUpdated => 'Payment configuration updated successfully';
+
+  @override
+  String get failedToLoadPaymentConfig => 'Failed to load payment configuration';
+
+  @override
+  String get retry => 'Retry';
 }

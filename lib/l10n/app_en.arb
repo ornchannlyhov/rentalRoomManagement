@@ -9,7 +9,6 @@
   "moneyTab": "Money",
   "buildingAnalysisTab": "Building",
   "welcomeBack": "Welcome Back",
-  "report": "report",
   "signInPrompt": "Sign in to your account",
   "tenantInformation": "Tenant Information",
   "deleteTenantConfirmMsg": "Are you sure you want to delete tenant {tenant}?",
@@ -20,243 +19,215 @@
       }
     }
   },
-    
   "report": "Report",
   "@report": {
     "description": "Label for a single report"
   },
-  
   "reports": "Reports",
   "@reports": {
     "description": "Label for multiple reports"
   },
-  
   "addReport": "Add Report",
   "@addReport": {
     "description": "Button text to add a new report"
   },
-  
   "editReport": "Edit Report",
   "@editReport": {
     "description": "Button text to edit an existing report"
   },
-  
   "deleteReport": "Delete Report",
   "@deleteReport": {
     "description": "Button text to delete a report"
   },
-  
   "noReports": "No Reports",
   "@noReports": {
     "description": "Message shown when there are no reports"
   },
-  
   "reportAddedSuccess": "Report added successfully",
   "@reportAddedSuccess": {
     "description": "Success message after adding a report"
   },
-  
   "reportUpdatedSuccess": "Report updated successfully",
   "@reportUpdatedSuccess": {
     "description": "Success message after updating a report"
   },
-  
   "reportDeletedSuccess": "Report deleted successfully",
   "@reportDeletedSuccess": {
     "description": "Success message after deleting a report"
   },
-  
   "deleteReportConfirm": "Are you sure you want to delete this report?",
   "@deleteReportConfirm": {
     "description": "Confirmation message before deleting a report"
   },
-  
   "selectTenant": "Please select a tenant",
   "@selectTenant": {
     "description": "Validation message to select a tenant"
   },
-  
   "problemDescription": "Problem Description",
   "@problemDescription": {
     "description": "Label for problem description field"
   },
-  
   "enterProblemDescription": "Please enter a problem description",
   "@enterProblemDescription": {
     "description": "Validation message for problem description field"
   },
-  
   "noTenant": "No Tenant",
   "@noTenant": {
     "description": "Text shown when report has no tenant assigned"
   },
-  
   "optional": "Optional",
   "@optional": {
     "description": "Label indicating a field is optional"
   },
-  
   "reportStatusPending": "Pending",
   "@reportStatusPending": {
     "description": "Report status: Pending"
   },
-  
   "reportStatusInProgress": "In Progress",
   "@reportStatusInProgress": {
     "description": "Report status: In Progress"
   },
-  
   "reportStatusResolved": "Resolved",
   "@reportStatusResolved": {
     "description": "Report status: Resolved"
   },
-  
   "reportStatusClosed": "Closed",
   "@reportStatusClosed": {
     "description": "Report status: Closed"
   },
-  
   "reportPriorityLow": "Low",
   "@reportPriorityLow": {
     "description": "Report priority: Low"
   },
-  
   "reportPriorityMedium": "Medium",
   "@reportPriorityMedium": {
     "description": "Report priority: Medium"
   },
-  
   "reportPriorityHigh": "High",
   "@reportPriorityHigh": {
     "description": "Report priority: High"
   },
-  
   "reportLanguageEnglish": "English",
   "@reportLanguageEnglish": {
     "description": "Report language: English"
   },
-  
   "reportLanguageKhmer": "Khmer",
   "@reportLanguageKhmer": {
     "description": "Report language: Khmer"
   },
   "editReceipt": "Edit Receipt",
-"createNewReceipt": "Create New Receipt",
-"noBuildingsPrompt": "No buildings. Please create a building before creating a receipt.",
-"createNewBuilding": "Create New Building",
-"selectBuilding": "Select Building",
-"all": "All",
-"selectRoom": "Select Room",
-"noOccupiedRooms": "No occupied rooms",
-"pleaseSelectRoom": "Please select a room",
-"previousMonthUsage": "Previous Month Usage",
-"currentMonthUsage": "Current Month Usage",
-"waterM3": "Water (m³)",
-"electricityKWh": "Electricity (kWh)",
-"services": "Services",
-"selectBuildingFirst": "Please select a building first",
-"noServicesForBuilding": "No services available for this building",
-"errorLoadingServices": "Error loading services",
-"receiptDetailTitle": "Receipt Details",
-"shareReceipt": "Share Receipt",
-"receiptForRoom": "Receipt for Room {room}",
-"tenantInfo": "Tenant Information",
-"tenantName": "Name",
-"phoneNumber": "Phone Number",
-"utilityUsage": "Utility Usage",
-"waterPreviousMonth": "Water (Previous Month)",
-"waterCurrentMonth": "Water (Current Month)",
-"electricPreviousMonth": "Electricity (Previous Month)",
-"electricCurrentMonth": "Electricity (Current Month)",
-"paymentBreakdown": "Payment Breakdown",
-"waterUsage": "Water Usage",
-"totalWaterPrice": "Total Water Price",
-"electricUsage": "Electricity Usage",
-"totalElectricPrice": "Total Electricity Price",
-"additionalServices": "Additional Services",
-"totalServicePrice": "Total Service Price",
-"roomRent": "Room Rent",
-"grandTotal": "Grand Total",
-
-"available": "Available",
-"rented": "Rented",
-"editService": "Edit Service",
-"createNewService": "Create New Service",
-"serviceName": "Service Name",
-"serviceNameRequired": "Please enter service name",
-"@servicePrice": {
-  "placeholders": { "price": {} }
-},
-"servicePriceLabel": "Service Price",
-"addService": "Add Service",
-"currencyServiceUnavailable": "Currency service unavailable – showing base USD rate",
-"thankYouForUsingOurService": "Thank you for using or service!",
-"currencyConversionFailed": "Failed to convert currency",
-"shareReceiptFailed": "Failed to share receipt",
-"save": "Save",
-"errorLoadingBuildings": "Error loading buildings",
-"unknown": "Unknown",
+  "createNewReceipt": "Create New Receipt",
+  "noBuildingsPrompt": "No buildings. Please create a building before creating a receipt.",
+  "createNewBuilding": "Create New Building",
+  "selectBuilding": "Select Building",
+  "all": "All",
+  "selectRoom": "Select Room",
+  "noOccupiedRooms": "No occupied rooms",
+  "pleaseSelectRoom": "Please select a room",
+  "previousMonthUsage": "Previous Month Usage",
+  "currentMonthUsage": "Current Month Usage",
+  "waterM3": "Water (m³)",
+  "electricityKWh": "Electricity (kWh)",
+  "services": "Services",
+  "selectBuildingFirst": "Please select a building first",
+  "noServicesForBuilding": "No services available for this building",
+  "errorLoadingServices": "Error loading services",
+  "receiptDetailTitle": "Receipt Details",
+  "shareReceipt": "Share Receipt",
+  "receiptForRoom": "Receipt for Room {room}",
+  "tenantInfo": "Tenant Information",
+  "tenantName": "Name",
+  "phoneNumber": "Phone Number",
+  "utilityUsage": "Utility Usage",
+  "waterPreviousMonth": "Water (Previous Month)",
+  "waterCurrentMonth": "Water (Current Month)",
+  "electricPreviousMonth": "Electricity (Previous Month)",
+  "electricCurrentMonth": "Electricity (Current Month)",
+  "paymentBreakdown": "Payment Breakdown",
+  "waterUsage": "Water Usage",
+  "totalWaterPrice": "Total Water Price",
+  "electricUsage": "Electricity Usage",
+  "totalElectricPrice": "Total Electricity Price",
+  "additionalServices": "Additional Services",
+  "totalServicePrice": "Total Service Price",
+  "roomRent": "Room Rent",
+  "grandTotal": "Grand Total",
+  "available": "Available",
+  "rented": "Rented",
+  "editService": "Edit Service",
+  "createNewService": "Create New Service",
+  "serviceName": "Service Name",
+  "serviceNameRequired": "Please enter service name",
+  "servicePriceLabel": "Service Price",
+  "addService": "Add Service",
+  "currencyServiceUnavailable": "Currency service unavailable – showing base USD rate",
+  "thankYouForUsingOurService": "Thank you for using our service!",
+  "currencyConversionFailed": "Failed to convert currency",
+  "shareReceiptFailed": "Failed to share receipt",
+  "save": "Save",
+  "errorLoadingBuildings": "Error loading buildings",
+  "unknown": "Unknown",
   "menu": "Menu",
   "dueDate": "Due Date",
   "paidStatus": "Paid",
-"pendingStatus": "Pending",
-"notes": "Notes",
+  "pendingStatus": "Pending",
+  "notes": "Notes",
   "priorityLabel": "Priority",
-"overdueStatus": "Overdue",
-"status": "status",
-"delete": "Delete",
-"unknownRoom": "Unknown Room",
-"room": "Room",
-"changedTo": "changed to",
+  "overdueStatus": "Overdue",
+  "status": "status",
+  "delete": "Delete",
+  "unknownRoom": "Unknown Room",
+  "room": "Room",
+  "changedTo": "changed to",
   "noTenants": "No tenants",
   "tapToAddNewTenant": "Tap + to add a new tenant",
   "errorLoadingData": "Error loading data",
   "tryAgain": "Try again",
   "male": "Male",
-      "changeStatus": "Change Status",
-    "filterByStatus": "Filter by Status",
-    "allReports": "All Reports",
-    "unknownTenant": "Unknown Tenant",
-    "reportStatusUpdated": "Report status updated to {status}",
-    "@reportStatusUpdated": {
-      "placeholders": {
-        "status": {
-          "type": "String"
-        }
+  "changeStatus": "Change Status",
+  "filterByStatus": "Filter by Status",
+  "allReports": "All Reports",
+  "unknownTenant": "Unknown Tenant",
+  "reportStatusUpdated": "Report status updated to {status}",
+  "@reportStatusUpdated": {
+    "placeholders": {
+      "status": {
+        "type": "String"
       }
-    },
-    "reportStatusUpdateFailed": "Failed to update report status",
-    "noFilteredReports": "No {status} Reports",
-    "@noFilteredReports": {
-      "placeholders": {
-        "status": {
-          "type": "String"
-        }
+    }
+  },
+  "reportStatusUpdateFailed": "Failed to update report status",
+  "noFilteredReports": "No {status} Reports",
+  "@noFilteredReports": {
+    "placeholders": {
+      "status": {
+        "type": "String"
       }
-    },
-    "noFilteredReportsSubtitle": "No reports match the selected status filter",
-    "clearFilter": "Clear Filter",
-    "deleteReportConfirmFrom": "Are you sure you want to delete this report from {tenant}?",
-    "@deleteReportConfirmFrom": {
-      "placeholders": {
-        "tenant": {
-          "type": "String"
-        }
+    }
+  },
+  "noFilteredReportsSubtitle": "No reports match the selected status filter",
+  "clearFilter": "Clear Filter",
+  "deleteReportConfirmFrom": "Are you sure you want to delete this report from {tenant}?",
+  "@deleteReportConfirmFrom": {
+    "placeholders": {
+      "tenant": {
+        "type": "String"
       }
-    },
-    "reportPriorityUrgent": "Urgent",
-    "deleteBuildingWarning": "Are you sure you want to delete {name}? This will also delete all rooms, services, and associated data.",
-    "@deleteBuildingWarning": {
-      "placeholders": {
-        "name": {
-          "type": "String"
-        }
+    }
+  },
+  "reportPriorityUrgent": "Urgent",
+  "deleteBuildingWarning": "Are you sure you want to delete {name}? This will also delete all rooms, services, and associated data.",
+  "@deleteBuildingWarning": {
+    "placeholders": {
+      "name": {
+        "type": "String"
       }
-    },
-    "noRoomsSubtitle": "Pull to refresh or add a new room",
-    "noServicesSubtitle": "Pull to refresh or add a new service",
-    "noReportsSubtitle": "Pull to refresh",
-    "refresh": "refresh",
+    }
+  },
+  "noRoomsSubtitle": "Pull to refresh or add a new room",
+  "noServicesSubtitle": "Pull to refresh or add a new service",
+  "noReportsSubtitle": "Pull to refresh",
+  "refresh": "refresh",
   "female": "Female",
   "other": "Other",
   "contactInformation": "Contact Information",
@@ -265,13 +236,11 @@
   "rentalPrice": "Rental Price",
   "editTenant": "Edit Tenant",
   "createNewTenant": "Create New Tenant",
-  "selectBuilding": "Select Building",
-  "tenantName": "Tenant Name",
+  "tenantNameLabel": "Name",
   "pleaseEnterTenantName": "Please enter tenant name",
   "pleaseEnterPhoneNumber": "Please enter phone number",
   "invalidPhoneNumber": "Invalid phone number",
   "searchCountry": "Search country",
-  "pleaseSelectRoom": "Please select room",
   "gender": "Gender",
   "updateTenant": "Update Tenant",
   "createTenant": "Create Tenant",
@@ -294,81 +263,67 @@
   "searchBuildingHint": "Search building...",
   "confirmDelete": "Confirm Delete",
   "buildings": "Buildings",
-"searchBuildings": "Search buildings...",
-"noBuildingsFound": "No buildings found",
-"noBuildingsAvailable": "No buildings available",
-"tryDifferentKeywords": "Try searching with different keywords",
-"tapPlusToAddBuilding": "Tap + to add a new building",
-"loading": "Loading...",
-"errorLoadingData": "Error loading data",
-"tryAgain": "Try again",
-"confirmDelete": "Confirm Delete",
-"deleteBuildingConfirmMsg": "Are you sure you want to delete building \"{name}\"?",
-"@deleteBuildingConfirmMsg": {
-  "placeholders": {
-    "name": {}
-  }
-},
-"cancel": "Cancel",
-"delete": "Delete",
-"buildingDeletedSuccess": "Building \"{name}\" deleted successfully",
-"@buildingDeletedSuccess": {
-  "placeholders": {
-    "name": {}
-  }
-},
-"buildingDeleted": "Building \"{name}\" deleted",
-"@buildingDeleted": {
-  "placeholders": {
-    "name": {}
-  }
-},
-"buildingDeleteFailed": "Failed to delete building: {error}",
-"@buildingDeleteFailed": {
-  "placeholders": {
-    "error": {}
-  }
-},
-"rentPriceLabel": "Monthly Rent Price",
-"electricPricePerKwh": "Electricity Price (1 kWh)",
-"waterPricePerCubicMeter": "Water Price (1 m³)",
-"rentPricePerMonthLabel": "Monthly Rent Price",
-"rentPricePerMonth": "{price}$/ month",
-"@rentPricePerMonth": {
-  "placeholders": { "price": {} }
-},
-"passKey": "Key: {key}",
-"@passKey": {
-  "placeholders": {
-    "key": {}
-  }
-},
-"perMonth": "/ month",
-"electricity": "Electricity",
-"water": "Water",
-"viewDetails": "View Details",
-"edit": "Edit",
-"delete": "Delete",
-"ofTotal": "/ {total}",
-"@ofTotal": {
-  "placeholders": {
-    "total": {}
-  }
-},
-  "deleteConfirmMsg": "Are you sure you want to delete building {building}?",
-  "@deleteConfirmMsg": {
-    "description": "Confirmation message for deleting a building",
+  "searchBuildings": "Search buildings...",
+  "noBuildingsFound": "No buildings found",
+  "noBuildingsAvailable": "No buildings available",
+  "tryDifferentKeywords": "Try searching with different keywords",
+  "tapPlusToAddBuilding": "Tap + to add a new building",
+  "loading": "Loading...",
+  "deleteBuildingConfirmMsg": "Are you sure you want to delete building \"{name}\"?",
+  "@deleteBuildingConfirmMsg": {
     "placeholders": {
-      "building": {
-        "type": "String"
-      }
+      "name": {}
     }
   },
   "cancel": "Cancel",
-  "delete": "Delete",
-  "buildingDeleted": "Building {building} deleted successfully",
+  "buildingDeletedSuccess": "Building \"{name}\" deleted successfully",
+  "@buildingDeletedSuccess": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "buildingDeleted": "Building \"{name}\" deleted",
   "@buildingDeleted": {
-    "description": "Success message after deleting a building",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "buildingDeleteFailed": "Failed to delete building: {error}",
+  "@buildingDeleteFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "rentPriceLabel": "Monthly Rent Price",
+  "electricPricePerKwh": "Electricity Price (1 kWh)",
+  "waterPricePerCubicMeter": "Water Price (1 m³)",
+  "rentPricePerMonthLabel": "Monthly Rent Price",
+  "rentPricePerMonth": "{price}$/ month",
+  "@rentPricePerMonth": {
+    "placeholders": {
+      "price": {}
+    }
+  },
+  "passKey": "Key: {key}",
+  "@passKey": {
+    "placeholders": {
+      "key": {}
+    }
+  },
+  "perMonth": "/ month",
+  "electricity": "Electricity",
+  "water": "Water",
+  "viewDetails": "View Details",
+  "edit": "Edit",
+  "ofTotal": "/ {total}",
+  "@ofTotal": {
+    "placeholders": {
+      "total": {}
+    }
+  },
+  "deleteConfirmMsg": "Are you sure you want to delete building {building}?",
+  "@deleteConfirmMsg": {
+    "description": "Confirmation message for deleting a building",
     "placeholders": {
       "building": {
         "type": "String"
@@ -390,35 +345,41 @@
   "tryDifferentKeyword": "Try a different keyword",
   "oldDataTitle": "History",
   "searchReceiptHint": "Search receipts...",
-  "paidStatus": "Paid",
-  "pendingStatus": "Pending",
-  "overdueStatus": "Overdue",
   "viewDetail": "View Details",
   "share": "Share",
-  "edit": "Edit",
   "deleteOption": "Delete",
   "undo": "Undo",
   "receiptTitle": "Receipts",
   "noReceipts": "No receipts",
-  "loading": "Loading...",
   "settingsTitle": "Settings",
   "settings": "Settings",
   "changeRoom": "Change Room",
-  "viewDetails": "View Details",
   "building": "Building",
   "roomNumberLabel": "Room {number}",
-"@roomNumberLabel": { "placeholders": { "number": {} } },
-"tenantNameLabel": "Name",
-"roomStatus": "Status: {status}",
-"@roomStatus": { "placeholders": { "status": {} } },
-
-"tenantName": "Tenant: {name}",
-"@tenantName": { "placeholders": { "name": {} } },
-"rentPrice": "Rent Price: {price}$",
-"@rentPrice": { "placeholders": { "price": {} } },
-  "phoneNumber": "Phone Number",
+  "@roomNumberLabel": {
+    "placeholders": {
+      "number": {}
+    }
+  },
+  "roomStatus": "Status: {status}",
+  "@roomStatus": {
+    "placeholders": {
+      "status": {}
+    }
+  },
+  "tenantName": "Tenant: {name}",
+  "@tenantName": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "rentPrice": "Rent Price: {price}$",
+  "@rentPrice": {
+    "placeholders": {
+      "price": {}
+    }
+  },
   "noRoom": "No Room",
-  "unknownRoom": "Unknown Room",
   "accountSettings": "Account Settings",
   "accountSettingsSubtitle": "Privacy, security, change password",
   "privacySecurity": "Privacy, security, change password",
@@ -524,70 +485,97 @@
     }
   },
   "priceValue": "Price: {price}$",
-"@priceValue": {
-  "placeholders": { "price": {} }
-},
-
+  "@priceValue": {
+    "placeholders": {
+      "price": {}
+    }
+  },
   "rooms": "Rooms",
-"servicePrice": "{price}$",
-"@servicePrice": {
-  "placeholders": { "price": {} }
-},
-"servicePrice": "{price}$",
-"@servicePrice": {
-  "placeholders": { "price": {} }
-},
-"servicePriceLabel": "Service Price",
-"available": "Available",
-"rented": "Rented",
-"services": "Services",
-"addRoom": "Add Room",
-"addService": "Add Service",
-"noRooms": "No Rooms",
-"noServices": "No Services",
-"pullToRefresh": "Pull down to refresh",
-"roomAddedSuccess": "Room \"{number}\" added successfully",
-"@roomAddedSuccess": { "placeholders": { "number": {} } },
-"roomUpdatedSuccess": "Room \"{number}\" updated successfully",
-"@roomUpdatedSuccess": { "placeholders": { "number": {} } },
-"roomDeletedSuccess": "Room \"{number}\" deleted successfully",
-"@roomDeletedSuccess": { "placeholders": { "number": {} } },
-"serviceAddedSuccess": "Service \"{name}\" added successfully",
-"@serviceAddedSuccess": { "placeholders": { "name": {} } },
-"serviceUpdatedSuccess": "Service \"{name}\" updated successfully",
-"@serviceUpdatedSuccess": { "placeholders": { "name": {} } },
-"serviceDeletedSuccess": "Service \"{name}\" deleted successfully",
-"@serviceDeletedSuccess": { "placeholders": { "name": {} } },
-"buildingUpdatedSuccess": "Building \"{name}\" updated successfully",
-"@buildingUpdatedSuccess": { "placeholders": { "name": {} } },
-"deleteBuilding": "Delete Building",
-"deleteBuildingConfirm": "Do you want to delete building \"{name}\"?",
-"@deleteBuildingConfirm": { "placeholders": { "name": {} } },
-"buildingDeletedSuccess": "Building \"{name}\" deleted successfully",
-"@buildingDeletedSuccess": { "placeholders": { "name": {} } },
-"deleteRoom": "Delete Room",
-"deleteRoomConfirm": "Do you want to delete room \"{number}\"?",
-"@deleteRoomConfirm": { "placeholders": { "number": {} } },
-"deleteService": "Delete Service",
-"deleteServiceConfirm": "Do you want to delete service \"{name}\"?",
-"@deleteServiceConfirm": { "placeholders": { "name": {} } },
-"errorOccurred": "An error occurred",
-"tryAgain": "Try Again",
-"addNewBuilding": "Add New Building",
-"editBuilding": "Edit Building",
-"cancel": "Cancel",
-"buildingName": "Building Name",
-"buildingNameRequired": "Please enter building name.",
-"rentPricePerMonth": "Monthly Rent Price",
-"roomCount": "Number of Rooms",
-"currentRoomCount": "Current Number of Rooms",
-"roomCountRequired": "Please enter number of rooms.",
-"roomCountInvalid": "Please enter a valid number of rooms.",
-"roomCountEditNote": "Room count cannot be changed. Manage rooms individually.",
-"electricPricePerKwh": "Electricity Price (1 kWh)",
-"waterPricePerCubicMeter": "Water Price (1 m³)",
-"saveChanges": "Save Changes",
-"saveBuilding": "Save Building",
+  "servicePrice": "{price}$",
+  "@servicePrice": {
+    "placeholders": {
+      "price": {}
+    }
+  },
+  "addRoom": "Add Room",
+  "noRooms": "No Rooms",
+  "noServices": "No Services",
+  "pullToRefresh": "Pull down to refresh",
+  "roomAddedSuccess": "Room \"{number}\" added successfully",
+  "@roomAddedSuccess": {
+    "placeholders": {
+      "number": {}
+    }
+  },
+  "roomUpdatedSuccess": "Room \"{number}\" updated successfully",
+  "@roomUpdatedSuccess": {
+    "placeholders": {
+      "number": {}
+    }
+  },
+  "roomDeletedSuccess": "Room \"{number}\" deleted successfully",
+  "@roomDeletedSuccess": {
+    "placeholders": {
+      "number": {}
+    }
+  },
+  "serviceAddedSuccess": "Service \"{name}\" added successfully",
+  "@serviceAddedSuccess": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "serviceUpdatedSuccess": "Service \"{name}\" updated successfully",
+  "@serviceUpdatedSuccess": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "serviceDeletedSuccess": "Service \"{name}\" deleted successfully",
+  "@serviceDeletedSuccess": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "buildingUpdatedSuccess": "Building \"{name}\" updated successfully",
+  "@buildingUpdatedSuccess": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "deleteBuilding": "Delete Building",
+  "deleteBuildingConfirm": "Do you want to delete building \"{name}\"?",
+  "@deleteBuildingConfirm": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "deleteRoom": "Delete Room",
+  "deleteRoomConfirm": "Do you want to delete room \"{number}\"?",
+  "@deleteRoomConfirm": {
+    "placeholders": {
+      "number": {}
+    }
+  },
+  "deleteService": "Delete Service",
+  "deleteServiceConfirm": "Do you want to delete service \"{name}\"?",
+  "@deleteServiceConfirm": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "errorOccurred": "An error occurred",
+  "addNewBuilding": "Add New Building",
+  "editBuilding": "Edit Building",
+  "buildingName": "Building Name",
+  "buildingNameRequired": "Please enter building name.",
+  "roomCount": "Number of Rooms",
+  "currentRoomCount": "Current Number of Rooms",
+  "roomCountRequired": "Please enter number of rooms.",
+  "roomCountInvalid": "Please enter a valid number of rooms.",
+  "roomCountEditNote": "Room count cannot be changed. Manage rooms individually.",
+  "saveChanges": "Save Changes",
+  "saveBuilding": "Save Building",
   "roomChangeFailed": "Error undoing room change",
   "retryLoadingProfile": "Retry Loading Profile",
   "failedToLoadProfile": "Failed to load profile.",
@@ -625,235 +613,42 @@
   "november": "November",
   "december": "December",
   "orSignOut": "Or Sign Out",
-  "all": "All",
-  "errorLoadingBuildings": "Error loading buildings",
   "pleaseEnterValue": "Please enter a value",
   "pleaseEnterValidNumber": "Please enter a valid number",
   "receiptsCount": "{count,plural, =1{{count} receipt}other{{count} receipts}}",
   "@receiptsCount": {
-  "placeholders": {
-    "count": {
-      "type": "num"
-    }
-  }
-},
-"receiptDeletedRoom": "Receipt for room {room} deleted",
-"@receiptDeletedRoom": {
-  "description": "Success message after a receipt is deleted",
-  "placeholders": {
-    "room": { "type": "String" }
-  }
-},
-"receiptNotFound": "Receipt not found",
-"@receiptNotFound": {
-  "description": "Error message when a receipt cannot be found in the provider"
-},
-"addReceipt": "Add Receipt",
-"@addReceipt": {
-  "description": "Tooltip for the add-receipt button"
-},
-"deleteReceiptConfirmMsg": "Are you sure you want to delete the receipt for room {room}?",
-"@deleteReceiptConfirmMsg": {
-  "description": "Confirmation dialog when deleting a receipt",
-  "placeholders": {
-    "room": { "type": "String" }
-  }
-},
-  "totalRevenue": "Total Revenue",
-  "paid": "Paid",
-  "remaining": "Remaining",
-  "collectionRate": "Collection Rate: {rate}%",
-  "@collectionRate": {
     "placeholders": {
-      "rate": {
-        "type": "String"
+      "count": {
+        "type": "num"
       }
     }
   },
-  "tapToSeeDetails": "Tap to see details",
-  "utilityAnalysis": "Utility Analysis",
-  "pending": "Pending",
-  "overdue": "Overdue",
-  "selectMonth": "Select Month",
-  "year": "Year: ",
-  "month": "Month:",
-  "previousMonth": "Previous Month",
-  "nextMonth": "Next Month",
-  "water": "Water",
-  "electricity": "Electricity",
-  "room": "Room",
-  "service": "Service",
-  "emailValidationInvalid": "Please enter a valid email",
-  "passwordValidationLength": "Password must be at least 6 characters",
-  "passwordsDoNotMatch": "Passwords do not match",
-  "chooseLanguageTitle": "Choose Your Language",
-  "chooseLanguageSubtitle": "Select your preferred language",
-  "continueButton": "Continue",
-  "nextButton": "Next",
-  "notificationRemoved": "Notification removed",
-  "notificationsCleared": "All notifications cleared",
-  "noNotifications": "No notifications",
-  "newReceiptNotification": "New receipt notifications will appear here",
-  "clearAllNotifications": "Clear all notifications?",
-  "clearNotificationsMessage": "This will remove all notification items. You can still view receipts in the Receipts tab.",
-  "phoneNumberLabel": "Phone Number",
-  "phoneNumberHint": "010 123 456",
-  "invalidPhoneNumber": "Invalid phone number format",
-  "requestOtp": "Request OTP",
-  "verificationCode": "Verification Code",
-  "enterCodeSentTo": "Please enter the code sent to",
-  "verify": "Verify",
-  "didNotReceiveCode": "Didn't receive code? ",
-  "resend": "Resend",
-  "invalidOtp": "Please enter a valid 6-digit code",
-  "roomChanged": "Room for {tenant} changed to {room}",
-  "@roomChanged": {
-    "description": "Message when a tenant's room is changed",
+  "receiptDeletedRoom": "Receipt for room {room} deleted",
+  "@receiptDeletedRoom": {
+    "description": "Success message after a receipt is deleted",
     "placeholders": {
-      "tenant": {
-        "type": "String"
-      },
       "room": {
         "type": "String"
       }
     }
   },
-  "priceValue": "Price: {price}$",
-"@priceValue": {
-  "placeholders": { "price": {} }
-},
-
-  "rooms": "Rooms",
-"servicePrice": "{price}$",
-"@servicePrice": {
-  "placeholders": { "price": {} }
-},
-"servicePrice": "{price}$",
-"@servicePrice": {
-  "placeholders": { "price": {} }
-},
-"servicePriceLabel": "Service Price",
-"available": "Available",
-"rented": "Rented",
-"services": "Services",
-"addRoom": "Add Room",
-"addService": "Add Service",
-"noRooms": "No Rooms",
-"noServices": "No Services",
-"pullToRefresh": "Pull down to refresh",
-"roomAddedSuccess": "Room \"{number}\" added successfully",
-"@roomAddedSuccess": { "placeholders": { "number": {} } },
-"roomUpdatedSuccess": "Room \"{number}\" updated successfully",
-"@roomUpdatedSuccess": { "placeholders": { "number": {} } },
-"roomDeletedSuccess": "Room \"{number}\" deleted successfully",
-"@roomDeletedSuccess": { "placeholders": { "number": {} } },
-"serviceAddedSuccess": "Service \"{name}\" added successfully",
-"@serviceAddedSuccess": { "placeholders": { "name": {} } },
-"serviceUpdatedSuccess": "Service \"{name}\" updated successfully",
-"@serviceUpdatedSuccess": { "placeholders": { "name": {} } },
-"serviceDeletedSuccess": "Service \"{name}\" deleted successfully",
-"@serviceDeletedSuccess": { "placeholders": { "name": {} } },
-"buildingUpdatedSuccess": "Building \"{name}\" updated successfully",
-"@buildingUpdatedSuccess": { "placeholders": { "name": {} } },
-"deleteBuilding": "Delete Building",
-"deleteBuildingConfirm": "Do you want to delete building \"{name}\"?",
-"@deleteBuildingConfirm": { "placeholders": { "name": {} } },
-"buildingDeletedSuccess": "Building \"{name}\" deleted successfully",
-"@buildingDeletedSuccess": { "placeholders": { "name": {} } },
-"deleteRoom": "Delete Room",
-"deleteRoomConfirm": "Do you want to delete room \"{number}\"?",
-"@deleteRoomConfirm": { "placeholders": { "number": {} } },
-"deleteService": "Delete Service",
-"deleteServiceConfirm": "Do you want to delete service \"{name}\"?",
-"@deleteServiceConfirm": { "placeholders": { "name": {} } },
-"errorOccurred": "An error occurred",
-"tryAgain": "Try Again",
-"addNewBuilding": "Add New Building",
-"editBuilding": "Edit Building",
-"cancel": "Cancel",
-"buildingName": "Building Name",
-"buildingNameRequired": "Please enter building name.",
-"rentPricePerMonth": "Monthly Rent Price",
-"roomCount": "Number of Rooms",
-"currentRoomCount": "Current Number of Rooms",
-"roomCountRequired": "Please enter number of rooms.",
-"roomCountInvalid": "Please enter a valid number of rooms.",
-"roomCountEditNote": "Room count cannot be changed. Manage rooms individually.",
-"electricPricePerKwh": "Electricity Price (1 kWh)",
-"waterPricePerCubicMeter": "Water Price (1 m³)",
-"saveChanges": "Save Changes",
-"saveBuilding": "Save Building",
-  "roomChangeFailed": "Error undoing room change",
-  "retryLoadingProfile": "Retry Loading Profile",
-  "failedToLoadProfile": "Failed to load profile.",
-  "noLoggedIn": "You are not logged in.",
-  "notLoggedIn": "You are not logged in.",
-  "goToOnboarding": "Go to Onboarding",
-  "unknownUser": "Unknown User",
-  "noEmailProvided": "No Email Provided",
-  "editProfileTapped": "Edit profile tapped",
-  "signOutSuccess": "Signed out successfully!",
-  "signOutFailed": "Failed to sign out",
-  "confirmPasswordLabel": "Confirm Password",
-  "confirmPasswordHint": "Confirm your password",
-  "manageBuildings": "Manage Buildings & Rooms",
-  "manageBuildingsDesc": "Manage your buildings, rooms, and services easily with our intuitive interface.",
-  "tenantManagement": "Tenant Management",
-  "tenantManagementDesc": "Assign tenants and automate receipts with just a few taps.",
-  "paymentTracking": "Payment Tracking",
-  "paymentTrackingDesc": "Track payments easily - Pending, Paid, and Overdue status at a glance.",
-  "automationTools": "Automation Tools",
-  "automationToolsDesc": "Automate work with Telegram bot reminders and utilities input.",
-  "advancedAnalysis": "Advanced Analysis",
-  "financial": "Financial",
-  "errorLoadingCurrencyRate": "Error loading currency rate",
-  "january": "January",
-  "february": "February",
-  "march": "March",
-  "april": "April",
-  "may": "May",
-  "june": "June",
-  "july": "July",
-  "august": "August",
-  "september": "September",
-  "october": "October",
-  "november": "November",
-  "december": "December",
-  "orSignOut": "Or Sign Out",
-  "all": "All",
-  "errorLoadingBuildings": "Error loading buildings",
-  "pleaseEnterValue": "Please enter a value",
-  "pleaseEnterValidNumber": "Please enter a valid number",
-  "receiptsCount": "{count,plural, =1{{count} receipt}other{{count} receipts}}",
-  "@receiptsCount": {
-  "placeholders": {
-    "count": {
-      "type": "num"
+  "receiptNotFound": "Receipt not found",
+  "@receiptNotFound": {
+    "description": "Error message when a receipt cannot be found in the provider"
+  },
+  "addReceipt": "Add Receipt",
+  "@addReceipt": {
+    "description": "Tooltip for the add-receipt button"
+  },
+  "deleteReceiptConfirmMsg": "Are you sure you want to delete the receipt for room {room}?",
+  "@deleteReceiptConfirmMsg": {
+    "description": "Confirmation dialog when deleting a receipt",
+    "placeholders": {
+      "room": {
+        "type": "String"
+      }
     }
-  }
-},
-"receiptDeletedRoom": "Receipt for room {room} deleted",
-"@receiptDeletedRoom": {
-  "description": "Success message after a receipt is deleted",
-  "placeholders": {
-    "room": { "type": "String" }
-  }
-},
-"receiptNotFound": "Receipt not found",
-"@receiptNotFound": {
-  "description": "Error message when a receipt cannot be found in the provider"
-},
-"addReceipt": "Add Receipt",
-"@addReceipt": {
-  "description": "Tooltip for the add-receipt button"
-},
-"deleteReceiptConfirmMsg": "Are you sure you want to delete the receipt for room {room}?",
-"@deleteReceiptConfirmMsg": {
-  "description": "Confirmation dialog when deleting a receipt",
-  "placeholders": {
-    "room": { "type": "String" }
-  }
-},
+  },
   "totalRevenue": "Total Revenue",
   "paid": "Paid",
   "remaining": "Remaining",
@@ -874,9 +669,6 @@
   "month": "Month:",
   "previousMonth": "Previous Month",
   "nextMonth": "Next Month",
-  "water": "Water",
-  "electricity": "Electricity",
-  "room": "Room",
   "service": "Service",
   "emailValidationInvalid": "Please enter a valid email",
   "passwordValidationLength": "Password must be at least 6 characters",
@@ -891,9 +683,7 @@
   "newReceiptNotification": "New receipt notifications will appear here",
   "clearAllNotifications": "Clear all notifications?",
   "clearNotificationsMessage": "This will remove all notification items. You can still view receipts in the Receipts tab.",
-  "phoneNumberLabel": "Phone Number",
   "phoneNumberHint": "010 123 456",
-  "invalidPhoneNumber": "Invalid phone number format",
   "requestOtp": "Request OTP",
   "verificationCode": "Verification Code",
   "enterCodeSentTo": "Please enter the code sent to",
@@ -905,7 +695,6 @@
   "faqs": "FAQs",
   "reportProblem": "Report Problem",
   "describeProblem": "Describe the problem",
-  "enterProblemDescription": "Please describe the problem you are facing",
   "reportSent": "Report sent successfully",
   "send": "Send",
   "changePassword": "Change Password",
@@ -913,7 +702,31 @@
   "newPassword": "New Password",
   "updatePassword": "Update Password",
   "passwordUpdated": "Password updated successfully",
-  "passwordsDoNotMatch": "Passwords do not match",
   "pleaseEnterPassword": "Please enter password",
-  "passwordTooShort": "Password must be at least 6 characters"
+  "passwordTooShort": "Password must be at least 6 characters",
+  "paymentSettings": "Payment Settings",
+  "paymentSettingsSubtitle": "Configure payout methods",
+  "paymentConfigInfo": "Set up how you want to receive payments from your tenants",
+  "paymentMethod": "Payment Method",
+  "both": "Both",
+  "none": "None",
+  "enabledMethods": "Enabled Methods",
+  "khqrSubtitle": "QR code payments",
+  "abaPayWaySubtitle": "Online banking payments",
+  "bankDetails": "Bank Details",
+  "bankName": "Bank Name",
+  "enterBankName": "e.g., ABA Bank",
+  "accountNumber": "Account Number",
+  "enterAccountNumber": "e.g., 001122334",
+  "accountHolderName": "Account Holder Name",
+  "enterAccountHolderName": "e.g., John Doe",
+  "pleaseEnterBankName": "Please enter bank name",
+  "pleaseEnterAccountNumber": "Please enter account number",
+  "pleaseEnterAccountHolderName": "Please enter account holder name",
+  "savePaymentConfig": "Save Configuration",
+  "updatePaymentConfig": "Update Configuration",
+  "paymentConfigSaved": "Payment configuration saved successfully",
+  "paymentConfigUpdated": "Payment configuration updated successfully",
+  "failedToLoadPaymentConfig": "Failed to load payment configuration",
+  "retry": "Retry"
 }

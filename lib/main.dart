@@ -1,8 +1,9 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:joul_v2/core/globals.dart';
+import 'package:joul_v2/presentation/providers/payment_config_provider.dart';
 import 'package:joul_v2/presentation/view/screen/auth/login_screen.dart';
 import 'package:joul_v2/presentation/view/screen/auth/onboard_screen.dart';
 import 'package:joul_v2/presentation/view/screen/auth/register_screen.dart';
@@ -10,13 +11,8 @@ import 'package:provider/provider.dart';
 import 'package:joul_v2/core/helper_widgets/auth_wraper.dart';
 import 'package:joul_v2/core/helper_widgets/splash_screen.dart';
 import 'package:joul_v2/presentation/providers/notification_provider.dart';
-import 'package:joul_v2/data/repositories/report_repository.dart';
-import 'package:joul_v2/data/repositories/auth_repository.dart';
-import 'package:joul_v2/data/repositories/building_repository.dart';
 import 'package:joul_v2/data/repositories/receipt_repository.dart';
-import 'package:joul_v2/data/repositories/room_repository.dart';
-import 'package:joul_v2/data/repositories/service_repository.dart';
-import 'package:joul_v2/data/repositories/tenant_repository.dart';
+import 'package:joul_v2/data/repositories/payment_config_repository.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
 import 'package:joul_v2/core/helpers/repository_manager.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
@@ -31,131 +27,58 @@ import 'package:joul_v2/core/theme/app_theme.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'dart:async';
-import 'dart:io' show Platform;
+import 'package:joul_v2/core/di/service_locator.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Only initialize Firebase on supported platforms
-  if (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS) {
-    // import these only for mobile/web if needed
-    // import 'package:firebase_core/firebase_core.dart';
-    // import 'package:firebase_messaging/firebase_messaging.dart';
-    // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-    // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    // await _initializeFCMPermissions();
-  }
-
   await dotenv.load(fileName: ".env");
   await initializeDateFormatting();
+  await Firebase.initializeApp();
+
+  // Setup Service Locator (GetIt)
+  await setupLocator();
 
   final navigatorKey = GlobalKey<NavigatorState>();
 
-  // --- Repositories ---
-  final roomRepository = RoomRepository();
-  final buildingRepository = BuildingRepository();
-  final serviceRepository = ServiceRepository();
-  final tenantRepository = TenantRepository();
-  final receiptRepository = ReceiptRepository(
-    serviceRepository,
-    buildingRepository,
-    roomRepository,
-    tenantRepository,
-  );
-  final authRepository = AuthRepository();
-  final reportRepository = ReportRepository();
+  // --- Load local data ---
+  final repositoryManager = locator<RepositoryManager>();
+  final paymentConfigRepository = locator<PaymentConfigRepository>();
+  final authProvider = locator<AuthProvider>();
 
-  final repositoryManager = RepositoryManager(
-    buildingRepository: buildingRepository,
-    roomRepository: roomRepository,
-    tenantRepository: tenantRepository,
-    receiptRepository: receiptRepository,
-    serviceRepository: serviceRepository,
-    reportRepository: reportRepository,
-  );
-
-  // --- AuthProvider ---
-  final authProvider = AuthProvider(
-    authRepository,
-    repositoryManager: repositoryManager,
-  );
+  await repositoryManager.loadAll();
+  await paymentConfigRepository.load();
   await authProvider.load();
 
-  // --- Load data in background ---
-  final loadDataFuture = _loadDataInBackground(
-    repositoryManager: repositoryManager,
-    authProvider: authProvider,
-  );
+  // --- Load Providers in Background ---
+  unawaited(_loadProvidersInBackground());
 
-  // --- Other providers ---
-  final roomProvider = RoomProvider(
-    roomRepository,
-    tenantRepository,
-    repositoryManager: repositoryManager,
-  );
-  final serviceProvider = ServiceProvider(
-    serviceRepository,
-    repositoryManager: repositoryManager,
-  );
-  final tenantProvider = TenantProvider(
-    tenantRepository,
-    repositoryManager: repositoryManager,
-  );
-  final receiptProvider = ReceiptProvider(
-    receiptRepository,
-    repositoryManager: repositoryManager,
-  );
-  final reportProvider = ReportProvider(
-    reportRepository,
-    repositoryManager: repositoryManager,
-  );
-  final buildingProvider = BuildingProvider(
-    buildingRepository,
-    roomRepository,
-    repositoryManager: repositoryManager,
-  );
+  // --- Sync data in background ---
+  final loadDataFuture = _syncDataInBackground();
 
-  unawaited(_loadProvidersInBackground(
-    roomProvider: roomProvider,
-    serviceProvider: serviceProvider,
-    tenantProvider: tenantProvider,
-    receiptProvider: receiptProvider,
-    reportProvider: reportProvider,
-    buildingProvider: buildingProvider,
-  ));
-
+  // Notification Provider (needs navigatorKey so instantiated manually for now, or could be refactored)
+  // For now, we can keep it here or register it in locator with a setter for navigatorKey
+  // Let's keep it manual for simplicity as it depends on navigatorKey
   final notificationProvider = NotificationProvider(
-      receiptRepository, navigatorKey,
+      locator<ReceiptRepository>(), navigatorKey,
       repositoryManager: repositoryManager);
   notificationProvider.setupListeners();
-
-  // Load notifications AFTER receipt provider is loaded to ensure we can map IDs to objects
   await notificationProvider.loadNotifications();
 
   runApp(MyApp(
     navigatorKey: navigatorKey,
-    authProvider: authProvider,
-    repositoryManager: repositoryManager,
-    roomProvider: roomProvider,
-    buildingProvider: buildingProvider,
-    receiptProvider: receiptProvider,
-    serviceProvider: serviceProvider,
-    tenantProvider: tenantProvider,
-    reportProvider: reportProvider,
     loadDataFuture: loadDataFuture,
     notificationProvider: notificationProvider,
   ));
 }
 
-Future<void> _loadDataInBackground({
-  required RepositoryManager repositoryManager,
-  required AuthProvider authProvider,
-}) async {
+Future<void> _syncDataInBackground() async {
   try {
-    await repositoryManager.loadAll();
+    final authProvider = locator<AuthProvider>();
     if (authProvider.isAuthenticated()) {
       if (await ApiHelper.instance.hasNetwork()) {
-        await repositoryManager.syncAll();
+        await locator<RepositoryManager>().syncAll();
+        await locator<PaymentConfigRepository>().syncFromApi();
       }
     }
   } catch (_) {
@@ -163,22 +86,16 @@ Future<void> _loadDataInBackground({
   }
 }
 
-Future<void> _loadProvidersInBackground({
-  required RoomProvider roomProvider,
-  required ServiceProvider serviceProvider,
-  required TenantProvider tenantProvider,
-  required ReceiptProvider receiptProvider,
-  required ReportProvider reportProvider,
-  required BuildingProvider buildingProvider,
-}) async {
+Future<void> _loadProvidersInBackground() async {
   try {
     await Future.wait([
-      roomProvider.load(),
-      serviceProvider.load(),
-      tenantProvider.load(),
-      receiptProvider.load(),
-      reportProvider.load(),
-      buildingProvider.load(),
+      locator<RoomProvider>().load(),
+      locator<ServiceProvider>().load(),
+      locator<TenantProvider>().load(),
+      locator<ReceiptProvider>().load(),
+      locator<ReportProvider>().load(),
+      locator<BuildingProvider>().load(),
+      locator<PaymentConfigProvider>().load(),
     ]);
   } catch (_) {
     // Fail silently
@@ -187,28 +104,12 @@ Future<void> _loadProvidersInBackground({
 
 class MyApp extends StatefulWidget {
   final GlobalKey<NavigatorState> navigatorKey;
-  final AuthProvider authProvider;
-  final RepositoryManager repositoryManager;
-  final RoomProvider roomProvider;
-  final BuildingProvider buildingProvider;
-  final ReceiptProvider receiptProvider;
-  final ServiceProvider serviceProvider;
-  final TenantProvider tenantProvider;
-  final ReportProvider reportProvider;
   final Future<void> loadDataFuture;
   final NotificationProvider notificationProvider;
 
   const MyApp({
     super.key,
     required this.navigatorKey,
-    required this.authProvider,
-    required this.repositoryManager,
-    required this.roomProvider,
-    required this.buildingProvider,
-    required this.receiptProvider,
-    required this.serviceProvider,
-    required this.tenantProvider,
-    required this.reportProvider,
     required this.loadDataFuture,
     required this.notificationProvider,
   });
@@ -234,16 +135,17 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider.value(value: widget.authProvider),
+        ChangeNotifierProvider(create: (_) => locator<AuthProvider>()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider.value(value: widget.notificationProvider),
-        Provider.value(value: widget.repositoryManager),
-        ChangeNotifierProvider.value(value: widget.roomProvider),
-        ChangeNotifierProvider.value(value: widget.serviceProvider),
-        ChangeNotifierProvider.value(value: widget.tenantProvider),
-        ChangeNotifierProvider.value(value: widget.buildingProvider),
-        ChangeNotifierProvider.value(value: widget.receiptProvider),
-        ChangeNotifierProvider.value(value: widget.reportProvider),
+        Provider(create: (_) => locator<RepositoryManager>()),
+        ChangeNotifierProvider(create: (_) => locator<RoomProvider>()),
+        ChangeNotifierProvider(create: (_) => locator<ServiceProvider>()),
+        ChangeNotifierProvider(create: (_) => locator<TenantProvider>()),
+        ChangeNotifierProvider(create: (_) => locator<BuildingProvider>()),
+        ChangeNotifierProvider(create: (_) => locator<ReceiptProvider>()),
+        ChangeNotifierProvider(create: (_) => locator<ReportProvider>()),
+        ChangeNotifierProvider(create: (_) => locator<PaymentConfigProvider>()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
@@ -292,3 +194,6 @@ class SecureStorageService {
     await _storage.deleteAll();
   }
 }
+
+final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
