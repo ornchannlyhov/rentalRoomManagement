@@ -8,6 +8,7 @@ import 'package:joul_v2/data/repositories/room_repository.dart';
 import 'package:joul_v2/data/repositories/service_repository.dart';
 import 'package:joul_v2/data/repositories/tenant_repository.dart';
 import 'package:joul_v2/data/repositories/report_repository.dart';
+import 'package:joul_v2/data/repositories/notification_repository.dart';
 import 'package:joul_v2/core/helpers/repository_manager.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
 import 'package:joul_v2/presentation/providers/building_provider.dart';
@@ -27,8 +28,11 @@ Future<void> setupLocator() async {
 
   // Repositories
   locator.registerLazySingleton(() => AuthRepository());
-  locator
-      .registerLazySingleton(() => RoomRepository(locator<DatabaseService>()));
+  locator.registerLazySingleton(() => RoomRepository(
+        locator<DatabaseService>(),
+        locator<BuildingRepository>(),
+        locator<TenantRepository>(),
+      ));
   locator.registerLazySingleton(
       () => BuildingRepository(locator<DatabaseService>()));
   locator.registerLazySingleton(
@@ -51,6 +55,10 @@ Future<void> setupLocator() async {
         locator<DatabaseService>(),
       ));
 
+  locator.registerLazySingleton(() => NotificationRepository(
+        locator<DatabaseService>(),
+      ));
+
   // Repository Manager
   locator.registerLazySingleton(() => RepositoryManager(
         buildingRepository: locator<BuildingRepository>(),
@@ -59,6 +67,8 @@ Future<void> setupLocator() async {
         receiptRepository: locator<ReceiptRepository>(),
         serviceRepository: locator<ServiceRepository>(),
         reportRepository: locator<ReportRepository>(),
+        notificationRepository: locator<NotificationRepository>(),
+        paymentConfigRepository: locator<PaymentConfigRepository>(),
       ));
 
   // Providers (as singletons so they maintain state)

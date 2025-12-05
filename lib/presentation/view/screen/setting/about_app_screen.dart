@@ -70,7 +70,7 @@ class AboutAppScreen extends StatelessWidget {
             _buildLinkTile(
               context,
               icon: Icons.description_outlined,
-              title: "Terms of Service",
+              title: localizations.termsOfService,
               onTap: () {
                 Navigator.push(
                   context,
@@ -84,7 +84,7 @@ class AboutAppScreen extends StatelessWidget {
             _buildLinkTile(
               context,
               icon: Icons.privacy_tip_outlined,
-              title: "Privacy Policy",
+              title: localizations.privacyPolicy,
               onTap: () {
                 Navigator.push(
                   context,

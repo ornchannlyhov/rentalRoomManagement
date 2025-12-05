@@ -55,11 +55,20 @@ class DataHydrationHelper {
   /// Step 1: Link rooms to their buildings
   void hydrateRoomsWithBuildings() {
     for (var room in rooms) {
+      // Use the ID from the placeholder object (or existing object)
       final buildingId = room.building?.id;
 
       if (buildingId != null && buildingId.isNotEmpty) {
         final fullBuilding = _buildingMap[buildingId];
-        room.building = fullBuilding;
+        // If found, replace placeholder with full object
+        // If not found, keep as is (or set to null if strict)
+        // Usually better to set to null if dependency is missing to avoid using placeholder
+        if (fullBuilding != null) {
+          room.building = fullBuilding;
+        } else {
+          // Dependency missing in cache
+          room.building = null;
+        }
       } else {
         room.building = null;
       }
@@ -98,7 +107,11 @@ class DataHydrationHelper {
 
       if (roomId != null && roomId.isNotEmpty) {
         final fullRoom = _roomMap[roomId];
-        tenant.room = fullRoom;
+        if (fullRoom != null) {
+          tenant.room = fullRoom;
+        } else {
+          tenant.room = null;
+        }
       } else {
         tenant.room = null;
       }
@@ -119,6 +132,9 @@ class DataHydrationHelper {
     // Assign tenants to rooms
     for (var room in rooms) {
       final tenant = tenantByRoom[room.id];
+
+      // Only overwrite if tenant is found, otherwise room.tenant might be null
+      // But we should probably clear it if no tenant claims this room
       room.tenant = tenant;
 
       // Ensure bidirectional link
@@ -135,7 +151,12 @@ class DataHydrationHelper {
 
       if (roomId != null && roomId.isNotEmpty) {
         final fullRoom = _roomMap[roomId];
-        receipt.room = fullRoom;
+        if (fullRoom != null) {
+          receipt.room = fullRoom;
+        } else {
+          // Room not found in cache, set to null to avoid using placeholder
+          receipt.room = null;
+        }
       } else {
         receipt.room = null;
       }

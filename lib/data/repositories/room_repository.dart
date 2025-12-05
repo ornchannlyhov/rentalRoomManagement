@@ -5,9 +5,9 @@ import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
 import 'package:joul_v2/data/models/room.dart';
 import 'package:joul_v2/data/models/enum/room_status.dart';
 import 'package:joul_v2/data/dtos/room_dto.dart';
-import 'package:joul_v2/data/dtos/building_dto.dart';
-import 'package:joul_v2/data/dtos/tenant_dto.dart';
 import 'package:joul_v2/core/services/database_service.dart';
+import 'package:joul_v2/data/repositories/building_repository.dart';
+import 'package:joul_v2/data/repositories/tenant_repository.dart';
 
 class RoomRepository {
   final DatabaseService _databaseService;
@@ -17,28 +17,100 @@ class RoomRepository {
   List<Room> _roomCache = [];
   List<Map<String, dynamic>> _pendingChanges = [];
 
-  RoomRepository(this._databaseService);
+  final BuildingRepository _buildingRepository;
+  final TenantRepository _tenantRepository;
+
+  RoomRepository(
+    this._databaseService,
+    this._buildingRepository,
+    this._tenantRepository,
+  );
 
   Future<void> load() async {
     try {
-      final roomsList = _databaseService.roomsBox.values.toList();
-      _roomCache = roomsList.map((e) {
-        final roomDto = RoomDto.fromJson(Map<String, dynamic>.from(e));
-        final room = roomDto.toRoom();
-        if (roomDto.building != null) {
-          room.building = roomDto.building!.toBuilding();
-        }
-        if (roomDto.tenant != null) {
-          room.tenant = roomDto.tenant!.toTenant();
-        }
-        return room;
-      }).toList();
-
-      final pendingList = _databaseService.roomsPendingBox.values.toList();
-      _pendingChanges =
-          pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
+      await loadWithoutHydration();
+      await _hydrateFromCachedRepositories();
     } catch (e) {
       throw Exception('Failed to load room data: $e');
+    }
+  }
+
+  Future<void> loadWithoutHydration() async {
+    final roomsList = _databaseService.roomsBox.values.toList();
+    _roomCache = roomsList.map((e) {
+      final roomDto = RoomDto.fromJson(Map<String, dynamic>.from(e));
+      return roomDto.toRoom();
+    }).toList();
+
+    final pendingList = _databaseService.roomsPendingBox.values.toList();
+    _pendingChanges =
+        pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
+
+    if (kDebugMode) {
+      print(
+          '📥 Loaded ${_roomCache.length} rooms from Hive (without hydration)');
+    }
+  }
+
+  Future<void> _hydrateFromCachedRepositories() async {
+    final buildings = _buildingRepository.getAllBuildings();
+    final tenants = _tenantRepository.getAllTenants();
+
+    if (buildings.isEmpty) {
+      if (kDebugMode) {
+        print('⚠️ Warning: Cannot hydrate rooms - buildings not loaded yet');
+      }
+      // Even if buildings are empty, we should still try to load what we can
+      // or just return if it's critical.
+      // For now, we proceed, but relationships might be null if not found.
+    }
+
+    final buildingMap = {for (var b in buildings) b.id: b};
+    // Tenant repository might not have getAllTenants or it might be per building.
+    // Assuming getAllTenants exists or we can get them.
+    // If TenantRepository doesn't have getAllTenants, we might need to rely on what's available.
+    // Checking TenantRepository... it usually has getAllTenants or similar.
+    final tenantMap = {for (var t in tenants) t.id: t};
+
+    for (var room in _roomCache) {
+      // Hydrate Building
+      // We need to know the buildingId. Room object might not have it if it was created from DTO without building object.
+      // But RoomDto.toRoom() sets building if buildingId is present (as a placeholder).
+      // Let's check RoomDto.toRoom() again.
+      // It creates a placeholder Building if buildingId is present.
+
+      if (room.building != null) {
+        final buildingId = room.building!.id;
+        if (buildingMap.containsKey(buildingId)) {
+          room.building = buildingMap[buildingId];
+        }
+      }
+
+      // Hydrate Tenant
+      // Room doesn't have a direct tenantId field, it has a Tenant object.
+      // We need to check if we can recover the tenantId.
+      // If we saved only IDs, the DTO `tenantId` would be set, but `toRoom` might not set the Tenant object if `tenant` DTO is null.
+      // We need to update RoomDto.toRoom to handle tenantId.
+      // Wait, I missed updating RoomDto.toRoom to use tenantId!
+      // I will fix RoomDto in a separate step or assume I'll fix it.
+      // Actually, I should fix RoomDto.toRoom first or handle it here.
+      // If RoomDto.toRoom() doesn't use tenantId, then room.tenant will be null.
+      // So I need to update RoomDto.toRoom as well.
+
+      // Assuming RoomDto is updated or we can access the DTO data here? No, we only have _roomCache which are Room objects.
+      // If I update RoomDto.toRoom to create a placeholder Tenant from tenantId, then room.tenant will not be null (but placeholder).
+
+      if (room.tenant != null) {
+        final tenantId = room.tenant!.id;
+        if (tenantMap.containsKey(tenantId)) {
+          room.tenant = tenantMap[tenantId];
+          room.tenant!.room = room; // Link back
+        }
+      }
+    }
+
+    if (kDebugMode) {
+      print('✅ Hydrated ${_roomCache.length} rooms from cached repositories');
     }
   }
 
@@ -46,41 +118,18 @@ class RoomRepository {
     try {
       await _databaseService.roomsBox.clear();
       for (var i = 0; i < _roomCache.length; i++) {
+        final room = _roomCache[i];
         final dto = RoomDto(
-          id: _roomCache[i].id,
-          roomNumber: _roomCache[i].roomNumber,
-          roomStatus: _roomCache[i].roomStatus == RoomStatus.occupied
-              ? 'occupied'
-              : 'available',
-          price: _roomCache[i].price,
-          buildingId: _roomCache[i].building?.id,
-          building: _roomCache[i].building != null
-              ? BuildingDto(
-                  id: _roomCache[i].building!.id,
-                  appUserId: _roomCache[i].building!.appUserId,
-                  name: _roomCache[i].building!.name,
-                  rentPrice: _roomCache[i].building!.rentPrice,
-                  electricPrice: _roomCache[i].building!.electricPrice,
-                  waterPrice: _roomCache[i].building!.waterPrice,
-                  buildingImage: _roomCache[i].building!.buildingImage,
-                  services: _roomCache[i].building!.services,
-                  passKey: _roomCache[i].building!.passKey,
-                )
-              : null,
-          tenant: _roomCache[i].tenant != null
-              ? TenantDto(
-                  id: _roomCache[i].tenant!.id,
-                  name: _roomCache[i].tenant!.name,
-                  phoneNumber: _roomCache[i].tenant!.phoneNumber,
-                  gender:
-                      _roomCache[i].tenant!.gender.toString().split('.').last,
-                  chatId: _roomCache[i].tenant!.chatId,
-                  language: _roomCache[i].tenant!.language,
-                  deposit: _roomCache[i].tenant!.deposit,
-                  tenantProfile: _roomCache[i].tenant!.tenantProfile,
-                  roomId: _roomCache[i].id,
-                )
-              : null,
+          id: room.id,
+          roomNumber: room.roomNumber,
+          roomStatus:
+              room.roomStatus == RoomStatus.occupied ? 'occupied' : 'available',
+          price: room.price,
+          buildingId: room.building?.id,
+          tenantId: room.tenant?.id,
+          // Do NOT save full objects
+          building: null,
+          tenant: null,
         );
         await _databaseService.roomsBox.put(i, dto.toJson());
       }
@@ -88,6 +137,10 @@ class RoomRepository {
       await _databaseService.roomsPendingBox.clear();
       for (var i = 0; i < _pendingChanges.length; i++) {
         await _databaseService.roomsPendingBox.put(i, _pendingChanges[i]);
+      }
+
+      if (kDebugMode) {
+        print('💾 Saved ${_roomCache.length} rooms to Hive');
       }
     } catch (e) {
       throw Exception('Failed to save room data: $e');

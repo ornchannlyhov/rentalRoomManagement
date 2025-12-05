@@ -154,7 +154,8 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
 
   String _formatPrice(double price, {bool isTotal = false}) {
     if (isTotal && _selectedCurrency != 'USD' && _convertedTotalPrice != null) {
-      return CurrencyService.formatCurrency(_convertedTotalPrice!, _selectedCurrency);
+      return CurrencyService.formatCurrency(
+          _convertedTotalPrice!, _selectedCurrency);
     }
     return '\$${price.toStringAsFixed(2)}';
   }
@@ -254,18 +255,31 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                       children: [
                         Text(
                           l10n.receiptForRoom(
-                            widget.receipt.room?.roomNumber ?? l10n.notAvailable,
+                            widget.receipt.room?.roomNumber ??
+                                l10n.notAvailable,
                           ),
                           style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: theme.colorScheme.primary,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          DateFormat.yMMMMd('km').format(widget.receipt.date),
-                          style: theme.textTheme.titleSmall,
+                        _buildInfoRow(
+                          theme,
+                          l10n.date,
+                          DateFormat('dd MMM yyyy, HH:mm')
+                              .format(widget.receipt.date),
                         ),
+                        _buildInfoRow(
+                          theme,
+                          l10n.roomNumber,
+                          widget.receipt.room?.roomNumber ?? l10n.notAvailable,
+                        ),
+                        if (tenant != null)
+                          _buildInfoRow(
+                            theme,
+                            l10n.tenantNameLabel,
+                            tenant.name,
+                          ),
                       ],
                     ),
                   ),
@@ -366,7 +380,8 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                             const SizedBox(width: 8),
                           ],
                           Text(
-                            _formatPrice(widget.receipt.totalPrice, isTotal: true),
+                            _formatPrice(widget.receipt.totalPrice,
+                                isTotal: true),
                             style: theme.textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: theme.colorScheme.primary,

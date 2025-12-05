@@ -32,6 +32,18 @@ class ServiceRepository {
     }
   }
 
+  Future<void> loadWithoutHydration() async {
+    final servicesList = _databaseService.servicesBox.values.toList();
+    _serviceCache = servicesList
+        .map((e) =>
+            ServiceDto.fromJson(Map<String, dynamic>.from(e)).toService())
+        .toList();
+
+    final pendingList = _databaseService.servicesPendingBox.values.toList();
+    _pendingChanges =
+        pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
   Future<void> save() async {
     try {
       await _databaseService.servicesBox.clear();

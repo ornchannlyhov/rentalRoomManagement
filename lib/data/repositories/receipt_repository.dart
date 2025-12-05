@@ -10,9 +10,6 @@ import 'package:joul_v2/core/helpers/api_helper.dart';
 import 'package:joul_v2/data/models/enum/payment_status.dart';
 import 'package:joul_v2/data/models/receipt.dart';
 import 'package:joul_v2/data/dtos/receipt_dto.dart';
-import 'package:joul_v2/data/dtos/room_dto.dart';
-import 'package:joul_v2/data/dtos/building_dto.dart';
-import 'package:joul_v2/data/dtos/service_dto.dart';
 import 'package:dio/dio.dart';
 import 'package:joul_v2/data/models/service.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
@@ -39,7 +36,15 @@ class ReceiptRepository {
     this._tenantRepository,
   );
 
+  /// Load with automatic hydration (for standalone use)
   Future<void> load() async {
+    await loadWithoutHydration();
+    await _hydrateFromCachedRepositories();
+    await updateStatusToOverdue();
+  }
+
+  /// Load WITHOUT hydration (for use by RepositoryManager)
+  Future<void> loadWithoutHydration() async {
     final receiptsList = _databaseService.receiptsBox.values.toList();
     _receiptCache = receiptsList
         .map((e) =>
@@ -50,7 +55,52 @@ class ReceiptRepository {
     _pendingChanges =
         pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
 
-    await updateStatusToOverdue();
+    if (kDebugMode) {
+      print('📥 Loaded ${_receiptCache.length} receipts from Hive (without hydration)');
+    }
+  }
+
+  /// Hydrate receipt relationships from cached repositories (for offline use)
+  Future<void> _hydrateFromCachedRepositories() async {
+    final rooms = _roomRepository.getAllRooms();
+    final services = _serviceRepository.getAllServices();
+    
+    if (rooms.isEmpty || services.isEmpty) {
+      // Dependencies not loaded yet, skip hydration
+      if (kDebugMode) {
+        print('⚠️ Warning: Cannot hydrate receipts - rooms or services not loaded yet');
+      }
+      return;
+    }
+    
+    final roomMap = {for (var r in rooms) r.id: r};
+    final serviceMap = {for (var s in services) s.id: s};
+    
+    for (var receipt in _receiptCache) {
+      // Hydrate room relationship (which includes building and tenant)
+      final roomId = receipt.room?.id;
+      if (roomId != null && roomMap.containsKey(roomId)) {
+        receipt.room = roomMap[roomId];
+      }
+      
+      // Hydrate services
+      if (receipt.serviceIds.isNotEmpty) {
+        final hydratedServices = <Service>[];
+        for (var serviceId in receipt.serviceIds) {
+          final service = serviceMap[serviceId];
+          if (service != null) {
+            hydratedServices.add(service);
+          }
+        }
+        if (hydratedServices.isNotEmpty) {
+          receipt.services = hydratedServices;
+        }
+      }
+    }
+
+    if (kDebugMode) {
+      print('✅ Hydrated ${_receiptCache.length} receipts from cached repositories');
+    }
   }
 
   Future<void> save() async {
@@ -58,6 +108,8 @@ class ReceiptRepository {
     for (var i = 0; i < _receiptCache.length; i++) {
       final receipt = _receiptCache[i];
       final statusStr = receipt.paymentStatus.name.toLowerCase();
+      
+      // Only store IDs for relationships, not full objects
       final dto = ReceiptDto(
         id: receipt.id,
         date: receipt.date,
@@ -69,39 +121,8 @@ class ReceiptRepository {
         paymentStatus: statusStr,
         roomId: receipt.room?.id,
         roomNumber: receipt.room?.roomNumber,
-        room: receipt.room != null
-            ? RoomDto(
-                id: receipt.room!.id,
-                roomNumber: receipt.room!.roomNumber,
-                roomStatus: receipt.room!.roomStatus.toString().split('.').last,
-                price: receipt.room!.price,
-                buildingId: receipt.room!.building?.id,
-                building: receipt.room!.building != null
-                    ? BuildingDto(
-                        id: receipt.room!.building!.id,
-                        appUserId: receipt.room!.building!.appUserId,
-                        name: receipt.room!.building!.name,
-                        rentPrice: receipt.room!.building!.rentPrice,
-                        electricPrice: receipt.room!.building!.electricPrice,
-                        waterPrice: receipt.room!.building!.waterPrice,
-                        buildingImage: receipt.room!.building!.buildingImage,
-                        services: receipt.room!.building!.services,
-                        passKey: receipt.room!.building!.passKey,
-                      )
-                    : null,
-              )
-            : null,
-        services: receipt.services.isNotEmpty
-            ? receipt.services
-                .map((service) => ServiceDto(
-                      id: service.id,
-                      name: service.name,
-                      price: service.price,
-                      buildingId: service.buildingId,
-                    ))
-                .toList()
-            : null,
         serviceIds: receipt.serviceIds.isNotEmpty ? receipt.serviceIds : null,
+        // Don't store full nested objects - only IDs
       );
       await _databaseService.receiptsBox.put(i, dto.toJson());
     }
@@ -109,6 +130,10 @@ class ReceiptRepository {
     await _databaseService.receiptsPendingBox.clear();
     for (var i = 0; i < _pendingChanges.length; i++) {
       await _databaseService.receiptsPendingBox.put(i, _pendingChanges[i]);
+    }
+
+    if (kDebugMode) {
+      print('💾 Saved ${_receiptCache.length} receipts to Hive');
     }
   }
 

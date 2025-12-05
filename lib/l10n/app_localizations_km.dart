@@ -343,7 +343,7 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String reportStatusUpdated(String status) {
-    return 'ស្ថានភាពរបាយការណ៍ត្រូវបានធ្វើបច្ចុប្បន្នភាពទៅ $status';
+    return 'ស្ថានភាពរបាយការណ៍ត្រូវបានកែប្រែទៅ $status';
   }
 
   @override
@@ -428,7 +428,7 @@ class AppLocalizationsKm extends AppLocalizations {
   String get gender => 'ភេទ';
 
   @override
-  String get updateTenant => 'ធ្វើបច្ចុប្បន្នភាពអ្នកជួល';
+  String get updateTenant => 'កែប្រែអ្នកជួល';
 
   @override
   String get createTenant => 'បង្កើតអ្នកជួល';
@@ -763,7 +763,7 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String tenantUpdated(String tenant) {
-    return 'បានធ្វើបច្ចុប្បន្នភាពអ្នកជួល $tenant ដោយជោគជ័យ';
+    return 'បានកែប្រែអ្នកជួល $tenant ដោយជោគជ័យ';
   }
 
   @override
@@ -814,7 +814,7 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String roomUpdatedSuccess(Object number) {
-    return 'បានធ្វើបច្ចុប្បន្នភាពបន្ទប់ \"$number\" ដោយជោគជ័យ';
+    return 'បានកែប្រែបន្ទប់ \"$number\" ដោយជោគជ័យ';
   }
 
   @override
@@ -829,7 +829,7 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String serviceUpdatedSuccess(Object name) {
-    return 'បានធ្វើបច្ចុប្បន្នភាពសេវាកម្ម \"$name\" ដោយជោគជ័យ';
+    return 'បានកែប្រែសេវាកម្ម \"$name\" ដោយជោគជ័យ';
   }
 
   @override
@@ -839,7 +839,7 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String buildingUpdatedSuccess(Object name) {
-    return 'បានធ្វើបច្ចុប្បន្នភាពអគារ \"$name\" ដោយជោគជ័យ';
+    return 'បានកែប្រែអគារ \"$name\" ដោយជោគជ័យ';
   }
 
   @override
@@ -1180,10 +1180,10 @@ class AppLocalizationsKm extends AppLocalizations {
   String get newPassword => 'ពាក្យសម្ងាត់ថ្មី';
 
   @override
-  String get updatePassword => 'ធ្វើបច្ចុប្បន្នភាពពាក្យសម្ងាត់';
+  String get updatePassword => 'កែប្រែពាក្យសម្ងាត់';
 
   @override
-  String get passwordUpdated => 'ពាក្យសម្ងាត់ត្រូវបានធ្វើបច្ចុប្បន្នភាពដោយជោគជ័យ';
+  String get passwordUpdated => 'ពាក្យសម្ងាត់ត្រូវបានកែប្រែដោយជោគជ័យ';
 
   @override
   String get pleaseEnterPassword => 'សូមបញ្ចូលពាក្យសម្ងាត់';
@@ -1252,17 +1252,90 @@ class AppLocalizationsKm extends AppLocalizations {
   String get savePaymentConfig => 'រក្សាទុកការកំណត់';
 
   @override
-  String get updatePaymentConfig => 'ធ្វើបច្ចុប្បន្នភាពការកំណត់';
+  String get updatePaymentConfig => 'កែប្រែការកំណត់';
 
   @override
   String get paymentConfigSaved => 'ការកំណត់ការទូទាត់ត្រូវបានរក្សាទុកដោយជោគជ័យ';
 
   @override
-  String get paymentConfigUpdated => 'ការកំណត់ការទូទាត់ត្រូវបានធ្វើបច្ចុប្បន្នភាពដោយជោគជ័យ';
+  String get paymentConfigUpdated => 'ការកំណត់ការទូទាត់ត្រូវបានកែប្រែដោយជោគជ័យ';
 
   @override
   String get failedToLoadPaymentConfig => 'បរាជ័យក្នុងការផ្ទុកការកំណត់ការទូទាត់';
 
   @override
   String get retry => 'ព្យាយាមម្តងទៀត';
+
+  @override
+  String get useOfflineMode => 'Use Offline Mode';
+
+  @override
+  String get termsOfService => 'Terms of Service';
+
+  @override
+  String get privacyPolicy => 'Privacy Policy';
+
+  @override
+  String get confirmReceipt => 'Confirm Receipt';
+
+  @override
+  String failedToPickImage(String error) {
+    return 'Failed to pick image: $error';
+  }
+
+  @override
+  String get usernameOrPhoneNumber => 'Username or Phone Number';
+
+  @override
+  String get khqr => 'KHQR';
+
+  @override
+  String get abaPayWay => 'ABA PayWay';
+
+  @override
+  String get confirmAndSendPdf => 'Confirm & Send PDF';
+
+  @override
+  String get confirmed => 'Confirmed';
+
+  @override
+  String get sending => 'Sending...';
+
+  @override
+  String get buildingImage => 'Building Image';
+
+  @override
+  String get addBuildingImage => 'Add Building Image';
+
+  @override
+  String get replaceImage => 'Replace Image';
+
+  @override
+  String get changePhoto => 'Change Photo';
+
+  @override
+  String get addPhoto => 'Add Photo';
+
+  @override
+  String get deposit => 'Deposit';
+
+  @override
+  String get resolved => 'Resolved';
+
+  @override
+  String roomWithNumber(Object number) {
+    return 'Room $number';
+  }
+
+  @override
+  String get roomNumber => 'លេខបន្ទប់';
+
+  @override
+  String get financialInformation => 'ព័ត៌មានហិរញ្ញវត្ថុ';
+
+  @override
+  String get offlineDataLoaded => 'បច្ចុប្បន្នគ្មានអ៊ីនធឺណិត ទិន្នន័យត្រូវបានផ្ទុកពីឧបករណ៍';
+
+  @override
+  String get date => 'កាលបរិច្ឆេទ';
 }

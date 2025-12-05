@@ -62,7 +62,7 @@ class _BuildingDetailState extends State<BuildingDetail> {
 
         GlobalSnackBar.show(
           context: context,
-          message: "Currently offline, loaded data from device",
+          message: AppLocalizations.of(context)!.offlineDataLoaded,
         );
       }
     }

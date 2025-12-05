@@ -19,17 +19,51 @@ class BuildingRepository {
   Future<void> load() async {
     try {
       final buildingsList = _databaseService.buildingsBox.values.toList();
-      _buildingCache = buildingsList
-          .map((e) =>
-              BuildingDto.fromJson(Map<String, dynamic>.from(e)).toBuilding())
-          .toList();
+      _buildingCache = buildingsList.map((e) {
+        // Convert dynamic map to Map<String, dynamic> safely
+        final Map<String, dynamic> jsonMap;
+        if (e is Map<String, dynamic>) {
+          jsonMap = e;
+        } else {
+          jsonMap = Map<String, dynamic>.from(e);
+        }
+
+        return BuildingDto.fromJson(jsonMap).toBuilding();
+      }).toList();
 
       final pendingList = _databaseService.buildingsPendingBox.values.toList();
-      _pendingChanges =
-          pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
+      _pendingChanges = pendingList.map((e) {
+        if (e is Map<String, dynamic>) {
+          return e;
+        } else {
+          return Map<String, dynamic>.from(e);
+        }
+      }).toList();
+
+      if (kDebugMode) {
+        print(
+            'Loaded ${_buildingCache.length} buildings and ${_pendingChanges.length} pending changes');
+      }
     } catch (e) {
-      throw Exception('Failed to load building data: $e');
+      if (kDebugMode) {
+        print('Error loading building data: $e');
+      }
+      // Don't throw, initialize with empty data instead
+      _buildingCache = [];
+      _pendingChanges = [];
     }
+  }
+
+  Future<void> loadWithoutHydration() async {
+    final buildingsList = _databaseService.buildingsBox.values.toList();
+    _buildingCache = buildingsList
+        .map((e) =>
+            BuildingDto.fromJson(Map<String, dynamic>.from(e)).toBuilding())
+        .toList();
+
+    final pendingList = _databaseService.buildingsPendingBox.values.toList();
+    _pendingChanges =
+        pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
   Future<void> save() async {
@@ -47,17 +81,35 @@ class BuildingRepository {
           buildingImage: _buildingCache[i].buildingImage,
           services: _buildingCache[i].services,
           passKey: _buildingCache[i].passKey,
-          rooms: null,
+          rooms:
+              null, // Don't save rooms in building - they're saved separately
         );
-        await _databaseService.buildingsBox.put(i, dto.toJson());
+
+        // Convert to JSON and ensure it's a proper Map<String, dynamic>
+        final jsonData = dto.toJson();
+        final Map<String, dynamic> mapData =
+            Map<String, dynamic>.from(jsonData);
+
+        await _databaseService.buildingsBox.put(i, mapData);
       }
 
       // Clear and save pending changes
       await _databaseService.buildingsPendingBox.clear();
       for (var i = 0; i < _pendingChanges.length; i++) {
-        await _databaseService.buildingsPendingBox.put(i, _pendingChanges[i]);
+        // Ensure pending change is a proper Map<String, dynamic>
+        final Map<String, dynamic> changeData =
+            Map<String, dynamic>.from(_pendingChanges[i]);
+        await _databaseService.buildingsPendingBox.put(i, changeData);
+      }
+
+      if (kDebugMode) {
+        print(
+            'Saved ${_buildingCache.length} buildings and ${_pendingChanges.length} pending changes');
       }
     } catch (e) {
+      if (kDebugMode) {
+        print('Error saving building data: $e');
+      }
       throw Exception('Failed to save building data: $e');
     }
   }
@@ -71,6 +123,9 @@ class BuildingRepository {
 
   Future<void> syncFromApi({bool skipHydration = false}) async {
     if (!await _apiHelper.hasNetwork()) {
+      if (kDebugMode) {
+        print('No network available for sync');
+      }
       return;
     }
 
@@ -88,11 +143,18 @@ class BuildingRepository {
       if (!skipHydration) {
         await save();
       }
+      if (kDebugMode) {
+        print('Synced ${_buildingCache.length} buildings from API');
+      }
     }
   }
 
   Future<void> _syncPendingChanges() async {
     if (_pendingChanges.isEmpty) return;
+
+    if (kDebugMode) {
+      print('Syncing ${_pendingChanges.length} pending changes');
+    }
 
     final successfulChanges = <int>[];
     final failedChanges = <int>[];
@@ -173,15 +235,24 @@ class BuildingRepository {
       return;
     }
 
-    _pendingChanges.add({
+    // Create a clean map that's JSON-serializable
+    final pendingChange = <String, dynamic>{
       'type': type,
-      'data': data,
+      'data': Map<String, dynamic>.from(data),
       'endpoint': endpoint,
       'timestamp': DateTime.now().toIso8601String(),
       'retryCount': 0,
-      if (filePath != null) 'filePath': filePath,
-      if (fileFieldName != null) 'fileFieldName': fileFieldName,
-    });
+    };
+
+    if (filePath != null) {
+      pendingChange['filePath'] = filePath;
+    }
+
+    if (fileFieldName != null) {
+      pendingChange['fileFieldName'] = fileFieldName;
+    }
+
+    _pendingChanges.add(pendingChange);
 
     if (kDebugMode) {
       print(

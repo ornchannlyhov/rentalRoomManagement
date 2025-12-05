@@ -5,8 +5,6 @@ import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
 import 'package:joul_v2/data/models/tenant.dart';
 import 'package:joul_v2/data/models/enum/gender.dart';
 import 'package:joul_v2/data/dtos/tenant_dto.dart';
-import 'package:joul_v2/data/dtos/room_dto.dart';
-import 'package:joul_v2/data/dtos/building_dto.dart';
 import 'package:joul_v2/core/services/database_service.dart';
 
 class TenantRepository {
@@ -45,6 +43,17 @@ class TenantRepository {
     }
   }
 
+  Future<void> loadWithoutHydration() async {
+    final tenantsList = _databaseService.tenantsBox.values.toList();
+    _tenantCache = tenantsList
+        .map((e) => TenantDto.fromJson(Map<String, dynamic>.from(e)).toTenant())
+        .toList();
+
+    final pendingList = _databaseService.tenantsPendingBox.values.toList();
+    _pendingChanges =
+        pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
   Future<void> save() async {
     try {
       await _databaseService.tenantsBox.clear();
@@ -60,29 +69,8 @@ class TenantRepository {
           deposit: tenant.deposit,
           tenantProfile: tenant.tenantProfile,
           roomId: tenant.room?.id,
-          room: tenant.room != null
-              ? RoomDto(
-                  id: tenant.room!.id,
-                  roomNumber: tenant.room!.roomNumber,
-                  roomStatus:
-                      tenant.room!.roomStatus.toString().split('.').last,
-                  price: tenant.room!.price,
-                  buildingId: tenant.room!.building?.id,
-                  building: tenant.room!.building != null
-                      ? BuildingDto(
-                          id: tenant.room!.building!.id,
-                          appUserId: tenant.room!.building!.appUserId,
-                          name: tenant.room!.building!.name,
-                          rentPrice: tenant.room!.building!.rentPrice,
-                          electricPrice: tenant.room!.building!.electricPrice,
-                          waterPrice: tenant.room!.building!.waterPrice,
-                          buildingImage: tenant.room!.building!.buildingImage,
-                          services: tenant.room!.building!.services,
-                          passKey: tenant.room!.building!.passKey,
-                        )
-                      : null,
-                )
-              : null,
+          // Do NOT save full objects
+          room: null,
         );
         await _databaseService.tenantsBox.put(i, dto.toJson());
       }

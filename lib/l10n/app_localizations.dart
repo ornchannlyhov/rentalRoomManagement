@@ -718,7 +718,7 @@ abstract class AppLocalizations {
   /// No description provided for @tryAgain.
   ///
   /// In en, this message translates to:
-  /// **'Try again'**
+  /// **'Try Again'**
   String get tryAgain;
 
   /// No description provided for @male.
@@ -2430,6 +2430,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get retry;
+
+  /// No description provided for @useOfflineMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Offline Mode'**
+  String get useOfflineMode;
+
+  /// No description provided for @termsOfService.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Service'**
+  String get termsOfService;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get privacyPolicy;
+
+  /// No description provided for @confirmReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Receipt'**
+  String get confirmReceipt;
+
+  /// No description provided for @failedToPickImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to pick image: {error}'**
+  String failedToPickImage(String error);
+
+  /// No description provided for @usernameOrPhoneNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Username or Phone Number'**
+  String get usernameOrPhoneNumber;
+
+  /// No description provided for @khqr.
+  ///
+  /// In en, this message translates to:
+  /// **'KHQR'**
+  String get khqr;
+
+  /// No description provided for @abaPayWay.
+  ///
+  /// In en, this message translates to:
+  /// **'ABA PayWay'**
+  String get abaPayWay;
+
+  /// No description provided for @confirmAndSendPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm & Send PDF'**
+  String get confirmAndSendPdf;
+
+  /// No description provided for @confirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get confirmed;
+
+  /// No description provided for @sending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending...'**
+  String get sending;
+
+  /// No description provided for @buildingImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Building Image'**
+  String get buildingImage;
+
+  /// No description provided for @addBuildingImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Building Image'**
+  String get addBuildingImage;
+
+  /// No description provided for @replaceImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace Image'**
+  String get replaceImage;
+
+  /// No description provided for @changePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Photo'**
+  String get changePhoto;
+
+  /// No description provided for @addPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Photo'**
+  String get addPhoto;
+
+  /// No description provided for @deposit.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit'**
+  String get deposit;
+
+  /// No description provided for @resolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get resolved;
+
+  /// No description provided for @roomWithNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Room {number}'**
+  String roomWithNumber(Object number);
+
+  /// No description provided for @roomNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Room Number'**
+  String get roomNumber;
+
+  /// No description provided for @financialInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial Information'**
+  String get financialInformation;
+
+  /// No description provided for @offlineDataLoaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Currently offline, loaded data from device'**
+  String get offlineDataLoaded;
+
+  /// No description provided for @date.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get date;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

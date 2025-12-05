@@ -170,7 +170,9 @@ class _BuildingFormState extends State<BuildingForm> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to pick image: $e')),
+          SnackBar(
+              content: Text(AppLocalizations.of(context)!
+                  .failedToPickImage(e.toString()))),
         );
       }
     }
@@ -286,7 +288,7 @@ class _BuildingFormState extends State<BuildingForm> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Building Image',
+                l10n.buildingImage,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -347,8 +349,8 @@ class _BuildingFormState extends State<BuildingForm> {
                     : Icons.edit),
                 label: Text(
                   buildingImagePath == null
-                      ? 'Add Building Image'
-                      : 'Replace Image',
+                      ? l10n.addBuildingImage
+                      : l10n.replaceImage,
                 ),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: theme.colorScheme.primary),

@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/data/repositories/auth_repository.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
@@ -97,6 +98,7 @@ class _PasswordResetVerificationScreenState
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 245, 245, 245),
       appBar: AppBar(
@@ -183,7 +185,7 @@ class _PasswordResetVerificationScreenState
                 const SizedBox(height: 32),
                 CustomTextField(
                   controller: _passwordController,
-                  label: 'New Password',
+                  label: localizations.newPassword,
                   hintText: 'Enter new password',
                   prefixIcon: Icons.lock_outline,
                   obscureText: _obscurePassword,
@@ -213,7 +215,7 @@ class _PasswordResetVerificationScreenState
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _confirmPasswordController,
-                  label: 'Confirm Password',
+                  label: localizations.confirmPasswordLabel,
                   hintText: 'Confirm new password',
                   prefixIcon: Icons.lock_outline,
                   obscureText: _obscureConfirmPassword,

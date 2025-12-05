@@ -61,12 +61,18 @@ class LocalNotificationService {
         importance: Importance.high,
         priority: Priority.high,
         showWhen: true,
+        // Enable foreground notification display
+        playSound: true,
+        enableVibration: true,
+        enableLights: true,
       );
 
       const iosDetails = DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
         presentSound: true,
+        // Important: These settings ensure notifications show in foreground
+        interruptionLevel: InterruptionLevel.active,
       );
 
       const notificationDetails = NotificationDetails(

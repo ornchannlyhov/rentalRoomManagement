@@ -342,7 +342,7 @@ class TenantCard extends StatelessWidget {
                       _buildInfoRow(
                         context,
                         // Assumes 'building' key exists in your localizations
-                        'Building',
+                        localizations.building,
                         tenant.room?.building?.name ??
                             localizations.unknownRoom,
                       ),
@@ -356,7 +356,7 @@ class TenantCard extends StatelessWidget {
                       _buildInfoRow(
                         context,
                         // Assumes 'phone' key exists in your localizations
-                        'Phone',
+                        localizations.phoneNumber,
                         tenant.phoneNumber,
                       ),
                     ],

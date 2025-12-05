@@ -55,9 +55,6 @@ class ReceiptList extends StatelessWidget {
   final Color Function(PaymentStatus) getStatusColor;
   final String Function(int) getKhmerMonth;
 
-  // --------------------------------------------------------------
-  // Localized status text (uses ARB keys)
-  // --------------------------------------------------------------
   String _translatePaymentStatus(PaymentStatus status, AppLocalizations l10n) {
     return switch (status) {
       PaymentStatus.paid => l10n.paidStatus,
@@ -66,9 +63,6 @@ class ReceiptList extends StatelessWidget {
     };
   }
 
-  // --------------------------------------------------------------
-  // FIXED: Centralized filtering logic
-  // --------------------------------------------------------------
   List<Receipt> _getFilteredReceipts(List<Receipt> allReceipts) {
     // Step 1: Always filter by current month first
     final now = DateTime.now();
@@ -146,6 +140,7 @@ class ReceiptList extends StatelessWidget {
                     ],
                   ),
                   child: FilterByPaymentButton(
+                    initialStatus: selectedStatus, 
                     onStatusSelected: onStatusChanged,
                   ),
                 ),
@@ -269,6 +264,8 @@ class ReceiptList extends StatelessWidget {
                                         await provider.updateReceipt(
                                             receipt.copyWith(
                                                 paymentStatus: newStatus));
+
+                                        onStatusChanged(newStatus);
 
                                         GlobalSnackBar.show(
                                           context: context,

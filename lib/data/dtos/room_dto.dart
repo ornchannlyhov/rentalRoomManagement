@@ -3,6 +3,8 @@ import 'package:joul_v2/data/dtos/tenant_dto.dart';
 import 'package:joul_v2/data/models/building.dart';
 import 'package:joul_v2/data/models/enum/room_status.dart';
 import 'package:joul_v2/data/models/room.dart';
+import 'package:joul_v2/data/models/tenant.dart';
+import 'package:joul_v2/data/models/enum/gender.dart';
 
 class RoomDto {
   final String id;
@@ -11,6 +13,7 @@ class RoomDto {
   final String roomStatus;
   final double price;
   final BuildingDto? building;
+  final String? tenantId;
   final TenantDto? tenant;
   final List<dynamic>? receipts;
   final List<dynamic>? reports;
@@ -22,6 +25,7 @@ class RoomDto {
     required this.roomStatus,
     required this.price,
     this.building,
+    this.tenantId,
     this.tenant,
     this.receipts,
     this.reports,
@@ -38,6 +42,7 @@ class RoomDto {
           ? BuildingDto.fromJson(
               Map<String, dynamic>.from(json['building'] as Map))
           : null,
+      tenantId: json['tenantId']?.toString(),
       tenant: json['tenant'] != null
           ? TenantDto.fromJson(Map<String, dynamic>.from(json['tenant'] as Map))
           : null,
@@ -63,6 +68,7 @@ class RoomDto {
       'roomStatus': roomStatus,
       'price': price,
       if (building != null) 'building': building!.toJson(),
+      if (tenantId != null) 'tenantId': tenantId,
       if (tenant != null) 'tenant': tenant!.toJson(),
       if (receipts != null) 'receipts': receipts,
       if (reports != null) 'reports': reports,
@@ -116,6 +122,16 @@ class RoomDto {
       if (room.tenant != null) {
         room.tenant!.room = room;
       }
+    } else if (tenantId != null && tenantId!.isNotEmpty) {
+      // Create placeholder Tenant with ID
+      room.tenant = Tenant(
+        id: tenantId!,
+        name: '',
+        phoneNumber: '',
+        gender: Gender.other,
+        language: 'english',
+        deposit: 0.0,
+      );
     }
 
     return room;
