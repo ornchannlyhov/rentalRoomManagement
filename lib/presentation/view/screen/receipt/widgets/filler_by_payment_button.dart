@@ -25,6 +25,17 @@ class _FilterButtonState extends State<FilterByPaymentButton> {
     _selectedStatus = widget.initialStatus;
   }
 
+  @override
+  void didUpdateWidget(FilterByPaymentButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // ✅ CRITICAL: Sync internal state when parent changes the status
+    if (oldWidget.initialStatus != widget.initialStatus) {
+      setState(() {
+        _selectedStatus = widget.initialStatus;
+      });
+    }
+  }
+
   void _handleStatusTap(PaymentStatus status) {
     if (_selectedStatus == status) return;
 
@@ -32,7 +43,6 @@ class _FilterButtonState extends State<FilterByPaymentButton> {
     widget.onStatusSelected(status);
   }
 
-  // Removed _khmerLabel — now uses AppLocalizations
   Color _statusColor(PaymentStatus status, ThemeData theme) {
     switch (status) {
       case PaymentStatus.paid:

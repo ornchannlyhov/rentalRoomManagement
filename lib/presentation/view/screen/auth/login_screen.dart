@@ -72,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 24),
                 CustomTextField(
                   controller: _identifierController,
-                  label: 'Username or Phone Number',
+                  label: localizations.usernameOrPhoneNumber,
                   hintText: 'Enter username or phone',
                   prefixIcon: Icons.person_outline,
                   validator: (value) {
@@ -85,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _passwordController,
-                  label: 'Password',
+                  label: localizations.passwordLabel,
                   hintText: 'Enter your password',
                   prefixIcon: Icons.lock_outline,
                   obscureText: _obscurePassword,

@@ -130,7 +130,7 @@ class _ReceiptConfirmationScreenState extends State<ReceiptConfirmationScreen> {
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
-        title: const Text('Confirm Receipt'),
+        title: Text(l10n.confirmReceipt),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -284,7 +284,7 @@ class _ReceiptConfirmationScreenState extends State<ReceiptConfirmationScreen> {
                             ? null
                             : _handleEdit,
                         icon: const Icon(Icons.edit),
-                        label: const Text('Edit'),
+                        label: Text(l10n.edit),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
@@ -312,10 +312,10 @@ class _ReceiptConfirmationScreenState extends State<ReceiptConfirmationScreen> {
                               )
                             : const Icon(Icons.check_circle_outline),
                         label: Text(_isConfirming
-                            ? 'Sending...'
+                            ? l10n.sending
                             : _receipt.paymentStatus != PaymentStatus.pending
-                                ? 'Confirmed'
-                                : 'Confirm & Send PDF'),
+                                ? l10n.confirmed
+                                : l10n.confirmAndSendPdf),
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(

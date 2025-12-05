@@ -33,6 +33,17 @@ class ReportRepository {
     }
   }
 
+  Future<void> loadWithoutHydration() async {
+    final reportsList = _databaseService.reportsBox.values.toList();
+    _reportCache = reportsList
+        .map((e) => ReportDto.fromJson(Map<String, dynamic>.from(e)).toReport())
+        .toList();
+
+    final pendingList = _databaseService.reportsPendingBox.values.toList();
+    _pendingChanges =
+        pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
   Future<void> save() async {
     try {
       await _databaseService.reportsBox.clear();

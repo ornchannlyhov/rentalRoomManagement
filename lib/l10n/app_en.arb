@@ -723,10 +723,627 @@
   "pleaseEnterBankName": "Please enter bank name",
   "pleaseEnterAccountNumber": "Please enter account number",
   "pleaseEnterAccountHolderName": "Please enter account holder name",
+  "buildingUpdatedSuccess": "Building \"{name}\" updated successfully",
+  "@buildingUpdatedSuccess": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "deleteBuilding": "Delete Building",
+  "deleteBuildingConfirm": "Do you want to delete building \"{name}\"?",
+  "@deleteBuildingConfirm": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "deleteRoom": "Delete Room",
+  "deleteRoomConfirm": "Do you want to delete room \"{number}\"?",
+  "@deleteRoomConfirm": {
+    "placeholders": {
+      "number": {}
+    }
+  },
+  "deleteService": "Delete Service",
+  "deleteServiceConfirm": "Do you want to delete service \"{name}\"?",
+  "@deleteServiceConfirm": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "errorOccurred": "An error occurred",
+  "addNewBuilding": "Add New Building",
+  "editBuilding": "Edit Building",
+  "buildingName": "Building Name",
+  "buildingNameRequired": "Please enter building name.",
+  "roomCount": "Number of Rooms",
+  "currentRoomCount": "Current Number of Rooms",
+  "roomCountRequired": "Please enter number of rooms.",
+  "roomCountInvalid": "Please enter a valid number of rooms.",
+  "roomCountEditNote": "Room count cannot be changed. Manage rooms individually.",
+  "saveChanges": "Save Changes",
+  "saveBuilding": "Save Building",
+  "roomChangeFailed": "Error undoing room change",
+  "retryLoadingProfile": "Retry Loading Profile",
+  "failedToLoadProfile": "Failed to load profile.",
+  "noLoggedIn": "You are not logged in.",
+  "notLoggedIn": "You are not logged in.",
+  "goToOnboarding": "Go to Onboarding",
+  "unknownUser": "Unknown User",
+  "noEmailProvided": "No Email Provided",
+  "editProfileTapped": "Edit profile tapped",
+  "signOutSuccess": "Signed out successfully!",
+  "signOutFailed": "Failed to sign out",
+  "confirmPasswordLabel": "Confirm Password",
+  "confirmPasswordHint": "Confirm your password",
+  "manageBuildings": "Manage Buildings & Rooms",
+  "manageBuildingsDesc": "Manage your buildings, rooms, and services easily with our intuitive interface.",
+  "tenantManagement": "Tenant Management",
+  "tenantManagementDesc": "Assign tenants and automate receipts with just a few taps.",
+  "paymentTracking": "Payment Tracking",
+  "paymentTrackingDesc": "Track payments easily - Pending, Paid, and Overdue status at a glance.",
+  "automationTools": "Automation Tools",
+  "automationToolsDesc": "Automate work with Telegram bot reminders and utilities input.",
+  "advancedAnalysis": "Advanced Analysis",
+  "financial": "Financial",
+  "errorLoadingCurrencyRate": "Error loading currency rate",
+  "january": "January",
+  "february": "February",
+  "march": "March",
+  "april": "April",
+  "may": "May",
+  "june": "June",
+  "july": "July",
+  "august": "August",
+  "september": "September",
+  "october": "October",
+  "november": "November",
+  "december": "December",
+  "orSignOut": "Or Sign Out",
+  "pleaseEnterValue": "Please enter a value",
+  "pleaseEnterValidNumber": "Please enter a valid number",
+  "receiptsCount": "{count,plural, =1{{count} receipt}other{{count} receipts}}",
+  "@receiptsCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "receiptDeletedRoom": "Receipt for room {room} deleted",
+  "@receiptDeletedRoom": {
+    "description": "Success message after a receipt is deleted",
+    "placeholders": {
+      "room": {
+        "type": "String"
+      }
+    }
+  },
+  "receiptNotFound": "Receipt not found",
+  "@receiptNotFound": {
+    "description": "Error message when a receipt cannot be found in the provider"
+  },
+  "addReceipt": "Add Receipt",
+  "@addReceipt": {
+    "description": "Tooltip for the add-receipt button"
+  },
+  "deleteReceiptConfirmMsg": "Are you sure you want to delete the receipt for room {room}?",
+  "@deleteReceiptConfirmMsg": {
+    "description": "Confirmation dialog when deleting a receipt",
+    "placeholders": {
+      "room": {
+        "type": "String"
+      }
+    }
+  },
+  "totalRevenue": "Total Revenue",
+  "paid": "Paid",
+  "remaining": "Remaining",
+  "collectionRate": "Collection Rate: {rate}%",
+  "@collectionRate": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "tapToSeeDetails": "Tap to see details",
+  "utilityAnalysis": "Utility Analysis",
+  "pending": "Pending",
+  "overdue": "Overdue",
+  "selectMonth": "Select Month",
+  "year": "Year: ",
+  "month": "Month:",
+  "previousMonth": "Previous Month",
+  "nextMonth": "Next Month",
+  "service": "Service",
+  "emailValidationInvalid": "Please enter a valid email",
+  "passwordValidationLength": "Password must be at least 6 characters",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "chooseLanguageTitle": "Choose Your Language",
+  "chooseLanguageSubtitle": "Select your preferred language",
+  "continueButton": "Continue",
+  "nextButton": "Next",
+  "notificationRemoved": "Notification removed",
+  "notificationsCleared": "All notifications cleared",
+  "noNotifications": "No notifications",
+  "newReceiptNotification": "New receipt notifications will appear here",
+  "clearAllNotifications": "Clear all notifications?",
+  "clearNotificationsMessage": "This will remove all notification items. You can still view receipts in the Receipts tab.",
+  "phoneNumberHint": "010 123 456",
+  "requestOtp": "Request OTP",
+  "verificationCode": "Verification Code",
+  "enterCodeSentTo": "Please enter the code sent to",
+  "verify": "Verify",
+  "didNotReceiveCode": "Didn't receive code? ",
+  "resend": "Resend",
+  "invalidOtp": "Please enter a valid 6-digit code",
+  "otpResent": "OTP Resent",
+  "faqs": "FAQs",
+  "reportProblem": "Report Problem",
+  "describeProblem": "Describe the problem",
+  "reportSent": "Report sent successfully",
+  "send": "Send",
+  "changePassword": "Change Password",
+  "oldPassword": "Old Password",
+  "newPassword": "New Password",
+  "updatePassword": "Update Password",
+  "passwordUpdated": "Password updated successfully",
+  "pleaseEnterPassword": "Please enter password",
+  "passwordTooShort": "Password must be at least 6 characters",
+  "paymentSettings": "Payment Settings",
+  "paymentSettingsSubtitle": "Configure payout methods",
+  "paymentConfigInfo": "Set up how you want to receive payments from your tenants",
+  "paymentMethod": "Payment Method",
+  "both": "Both",
+  "none": "None",
+  "enabledMethods": "Enabled Methods",
+  "khqrSubtitle": "QR code payments",
+  "abaPayWaySubtitle": "Online banking payments",
+  "bankDetails": "Bank Details",
+  "bankName": "Bank Name",
+  "enterBankName": "e.g., ABA Bank",
+  "accountNumber": "Account Number",
+  "enterAccountNumber": "e.g., 001122334",
+  "accountHolderName": "Account Holder Name",
+  "enterAccountHolderName": "e.g., John Doe",
+  "pleaseEnterBankName": "Please enter bank name",
+  "pleaseEnterAccountNumber": "Please enter account number",
+  "pleaseEnterAccountHolderName": "Please enter account holder name",
   "savePaymentConfig": "Save Configuration",
   "updatePaymentConfig": "Update Configuration",
   "paymentConfigSaved": "Payment configuration saved successfully",
   "paymentConfigUpdated": "Payment configuration updated successfully",
   "failedToLoadPaymentConfig": "Failed to load payment configuration",
-  "retry": "Retry"
+  "retry": "Retry",
+  "useOfflineMode": "Use Offline Mode",
+  "termsOfService": "Terms of Service",
+  "privacyPolicy": "Privacy Policy",
+  "confirmReceipt": "Confirm Receipt",
+  "failedToPickImage": "Failed to pick image: {error}",
+  "@failedToPickImage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteBuilding": "Delete Building",
+  "deleteBuildingConfirm": "Do you want to delete building \"{name}\"?",
+  "@deleteBuildingConfirm": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "deleteRoom": "Delete Room",
+  "deleteRoomConfirm": "Do you want to delete room \"{number}\"?",
+  "@deleteRoomConfirm": {
+    "placeholders": {
+      "number": {}
+    }
+  },
+  "deleteService": "Delete Service",
+  "deleteServiceConfirm": "Do you want to delete service \"{name}\"?",
+  "@deleteServiceConfirm": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "errorOccurred": "An error occurred",
+  "addNewBuilding": "Add New Building",
+  "editBuilding": "Edit Building",
+  "buildingName": "Building Name",
+  "buildingNameRequired": "Please enter building name.",
+  "roomCount": "Number of Rooms",
+  "currentRoomCount": "Current Number of Rooms",
+  "roomCountRequired": "Please enter number of rooms.",
+  "roomCountInvalid": "Please enter a valid number of rooms.",
+  "roomCountEditNote": "Room count cannot be changed. Manage rooms individually.",
+  "saveChanges": "Save Changes",
+  "saveBuilding": "Save Building",
+  "roomChangeFailed": "Error undoing room change",
+  "retryLoadingProfile": "Retry Loading Profile",
+  "failedToLoadProfile": "Failed to load profile.",
+  "noLoggedIn": "You are not logged in.",
+  "notLoggedIn": "You are not logged in.",
+  "goToOnboarding": "Go to Onboarding",
+  "unknownUser": "Unknown User",
+  "noEmailProvided": "No Email Provided",
+  "editProfileTapped": "Edit profile tapped",
+  "signOutSuccess": "Signed out successfully!",
+  "signOutFailed": "Failed to sign out",
+  "confirmPasswordLabel": "Confirm Password",
+  "confirmPasswordHint": "Confirm your password",
+  "manageBuildings": "Manage Buildings & Rooms",
+  "manageBuildingsDesc": "Manage your buildings, rooms, and services easily with our intuitive interface.",
+  "tenantManagement": "Tenant Management",
+  "tenantManagementDesc": "Assign tenants and automate receipts with just a few taps.",
+  "paymentTracking": "Payment Tracking",
+  "paymentTrackingDesc": "Track payments easily - Pending, Paid, and Overdue status at a glance.",
+  "automationTools": "Automation Tools",
+  "automationToolsDesc": "Automate work with Telegram bot reminders and utilities input.",
+  "advancedAnalysis": "Advanced Analysis",
+  "financial": "Financial",
+  "errorLoadingCurrencyRate": "Error loading currency rate",
+  "january": "January",
+  "february": "February",
+  "march": "March",
+  "april": "April",
+  "may": "May",
+  "june": "June",
+  "july": "July",
+  "august": "August",
+  "september": "September",
+  "october": "October",
+  "november": "November",
+  "december": "December",
+  "orSignOut": "Or Sign Out",
+  "pleaseEnterValue": "Please enter a value",
+  "pleaseEnterValidNumber": "Please enter a valid number",
+  "receiptsCount": "{count,plural, =1{{count} receipt}other{{count} receipts}}",
+  "@receiptsCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "receiptDeletedRoom": "Receipt for room {room} deleted",
+  "@receiptDeletedRoom": {
+    "description": "Success message after a receipt is deleted",
+    "placeholders": {
+      "room": {
+        "type": "String"
+      }
+    }
+  },
+  "receiptNotFound": "Receipt not found",
+  "@receiptNotFound": {
+    "description": "Error message when a receipt cannot be found in the provider"
+  },
+  "addReceipt": "Add Receipt",
+  "@addReceipt": {
+    "description": "Tooltip for the add-receipt button"
+  },
+  "deleteReceiptConfirmMsg": "Are you sure you want to delete the receipt for room {room}?",
+  "@deleteReceiptConfirmMsg": {
+    "description": "Confirmation dialog when deleting a receipt",
+    "placeholders": {
+      "room": {
+        "type": "String"
+      }
+    }
+  },
+  "totalRevenue": "Total Revenue",
+  "paid": "Paid",
+  "remaining": "Remaining",
+  "collectionRate": "Collection Rate: {rate}%",
+  "@collectionRate": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "tapToSeeDetails": "Tap to see details",
+  "utilityAnalysis": "Utility Analysis",
+  "pending": "Pending",
+  "overdue": "Overdue",
+  "selectMonth": "Select Month",
+  "year": "Year: ",
+  "month": "Month:",
+  "previousMonth": "Previous Month",
+  "nextMonth": "Next Month",
+  "service": "Service",
+  "emailValidationInvalid": "Please enter a valid email",
+  "passwordValidationLength": "Password must be at least 6 characters",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "chooseLanguageTitle": "Choose Your Language",
+  "chooseLanguageSubtitle": "Select your preferred language",
+  "continueButton": "Continue",
+  "nextButton": "Next",
+  "notificationRemoved": "Notification removed",
+  "notificationsCleared": "All notifications cleared",
+  "noNotifications": "No notifications",
+  "newReceiptNotification": "New receipt notifications will appear here",
+  "clearAllNotifications": "Clear all notifications?",
+  "clearNotificationsMessage": "This will remove all notification items. You can still view receipts in the Receipts tab.",
+  "phoneNumberHint": "010 123 456",
+  "requestOtp": "Request OTP",
+  "verificationCode": "Verification Code",
+  "enterCodeSentTo": "Please enter the code sent to",
+  "verify": "Verify",
+  "didNotReceiveCode": "Didn't receive code? ",
+  "resend": "Resend",
+  "invalidOtp": "Please enter a valid 6-digit code",
+  "otpResent": "OTP Resent",
+  "faqs": "FAQs",
+  "reportProblem": "Report Problem",
+  "describeProblem": "Describe the problem",
+  "reportSent": "Report sent successfully",
+  "send": "Send",
+  "changePassword": "Change Password",
+  "oldPassword": "Old Password",
+  "newPassword": "New Password",
+  "updatePassword": "Update Password",
+  "passwordUpdated": "Password updated successfully",
+  "pleaseEnterPassword": "Please enter password",
+  "passwordTooShort": "Password must be at least 6 characters",
+  "paymentSettings": "Payment Settings",
+  "paymentSettingsSubtitle": "Configure payout methods",
+  "paymentConfigInfo": "Set up how you want to receive payments from your tenants",
+  "paymentMethod": "Payment Method",
+  "both": "Both",
+  "none": "None",
+  "enabledMethods": "Enabled Methods",
+  "khqrSubtitle": "QR code payments",
+  "abaPayWaySubtitle": "Online banking payments",
+  "bankDetails": "Bank Details",
+  "bankName": "Bank Name",
+  "enterBankName": "e.g., ABA Bank",
+  "accountNumber": "Account Number",
+  "enterAccountNumber": "e.g., 001122334",
+  "accountHolderName": "Account Holder Name",
+  "enterAccountHolderName": "e.g., John Doe",
+  "pleaseEnterBankName": "Please enter bank name",
+  "pleaseEnterAccountNumber": "Please enter account number",
+  "pleaseEnterAccountHolderName": "Please enter account holder name",
+  "savePaymentConfig": "Save Configuration",
+  "updatePaymentConfig": "Update Configuration",
+  "paymentConfigSaved": "Payment configuration saved successfully",
+  "paymentConfigUpdated": "Payment configuration updated successfully",
+  "failedToLoadPaymentConfig": "Failed to load payment configuration",
+  "retry": "Retry",
+  "useOfflineMode": "Use Offline Mode",
+  "termsOfService": "Terms of Service",
+  "privacyPolicy": "Privacy Policy",
+  "confirmReceipt": "Confirm Receipt",
+  "failedToPickImage": "Failed to pick image: {error}",
+  "@failedToPickImage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "usernameOrPhoneNumber": "Username or Phone Number",
+  "khqr": "KHQR",
+  "abaPayWay": "ABA PayWay",
+  "confirmAndSendPdf": "Confirm & Send PDF",
+  "confirmed": "Confirmed",
+  "sending": "Sending...",
+
+  "@deleteRoomConfirm": {
+    "placeholders": {
+      "number": {}
+    }
+  },
+  "deleteService": "Delete Service",
+  "deleteServiceConfirm": "Do you want to delete service \"{name}\"?",
+  "@deleteServiceConfirm": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "errorOccurred": "An error occurred",
+  "addNewBuilding": "Add New Building",
+  "editBuilding": "Edit Building",
+  "buildingName": "Building Name",
+  "buildingNameRequired": "Please enter building name.",
+  "roomCount": "Number of Rooms",
+  "currentRoomCount": "Current Number of Rooms",
+  "roomCountRequired": "Please enter number of rooms.",
+  "roomCountInvalid": "Please enter a valid number of rooms.",
+  "roomCountEditNote": "Room count cannot be changed. Manage rooms individually.",
+  "saveChanges": "Save Changes",
+  "saveBuilding": "Save Building",
+  "roomChangeFailed": "Error undoing room change",
+  "retryLoadingProfile": "Retry Loading Profile",
+  "failedToLoadProfile": "Failed to load profile.",
+  "noLoggedIn": "You are not logged in.",
+  "notLoggedIn": "You are not logged in.",
+  "goToOnboarding": "Go to Onboarding",
+  "unknownUser": "Unknown User",
+  "noEmailProvided": "No Email Provided",
+  "editProfileTapped": "Edit profile tapped",
+  "signOutSuccess": "Signed out successfully!",
+  "signOutFailed": "Failed to sign out",
+  "confirmPasswordLabel": "Confirm Password",
+  "confirmPasswordHint": "Confirm your password",
+  "manageBuildings": "Manage Buildings & Rooms",
+  "manageBuildingsDesc": "Manage your buildings, rooms, and services easily with our intuitive interface.",
+  "tenantManagement": "Tenant Management",
+  "tenantManagementDesc": "Assign tenants and automate receipts with just a few taps.",
+  "paymentTracking": "Payment Tracking",
+  "paymentTrackingDesc": "Track payments easily - Pending, Paid, and Overdue status at a glance.",
+  "automationTools": "Automation Tools",
+  "automationToolsDesc": "Automate work with Telegram bot reminders and utilities input.",
+  "advancedAnalysis": "Advanced Analysis",
+  "financial": "Financial",
+  "errorLoadingCurrencyRate": "Error loading currency rate",
+  "january": "January",
+  "february": "February",
+  "march": "March",
+  "april": "April",
+  "may": "May",
+  "june": "June",
+  "july": "July",
+  "august": "August",
+  "september": "September",
+  "october": "October",
+  "november": "November",
+  "december": "December",
+  "orSignOut": "Or Sign Out",
+  "pleaseEnterValue": "Please enter a value",
+  "pleaseEnterValidNumber": "Please enter a valid number",
+  "receiptsCount": "{count,plural, =1{{count} receipt}other{{count} receipts}}",
+  "@receiptsCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "receiptDeletedRoom": "Receipt for room {room} deleted",
+  "@receiptDeletedRoom": {
+    "description": "Success message after a receipt is deleted",
+    "placeholders": {
+      "room": {
+        "type": "String"
+      }
+    }
+  },
+  "receiptNotFound": "Receipt not found",
+  "@receiptNotFound": {
+    "description": "Error message when a receipt cannot be found in the provider"
+  },
+  "addReceipt": "Add Receipt",
+  "@addReceipt": {
+    "description": "Tooltip for the add-receipt button"
+  },
+  "deleteReceiptConfirmMsg": "Are you sure you want to delete the receipt for room {room}?",
+  "@deleteReceiptConfirmMsg": {
+    "description": "Confirmation dialog when deleting a receipt",
+    "placeholders": {
+      "room": {
+        "type": "String"
+      }
+    }
+  },
+  "totalRevenue": "Total Revenue",
+  "paid": "Paid",
+  "remaining": "Remaining",
+  "collectionRate": "Collection Rate: {rate}%",
+  "@collectionRate": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "tapToSeeDetails": "Tap to see details",
+  "utilityAnalysis": "Utility Analysis",
+  "pending": "Pending",
+  "overdue": "Overdue",
+  "selectMonth": "Select Month",
+  "year": "Year: ",
+  "month": "Month:",
+  "previousMonth": "Previous Month",
+  "nextMonth": "Next Month",
+  "service": "Service",
+  "emailValidationInvalid": "Please enter a valid email",
+  "passwordValidationLength": "Password must be at least 6 characters",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "chooseLanguageTitle": "Choose Your Language",
+  "chooseLanguageSubtitle": "Select your preferred language",
+  "continueButton": "Continue",
+  "nextButton": "Next",
+  "notificationRemoved": "Notification removed",
+  "notificationsCleared": "All notifications cleared",
+  "noNotifications": "No notifications",
+  "newReceiptNotification": "New receipt notifications will appear here",
+  "clearAllNotifications": "Clear all notifications?",
+  "clearNotificationsMessage": "This will remove all notification items. You can still view receipts in the Receipts tab.",
+  "phoneNumberHint": "010 123 456",
+  "requestOtp": "Request OTP",
+  "verificationCode": "Verification Code",
+  "enterCodeSentTo": "Please enter the code sent to",
+  "verify": "Verify",
+  "didNotReceiveCode": "Didn't receive code? ",
+  "resend": "Resend",
+  "invalidOtp": "Please enter a valid 6-digit code",
+  "otpResent": "OTP Resent",
+  "faqs": "FAQs",
+  "reportProblem": "Report Problem",
+  "describeProblem": "Describe the problem",
+  "reportSent": "Report sent successfully",
+  "send": "Send",
+  "changePassword": "Change Password",
+  "oldPassword": "Old Password",
+  "newPassword": "New Password",
+  "updatePassword": "Update Password",
+  "passwordUpdated": "Password updated successfully",
+  "pleaseEnterPassword": "Please enter password",
+  "passwordTooShort": "Password must be at least 6 characters",
+  "paymentSettings": "Payment Settings",
+  "paymentSettingsSubtitle": "Configure payout methods",
+  "paymentConfigInfo": "Set up how you want to receive payments from your tenants",
+  "paymentMethod": "Payment Method",
+  "both": "Both",
+  "none": "None",
+  "enabledMethods": "Enabled Methods",
+  "khqrSubtitle": "QR code payments",
+  "abaPayWaySubtitle": "Online banking payments",
+  "bankDetails": "Bank Details",
+  "bankName": "Bank Name",
+  "enterBankName": "e.g., ABA Bank",
+  "accountNumber": "Account Number",
+  "enterAccountNumber": "e.g., 001122334",
+  "accountHolderName": "Account Holder Name",
+  "enterAccountHolderName": "e.g., John Doe",
+  "pleaseEnterBankName": "Please enter bank name",
+  "pleaseEnterAccountNumber": "Please enter account number",
+  "pleaseEnterAccountHolderName": "Please enter account holder name",
+  "savePaymentConfig": "Save Configuration",
+  "updatePaymentConfig": "Update Configuration",
+  "paymentConfigSaved": "Payment configuration saved successfully",
+  "paymentConfigUpdated": "Payment configuration updated successfully",
+  "failedToLoadPaymentConfig": "Failed to load payment configuration",
+  "retry": "Retry",
+  "useOfflineMode": "Use Offline Mode",
+  "termsOfService": "Terms of Service",
+  "privacyPolicy": "Privacy Policy",
+  "confirmReceipt": "Confirm Receipt",
+  "failedToPickImage": "Failed to pick image: {error}",
+  "@failedToPickImage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "usernameOrPhoneNumber": "Username or Phone Number",
+  "khqr": "KHQR",
+  "abaPayWay": "ABA PayWay",
+  "confirmAndSendPdf": "Confirm & Send PDF",
+  "confirmed": "Confirmed",
+  "sending": "Sending...",
+  "buildingImage": "Building Image",
+  "addBuildingImage": "Add Building Image",
+  "replaceImage": "Replace Image",
+  "changePhoto": "Change Photo",
+  "addPhoto": "Add Photo",
+  "deposit": "Deposit",
+  "edit": "Edit",
+  "tryAgain": "Try Again",
+  "resolved": "Resolved",
+  "roomWithNumber": "Room {number}",
+  "@roomWithNumber": {
+    "placeholders": {
+      "number": {}
+    }
+  },
+  "roomNumber": "Room Number",
+  "financialInformation": "Financial Information",
+  "offlineDataLoaded": "Currently offline, loaded data from device",
+  "date": "Date"
 }

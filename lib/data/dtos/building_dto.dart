@@ -60,10 +60,7 @@ class BuildingDto {
       rentPrice: building.rentPrice,
       electricPrice: building.electricPrice,
       waterPrice: building.waterPrice,
-
-      // CHANGED: Map String to String
       buildingImage: building.buildingImage,
-
       services: building.services,
       imageFile: building.imageFile,
     );
@@ -87,12 +84,9 @@ class BuildingDto {
       'rentPrice': rentPrice,
       'electricPrice': electricPrice,
       'waterPrice': waterPrice,
-
-      // CHANGED: Sending string
       'buildingImage': buildingImage,
-
       'services': services,
-      if (rooms != null) 'rooms': rooms!.map((r) => r.toJson()).toList(),
+      // Do NOT save rooms in building - they're saved separately
     };
   }
 
@@ -102,7 +96,6 @@ class BuildingDto {
       'rentPrice': rentPrice,
       'electricPrice': electricPrice,
       'waterPrice': waterPrice,
-      // You might want to include buildingImage here too if it's part of the update request
       if (buildingImage != null) 'buildingImage': buildingImage,
     };
   }
@@ -116,10 +109,7 @@ class BuildingDto {
       electricPrice: electricPrice,
       waterPrice: waterPrice,
       passKey: passKey,
-
-      // CHANGED: Map String to String
       buildingImage: buildingImage,
-
       services: services,
       rooms: rooms?.map((r) => r.toRoom()).toList() ?? [],
       imageFile: imageFile,

@@ -2,6 +2,9 @@ import 'package:joul_v2/data/dtos/room_dto.dart';
 import 'package:joul_v2/data/dtos/service_dto.dart';
 import 'package:joul_v2/data/models/enum/payment_status.dart';
 import 'package:joul_v2/data/models/receipt.dart';
+import 'package:joul_v2/data/models/service.dart';
+import 'package:joul_v2/data/models/room.dart';
+import 'package:joul_v2/data/models/enum/room_status.dart';
 
 class ReceiptDto {
   final String id;
@@ -80,9 +83,6 @@ class ReceiptDto {
       'paymentStatus': paymentStatus,
       if (roomId != null) 'roomId': roomId,
       if (roomNumber != null) 'roomNumber': roomNumber,
-      if (room != null) 'room': room!.toJson(),
-      if (services != null)
-        'services': services!.map((s) => s.toJson()).toList(),
       if (serviceIds != null) 'serviceIds': serviceIds,
     };
   }
@@ -100,12 +100,11 @@ class ReceiptDto {
         status = PaymentStatus.pending;
     }
 
-    final finalServiceIds =
-        services?.map((s) => s.id).toList() ?? serviceIds ?? [];
+    final finalServiceIds = serviceIds ?? [];
 
-    final serviceObjects = services?.map((s) => s.toService()).toList() ?? [];
+    final serviceObjects = <Service>[];
 
-    return Receipt(
+    final receipt = Receipt(
       id: id,
       date: date,
       dueDate: dueDate,
@@ -118,5 +117,17 @@ class ReceiptDto {
       services: serviceObjects,
       serviceIds: finalServiceIds,
     );
+
+    // If room is null but roomId exists, create placeholder Room
+    if (receipt.room == null && roomId != null && roomId!.isNotEmpty) {
+      receipt.room = Room(
+        id: roomId!,
+        roomNumber: roomNumber ?? '',
+        roomStatus: RoomStatus.available,
+        price: 0.0,
+      );
+    }
+
+    return receipt;
   }
 }

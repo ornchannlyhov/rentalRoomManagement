@@ -43,8 +43,12 @@ class TenantProvider with ChangeNotifier {
 
   /// Sync tenants from API
   Future<void> syncTenants() async {
-    _tenantsState = AsyncValue.loading(_tenantsState.data);
-    notifyListeners();
+    // Only show loading state if we don't have data yet
+    final hasData = _tenantsState.data != null;
+    if (!hasData) {
+      _tenantsState = AsyncValue.loading(_tenantsState.data);
+      notifyListeners();
+    }
 
     try {
       await _tenantRepository.syncFromApi();
@@ -55,19 +59,18 @@ class TenantProvider with ChangeNotifier {
         await _repositoryManager.saveAll();
       }
 
-      await load();
-    } catch (e) {
-      _tenantsState = AsyncValue.error(e, _tenantsState.data);
+      final tenants = _tenantRepository.getAllTenants();
+      _tenantsState = AsyncValue.success(tenants);
       notifyListeners();
+    } catch (e) {
+      // Don't set error state - just rethrow and let the screen handle fallback
+      // This prevents the error state flicker when falling back to local data
       rethrow;
     }
   }
 
   Future<void> createTenant(Tenant tenant) async {
     try {
-      _tenantsState = AsyncValue.loading(_tenantsState.data);
-      notifyListeners();
-
       await _tenantRepository.createTenant(tenant);
 
       if (_repositoryManager != null) {
@@ -77,19 +80,16 @@ class TenantProvider with ChangeNotifier {
 
       final tenants = _tenantRepository.getAllTenants();
       _tenantsState = AsyncValue.success(tenants);
+      notifyListeners();
     } catch (e) {
       _tenantsState = AsyncValue.error(e, _tenantsState.data);
       notifyListeners();
       rethrow; // Propagate error to caller
     }
-    notifyListeners();
   }
 
   Future<void> updateTenant(Tenant tenant) async {
     try {
-      _tenantsState = AsyncValue.loading(_tenantsState.data);
-      notifyListeners();
-
       await _tenantRepository.updateTenant(tenant);
 
       if (_repositoryManager != null) {
@@ -99,19 +99,16 @@ class TenantProvider with ChangeNotifier {
 
       final tenants = _tenantRepository.getAllTenants();
       _tenantsState = AsyncValue.success(tenants);
+      notifyListeners();
     } catch (e) {
       _tenantsState = AsyncValue.error(e, _tenantsState.data);
       notifyListeners();
       rethrow; // Propagate error to caller
     }
-    notifyListeners();
   }
 
   Future<void> deleteTenant(String tenantId) async {
     try {
-      _tenantsState = AsyncValue.loading(_tenantsState.data);
-      notifyListeners();
-
       await _tenantRepository.deleteTenant(tenantId);
 
       if (_repositoryManager != null) {
@@ -121,19 +118,16 @@ class TenantProvider with ChangeNotifier {
 
       final tenants = _tenantRepository.getAllTenants();
       _tenantsState = AsyncValue.success(tenants);
+      notifyListeners();
     } catch (e) {
       _tenantsState = AsyncValue.error(e, _tenantsState.data);
       notifyListeners();
       rethrow; // Propagate error to caller
     }
-    notifyListeners();
   }
 
   Future<void> removeRoom(String tenantId) async {
     try {
-      _tenantsState = AsyncValue.loading(_tenantsState.data);
-      notifyListeners();
-
       await _tenantRepository.removeRoom(tenantId);
 
       if (_repositoryManager != null) {
@@ -143,10 +137,11 @@ class TenantProvider with ChangeNotifier {
 
       final tenants = _tenantRepository.getAllTenants();
       _tenantsState = AsyncValue.success(tenants);
+      notifyListeners();
     } catch (e) {
       _tenantsState = AsyncValue.error(e, _tenantsState.data);
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   List<Tenant> getTenantsByBuilding(String buildingId) {

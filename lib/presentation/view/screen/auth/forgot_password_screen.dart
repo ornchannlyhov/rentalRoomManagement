@@ -67,7 +67,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 const SizedBox(height: 24),
                 CustomTextField(
                   controller: _phoneController,
-                  label: 'Phone Number',
+                  label: localizations.phoneNumber,
                   hintText: '010 123 456',
                   prefixIcon: Icons.phone_android,
                   keyboardType: TextInputType.phone,

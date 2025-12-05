@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:joul_v2/data/dtos/room_dto.dart';
 import 'package:joul_v2/data/models/enum/gender.dart';
 import 'package:joul_v2/data/models/tenant.dart';
+import 'package:joul_v2/data/models/room.dart';
+import 'package:joul_v2/data/models/enum/room_status.dart';
 
 class TenantDto {
   final String id;
@@ -84,7 +86,7 @@ class TenantDto {
         genderEnum = Gender.other;
     }
 
-    return Tenant(
+    final tenant = Tenant(
       id: id,
       name: name,
       phoneNumber: phoneNumber,
@@ -96,5 +98,17 @@ class TenantDto {
       room: room?.toRoom(),
       imageFile: imageFile,
     );
+
+    if (tenant.room == null && roomId != null && roomId!.isNotEmpty) {
+      // Create placeholder Room with ID
+      tenant.room = Room(
+        id: roomId!,
+        roomNumber: '',
+        roomStatus: RoomStatus.available,
+        price: 0.0,
+      );
+    }
+
+    return tenant;
   }
 }

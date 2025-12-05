@@ -88,7 +88,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _phoneController,
-                  label: 'Phone Number',
+                  label: localizations.phoneNumber,
                   hintText: '010 123 456',
                   prefixIcon: Icons.phone_android,
                   keyboardType: TextInputType.phone,
@@ -108,7 +108,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _passwordController,
-                  label: 'Password',
+                  label: localizations.passwordLabel,
                   hintText: 'Enter your password',
                   prefixIcon: Icons.lock_outline,
                   obscureText: _obscurePassword,
@@ -138,7 +138,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _confirmPasswordController,
-                  label: 'Confirm Password',
+                  label: localizations.confirmPasswordLabel,
                   hintText: 'Confirm your password',
                   prefixIcon: Icons.lock_outline,
                   obscureText: _obscureConfirmPassword,

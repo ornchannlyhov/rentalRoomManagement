@@ -7,14 +7,17 @@ import 'package:joul_v2/presentation/providers/payment_config_provider.dart';
 import 'package:joul_v2/presentation/view/screen/auth/login_screen.dart';
 import 'package:joul_v2/presentation/view/screen/auth/onboard_screen.dart';
 import 'package:joul_v2/presentation/view/screen/auth/register_screen.dart';
+import 'package:joul_v2/presentation/view/screen/maintenance/maintenance_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/core/helper_widgets/auth_wraper.dart';
 import 'package:joul_v2/core/helper_widgets/splash_screen.dart';
 import 'package:joul_v2/presentation/providers/notification_provider.dart';
+import 'package:joul_v2/presentation/providers/network_status_provider.dart';
 import 'package:joul_v2/data/repositories/receipt_repository.dart';
 import 'package:joul_v2/data/repositories/payment_config_repository.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
 import 'package:joul_v2/core/helpers/repository_manager.dart';
+import 'package:joul_v2/data/repositories/notification_repository.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
 import 'package:joul_v2/presentation/providers/building_provider.dart';
 import 'package:joul_v2/presentation/providers/receipt_provider.dart';
@@ -23,11 +26,14 @@ import 'package:joul_v2/presentation/providers/room_provider.dart';
 import 'package:joul_v2/presentation/providers/service_provider.dart';
 import 'package:joul_v2/presentation/providers/tenant_provider.dart';
 import 'package:joul_v2/presentation/providers/theme_provider.dart';
+import 'package:joul_v2/presentation/view/app_widgets/offline_banner.dart';
 import 'package:joul_v2/core/theme/app_theme.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
+import 'package:joul_v2/core/services/health_check_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'dart:async';
 import 'package:joul_v2/core/di/service_locator.dart';
+import 'package:joul_v2/core/services/local_notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,26 +56,116 @@ Future<void> main() async {
   await paymentConfigRepository.load();
   await authProvider.load();
 
-  // --- Load Providers in Background ---
-  unawaited(_loadProvidersInBackground());
+  // --- Initialize Local Notifications ---
+  await LocalNotificationService.initialize();
 
-  // --- Sync data in background ---
-  final loadDataFuture = _syncDataInBackground();
+  // --- Health Check: Verify backend is running ---
+  final isBackendHealthy = await HealthCheckService.checkBackendHealth();
 
-  // Notification Provider (needs navigatorKey so instantiated manually for now, or could be refactored)
-  // For now, we can keep it here or register it in locator with a setter for navigatorKey
-  // Let's keep it manual for simplicity as it depends on navigatorKey
-  final notificationProvider = NotificationProvider(
-      locator<ReceiptRepository>(), navigatorKey,
-      repositoryManager: repositoryManager);
-  notificationProvider.setupListeners();
-  await notificationProvider.loadNotifications();
-
-  runApp(MyApp(
+  // Start the app (pass health status to determine if we should show maintenance)
+  runApp(JoulApp(
     navigatorKey: navigatorKey,
-    loadDataFuture: loadDataFuture,
-    notificationProvider: notificationProvider,
+    repositoryManager: repositoryManager,
+    isBackendHealthy: isBackendHealthy,
   ));
+}
+
+/// Main App wrapper that handles maintenance mode
+class JoulApp extends StatefulWidget {
+  final GlobalKey<NavigatorState> navigatorKey;
+  final RepositoryManager repositoryManager;
+  final bool isBackendHealthy;
+
+  const JoulApp({
+    super.key,
+    required this.navigatorKey,
+    required this.repositoryManager,
+    required this.isBackendHealthy,
+  });
+
+  @override
+  State<JoulApp> createState() => _JoulAppState();
+}
+
+class _JoulAppState extends State<JoulApp> {
+  late bool _showMaintenance;
+  NotificationProvider? _notificationProvider;
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _showMaintenance = !widget.isBackendHealthy;
+    if (!_showMaintenance) {
+      _initializeApp();
+    }
+  }
+
+  Future<void> _initializeApp() async {
+    // --- Load Providers in Background ---
+    unawaited(_loadProvidersInBackground());
+
+    // --- Sync data in background ---
+    unawaited(_syncDataInBackground());
+
+    // Notification Provider
+    _notificationProvider = NotificationProvider(
+      locator<ReceiptRepository>(),
+      locator<NotificationRepository>(),
+      widget.navigatorKey,
+      repositoryManager: widget.repositoryManager,
+    );
+    _notificationProvider!.setupListeners();
+    await _notificationProvider!.loadNotifications();
+
+    if (mounted) {
+      setState(() => _initialized = true);
+    }
+  }
+
+  Future<void> _retryHealthCheck() async {
+    final isHealthy = await HealthCheckService.checkBackendHealth();
+    if (isHealthy) {
+      setState(() => _showMaintenance = false);
+      _initializeApp();
+    }
+  }
+
+  void _useOfflineMode() {
+    setState(() => _showMaintenance = false);
+    _initializeApp();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_showMaintenance) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        home: MaintenanceScreen(
+          onRetry: _retryHealthCheck,
+          onUseOffline: _useOfflineMode,
+        ),
+      );
+    }
+
+    if (!_initialized || _notificationProvider == null) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        home: const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
+    return MyApp(
+      navigatorKey: widget.navigatorKey,
+      notificationProvider: _notificationProvider!,
+    );
+  }
 }
 
 Future<void> _syncDataInBackground() async {
@@ -104,13 +200,11 @@ Future<void> _loadProvidersInBackground() async {
 
 class MyApp extends StatefulWidget {
   final GlobalKey<NavigatorState> navigatorKey;
-  final Future<void> loadDataFuture;
   final NotificationProvider notificationProvider;
 
   const MyApp({
     super.key,
     required this.navigatorKey,
-    required this.loadDataFuture,
     required this.notificationProvider,
   });
 
@@ -137,6 +231,7 @@ class _MyAppState extends State<MyApp> {
       providers: [
         ChangeNotifierProvider(create: (_) => locator<AuthProvider>()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => NetworkStatusProvider()),
         ChangeNotifierProvider.value(value: widget.notificationProvider),
         Provider(create: (_) => locator<RepositoryManager>()),
         ChangeNotifierProvider(create: (_) => locator<RoomProvider>()),
@@ -174,6 +269,23 @@ class _MyAppState extends State<MyApp> {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
+            builder: (context, child) {
+              return Stack(
+                children: [
+                  // Main app content
+                  child ?? const SizedBox.shrink(),
+                  // Offline banner positioned above bottom nav
+                  Consumer<NetworkStatusProvider>(
+                    builder: (context, networkStatus, _) {
+                      if (networkStatus.hasChecked && !networkStatus.isOnline) {
+                        return const OfflineBanner();
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                ],
+              );
+            },
             home: _showSplash ? const SplashScreen() : const AuthWrapper(),
             routes: {
               '/onboarding': (context) => const OnboardingScreen(),

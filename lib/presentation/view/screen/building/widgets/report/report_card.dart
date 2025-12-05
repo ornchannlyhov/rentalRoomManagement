@@ -3,6 +3,7 @@ import 'package:joul_v2/data/models/report.dart';
 import 'package:joul_v2/data/models/enum/report_status.dart';
 
 import 'package:joul_v2/core/theme/app_theme.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 enum ReportMenuOption { changeStatus, delete }
 
@@ -36,17 +37,19 @@ class ReportCard extends StatelessWidget {
     }
   }
 
-  String _getStatusLabel(ReportStatus status) {
+  String _getStatusLabel(BuildContext context, ReportStatus status) {
+    final l10n = AppLocalizations.of(context)!;
     switch (status) {
       case ReportStatus.pending:
-        return 'Pending';
+        return l10n.pending;
       case ReportStatus.resolved:
-        return 'Resolved';
+        return l10n.resolved;
     }
   }
 
   void _showOptionsBottomSheet(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     showModalBottomSheet(
       context: context,
@@ -98,14 +101,14 @@ class ReportCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            report.tenant?.name ?? 'Unknown Tenant',
+                            report.tenant?.name ?? l10n.unknownTenant,
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           if (report.room != null)
                             Text(
-                              'Room ${report.room!.roomNumber}',
+                              l10n.roomWithNumber(report.room!.roomNumber),
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.colorScheme.onSurface
                                     .withOpacity(0.7),
@@ -125,7 +128,7 @@ class ReportCard extends StatelessWidget {
                     Icons.edit_rounded,
                     color: theme.colorScheme.primary,
                   ),
-                  title: const Text('Change Status'),
+                  title: Text(l10n.changeStatus),
                   onTap: () {
                     Navigator.pop(context);
                     onMenuSelected?.call(ReportMenuOption.changeStatus);
@@ -136,7 +139,7 @@ class ReportCard extends StatelessWidget {
                     Icons.delete_rounded,
                     color: Colors.red,
                   ),
-                  title: const Text('Delete'),
+                  title: Text(l10n.delete),
                   onTap: () {
                     Navigator.pop(context);
                     onMenuSelected?.call(ReportMenuOption.delete);
@@ -155,6 +158,7 @@ class ReportCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Card(
       elevation: 1,
@@ -194,7 +198,7 @@ class ReportCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          report.tenant?.name ?? 'Unknown Tenant',
+                          report.tenant?.name ?? l10n.unknownTenant,
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
@@ -205,7 +209,7 @@ class ReportCard extends StatelessWidget {
                         if (report.room != null) ...[
                           const SizedBox(height: 2),
                           Text(
-                            'Room ${report.room!.roomNumber}',
+                            l10n.roomWithNumber(report.room!.roomNumber),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
                             ),
@@ -265,7 +269,7 @@ class ReportCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          _getStatusLabel(report.status),
+                          _getStatusLabel(context, report.status),
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: _getStatusColor(context, report.status),
                             fontWeight: FontWeight.bold,

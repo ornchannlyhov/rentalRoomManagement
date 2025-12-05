@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
@@ -79,29 +80,47 @@ class PaymentConfigRepository {
 
     await _syncPendingChanges();
 
-    final result = await _syncHelper.fetch<PaymentConfig>(
-      endpoint: '/landlord/payment-config',
-      fromJsonList: (jsonList) {
-        // Handle both single object response and empty response
-        if (jsonList.isEmpty) return [];
+    // GET /api/landlord/payment-config returns single object, not array
+    // Response format: { "success": true, "data": { ... } }
+    try {
+      final token = await _apiHelper.storage.read(key: 'auth_token');
+      if (token == null) {
+        return;
+      }
 
-        // If API returns single object instead of array
-        if (jsonList.first is Map) {
-          return [PaymentConfigDto.fromJson(jsonList.first).toPaymentConfig()];
+      final response = await _apiHelper.dio.get(
+        '${_apiHelper.baseUrl}/landlord/payment-config',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+        cancelToken: _apiHelper.cancelToken,
+      );
+
+      if (response.data['cancelled'] == true) {
+        return;
+      }
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'];
+
+        // Handle case where data might be null (no config yet)
+        if (data != null && data is Map<String, dynamic>) {
+          _configCache = PaymentConfigDto.fromJson(data).toPaymentConfig();
+        } else {
+          _configCache = null;
         }
 
-        // If API returns array
-        return jsonList
-            .map((json) => PaymentConfigDto.fromJson(json).toPaymentConfig())
-            .toList();
-      },
-    );
-
-    if (result.success && result.data != null) {
-      _configCache = result.data!.isNotEmpty ? result.data!.first : null;
-      if (!skipHydration) {
-        await save();
+        if (!skipHydration) {
+          await save();
+        }
       }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error syncing payment config from API: $e');
+      }
+      // Don't throw, just keep existing cache
     }
   }
 

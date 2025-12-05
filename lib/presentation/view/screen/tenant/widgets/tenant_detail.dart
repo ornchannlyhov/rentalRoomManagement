@@ -171,7 +171,8 @@ class TenantDetail extends StatelessWidget {
             // Contact Information Section
             _buildSectionHeader(theme, localizations.contactInformation),
             _buildInfoRow(theme, localizations.phoneNumber, tenant.phoneNumber),
-            _buildInfoRow(theme, 'Language', tenant.language.toUpperCase()),
+            _buildInfoRow(
+                theme, localizations.language, tenant.language.toUpperCase()),
 
             const SizedBox(height: 8),
             _buildDivider(theme),
@@ -186,7 +187,7 @@ class TenantDetail extends StatelessWidget {
             ),
             _buildInfoRow(
               theme,
-              'Room Number',
+              localizations.roomNumber,
               tenant.room?.roomNumber ?? localizations.notAvailable,
             ),
             if (tenant.room?.price != null)
@@ -201,13 +202,12 @@ class TenantDetail extends StatelessWidget {
             const SizedBox(height: 8),
 
             // Financial Information Section
-            _buildSectionHeader(theme, 'Financial Information'),
+            _buildSectionHeader(theme, localizations.financialInformation),
             _buildInfoRow(
               theme,
-              'Deposit',
+              localizations.deposit,
               '\$${tenant.deposit.toStringAsFixed(2)}',
             ),
-
           ],
         ),
       ),

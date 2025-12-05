@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:joul_v2/core/helpers/asyn_value.dart';
-import 'package:joul_v2/core/helpers/api_helper.dart';
 import 'package:joul_v2/core/helpers/repository_manager.dart';
+import 'package:joul_v2/data/models/notification_item.dart';
 import 'package:joul_v2/data/models/receipt.dart';
+import 'package:joul_v2/data/repositories/notification_repository.dart';
 import 'package:joul_v2/data/repositories/receipt_repository.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_detail.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/receipt_confirmation_screen.dart';
@@ -12,85 +13,95 @@ import 'package:joul_v2/core/services/local_notification_service.dart';
 
 class NotificationProvider with ChangeNotifier {
   final ReceiptRepository _receiptRepository;
+  final NotificationRepository _notificationRepository;
   final RepositoryManager? _repositoryManager;
   final GlobalKey<NavigatorState> navigatorKey;
-  final ApiHelper _apiHelper = ApiHelper.instance;
 
-  static const String _storageKey = 'notification_receipts';
-  static const String _unreadKey = 'notification_unread';
-
-  AsyncValue<List<Receipt>> _newReceipts = const AsyncValue.success([]);
-  bool _hasUnread = false;
+  AsyncValue<List<NotificationItem>> _notifications =
+      const AsyncValue.success([]);
   bool _isInitialized = false;
 
   NotificationProvider(
     this._receiptRepository,
+    this._notificationRepository,
     this.navigatorKey, {
     RepositoryManager? repositoryManager,
   }) : _repositoryManager = repositoryManager;
 
-  AsyncValue<List<Receipt>> get newReceipts => _newReceipts;
-  bool get hasUnread => _hasUnread;
-  int get unreadCount => _hasUnread ? (_newReceipts.data?.length ?? 0) : 0;
+  AsyncValue<List<NotificationItem>> get notifications => _notifications;
+  bool get hasUnread => _notificationRepository.hasUnread;
+  int get unreadCount => _notificationRepository.unreadCount;
+  List<NotificationItem> get notificationList =>
+      _notificationRepository.notifications;
 
-  /// Load persisted notifications from local storage
+  /// Load persisted notifications from Hive
   Future<void> loadNotifications() async {
     if (_isInitialized) return;
 
     try {
-      final receiptIdsJson = await _apiHelper.storage.read(key: _storageKey);
-      final unreadStatus = await _apiHelper.storage.read(key: _unreadKey);
-
-      if (receiptIdsJson != null && receiptIdsJson.isNotEmpty) {
-        final receiptIds = List<String>.from(jsonDecode(receiptIdsJson));
-        final allReceipts = _receiptRepository.getAllReceipts();
-
-        final notificationReceipts = receiptIds
-            .map((id) {
-              try {
-                return allReceipts.firstWhere((r) => r.id == id);
-              } catch (_) {
-                return null;
-              }
-            })
-            .whereType<Receipt>()
-            .toList();
-
-        _newReceipts = AsyncValue.success(notificationReceipts);
-        _hasUnread = unreadStatus == 'true';
-      }
+      await _notificationRepository.load();
+      _notifications =
+          AsyncValue.success(_notificationRepository.notifications);
     } catch (_) {
-      _newReceipts = const AsyncValue.success([]);
-      _hasUnread = false;
+      _notifications = const AsyncValue.success([]);
     }
 
     _isInitialized = true;
     notifyListeners();
   }
 
-  /// Save notifications state persistently
-  Future<void> _saveNotifications() async {
+  /// Get receipt for a notification (convenience method)
+  Receipt? getReceiptForNotification(NotificationItem notification) {
+    if (notification.receiptId == null) return null;
+    final allReceipts = _receiptRepository.getAllReceipts();
     try {
-      final receiptIds = _newReceipts.data?.map((r) => r.id).toList() ?? [];
-      await _apiHelper.storage.write(
-        key: _storageKey,
-        value: jsonEncode(receiptIds),
-      );
-      await _apiHelper.storage.write(
-        key: _unreadKey,
-        value: _hasUnread.toString(),
-      );
-    } catch (_) {}
+      return allReceipts.firstWhere((r) => r.id == notification.receiptId);
+    } catch (_) {
+      return null;
+    }
   }
 
-  /// Initialize Firebase listeners for notifications
+  /// Mark notification as read
+  Future<void> markAsRead(String notificationId) async {
+    await _notificationRepository.markAsRead(notificationId);
+    _notifications = AsyncValue.success(_notificationRepository.notifications);
+    notifyListeners();
+  }
+
+  /// Mark all notifications as read
+  Future<void> markAllAsRead() async {
+    await _notificationRepository.markAllAsRead();
+    _notifications = AsyncValue.success(_notificationRepository.notifications);
+    notifyListeners();
+  }
+
+  /// Delete a notification
+  Future<void> deleteNotification(String notificationId) async {
+    await _notificationRepository.deleteNotification(notificationId);
+    _notifications = AsyncValue.success(_notificationRepository.notifications);
+    notifyListeners();
+  }
+
+  /// Clear all notifications
+  Future<void> clearAllNotifications() async {
+    await _notificationRepository.clear();
+    _notifications = const AsyncValue.success([]);
+    notifyListeners();
+  }
+
+  /// Sets up listeners for Firebase messages
   void setupListeners() {
-    // Listen to local notification taps
+    // Handle local notification taps
     LocalNotificationService.onNotificationTap.listen((payload) {
       if (payload != null) {
         try {
-          final data = jsonDecode(payload) as Map<String, dynamic>;
-          _handleReceiptNotification(data, showNavigation: true);
+          final data = jsonDecode(payload);
+          final type = data['type'];
+          if (type == 'NEW_RECEIPT' || type == 'NEW_USAGE_INPUT') {
+            _handleReceiptNotification(data, showNavigation: true);
+          } else if (type == 'PAYMENT_RECEIVED') {
+            _handlePaymentReceivedNotification(data, showNavigation: true);
+          }
         } catch (e) {
           print('Error parsing notification payload: $e');
         }
@@ -103,6 +114,9 @@ class NotificationProvider with ChangeNotifier {
       if (type == 'NEW_RECEIPT' || type == 'NEW_USAGE_INPUT') {
         _handleReceiptNotification(message.data, showNavigation: false);
         _showForegroundNotification(message);
+      } else if (type == 'PAYMENT_RECEIVED') {
+        _handlePaymentReceivedNotification(message.data, showNavigation: false);
+        _showForegroundNotification(message);
       }
     });
 
@@ -111,6 +125,8 @@ class NotificationProvider with ChangeNotifier {
       final type = message.data['type'];
       if (type == 'NEW_RECEIPT' || type == 'NEW_USAGE_INPUT') {
         _handleReceiptNotification(message.data, showNavigation: true);
+      } else if (type == 'PAYMENT_RECEIVED') {
+        _handlePaymentReceivedNotification(message.data, showNavigation: true);
       }
     });
 
@@ -139,9 +155,18 @@ class NotificationProvider with ChangeNotifier {
     final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
     final type = initialMessage?.data['type'];
     if (type == 'NEW_RECEIPT' || type == 'NEW_USAGE_INPUT') {
+      // Delay slightly to ensure navigation is ready
       Future.delayed(
         const Duration(milliseconds: 500),
         () => _handleReceiptNotification(
+          initialMessage!.data,
+          showNavigation: true,
+        ),
+      );
+    } else if (type == 'PAYMENT_RECEIVED') {
+      Future.delayed(
+        const Duration(milliseconds: 500),
+        () => _handlePaymentReceivedNotification(
           initialMessage!.data,
           showNavigation: true,
         ),
@@ -158,7 +183,8 @@ class NotificationProvider with ChangeNotifier {
     if (receiptId == null) return;
 
     try {
-      _newReceipts = AsyncValue.loading(_newReceipts.bestData ?? []);
+      _notifications =
+          AsyncValue.loading(_notificationRepository.notifications);
       notifyListeners();
 
       await _receiptRepository.syncFromApi();
@@ -175,38 +201,42 @@ class NotificationProvider with ChangeNotifier {
         receipt = allReceipts.firstWhere((r) => r.id == receiptId);
       } catch (_) {
         // Receipt not found after sync, exit early
-        _newReceipts = AsyncValue.error(
-          Exception('Receipt not found: $receiptId'),
-          _newReceipts.previousData,
-        );
+        _notifications =
+            AsyncValue.success(_notificationRepository.notifications);
         notifyListeners();
         return;
       }
 
-      final currentList = _newReceipts.previousData ?? [];
-      final exists = currentList.any((r) => r.id == receipt!.id);
+      // Create notification item and save to Hive
+      final notificationItem = NotificationItem(
+        id: '${notificationType}_${receiptId}_${DateTime.now().millisecondsSinceEpoch}',
+        type: notificationType ?? 'NEW_RECEIPT',
+        title: notificationType == 'NEW_USAGE_INPUT'
+            ? 'Usage Input Required'
+            : 'New Receipt',
+        message: notificationType == 'NEW_USAGE_INPUT'
+            ? 'Please input meter readings for ${receipt.room?.roomNumber ?? 'your room'}'
+            : 'New receipt for ${receipt.room?.roomNumber ?? 'your room'}',
+        receiptId: receiptId,
+        createdAt: DateTime.now(),
+        isRead: false,
+      );
 
-      if (!exists) {
-        _newReceipts = AsyncValue.success([receipt, ...currentList]);
-        _hasUnread = true;
-        await _saveNotifications();
-      } else {
-        _newReceipts = AsyncValue.success(currentList);
-      }
-
+      await _notificationRepository.addNotification(notificationItem);
+      _notifications =
+          AsyncValue.success(_notificationRepository.notifications);
       notifyListeners();
 
       if (showNavigation && navigatorKey.currentContext != null) {
-        // Navigate to different screens based on notification type
         if (notificationType == 'NEW_USAGE_INPUT') {
-          // Navigate to confirmation screen for usage inputs
+          // Navigate to usage input screen
           navigatorKey.currentState?.push(
             MaterialPageRoute(
               builder: (_) => ReceiptConfirmationScreen(receipt: receipt!),
             ),
           );
         } else {
-          // Default to detail screen for regular receipts
+          // Navigate to receipt detail screen
           navigatorKey.currentState?.push(
             MaterialPageRoute(
               builder: (_) => ReceiptDetailScreen(receipt: receipt!),
@@ -215,31 +245,73 @@ class NotificationProvider with ChangeNotifier {
         }
       }
     } catch (e) {
-      _newReceipts = AsyncValue.error(e, _newReceipts.previousData);
+      _notifications =
+          AsyncValue.success(_notificationRepository.notifications);
       notifyListeners();
     }
   }
 
-  void markAsRead() {
-    if (_hasUnread) {
-      _hasUnread = false;
-      _saveNotifications();
+  Future<void> _handlePaymentReceivedNotification(
+    Map<String, dynamic> data, {
+    required bool showNavigation,
+  }) async {
+    final receiptId = data['receiptId'];
+    if (receiptId == null) return;
+
+    try {
+      _notifications =
+          AsyncValue.loading(_notificationRepository.notifications);
+      notifyListeners();
+
+      // Sync to get updated receipt with paid status
+      await _receiptRepository.syncFromApi();
+
+      // Hydrate relationships after sync
+      if (_repositoryManager != null) {
+        await _repositoryManager.hydrateAllRelationships();
+        await _repositoryManager.saveAll();
+      }
+
+      final allReceipts = _receiptRepository.getAllReceipts();
+      Receipt? receipt;
+      try {
+        receipt = allReceipts.firstWhere((r) => r.id == receiptId);
+      } catch (_) {
+        // Receipt not found after sync, exit early
+        _notifications =
+            AsyncValue.success(_notificationRepository.notifications);
+        notifyListeners();
+        return;
+      }
+
+      // Create notification item and save to Hive
+      final notificationItem = NotificationItem(
+        id: 'PAYMENT_RECEIVED_${receiptId}_${DateTime.now().millisecondsSinceEpoch}',
+        type: 'PAYMENT_RECEIVED',
+        title: 'Payment Received',
+        message: 'Payment received for ${receipt.room?.roomNumber ?? 'a room'}',
+        receiptId: receiptId,
+        createdAt: DateTime.now(),
+        isRead: false,
+      );
+
+      await _notificationRepository.addNotification(notificationItem);
+      _notifications =
+          AsyncValue.success(_notificationRepository.notifications);
+      notifyListeners();
+
+      if (showNavigation && navigatorKey.currentContext != null) {
+        // Navigate to receipt detail screen to show the paid receipt
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (_) => ReceiptDetailScreen(receipt: receipt!),
+          ),
+        );
+      }
+    } catch (e) {
+      _notifications =
+          AsyncValue.success(_notificationRepository.notifications);
       notifyListeners();
     }
-  }
-
-  void clearNotifications() {
-    _newReceipts = const AsyncValue.success([]);
-    markAsRead();
-    _saveNotifications();
-  }
-
-  void removeNotification(String receiptId) {
-    final updatedList =
-        (_newReceipts.data ?? []).where((r) => r.id != receiptId).toList();
-    _newReceipts = AsyncValue.success(updatedList);
-    if (updatedList.isEmpty) _hasUnread = false;
-    _saveNotifications();
-    notifyListeners();
   }
 }

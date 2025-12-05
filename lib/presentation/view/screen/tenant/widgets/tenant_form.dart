@@ -165,7 +165,9 @@ class _TenantFormState extends State<TenantForm> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to pick image: $e')),
+          SnackBar(
+              content: Text(AppLocalizations.of(context)!
+                  .failedToPickImage(e.toString()))),
         );
       }
     }
@@ -283,8 +285,8 @@ class _TenantFormState extends State<TenantForm> {
           icon: const Icon(Icons.photo_library, size: 18),
           label: Text(
             _selectedImage != null || tenantProfile != null
-                ? 'Change Photo'
-                : 'Add Photo',
+                ? AppLocalizations.of(context)!.changePhoto
+                : AppLocalizations.of(context)!.addPhoto,
             style: theme.textTheme.bodySmall,
           ),
         ),
@@ -341,7 +343,7 @@ class _TenantFormState extends State<TenantForm> {
                     children: [
                       Center(child: _buildProfileImagePicker(theme)),
                       const SizedBox(height: 24),
-                      
+
                       // Building Filter Dropdown
                       DropdownButtonFormField<String?>(
                         value: selectedBuildingId,
@@ -381,7 +383,8 @@ class _TenantFormState extends State<TenantForm> {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                              color: theme.colorScheme.onSurface.withOpacity(0.2),
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.2),
                               width: 1,
                             ),
                           ),
@@ -415,7 +418,8 @@ class _TenantFormState extends State<TenantForm> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('${localizations.room}: ${room.roomNumber}'),
+                                Text(
+                                    '${localizations.room}: ${room.roomNumber}'),
                                 Text('- ${room.building?.name ?? ''}'),
                               ],
                             ),
@@ -433,18 +437,21 @@ class _TenantFormState extends State<TenantForm> {
                           ),
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(
-                              color: theme.colorScheme.onSurface.withOpacity(0.2),
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.2),
                             ),
                           ),
                           focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: theme.colorScheme.primary),
+                            borderSide:
+                                BorderSide(color: theme.colorScheme.primary),
                           ),
                         ),
                         style: theme.textTheme.bodyLarge?.copyWith(
                           color: theme.colorScheme.onSurface,
                         ),
-                        validator: (value) =>
-                            value == null ? localizations.pleaseSelectRoom : null,
+                        validator: (value) => value == null
+                            ? localizations.pleaseSelectRoom
+                            : null,
                       ),
                       const SizedBox(height: 16),
 
@@ -458,11 +465,13 @@ class _TenantFormState extends State<TenantForm> {
                           ),
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(
-                              color: theme.colorScheme.onSurface.withOpacity(0.2),
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.2),
                             ),
                           ),
                           focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: theme.colorScheme.primary),
+                            borderSide:
+                                BorderSide(color: theme.colorScheme.primary),
                           ),
                         ),
                         style: theme.textTheme.bodyLarge?.copyWith(
@@ -487,11 +496,13 @@ class _TenantFormState extends State<TenantForm> {
                           ),
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(
-                              color: theme.colorScheme.onSurface.withOpacity(0.2),
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.2),
                             ),
                           ),
                           focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: theme.colorScheme.primary),
+                            borderSide:
+                                BorderSide(color: theme.colorScheme.primary),
                           ),
                         ),
                         style: theme.textTheme.bodyLarge?.copyWith(
@@ -552,11 +563,13 @@ class _TenantFormState extends State<TenantForm> {
                           ),
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(
-                              color: theme.colorScheme.onSurface.withOpacity(0.2),
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.2),
                             ),
                           ),
                           focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: theme.colorScheme.primary),
+                            borderSide:
+                                BorderSide(color: theme.colorScheme.primary),
                           ),
                         ),
                         style: theme.textTheme.bodyLarge?.copyWith(
@@ -579,17 +592,19 @@ class _TenantFormState extends State<TenantForm> {
                       TextFormField(
                         controller: _depositController,
                         decoration: InputDecoration(
-                          labelText: 'Deposit',
+                          labelText: localizations.deposit,
                           labelStyle: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurface,
                           ),
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(
-                              color: theme.colorScheme.onSurface.withOpacity(0.2),
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.2),
                             ),
                           ),
                           focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: theme.colorScheme.primary),
+                            borderSide:
+                                BorderSide(color: theme.colorScheme.primary),
                           ),
                         ),
                         style: theme.textTheme.bodyLarge?.copyWith(
@@ -601,7 +616,7 @@ class _TenantFormState extends State<TenantForm> {
                           if (value != null &&
                               value.isNotEmpty &&
                               double.tryParse(value) == null) {
-                            return 'Please enter a valid number';
+                            return localizations.pleaseEnterValidNumber;
                           }
                           return null;
                         },

@@ -1265,4 +1265,77 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get retry => '重试';
+
+  @override
+  String get useOfflineMode => 'Use Offline Mode';
+
+  @override
+  String get termsOfService => 'Terms of Service';
+
+  @override
+  String get privacyPolicy => 'Privacy Policy';
+
+  @override
+  String get confirmReceipt => 'Confirm Receipt';
+
+  @override
+  String failedToPickImage(String error) {
+    return 'Failed to pick image: $error';
+  }
+
+  @override
+  String get usernameOrPhoneNumber => 'Username or Phone Number';
+
+  @override
+  String get khqr => 'KHQR';
+
+  @override
+  String get abaPayWay => 'ABA PayWay';
+
+  @override
+  String get confirmAndSendPdf => 'Confirm & Send PDF';
+
+  @override
+  String get confirmed => 'Confirmed';
+
+  @override
+  String get sending => 'Sending...';
+
+  @override
+  String get buildingImage => 'Building Image';
+
+  @override
+  String get addBuildingImage => 'Add Building Image';
+
+  @override
+  String get replaceImage => 'Replace Image';
+
+  @override
+  String get changePhoto => 'Change Photo';
+
+  @override
+  String get addPhoto => 'Add Photo';
+
+  @override
+  String get deposit => 'Deposit';
+
+  @override
+  String get resolved => 'Resolved';
+
+  @override
+  String roomWithNumber(Object number) {
+    return 'Room $number';
+  }
+
+  @override
+  String get roomNumber => 'Room Number';
+
+  @override
+  String get financialInformation => 'Financial Information';
+
+  @override
+  String get offlineDataLoaded => 'Currently offline, loaded data from device';
+
+  @override
+  String get date => 'Date';
 }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:joul_v2/data/models/receipt.dart';
+import 'package:joul_v2/data/models/notification_item.dart';
 import 'package:joul_v2/presentation/providers/notification_provider.dart';
-import 'package:joul_v2/presentation/providers/receipt_provider.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/receipt_confirmation_screen.dart';
+import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_detail.dart';
 import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:joul_v2/core/theme/app_theme.dart';
@@ -20,9 +20,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   void initState() {
     super.initState();
-    // Mark as read when opening notifications
+    // Mark all as read when opening notifications
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<NotificationProvider>().markAsRead();
+      context.read<NotificationProvider>().markAllAsRead();
     });
   }
 
@@ -70,46 +70,29 @@ class _NotificationScreenState extends State<NotificationScreen> {
               ),
             Consumer<NotificationProvider>(
               builder: (context, notificationProvider, child) {
-                final receiptsAsync = notificationProvider.newReceipts;
+                final notificationsAsync = notificationProvider.notifications;
 
-                return receiptsAsync.when(
+                return notificationsAsync.when(
                   loading: () => const Center(
                     child: CircularProgressIndicator(),
                   ),
                   error: (error) => _buildErrorState(context, error),
-                  success: (receipts) {
-                    if (receipts.isEmpty) {
+                  success: (notifications) {
+                    if (notifications.isEmpty) {
                       return _buildEmptyState(context);
                     }
 
                     return ListView.builder(
-                      itemCount: receipts.length,
+                      itemCount: notifications.length,
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                       itemBuilder: (context, index) {
-                        final receipt = receipts[index];
+                        final notification = notifications[index];
                         return _NotificationCard(
-                          receipt: receipt,
-                          onTap: () {
-                            // Get fresh receipt from provider to ensure status is up to date
-                            final allReceipts = context
-                                .read<ReceiptProvider>()
-                                .receiptsState
-                                .data;
-                            final freshReceipt = allReceipts?.firstWhere(
-                                  (r) => r.id == receipt.id,
-                                  orElse: () => receipt,
-                                ) ??
-                                receipt;
-
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => ReceiptConfirmationScreen(
-                                    receipt: freshReceipt),
-                              ),
-                            );
-                          },
+                          notification: notification,
+                          onTap: () => _handleNotificationTap(notification),
                           onDismiss: () {
-                            notificationProvider.removeNotification(receipt.id);
+                            notificationProvider
+                                .deleteNotification(notification.id);
                             GlobalSnackBar.show(
                               message: l10n.notificationRemoved,
                               context: context,
@@ -126,6 +109,39 @@ class _NotificationScreenState extends State<NotificationScreen> {
         );
       }),
     );
+  }
+
+  void _handleNotificationTap(NotificationItem notification) {
+    final notificationProvider = context.read<NotificationProvider>();
+    final receipt =
+        notificationProvider.getReceiptForNotification(notification);
+
+    if (receipt == null) {
+      GlobalSnackBar.show(
+        message: 'Receipt not found',
+        context: context,
+        isError: true,
+      );
+      return;
+    }
+
+    // Mark as read
+    notificationProvider.markAsRead(notification.id);
+
+    // Navigate based on notification type
+    if (notification.type == 'NEW_USAGE_INPUT') {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ReceiptConfirmationScreen(receipt: receipt),
+        ),
+      );
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ReceiptDetailScreen(receipt: receipt),
+        ),
+      );
+    }
   }
 
   double _calculateBackgroundHeight(BuildContext context) {
@@ -178,7 +194,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'New receipt notifications will appear here',
+              'New notifications will appear here',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -269,7 +285,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ),
           FilledButton(
             onPressed: () {
-              context.read<NotificationProvider>().clearNotifications();
+              context.read<NotificationProvider>().clearAllNotifications();
               Navigator.pop(dialogContext);
               GlobalSnackBar.show(
                 message: l10n.notificationsCleared,
@@ -319,15 +335,39 @@ class _BackgroundGradient extends StatelessWidget {
 }
 
 class _NotificationCard extends StatelessWidget {
-  final Receipt receipt;
+  final NotificationItem notification;
   final VoidCallback onTap;
   final VoidCallback onDismiss;
 
   const _NotificationCard({
-    required this.receipt,
+    required this.notification,
     required this.onTap,
     required this.onDismiss,
   });
+
+  IconData _getNotificationIcon() {
+    switch (notification.type) {
+      case 'PAYMENT_RECEIVED':
+        return Icons.payments_rounded;
+      case 'NEW_USAGE_INPUT':
+        return Icons.edit_note_rounded;
+      case 'NEW_RECEIPT':
+      default:
+        return Icons.receipt_long_rounded;
+    }
+  }
+
+  Color _getIconColor(ThemeData theme) {
+    switch (notification.type) {
+      case 'PAYMENT_RECEIVED':
+        return Colors.green;
+      case 'NEW_USAGE_INPUT':
+        return Colors.orange;
+      case 'NEW_RECEIPT':
+      default:
+        return theme.colorScheme.primary;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -335,7 +375,7 @@ class _NotificationCard extends StatelessWidget {
     final dateFormatter = DateFormat('MMM dd, yyyy • hh:mm a');
 
     return Dismissible(
-      key: Key(receipt.id),
+      key: Key(notification.id),
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
@@ -372,12 +412,12 @@ class _NotificationCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    color: _getIconColor(theme).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    Icons.receipt_long_rounded,
-                    color: theme.colorScheme.primary,
+                    _getNotificationIcon(),
+                    color: _getIconColor(theme),
                     size: 28,
                   ),
                 ),
@@ -387,47 +427,35 @@ class _NotificationCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'New Receipt Generated',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(
-                            Icons.business_outlined,
-                            size: 14,
-                            color: Colors.grey[600],
-                          ),
-                          const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              receipt.room?.building?.name ??
-                                  "Unknown Building",
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w500,
+                              notification.title,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
                               ),
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          if (!notification.isRead)
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
                         ],
                       ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.meeting_room_outlined,
-                            size: 14,
-                            color: Colors.grey[600],
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Room ${receipt.room?.roomNumber ?? "N/A"}',
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                        ],
+                      const SizedBox(height: 4),
+                      Text(
+                        notification.message,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 6),
                       Row(
@@ -439,7 +467,7 @@ class _NotificationCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            dateFormatter.format(receipt.date),
+                            dateFormatter.format(notification.createdAt),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: Colors.grey[600],
                             ),

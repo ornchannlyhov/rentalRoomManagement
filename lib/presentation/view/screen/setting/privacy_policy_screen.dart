@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:joul_v2/l10n/app_localizations.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     const htmlContent = '''
       <h1>Privacy Policy</h1>
       <p>Last updated: November 30, 2025</p>
@@ -34,7 +36,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Privacy Policy'),
+        title: Text(localizations.privacyPolicy),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
