@@ -35,7 +35,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: Text(
-          'Notifications',
+          l10n.notificationsTitle,
           style: TextStyle(
             color: theme.brightness == Brightness.light
                 ? Colors.white
@@ -56,7 +56,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
             onPressed: () => _showClearConfirmation(context),
-            tooltip: 'Clear all',
+            tooltip: l10n.clearAllTooltip,
           ),
         ],
       ),
@@ -112,13 +112,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   void _handleNotificationTap(NotificationItem notification) {
+    final l10n = AppLocalizations.of(context)!;
     final notificationProvider = context.read<NotificationProvider>();
     final receipt =
         notificationProvider.getReceiptForNotification(notification);
 
     if (receipt == null) {
       GlobalSnackBar.show(
-        message: 'Receipt not found',
+        message: l10n.receiptNotFound,
         context: context,
         isError: true,
       );
@@ -152,6 +153,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Center(
       child: Container(
@@ -186,7 +188,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'No notifications',
+              l10n.noNotifications,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.onSurface,
@@ -194,7 +196,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'New notifications will appear here',
+              l10n.newNotificationsMessage,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -209,6 +211,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Widget _buildErrorState(BuildContext context, Object error) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Center(
       child: Padding(
@@ -223,7 +226,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Error loading notifications',
+              l10n.errorLoadingNotifications,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -260,17 +263,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
               size: 28,
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Text(
-                'Clear all notifications?',
-                style: TextStyle(fontWeight: FontWeight.w600),
+                l10n.clearAllNotificationsQuestion,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ],
         ),
-        content: const Text(
-          'This will remove all notification items. You can still view receipts in the Receipts tab.',
-          style: TextStyle(height: 1.5),
+        content: Text(
+          l10n.clearAllNotificationsWarning,
+          style: const TextStyle(height: 1.5),
         ),
         actions: [
           TextButton(
@@ -296,9 +299,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
               backgroundColor: theme.colorScheme.error,
               foregroundColor: theme.colorScheme.onError,
             ),
-            child: const Text(
-              'Clear',
-              style: TextStyle(fontWeight: FontWeight.w600),
+            child: Text(
+              l10n.clearAction,
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
         ],

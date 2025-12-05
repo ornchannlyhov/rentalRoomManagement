@@ -2568,6 +2568,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Date'**
   String get date;
+
+  /// No description provided for @roomOccupancy.
+  ///
+  /// In en, this message translates to:
+  /// **'Room Occupancy'**
+  String get roomOccupancy;
+
+  /// No description provided for @paymentMethods.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Methods'**
+  String get paymentMethods;
+
+  /// No description provided for @khqrDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept payments via KHQR QR code'**
+  String get khqrDescription;
+
+  /// No description provided for @abaPayWayDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept payments via ABA PayWay'**
+  String get abaPayWayDescription;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsTitle;
+
+  /// No description provided for @clearAllTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all'**
+  String get clearAllTooltip;
+
+  /// No description provided for @newNotificationsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'New notifications will appear here'**
+  String get newNotificationsMessage;
+
+  /// No description provided for @errorLoadingNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading notifications'**
+  String get errorLoadingNotifications;
+
+  /// No description provided for @clearAllNotificationsQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all notifications?'**
+  String get clearAllNotificationsQuestion;
+
+  /// No description provided for @clearAllNotificationsWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This will remove all notification items. You can still view receipts in the Receipts tab.'**
+  String get clearAllNotificationsWarning;
+
+  /// No description provided for @clearAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clearAction;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

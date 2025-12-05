@@ -36,30 +36,6 @@ class ReceiptProvider with ChangeNotifier {
     }
   }
 
-  Future<void> generateMonthlyReceipts({
-    Future<Uint8List?> Function(Receipt)? createImage,
-  }) async {
-    try {
-      _receiptsState = AsyncValue.loading(_receiptsState.data);
-      notifyListeners();
-
-      await _receiptRepository.generateReceiptsFromUsage(
-        createImage: createImage,
-      );
-
-      if (_repositoryManager != null) {
-        await _repositoryManager.hydrateAllRelationships();
-        await _repositoryManager.saveAll();
-      }
-
-      final receipts = _receiptRepository.getAllReceipts();
-      _receiptsState = AsyncValue.success(receipts);
-    } catch (e) {
-      _receiptsState = AsyncValue.error(e, _receiptsState.data);
-    }
-    notifyListeners();
-  }
-
   Future<void> createReceipt(Receipt receipt, {Uint8List? receiptImage}) async {
     _receiptsState = AsyncValue.loading(_receiptsState.bestData);
     notifyListeners();

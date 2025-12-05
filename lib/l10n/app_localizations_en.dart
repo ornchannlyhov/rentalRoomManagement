@@ -1339,4 +1339,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get date => 'Date';
+
+  @override
+  String get roomOccupancy => 'Room Occupancy';
+
+  @override
+  String get paymentMethods => 'Payment Methods';
+
+  @override
+  String get khqrDescription => 'Accept payments via KHQR QR code';
+
+  @override
+  String get abaPayWayDescription => 'Accept payments via ABA PayWay';
+
+  @override
+  String get notificationsTitle => 'Notifications';
+
+  @override
+  String get clearAllTooltip => 'Clear all';
+
+  @override
+  String get newNotificationsMessage => 'New notifications will appear here';
+
+  @override
+  String get errorLoadingNotifications => 'Error loading notifications';
+
+  @override
+  String get clearAllNotificationsQuestion => 'Clear all notifications?';
+
+  @override
+  String get clearAllNotificationsWarning => 'This will remove all notification items. You can still view receipts in the Receipts tab.';
+
+  @override
+  String get clearAction => 'Clear';
 }

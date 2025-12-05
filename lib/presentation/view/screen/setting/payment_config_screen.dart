@@ -33,8 +33,27 @@ class _PaymentConfigScreenState extends State<PaymentConfigScreen> {
     _bankAccountNameController = TextEditingController();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadExistingConfig();
+      _syncAndLoadConfig();
     });
+  }
+
+  Future<void> _syncAndLoadConfig() async {
+    final provider = context.read<PaymentConfigProvider>();
+
+    // First, load any existing cached config immediately
+    _loadExistingConfig();
+
+    // Then sync from API to get the latest data
+    try {
+      await provider.syncPaymentConfig();
+      // After sync completes, reload the form with fresh data
+      if (mounted) {
+        _loadExistingConfig();
+      }
+    } catch (_) {
+      // Silently fail - we already loaded cached data above
+      // The error will be handled by the Consumer in the build method
+    }
   }
 
   void _loadExistingConfig() {
@@ -177,7 +196,7 @@ class _PaymentConfigScreenState extends State<PaymentConfigScreen> {
           children: [
             // Header text
             Text(
-              'Payment Methods',
+              localizations.paymentMethods,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -190,7 +209,7 @@ class _PaymentConfigScreenState extends State<PaymentConfigScreen> {
             // KHQR Payment Method Card
             _buildPaymentMethodToggleCard(
               title: localizations.khqr,
-              description: 'Accept payments via KHQR QR code',
+              description: localizations.khqrDescription,
               icon: Icons.qr_code_2_rounded,
               value: _enableKhqr,
               onChanged: (value) => setState(() => _enableKhqr = value),
@@ -202,7 +221,7 @@ class _PaymentConfigScreenState extends State<PaymentConfigScreen> {
             // ABA PayWay Payment Method Card
             _buildPaymentMethodToggleCard(
               title: localizations.abaPayWay,
-              description: 'Accept payments via ABA PayWay',
+              description: localizations.abaPayWayDescription,
               icon: Icons.payment_rounded,
               value: _enableAbaPayWay,
               onChanged: (value) => setState(() => _enableAbaPayWay = value),
