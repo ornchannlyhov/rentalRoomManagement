@@ -511,32 +511,7 @@ class _TenantScreenState extends State<TenantScreen>
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: tenantProvider.tenantsState.when(
                 loading: () {
-                  // If we have previous data, show it while loading
-                  if (tenantProvider.tenantsState.bestData != null) {
-                    final filteredTenants =
-                        _filterTenants(tenantProvider.tenantsState.bestData!);
-
-                    if (filteredTenants.isEmpty) {
-                      return EmptyState(
-                        theme: theme,
-                        fadeAnimation: _fadeAnimation,
-                        slideAnimation: _slideAnimation,
-                      );
-                    }
-
-                    return TenantList(
-                      tenants: filteredTenants,
-                      theme: theme,
-                      animationController: _animationController,
-                      fadeAnimation: _fadeAnimation,
-                      onRefresh: _loadData,
-                      onDismissed: _handleTenantDismissed,
-                      onTapTenant: _viewTenantDetails,
-                      onLongPress: _editTenant,
-                      onMenuSelected: _handleMenuSelection,
-                    );
-                  }
-                  // No previous data, show loading spinner
+                  // Always show skeleton during loading
                   return LoadingState(theme: theme);
                 },
                 error: (error) =>

@@ -322,12 +322,7 @@ class _BuildingScreenState extends State<BuildingScreen>
   }
 
   Widget _buildLoadingState(ThemeData theme) {
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      itemCount: 5,
-      separatorBuilder: (context, index) => const SizedBox(height: 2),
-      itemBuilder: (context, index) => const BuildingCardSkeleton(),
-    );
+    return const BuildingListSkeleton();
   }
 
   Widget _buildErrorState(ThemeData theme, Object error) {

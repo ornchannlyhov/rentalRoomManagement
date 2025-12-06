@@ -1371,4 +1371,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get clearAction => '清除';
+
+  @override
+  String get iAgreeToThe => '我同意';
+
+  @override
+  String get and => '和';
+
+  @override
+  String get pleaseAcceptTerms => '请接受服务条款和隐私政策以继续';
 }

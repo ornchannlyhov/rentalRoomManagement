@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:joul_v2/presentation/providers/payment_config_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
+import 'package:joul_v2/presentation/view/app_widgets/skeleton_widgets.dart';
 
 class PaymentConfigScreen extends StatefulWidget {
   const PaymentConfigScreen({super.key});
@@ -117,7 +119,10 @@ class _PaymentConfigScreenState extends State<PaymentConfigScreen> {
       body: Consumer<PaymentConfigProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Skeletonizer(
+              enabled: true,
+              child: PaymentConfigSkeleton(),
+            );
           }
 
           if (provider.hasError) {

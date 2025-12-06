@@ -1358,5 +1358,8 @@
   "errorLoadingNotifications": "Error loading notifications",
   "clearAllNotificationsQuestion": "Clear all notifications?",
   "clearAllNotificationsWarning": "This will remove all notification items. You can still view receipts in the Receipts tab.",
-  "clearAction": "Clear"
+  "clearAction": "Clear",
+  "iAgreeToThe": "I agree to the ",
+  "and": "and",
+  "pleaseAcceptTerms": "Please accept the Terms of Service and Privacy Policy to continue"
 }

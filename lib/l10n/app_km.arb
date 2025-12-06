@@ -408,5 +408,8 @@
   "errorLoadingNotifications": "មានបញ្ហាក្នុងការផ្ទុកការជូនដំណឹង",
   "clearAllNotificationsQuestion": "សម្អាតការជូនដំណឹងទាំងអស់?",
   "clearAllNotificationsWarning": "នេះនឹងលុបការជូនដំណឹងទាំងអស់។ អ្នកនៅតែអាចមើលវិក្កយបត្រនៅក្នុងផ្ទាំងវិក្កយបត្រ។",
-  "clearAction": "សម្អាត"
+  "clearAction": "សម្អាត",
+  "iAgreeToThe": "ខ្ញុំយល់ព្រមលើ ",
+  "and": "និង",
+  "pleaseAcceptTerms": "សូមយល់ព្រមលើលក្ខខណ្ឌនៃសេវាកម្ម និងគោលការណ៍ឯកជនភាពដើម្បីបន្ត"
 }

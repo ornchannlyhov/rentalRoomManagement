@@ -2634,6 +2634,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear'**
   String get clearAction;
+
+  /// No description provided for @iAgreeToThe.
+  ///
+  /// In en, this message translates to:
+  /// **'I agree to the '**
+  String get iAgreeToThe;
+
+  /// No description provided for @and.
+  ///
+  /// In en, this message translates to:
+  /// **'and'**
+  String get and;
+
+  /// No description provided for @pleaseAcceptTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'Please accept the Terms of Service and Privacy Policy to continue'**
+  String get pleaseAcceptTerms;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

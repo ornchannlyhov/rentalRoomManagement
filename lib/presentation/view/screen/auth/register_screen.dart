@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:joul_v2/core/utils/phone_formatter.dart';
@@ -9,6 +10,9 @@ import 'package:joul_v2/data/repositories/auth_repository.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
 import 'package:joul_v2/presentation/view/screen/auth/widget/custom_text_feild.dart';
 import 'package:joul_v2/presentation/view/screen/auth/otp_verification_screen.dart';
+import 'package:joul_v2/presentation/view/screen/setting/terms_of_service_screen.dart';
+import 'package:joul_v2/presentation/view/screen/setting/privacy_policy_screen.dart';
+import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -25,6 +29,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _acceptedTerms = false;
 
   @override
   void dispose() {
@@ -165,7 +170,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
+                // Terms and Privacy Policy Checkbox
+                _buildTermsCheckbox(localizations),
+                const SizedBox(height: 24),
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, child) {
                     return SizedBox(
@@ -264,7 +272,88 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  Widget _buildTermsCheckbox(AppLocalizations localizations) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 24,
+          width: 24,
+          child: Checkbox(
+            value: _acceptedTerms,
+            onChanged: (value) {
+              setState(() {
+                _acceptedTerms = value ?? false;
+              });
+            },
+            activeColor: const Color(0xFF10B981),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF757575),
+                height: 1.4,
+              ),
+              children: [
+                TextSpan(text: localizations.iAgreeToThe),
+                TextSpan(
+                  text: localizations.termsOfService,
+                  style: const TextStyle(
+                    color: Color(0xFF10B981),
+                    fontWeight: FontWeight.w600,
+                  ),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const TermsOfServiceScreen(),
+                        ),
+                      );
+                    },
+                ),
+                TextSpan(text: ' ${localizations.and} '),
+                TextSpan(
+                  text: localizations.privacyPolicy,
+                  style: const TextStyle(
+                    color: Color(0xFF10B981),
+                    fontWeight: FontWeight.w600,
+                  ),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PrivacyPolicyScreen(),
+                        ),
+                      );
+                    },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   void _handleRegister(AuthProvider authProvider) async {
+    if (!_acceptedTerms) {
+      GlobalSnackBar.show(
+        context: context,
+        message: AppLocalizations.of(context)!.pleaseAcceptTerms,
+        isError: true,
+      );
+      return;
+    }
+
     if (_formKey.currentState!.validate()) {
       final formattedPhone =
           PhoneFormatter.format(_phoneController.text.trim());

@@ -34,12 +34,19 @@ class NotificationProvider with ChangeNotifier {
   List<NotificationItem> get notificationList =>
       _notificationRepository.notifications;
 
-  /// Load persisted notifications from Hive
+  /// Load persisted notifications from Hive and sync from backend
   Future<void> loadNotifications() async {
     if (_isInitialized) return;
 
     try {
+      // First load from local cache for immediate display
       await _notificationRepository.load();
+      _notifications =
+          AsyncValue.success(_notificationRepository.notifications);
+      notifyListeners();
+
+      // Then sync from backend to get latest data
+      await _notificationRepository.syncFromApi();
       _notifications =
           AsyncValue.success(_notificationRepository.notifications);
     } catch (_) {
@@ -47,6 +54,22 @@ class NotificationProvider with ChangeNotifier {
     }
 
     _isInitialized = true;
+    notifyListeners();
+  }
+
+  /// Sync notifications from backend API
+  Future<void> syncNotifications() async {
+    _notifications = AsyncValue.loading(_notificationRepository.notifications);
+    notifyListeners();
+
+    try {
+      await _notificationRepository.syncFromApi();
+      _notifications =
+          AsyncValue.success(_notificationRepository.notifications);
+    } catch (e) {
+      _notifications =
+          AsyncValue.error(e, _notificationRepository.notifications);
+    }
     notifyListeners();
   }
 

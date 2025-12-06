@@ -1372,4 +1372,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clearAction => 'Clear';
+
+  @override
+  String get iAgreeToThe => 'I agree to the ';
+
+  @override
+  String get and => 'and';
+
+  @override
+  String get pleaseAcceptTerms => 'Please accept the Terms of Service and Privacy Policy to continue';
 }

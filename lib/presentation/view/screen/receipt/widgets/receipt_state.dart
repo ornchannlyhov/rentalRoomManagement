@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
+import 'package:joul_v2/presentation/view/app_widgets/skeleton_widgets.dart';
 
 class EmptyState extends StatelessWidget {
   const EmptyState({
@@ -28,7 +30,8 @@ class EmptyState extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                  color: theme.colorScheme.surfaceContainerHighest
+                      .withOpacity(0.3),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -68,22 +71,29 @@ class LoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return Center(
+    return Skeletonizer(
+      enabled: true,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(
-              theme.colorScheme.primary,
+          // Summary card skeleton
+          const ReceiptSummarySkeleton(),
+          const SizedBox(height: 16),
+          // Filter button skeleton
+          Container(
+            height: 48,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(15),
             ),
           ),
           const SizedBox(height: 16),
-          Text(
-            l10n.loading, // 'កំពុងដំណើការ...'
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+          // Receipt list skeleton
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(0),
+              itemCount: 5,
+              itemBuilder: (context, index) => const ReceiptCardSkeleton(),
             ),
           ),
         ],

@@ -55,29 +55,44 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
   Widget _buildFaqsTab(BuildContext context) {
     final faqs = [
       _FaqItem(
-        question: "How do I reset my password?",
+        question: "How do I add a new building?",
         answer:
-            "You can reset your password by going to the login screen and clicking on 'Forgot Password'. Follow the instructions sent to your email to create a new password.",
+            "Go to the Buildings tab and tap the '+' button. Fill in the building details including name, passkey, rent price, and utility rates (electricity and water per unit).",
       ),
       _FaqItem(
-        question: "How do I contact support?",
+        question: "How do I assign a tenant to a room?",
         answer:
-            "You can contact support via the 'Report Problem' tab in this screen, or email us directly at support@joul.com. We aim to respond within 24 hours.",
+            "From the Tenants screen, create a new tenant and select their room. Or from a Room's detail page, tap 'Add Tenant' to assign a tenant.",
+      ),
+      _FaqItem(
+        question: "How are receipts generated?",
+        answer:
+            "Receipts are created each month for occupied rooms. You'll receive a notification to confirm meter readings. Once confirmed, the receipt is generated with calculated costs.",
+      ),
+      _FaqItem(
+        question: "How do tenants pay their bills?",
+        answer:
+            "Tenants receive payment links via Telegram. They can pay using KHQR or ABA PayWay. Once payment is confirmed, the receipt status updates to 'Paid'.",
+      ),
+      _FaqItem(
+        question: "How do I mark a receipt as paid manually?",
+        answer:
+            "Swipe right on any receipt in the list to toggle its payment status between 'Paid' and 'Pending'.",
       ),
       _FaqItem(
         question: "Is my data secure?",
         answer:
-            "Yes, we use industry-standard encryption to protect your data. Your personal information and building data are stored securely and are never shared with third parties without your consent.",
+            "Yes, all data is encrypted in transit. Your personal information and building data are stored securely and never shared without your consent.",
       ),
       _FaqItem(
-        question: "How do I add a new tenant?",
+        question: "How do I reset my password?",
         answer:
-            "Navigate to the Building Detail screen, select the 'Tenants' tab (if available) or go to a Room and assign a tenant. You can also use the main 'Tenants' screen to manage all tenants.",
+            "Tap 'Forgot Password' on the login screen, enter your phone number, and follow the OTP verification process to create a new password.",
       ),
       _FaqItem(
-        question: "Can I manage multiple buildings?",
+        question: "How do I contact support?",
         answer:
-            "Yes! The app supports managing multiple buildings. You can switch between buildings from the home screen or the buildings list.",
+            "Use the 'Report Problem' tab above, email support@joul.app, or contact us via Telegram at @JoulSupport. We respond within 24 hours.",
       ),
     ];
 

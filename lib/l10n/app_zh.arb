@@ -408,5 +408,8 @@
   "errorLoadingNotifications": "加载通知出错",
   "clearAllNotificationsQuestion": "清除所有通知？",
   "clearAllNotificationsWarning": "这将删除所有通知项目。您仍然可以在“收据”选项卡中查看收据。",
-  "clearAction": "清除"
+  "clearAction": "清除",
+  "iAgreeToThe": "我同意",
+  "and": "和",
+  "pleaseAcceptTerms": "请接受服务条款和隐私政策以继续"
 }

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:joul_v2/data/models/notification_item.dart';
 import 'package:joul_v2/presentation/providers/notification_provider.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/receipt_confirmation_screen.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_detail.dart';
 import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
+import 'package:joul_v2/presentation/view/app_widgets/skeleton_widgets.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:joul_v2/core/theme/app_theme.dart';
 
@@ -20,9 +22,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   void initState() {
     super.initState();
-    // Mark all as read when opening notifications
+    // Sync notifications from server when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<NotificationProvider>().markAllAsRead();
+      context.read<NotificationProvider>()
+        ..syncNotifications()
+        ..markAllAsRead();
     });
   }
 
@@ -73,33 +77,51 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 final notificationsAsync = notificationProvider.notifications;
 
                 return notificationsAsync.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
+                  loading: () => Skeletonizer(
+                    enabled: true,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                      itemCount: 5,
+                      itemBuilder: (context, index) =>
+                          const NotificationCardSkeleton(),
+                    ),
                   ),
                   error: (error) => _buildErrorState(context, error),
                   success: (notifications) {
                     if (notifications.isEmpty) {
-                      return _buildEmptyState(context);
+                      return RefreshIndicator(
+                        onRefresh: () =>
+                            notificationProvider.syncNotifications(),
+                        child: Stack(
+                          children: [
+                            ListView(), // Needed for RefreshIndicator
+                            _buildEmptyState(context),
+                          ],
+                        ),
+                      );
                     }
 
-                    return ListView.builder(
-                      itemCount: notifications.length,
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                      itemBuilder: (context, index) {
-                        final notification = notifications[index];
-                        return _NotificationCard(
-                          notification: notification,
-                          onTap: () => _handleNotificationTap(notification),
-                          onDismiss: () {
-                            notificationProvider
-                                .deleteNotification(notification.id);
-                            GlobalSnackBar.show(
-                              message: l10n.notificationRemoved,
-                              context: context,
-                            );
-                          },
-                        );
-                      },
+                    return RefreshIndicator(
+                      onRefresh: () => notificationProvider.syncNotifications(),
+                      child: ListView.builder(
+                        itemCount: notifications.length,
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                        itemBuilder: (context, index) {
+                          final notification = notifications[index];
+                          return _NotificationCard(
+                            notification: notification,
+                            onTap: () => _handleNotificationTap(notification),
+                            onDismiss: () {
+                              notificationProvider
+                                  .deleteNotification(notification.id);
+                              GlobalSnackBar.show(
+                                message: l10n.notificationRemoved,
+                                context: context,
+                              );
+                            },
+                          );
+                        },
+                      ),
                     );
                   },
                 );

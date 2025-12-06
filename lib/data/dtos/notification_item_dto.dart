@@ -23,16 +23,21 @@ class NotificationItemDto {
   });
 
   factory NotificationItemDto.fromJson(Map<String, dynamic> json) {
+    // Backend uses numeric IDs, convert to string for frontend consistency
+    final dynamic rawId = json['id'];
+    final String id = rawId?.toString() ?? '';
+
     return NotificationItemDto(
-      id: json['id'] as String? ?? '',
+      id: id,
       type: json['type'] as String? ?? '',
       title: json['title'] as String? ?? '',
       message: json['message'] as String? ?? '',
-      receiptId: json['receiptId'] as String?,
-      reportId: json['reportId'] as String?,
+      receiptId: json['receiptId']?.toString(),
+      reportId: json['reportId']?.toString(),
       createdAt:
           json['createdAt'] as String? ?? DateTime.now().toIso8601String(),
-      isRead: json['isRead'] as bool? ?? false,
+      // If readAt exists and is not null, mark as read
+      isRead: json['isRead'] as bool? ?? json['readAt'] != null,
     );
   }
 

@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:joul_v2/presentation/view/screen/setting/payment_config_screen.dart';
 import 'package:provider/provider.dart';
@@ -15,6 +16,7 @@ import 'package:joul_v2/presentation/view/screen/setting/help_support_screen.dar
 import 'package:joul_v2/presentation/view/screen/setting/about_app_screen.dart';
 import 'package:joul_v2/data/repositories/auth_repository.dart';
 import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
+import 'package:joul_v2/presentation/view/app_widgets/skeleton_widgets.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -46,7 +48,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
       body: authProvider.user.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Skeletonizer(
+          enabled: true,
+          child: ProfileScreenSkeleton(),
+        ),
         error: (error) => Center(
           child: Padding(
             padding: const EdgeInsets.all(20.0),

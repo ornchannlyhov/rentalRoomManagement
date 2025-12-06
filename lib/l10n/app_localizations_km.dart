@@ -1371,4 +1371,13 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get clearAction => 'សម្អាត';
+
+  @override
+  String get iAgreeToThe => 'ខ្ញុំយល់ព្រមលើ ';
+
+  @override
+  String get and => 'និង';
+
+  @override
+  String get pleaseAcceptTerms => 'សូមយល់ព្រមលើលក្ខខណ្ឌនៃសេវាកម្ម និងគោលការណ៍ឯកជនភាពដើម្បីបន្ត';
 }

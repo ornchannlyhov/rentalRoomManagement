@@ -400,12 +400,16 @@ class _HistoryScreenState extends State<HistoryScreen>
           receipt.room!.roomNumber
               .toLowerCase()
               .contains(_searchQuery.toLowerCase()));
-    } else if (_selectedBuildingId != null) {
-      filtered = filtered.where(
-          (receipt) => receipt.room?.building?.id == _selectedBuildingId);
     } else {
+      // Apply Month Filter
       filtered =
           filtered.where((receipt) => receipt.date.month == _selectedMonth);
+
+      // Apply Building Filter if selected
+      if (_selectedBuildingId != null) {
+        filtered = filtered.where(
+            (receipt) => receipt.room?.building?.id == _selectedBuildingId);
+      }
     }
 
     return filtered.toList()..sort((a, b) => b.date.compareTo(a.date));
