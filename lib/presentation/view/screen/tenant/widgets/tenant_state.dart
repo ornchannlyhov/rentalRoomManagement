@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
+import 'package:joul_v2/presentation/view/app_widgets/skeleton_widgets.dart';
 
 class EmptyState extends StatelessWidget {
   const EmptyState({
@@ -28,8 +30,8 @@ class EmptyState extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  color:
-                      theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                  color: theme.colorScheme.surfaceContainerHighest
+                      .withOpacity(0.3),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -70,24 +72,12 @@ class LoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(
-            valueColor:
-                AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            localizations.loading,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
+    return Skeletonizer(
+      enabled: true,
+      child: ListView.builder(
+        padding: const EdgeInsets.only(bottom: 16),
+        itemCount: 5,
+        itemBuilder: (context, index) => const TenantCardSkeleton(),
       ),
     );
   }

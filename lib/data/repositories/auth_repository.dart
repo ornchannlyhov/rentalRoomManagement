@@ -436,6 +436,8 @@ class AuthRepository {
     return User(
       id: userDto.id,
       username: userDto.username,
+      phoneNumber: userDto.phoneNumber,
+      phoneVerified: userDto.phoneVerified,
       email: userDto.email,
       fcmToken: userDto.fcmToken,
       token: token,
@@ -564,6 +566,8 @@ class AuthRepository {
             return User(
               id: validatedUser.id,
               username: validatedUser.username,
+              phoneNumber: validatedUser.phoneNumber,
+              phoneVerified: validatedUser.phoneVerified,
               email: validatedUser.email,
               fcmToken: validatedUser.fcmToken,
             );
@@ -575,6 +579,8 @@ class AuthRepository {
         return User(
           id: userDto.id,
           username: userDto.username,
+          phoneNumber: userDto.phoneNumber,
+          phoneVerified: userDto.phoneVerified,
           email: userDto.email,
           fcmToken: userDto.fcmToken,
         );
@@ -591,6 +597,8 @@ class AuthRepository {
         return User(
           id: userDto.id,
           username: userDto.username,
+          phoneNumber: userDto.phoneNumber,
+          phoneVerified: userDto.phoneVerified,
           email: userDto.email,
           fcmToken: userDto.fcmToken,
         );

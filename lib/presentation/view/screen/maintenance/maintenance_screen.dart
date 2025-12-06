@@ -15,7 +15,7 @@ class MaintenanceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final localizations = AppLocalizations.of(context)!;
+    final localizations = AppLocalizations.of(context);
     final colorScheme = theme.colorScheme;
 
     return Theme(
@@ -78,7 +78,7 @@ class MaintenanceScreen extends StatelessWidget {
                     FilledButton.icon(
                       onPressed: onRetry,
                       icon: const Icon(Icons.refresh_rounded),
-                      label: Text(localizations.tryAgain),
+                      label: Text(localizations?.tryAgain ?? 'Try Again'),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 32,
@@ -97,7 +97,8 @@ class MaintenanceScreen extends StatelessWidget {
                     OutlinedButton.icon(
                       onPressed: onUseOffline,
                       icon: const Icon(Icons.cloud_off_rounded),
-                      label: Text(localizations.useOfflineMode),
+                      label: Text(
+                          localizations?.useOfflineMode ?? 'Use Offline Mode'),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 32,

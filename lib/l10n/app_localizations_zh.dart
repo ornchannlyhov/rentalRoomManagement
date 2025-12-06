@@ -1117,7 +1117,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notificationsCleared => '所有通知已清除';
 
   @override
-  String get noNotifications => '无通知';
+  String get noNotifications => '暂无通知';
 
   @override
   String get newReceiptNotification => '新收据通知将显示在这里';
@@ -1302,22 +1302,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sending => 'Sending...';
 
   @override
-  String get buildingImage => 'Building Image';
+  String get buildingImage => '楼宇图片';
 
   @override
-  String get addBuildingImage => 'Add Building Image';
+  String get addBuildingImage => '添加楼宇图片';
 
   @override
-  String get replaceImage => 'Replace Image';
+  String get replaceImage => '更换图片';
 
   @override
   String get changePhoto => 'Change Photo';
 
   @override
-  String get addPhoto => 'Add Photo';
+  String get addPhoto => '添加照片';
 
   @override
-  String get deposit => 'Deposit';
+  String get deposit => '押金';
 
   @override
   String get resolved => 'Resolved';
@@ -1328,14 +1328,56 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get roomNumber => 'Room Number';
+  String get roomNumber => '房间号';
 
   @override
-  String get financialInformation => 'Financial Information';
+  String get financialInformation => '财务信息';
 
   @override
-  String get offlineDataLoaded => 'Currently offline, loaded data from device';
+  String get offlineDataLoaded => '当前离线，数据已从设备加载';
 
   @override
-  String get date => 'Date';
+  String get date => '日期';
+
+  @override
+  String get roomOccupancy => '房间入住率';
+
+  @override
+  String get paymentMethods => '支付方式';
+
+  @override
+  String get khqrDescription => '通过KHQR二维码接受付款';
+
+  @override
+  String get abaPayWayDescription => '通过ABA PayWay接受付款';
+
+  @override
+  String get notificationsTitle => '通知';
+
+  @override
+  String get clearAllTooltip => '清除所有';
+
+  @override
+  String get newNotificationsMessage => '新通知将显示在这里';
+
+  @override
+  String get errorLoadingNotifications => '加载通知出错';
+
+  @override
+  String get clearAllNotificationsQuestion => '清除所有通知？';
+
+  @override
+  String get clearAllNotificationsWarning => '这将删除所有通知项目。您仍然可以在“收据”选项卡中查看收据。';
+
+  @override
+  String get clearAction => '清除';
+
+  @override
+  String get iAgreeToThe => '我同意';
+
+  @override
+  String get and => '和';
+
+  @override
+  String get pleaseAcceptTerms => '请接受服务条款和隐私政策以继续';
 }

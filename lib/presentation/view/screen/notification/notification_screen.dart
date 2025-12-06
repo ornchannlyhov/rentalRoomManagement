@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:joul_v2/data/models/notification_item.dart';
 import 'package:joul_v2/presentation/providers/notification_provider.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/receipt_confirmation_screen.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/widgets/receipt_detail.dart';
 import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
+import 'package:joul_v2/presentation/view/app_widgets/skeleton_widgets.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:joul_v2/core/theme/app_theme.dart';
 
@@ -20,9 +22,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   void initState() {
     super.initState();
-    // Mark all as read when opening notifications
+    // Sync notifications from server when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<NotificationProvider>().markAllAsRead();
+      context.read<NotificationProvider>()
+        ..syncNotifications()
+        ..markAllAsRead();
     });
   }
 
@@ -35,7 +39,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: Text(
-          'Notifications',
+          l10n.notificationsTitle,
           style: TextStyle(
             color: theme.brightness == Brightness.light
                 ? Colors.white
@@ -56,7 +60,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
             onPressed: () => _showClearConfirmation(context),
-            tooltip: 'Clear all',
+            tooltip: l10n.clearAllTooltip,
           ),
         ],
       ),
@@ -73,33 +77,51 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 final notificationsAsync = notificationProvider.notifications;
 
                 return notificationsAsync.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
+                  loading: () => Skeletonizer(
+                    enabled: true,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                      itemCount: 5,
+                      itemBuilder: (context, index) =>
+                          const NotificationCardSkeleton(),
+                    ),
                   ),
                   error: (error) => _buildErrorState(context, error),
                   success: (notifications) {
                     if (notifications.isEmpty) {
-                      return _buildEmptyState(context);
+                      return RefreshIndicator(
+                        onRefresh: () =>
+                            notificationProvider.syncNotifications(),
+                        child: Stack(
+                          children: [
+                            ListView(), // Needed for RefreshIndicator
+                            _buildEmptyState(context),
+                          ],
+                        ),
+                      );
                     }
 
-                    return ListView.builder(
-                      itemCount: notifications.length,
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                      itemBuilder: (context, index) {
-                        final notification = notifications[index];
-                        return _NotificationCard(
-                          notification: notification,
-                          onTap: () => _handleNotificationTap(notification),
-                          onDismiss: () {
-                            notificationProvider
-                                .deleteNotification(notification.id);
-                            GlobalSnackBar.show(
-                              message: l10n.notificationRemoved,
-                              context: context,
-                            );
-                          },
-                        );
-                      },
+                    return RefreshIndicator(
+                      onRefresh: () => notificationProvider.syncNotifications(),
+                      child: ListView.builder(
+                        itemCount: notifications.length,
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                        itemBuilder: (context, index) {
+                          final notification = notifications[index];
+                          return _NotificationCard(
+                            notification: notification,
+                            onTap: () => _handleNotificationTap(notification),
+                            onDismiss: () {
+                              notificationProvider
+                                  .deleteNotification(notification.id);
+                              GlobalSnackBar.show(
+                                message: l10n.notificationRemoved,
+                                context: context,
+                              );
+                            },
+                          );
+                        },
+                      ),
                     );
                   },
                 );
@@ -112,13 +134,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   void _handleNotificationTap(NotificationItem notification) {
+    final l10n = AppLocalizations.of(context)!;
     final notificationProvider = context.read<NotificationProvider>();
     final receipt =
         notificationProvider.getReceiptForNotification(notification);
 
     if (receipt == null) {
       GlobalSnackBar.show(
-        message: 'Receipt not found',
+        message: l10n.receiptNotFound,
         context: context,
         isError: true,
       );
@@ -152,6 +175,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Center(
       child: Container(
@@ -186,7 +210,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'No notifications',
+              l10n.noNotifications,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.onSurface,
@@ -194,7 +218,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'New notifications will appear here',
+              l10n.newNotificationsMessage,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -209,6 +233,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Widget _buildErrorState(BuildContext context, Object error) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Center(
       child: Padding(
@@ -223,7 +248,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Error loading notifications',
+              l10n.errorLoadingNotifications,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -260,17 +285,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
               size: 28,
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Text(
-                'Clear all notifications?',
-                style: TextStyle(fontWeight: FontWeight.w600),
+                l10n.clearAllNotificationsQuestion,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ],
         ),
-        content: const Text(
-          'This will remove all notification items. You can still view receipts in the Receipts tab.',
-          style: TextStyle(height: 1.5),
+        content: Text(
+          l10n.clearAllNotificationsWarning,
+          style: const TextStyle(height: 1.5),
         ),
         actions: [
           TextButton(
@@ -296,9 +321,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
               backgroundColor: theme.colorScheme.error,
               foregroundColor: theme.colorScheme.onError,
             ),
-            child: const Text(
-              'Clear',
-              style: TextStyle(fontWeight: FontWeight.w600),
+            child: Text(
+              l10n.clearAction,
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
         ],

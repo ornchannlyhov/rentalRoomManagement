@@ -86,7 +86,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
       }
     });
 
-    // Check for existing session expiryz 
+    // Check for existing session expiryz
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       if (authProvider.sessionHasExpired) {
@@ -182,7 +182,13 @@ class _AuthWrapperState extends State<AuthWrapper> {
     }
   }
 
+  bool _hasShownSessionExpiredDialog = false;
+
   void _showSessionExpiredDialog() {
+    // Prevent showing dialog multiple times
+    if (_hasShownSessionExpiredDialog) return;
+    _hasShownSessionExpiredDialog = true;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -192,13 +198,26 @@ class _AuthWrapperState extends State<AuthWrapper> {
         actions: [
           TextButton(
             onPressed: () async {
+              // Get providers before any async operations
               final authProvider =
                   Provider.of<AuthProvider>(context, listen: false);
+              final repositoryManager =
+                  Provider.of<RepositoryManager>(context, listen: false);
+
+              // Clear all cached data - same as logout flow
               await authProvider.logout();
+              await repositoryManager.clearAll();
+
               authProvider.acknowledgeSessionExpired();
+              _hasShownSessionExpiredDialog = false;
+
               if (mounted) {
                 Navigator.of(context).pop();
-                Navigator.of(context).pushReplacementNamed('/login');
+                // Navigate to onboarding screen, not login (same as logout)
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/onboarding',
+                  (route) => false,
+                );
               }
             },
             child: const Text('OK'),
@@ -208,40 +227,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
     );
   }
 
-  void _showNetworkErrorDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('No Internet Connection'),
-        content: const Text(
-          'You are currently offline. Changes will be saved locally and synced when connection is restored.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              final authProvider =
-                  Provider.of<AuthProvider>(context, listen: false);
-              authProvider.acknowledgeNetworkError();
-              Navigator.of(context).pop();
-            },
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
+  // Network error dialog removed - using offline banner instead
 
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
-        // Show dialogs if needed
-        if (authProvider.showNetworkError) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _showNetworkErrorDialog();
-          });
-        }
-
+        // Show session expired dialog if needed
+        // Network errors use the offline banner in main.dart, no dialog needed
         if (authProvider.sessionHasExpired) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _showSessionExpiredDialog();

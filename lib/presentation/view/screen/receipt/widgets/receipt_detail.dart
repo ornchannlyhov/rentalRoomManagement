@@ -266,8 +266,7 @@ class _ReceiptDetailScreenState extends State<ReceiptDetailScreen> {
                         _buildInfoRow(
                           theme,
                           l10n.date,
-                          DateFormat('dd MMM yyyy, HH:mm')
-                              .format(widget.receipt.date),
+                          DateFormat('dd/MM/yyyy').format(widget.receipt.date),
                         ),
                         _buildInfoRow(
                           theme,

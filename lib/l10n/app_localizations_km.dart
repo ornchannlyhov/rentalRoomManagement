@@ -1302,22 +1302,22 @@ class AppLocalizationsKm extends AppLocalizations {
   String get sending => 'Sending...';
 
   @override
-  String get buildingImage => 'Building Image';
+  String get buildingImage => 'រូបភាពអគារ';
 
   @override
-  String get addBuildingImage => 'Add Building Image';
+  String get addBuildingImage => 'បន្ថែមរូបភាពអគារ';
 
   @override
-  String get replaceImage => 'Replace Image';
+  String get replaceImage => 'ប្ដូររូបភាព';
 
   @override
   String get changePhoto => 'Change Photo';
 
   @override
-  String get addPhoto => 'Add Photo';
+  String get addPhoto => 'បន្ថែមរូបភាព';
 
   @override
-  String get deposit => 'Deposit';
+  String get deposit => 'ប្រាក់កក់';
 
   @override
   String get resolved => 'Resolved';
@@ -1338,4 +1338,46 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get date => 'កាលបរិច្ឆេទ';
+
+  @override
+  String get roomOccupancy => 'ការកាន់កាប់បន្ទប់';
+
+  @override
+  String get paymentMethods => 'វិធីសាស្ត្រទូទាត់';
+
+  @override
+  String get khqrDescription => 'ទទួលការទូទាត់តាមរយៈ KHQR QR code';
+
+  @override
+  String get abaPayWayDescription => 'ទទួលការទូទាត់តាមរយៈ ABA PayWay';
+
+  @override
+  String get notificationsTitle => 'ការជូនដំណឹង';
+
+  @override
+  String get clearAllTooltip => 'សម្អាតទាំងអស់';
+
+  @override
+  String get newNotificationsMessage => 'ការជូនដំណឹងថ្មីនឹងបង្ហាញនៅទីនេះ';
+
+  @override
+  String get errorLoadingNotifications => 'មានបញ្ហាក្នុងការផ្ទុកការជូនដំណឹង';
+
+  @override
+  String get clearAllNotificationsQuestion => 'សម្អាតការជូនដំណឹងទាំងអស់?';
+
+  @override
+  String get clearAllNotificationsWarning => 'នេះនឹងលុបការជូនដំណឹងទាំងអស់។ អ្នកនៅតែអាចមើលវិក្កយបត្រនៅក្នុងផ្ទាំងវិក្កយបត្រ។';
+
+  @override
+  String get clearAction => 'សម្អាត';
+
+  @override
+  String get iAgreeToThe => 'ខ្ញុំយល់ព្រមលើ ';
+
+  @override
+  String get and => 'និង';
+
+  @override
+  String get pleaseAcceptTerms => 'សូមយល់ព្រមលើលក្ខខណ្ឌនៃសេវាកម្ម និងគោលការណ៍ឯកជនភាពដើម្បីបន្ត';
 }

@@ -1345,5 +1345,21 @@
   "roomNumber": "Room Number",
   "financialInformation": "Financial Information",
   "offlineDataLoaded": "Currently offline, loaded data from device",
-  "date": "Date"
+  "date": "Date",
+  "roomOccupancy": "Room Occupancy",
+  "paymentMethods": "Payment Methods",
+  "khqrDescription": "Accept payments via KHQR QR code",
+  "abaPayWayDescription": "Accept payments via ABA PayWay",
+  "notificationsTitle": "Notifications",
+  "clearAllTooltip": "Clear all",
+  "receiptNotFound": "Receipt not found",
+  "noNotifications": "No notifications",
+  "newNotificationsMessage": "New notifications will appear here",
+  "errorLoadingNotifications": "Error loading notifications",
+  "clearAllNotificationsQuestion": "Clear all notifications?",
+  "clearAllNotificationsWarning": "This will remove all notification items. You can still view receipts in the Receipts tab.",
+  "clearAction": "Clear",
+  "iAgreeToThe": "I agree to the ",
+  "and": "and",
+  "pleaseAcceptTerms": "Please accept the Terms of Service and Privacy Policy to continue"
 }

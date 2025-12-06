@@ -43,12 +43,9 @@ class TenantProvider with ChangeNotifier {
 
   /// Sync tenants from API
   Future<void> syncTenants() async {
-    // Only show loading state if we don't have data yet
-    final hasData = _tenantsState.data != null;
-    if (!hasData) {
-      _tenantsState = AsyncValue.loading(_tenantsState.data);
-      notifyListeners();
-    }
+    // Always show loading state for consistent skeleton display
+    _tenantsState = AsyncValue.loading(_tenantsState.data);
+    notifyListeners();
 
     try {
       await _tenantRepository.syncFromApi();
@@ -63,8 +60,8 @@ class TenantProvider with ChangeNotifier {
       _tenantsState = AsyncValue.success(tenants);
       notifyListeners();
     } catch (e) {
-      // Don't set error state - just rethrow and let the screen handle fallback
-      // This prevents the error state flicker when falling back to local data
+      _tenantsState = AsyncValue.error(e, _tenantsState.data);
+      notifyListeners();
       rethrow;
     }
   }
