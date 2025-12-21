@@ -1380,4 +1380,10 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get pleaseAcceptTerms => 'សូមយល់ព្រមលើលក្ខខណ្ឌនៃសេវាកម្ម និងគោលការណ៍ឯកជនភាពដើម្បីបន្ត';
+
+  @override
+  String get deleteReceiptTitle => 'លុបវិក្កយបត្រ';
+
+  @override
+  String get deleteReceiptSimpleConfirm => 'តើអ្នកប្រាកដជាចង់លុបវិក្កយបត្រនេះមែនទេ?';
 }

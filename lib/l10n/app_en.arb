@@ -1361,5 +1361,7 @@
   "clearAction": "Clear",
   "iAgreeToThe": "I agree to the ",
   "and": "and",
-  "pleaseAcceptTerms": "Please accept the Terms of Service and Privacy Policy to continue"
+  "pleaseAcceptTerms": "Please accept the Terms of Service and Privacy Policy to continue",
+  "deleteReceiptTitle": "Delete Receipt",
+  "deleteReceiptSimpleConfirm": "Are you sure you want to delete this receipt?"
 }

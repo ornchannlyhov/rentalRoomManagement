@@ -2652,6 +2652,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please accept the Terms of Service and Privacy Policy to continue'**
   String get pleaseAcceptTerms;
+
+  /// No description provided for @deleteReceiptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Receipt'**
+  String get deleteReceiptTitle;
+
+  /// No description provided for @deleteReceiptSimpleConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this receipt?'**
+  String get deleteReceiptSimpleConfirm;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
