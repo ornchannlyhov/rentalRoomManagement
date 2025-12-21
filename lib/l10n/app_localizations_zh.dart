@@ -1380,4 +1380,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pleaseAcceptTerms => '请接受服务条款和隐私政策以继续';
+
+  @override
+  String get deleteReceiptTitle => '删除收据';
+
+  @override
+  String get deleteReceiptSimpleConfirm => '您确定要删除此收据吗？';
 }

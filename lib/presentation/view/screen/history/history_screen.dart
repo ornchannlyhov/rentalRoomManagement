@@ -207,10 +207,11 @@ class _HistoryScreenState extends State<HistoryScreen>
     final provider = context.read<ReceiptProvider>();
     await provider.deleteReceipt(receipt.id);
 
+    final l10n = AppLocalizations.of(context)!;
     if (mounted) {
       GlobalSnackBar.show(
         context: context,
-        message: 'បានលុបវិក្កយបត្រជោគជ័យ',
+        message: l10n.receiptDeleted,
       );
     }
   }
@@ -218,6 +219,7 @@ class _HistoryScreenState extends State<HistoryScreen>
   Future<bool> _confirmDeleteReceipt(
       BuildContext context, Receipt receipt) async {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -235,25 +237,25 @@ class _HistoryScreenState extends State<HistoryScreen>
                 size: 28,
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'លុបវិក្កយបត្រ',
-                  style: TextStyle(
+                  l10n.deleteReceiptTitle,
+                  style: const TextStyle(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          content: const Text(
-            'តើអ្នកប្រាកដជាចង់លុបវិក្កយបត្រនេះមែនទេ?',
-            style: TextStyle(height: 1.5),
+          content: Text(
+            l10n.deleteReceiptSimpleConfirm,
+            style: const TextStyle(height: 1.5),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
               child: Text(
-                'បោះបង់',
+                l10n.cancel,
                 style: TextStyle(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
@@ -266,9 +268,9 @@ class _HistoryScreenState extends State<HistoryScreen>
                 backgroundColor: theme.colorScheme.error,
                 foregroundColor: theme.colorScheme.onError,
               ),
-              child: const Text(
-                'លុប',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              child: Text(
+                l10n.delete,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ],

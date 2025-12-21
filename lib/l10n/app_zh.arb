@@ -411,5 +411,7 @@
   "clearAction": "清除",
   "iAgreeToThe": "我同意",
   "and": "和",
-  "pleaseAcceptTerms": "请接受服务条款和隐私政策以继续"
+  "pleaseAcceptTerms": "请接受服务条款和隐私政策以继续",
+  "deleteReceiptTitle": "删除收据",
+  "deleteReceiptSimpleConfirm": "您确定要删除此收据吗？"
 }

@@ -1381,4 +1381,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pleaseAcceptTerms => 'Please accept the Terms of Service and Privacy Policy to continue';
+
+  @override
+  String get deleteReceiptTitle => 'Delete Receipt';
+
+  @override
+  String get deleteReceiptSimpleConfirm => 'Are you sure you want to delete this receipt?';
 }
