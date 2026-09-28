@@ -448,5 +448,17 @@
   "syncEntityPaymentConfig": "付款设置",
   "syncTypeCreate": "新建",
   "syncTypeUpdate": "已编辑",
-  "syncTypeDelete": "已删除"
+  "syncTypeDelete": "已删除",
+  "storageTitle": "存储",
+  "storageSubtitle": "此手机上保留的收据记录",
+  "storageHistoryTitle": "在此手机上保留收据",
+  "storageHistoryHelp": "较早的收据保留在服务器上，不会再次下载。本月收据以及楼房、房间、租户和服务始终保留。",
+  "storageKeepMonths": "{count, plural, other{最近 {count} 个月}}",
+  "storageKeepAll": "全部",
+  "storageReceiptsOnPhone": "{count, plural, other{此手机上有 {count} 张收据}}",
+  "storageRemoveAll": "删除除本月外的所有记录",
+  "storageRemoveAllTitle": "从此手机删除记录？",
+  "storageRemoveAllMessage": "本月之前的收据将从此手机删除，但仍保留在服务器上。尚未上传更改的收据会被保留。",
+  "storageRemove": "删除",
+  "storageRemoved": "{count, plural, =0{没有可删除的内容} other{已从此手机删除 {count} 张收据}}"
 }

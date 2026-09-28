@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:joul_v2/core/helpers/data_hydration_helper.dart';
 import 'package:joul_v2/core/sync/outbox.dart';
+import 'package:joul_v2/core/sync/storage_settings.dart';
 import 'package:joul_v2/data/repositories/building_repository.dart';
 import 'package:joul_v2/data/repositories/receipt_repository.dart';
 import 'package:joul_v2/data/repositories/report_repository.dart';
@@ -47,6 +48,18 @@ class RepositoryManager {
   SyncStatus get syncStatus => _syncStatus;
   DateTime? get lastSyncTime => _lastSyncTime;
   String? get lastSyncError => _lastSyncError;
+
+  /// Makes the local data belong to [userId]. Data left on the phone by a
+  /// different account (whose session expired) is removed first; the same
+  /// account keeps its data and waiting changes.
+  Future<void> claimLocalData(String userId) async {
+    final settings = StorageSettings.fromHive();
+    final owner = settings.ownerUserId;
+    if (owner != null && owner != userId) {
+      await clearAll();
+    }
+    await settings.setOwner(userId);
+  }
 
   /// Offline changes that haven't reached the server yet, failed or not.
   int get pendingChangesCount => Outbox.instance.totalCount;
@@ -246,6 +259,7 @@ class RepositoryManager {
         paymentConfigRepository.clear(),
         Outbox.instance.clear(),
       ]);
+      await StorageSettings.fromHive().setOwner(null);
 
       _syncStatus = SyncStatus.idle;
       _lastSyncTime = null;

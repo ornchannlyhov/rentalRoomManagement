@@ -1507,4 +1507,62 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get syncTypeDelete => 'បានលុប';
+
+  @override
+  String get storageTitle => 'ទំហំផ្ទុក';
+
+  @override
+  String get storageSubtitle => 'ប្រវត្តិវិក្កយបត្រដែលរក្សាទុកនៅលើទូរស័ព្ទនេះ';
+
+  @override
+  String get storageHistoryTitle => 'រក្សាវិក្កយបត្រនៅលើទូរស័ព្ទនេះរយៈពេល';
+
+  @override
+  String get storageHistoryHelp => 'វិក្កយបត្រចាស់ៗនៅតែមាននៅលើម៉ាស៊ីនមេ ហើយមិនត្រូវបានទាញយកម្តងទៀតទេ។ វិក្កយបត្រខែនេះ អគារ បន្ទប់ អ្នកជួល និងសេវាកម្ម តែងតែត្រូវបានរក្សាទុក។';
+
+  @override
+  String storageKeepMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ខែចុងក្រោយ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get storageKeepAll => 'ទាំងអស់';
+
+  @override
+  String storageReceiptsOnPhone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'វិក្កយបត្រ $count នៅលើទូរស័ព្ទនេះ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get storageRemoveAll => 'លុបប្រវត្តិទាំងអស់ លើកលែងតែខែនេះ';
+
+  @override
+  String get storageRemoveAllTitle => 'លុបប្រវត្តិចេញពីទូរស័ព្ទនេះ?';
+
+  @override
+  String get storageRemoveAllMessage => 'វិក្កយបត្រមុនខែនេះនឹងត្រូវបានលុបចេញពីទូរស័ព្ទនេះ។ វានៅតែមាននៅលើម៉ាស៊ីនមេ។ វិក្កយបត្រដែលមានការផ្លាស់ប្តូរមិនទាន់បានផ្ទុកឡើងនឹងត្រូវបានរក្សាទុក។';
+
+  @override
+  String get storageRemove => 'លុប';
+
+  @override
+  String storageRemoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'បានលុបវិក្កយបត្រ $count ចេញពីទូរស័ព្ទនេះ',
+      zero: 'គ្មានអ្វីត្រូវលុបទេ',
+    );
+    return '$_temp0';
+  }
 }

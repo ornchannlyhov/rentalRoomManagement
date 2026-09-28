@@ -448,5 +448,17 @@
   "syncEntityPaymentConfig": "ការកំណត់ការទូទាត់",
   "syncTypeCreate": "ថ្មី",
   "syncTypeUpdate": "បានកែប្រែ",
-  "syncTypeDelete": "បានលុប"
+  "syncTypeDelete": "បានលុប",
+  "storageTitle": "ទំហំផ្ទុក",
+  "storageSubtitle": "ប្រវត្តិវិក្កយបត្រដែលរក្សាទុកនៅលើទូរស័ព្ទនេះ",
+  "storageHistoryTitle": "រក្សាវិក្កយបត្រនៅលើទូរស័ព្ទនេះរយៈពេល",
+  "storageHistoryHelp": "វិក្កយបត្រចាស់ៗនៅតែមាននៅលើម៉ាស៊ីនមេ ហើយមិនត្រូវបានទាញយកម្តងទៀតទេ។ វិក្កយបត្រខែនេះ អគារ បន្ទប់ អ្នកជួល និងសេវាកម្ម តែងតែត្រូវបានរក្សាទុក។",
+  "storageKeepMonths": "{count, plural, other{{count} ខែចុងក្រោយ}}",
+  "storageKeepAll": "ទាំងអស់",
+  "storageReceiptsOnPhone": "{count, plural, other{វិក្កយបត្រ {count} នៅលើទូរស័ព្ទនេះ}}",
+  "storageRemoveAll": "លុបប្រវត្តិទាំងអស់ លើកលែងតែខែនេះ",
+  "storageRemoveAllTitle": "លុបប្រវត្តិចេញពីទូរស័ព្ទនេះ?",
+  "storageRemoveAllMessage": "វិក្កយបត្រមុនខែនេះនឹងត្រូវបានលុបចេញពីទូរស័ព្ទនេះ។ វានៅតែមាននៅលើម៉ាស៊ីនមេ។ វិក្កយបត្រដែលមានការផ្លាស់ប្តូរមិនទាន់បានផ្ទុកឡើងនឹងត្រូវបានរក្សាទុក។",
+  "storageRemove": "លុប",
+  "storageRemoved": "{count, plural, =0{គ្មានអ្វីត្រូវលុបទេ} other{បានលុបវិក្កយបត្រ {count} ចេញពីទូរស័ព្ទនេះ}}"
 }

@@ -1407,5 +1407,20 @@
   "syncEntityPaymentConfig": "Payment settings",
   "syncTypeCreate": "New",
   "syncTypeUpdate": "Edited",
-  "syncTypeDelete": "Deleted"
+  "syncTypeDelete": "Deleted",
+  "storageTitle": "Storage",
+  "storageSubtitle": "Receipt history kept on this phone",
+  "storageHistoryTitle": "Keep receipts on this phone for",
+  "storageHistoryHelp": "Older receipts stay on the server and aren't downloaded again. This month's receipts, buildings, rooms, tenants and services are always kept.",
+  "storageKeepMonths": "{count, plural, =1{Last month} other{Last {count} months}}",
+  "@storageKeepMonths": {"placeholders": {"count": {"type": "int"}}},
+  "storageKeepAll": "Everything",
+  "storageReceiptsOnPhone": "{count, plural, =1{1 receipt on this phone} other{{count} receipts on this phone}}",
+  "@storageReceiptsOnPhone": {"placeholders": {"count": {"type": "int"}}},
+  "storageRemoveAll": "Remove all history except this month",
+  "storageRemoveAllTitle": "Remove history from this phone?",
+  "storageRemoveAllMessage": "Receipts from before this month will be removed from this phone. They stay on the server. Receipts with changes that haven't uploaded yet are kept.",
+  "storageRemove": "Remove",
+  "storageRemoved": "{count, plural, =0{Nothing to remove} =1{Removed 1 receipt from this phone} other{Removed {count} receipts from this phone}}",
+  "@storageRemoved": {"placeholders": {"count": {"type": "int"}}}
 }

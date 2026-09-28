@@ -99,6 +99,7 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final newUser = await _repository.verifyRegistration(request);
+      await _repositoryManager?.claimLocalData(newUser.id);
       _user = AsyncValue.success(newUser);
       _otpState = const AsyncValue.success(true);
       _otpSent = false; // Reset after successful verification
@@ -118,6 +119,7 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final loggedInUser = await _repository.login(request);
+      await _repositoryManager?.claimLocalData(loggedInUser.id);
       _user = AsyncValue.success(loggedInUser);
       _loginState = const AsyncValue.success(true);
     } catch (e) {
@@ -210,6 +212,25 @@ class AuthProvider with ChangeNotifier {
         _otpState = const AsyncValue.success(false);
         _otpSent = false;
         _sessionHasExpired = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  /// Ends a session the server no longer accepts, without deleting local
+  /// data: changes still waiting upload once the same account signs in
+  /// again. A different account starts clean (see claimLocalData).
+  Future<void> endExpiredSession() async {
+    try {
+      await _repository.logout();
+    } catch (e) {
+      debugPrint('Ending expired session failed: $e');
+    } finally {
+      if (!_disposed) {
+        _user = const AsyncValue.success(null);
+        _loginState = const AsyncValue.success(false);
+        _otpState = const AsyncValue.success(false);
+        _otpSent = false;
         notifyListeners();
       }
     }

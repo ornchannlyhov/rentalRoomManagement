@@ -2874,6 +2874,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Deleted'**
   String get syncTypeDelete;
+
+  /// No description provided for @storageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get storageTitle;
+
+  /// No description provided for @storageSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt history kept on this phone'**
+  String get storageSubtitle;
+
+  /// No description provided for @storageHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep receipts on this phone for'**
+  String get storageHistoryTitle;
+
+  /// No description provided for @storageHistoryHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Older receipts stay on the server and aren\'t downloaded again. This month\'s receipts, buildings, rooms, tenants and services are always kept.'**
+  String get storageHistoryHelp;
+
+  /// No description provided for @storageKeepMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Last month} other{Last {count} months}}'**
+  String storageKeepMonths(int count);
+
+  /// No description provided for @storageKeepAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything'**
+  String get storageKeepAll;
+
+  /// No description provided for @storageReceiptsOnPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 receipt on this phone} other{{count} receipts on this phone}}'**
+  String storageReceiptsOnPhone(int count);
+
+  /// No description provided for @storageRemoveAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove all history except this month'**
+  String get storageRemoveAll;
+
+  /// No description provided for @storageRemoveAllTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove history from this phone?'**
+  String get storageRemoveAllTitle;
+
+  /// No description provided for @storageRemoveAllMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipts from before this month will be removed from this phone. They stay on the server. Receipts with changes that haven\'t uploaded yet are kept.'**
+  String get storageRemoveAllMessage;
+
+  /// No description provided for @storageRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get storageRemove;
+
+  /// No description provided for @storageRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing to remove} =1{Removed 1 receipt from this phone} other{Removed {count} receipts from this phone}}'**
+  String storageRemoved(int count);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

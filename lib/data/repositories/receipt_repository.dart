@@ -14,6 +14,7 @@ import 'package:dio/dio.dart';
 import 'package:joul_v2/data/models/service.dart';
 import 'package:joul_v2/core/sync/outbox.dart';
 import 'package:joul_v2/core/sync/pull_merge.dart';
+import 'package:joul_v2/core/sync/storage_settings.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
 import 'package:joul_v2/core/services/database_service.dart';
 
@@ -202,6 +203,7 @@ class ReceiptRepository {
         local: _receiptCache,
         idOf: (item) => item.id,
       );
+      applyHistoryWindow();
 
       await updateStatusToOverdue();
 
@@ -416,11 +418,25 @@ class ReceiptRepository {
     }
   }
 
+  /// Removes receipts from before this year from the phone and stops
+  /// downloading them again. They stay on the server.
   Future<void> deleteLastYearReceipts() async {
     final now = DateTime.now();
-    final startOfCurrentYear = DateTime(now.year, 1, 1);
-    _receiptCache.removeWhere((r) => r.date.isBefore(startOfCurrentYear));
+    await StorageSettings.fromHive().setHistoryFrom(DateTime(now.year, 1, 1));
+    applyHistoryWindow();
     await save();
+  }
+
+  /// Drops receipts older than the history window chosen in Storage
+  /// settings, except ones with changes still waiting to upload.
+  /// Returns how many were removed. Call [save] afterwards to store it.
+  int applyHistoryWindow() {
+    final cutoff = StorageSettings.fromHive().historyCutoff();
+    if (cutoff == null) return 0;
+    final before = _receiptCache.length;
+    _receiptCache.removeWhere((r) =>
+        r.date.isBefore(cutoff) && !Outbox.instance.hasChangesFor(r.id));
+    return before - _receiptCache.length;
   }
 
   List<Receipt> getAllReceipts() => List.unmodifiable(_receiptCache);

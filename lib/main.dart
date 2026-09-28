@@ -32,6 +32,7 @@ import 'package:joul_v2/core/services/health_check_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'dart:async';
 import 'package:joul_v2/core/di/service_locator.dart';
+import 'package:joul_v2/core/sync/storage_settings.dart';
 import 'package:joul_v2/core/sync/sync_engine.dart';
 import 'package:joul_v2/core/services/local_notification_service.dart';
 
@@ -55,6 +56,14 @@ Future<void> main() async {
   await repositoryManager.loadAll();
   await paymentConfigRepository.load();
   await authProvider.load();
+
+  // Installs from before local data had an owner: it belongs to whoever
+  // is signed in now.
+  final currentUser = authProvider.getCurrentUser();
+  final storageSettings = StorageSettings.fromHive();
+  if (currentUser != null && storageSettings.ownerUserId == null) {
+    await storageSettings.setOwner(currentUser.id);
+  }
 
   // --- Initialize Local Notifications ---
   await LocalNotificationService.initialize();

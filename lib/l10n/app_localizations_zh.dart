@@ -1507,4 +1507,62 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get syncTypeDelete => '已删除';
+
+  @override
+  String get storageTitle => '存储';
+
+  @override
+  String get storageSubtitle => '此手机上保留的收据记录';
+
+  @override
+  String get storageHistoryTitle => '在此手机上保留收据';
+
+  @override
+  String get storageHistoryHelp => '较早的收据保留在服务器上，不会再次下载。本月收据以及楼房、房间、租户和服务始终保留。';
+
+  @override
+  String storageKeepMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '最近 $count 个月',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get storageKeepAll => '全部';
+
+  @override
+  String storageReceiptsOnPhone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '此手机上有 $count 张收据',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get storageRemoveAll => '删除除本月外的所有记录';
+
+  @override
+  String get storageRemoveAllTitle => '从此手机删除记录？';
+
+  @override
+  String get storageRemoveAllMessage => '本月之前的收据将从此手机删除，但仍保留在服务器上。尚未上传更改的收据会被保留。';
+
+  @override
+  String get storageRemove => '删除';
+
+  @override
+  String storageRemoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '已从此手机删除 $count 张收据',
+      zero: '没有可删除的内容',
+    );
+    return '$_temp0';
+  }
 }

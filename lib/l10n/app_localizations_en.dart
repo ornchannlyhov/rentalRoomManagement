@@ -1510,4 +1510,65 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncTypeDelete => 'Deleted';
+
+  @override
+  String get storageTitle => 'Storage';
+
+  @override
+  String get storageSubtitle => 'Receipt history kept on this phone';
+
+  @override
+  String get storageHistoryTitle => 'Keep receipts on this phone for';
+
+  @override
+  String get storageHistoryHelp => 'Older receipts stay on the server and aren\'t downloaded again. This month\'s receipts, buildings, rooms, tenants and services are always kept.';
+
+  @override
+  String storageKeepMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Last $count months',
+      one: 'Last month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get storageKeepAll => 'Everything';
+
+  @override
+  String storageReceiptsOnPhone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count receipts on this phone',
+      one: '1 receipt on this phone',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get storageRemoveAll => 'Remove all history except this month';
+
+  @override
+  String get storageRemoveAllTitle => 'Remove history from this phone?';
+
+  @override
+  String get storageRemoveAllMessage => 'Receipts from before this month will be removed from this phone. They stay on the server. Receipts with changes that haven\'t uploaded yet are kept.';
+
+  @override
+  String get storageRemove => 'Remove';
+
+  @override
+  String storageRemoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Removed $count receipts from this phone',
+      one: 'Removed 1 receipt from this phone',
+      zero: 'Nothing to remove',
+    );
+    return '$_temp0';
+  }
 }

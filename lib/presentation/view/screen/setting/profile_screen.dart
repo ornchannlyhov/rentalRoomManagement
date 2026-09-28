@@ -16,6 +16,7 @@ import 'package:joul_v2/presentation/view/screen/setting/widgets/settings_group.
 import 'package:joul_v2/presentation/view/screen/setting/widgets/settings_item.dart';
 import 'package:joul_v2/presentation/view/screen/setting/widgets/logout_button.dart';
 import 'package:joul_v2/presentation/view/screen/setting/help_support_screen.dart';
+import 'package:joul_v2/presentation/view/screen/setting/storage_screen.dart';
 import 'package:joul_v2/presentation/view/screen/setting/sync_status_screen.dart';
 import 'package:joul_v2/presentation/view/screen/setting/about_app_screen.dart';
 import 'package:joul_v2/data/repositories/auth_repository.dart';
@@ -227,6 +228,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => const SyncStatusScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  SettingsItem(
+                    icon: Icons.storage_outlined,
+                    title: localizations.storageTitle,
+                    subtitle: localizations.storageSubtitle,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const StorageScreen(),
                         ),
                       );
                     },

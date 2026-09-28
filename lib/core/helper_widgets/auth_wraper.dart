@@ -3,7 +3,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
-import 'package:joul_v2/core/helpers/repository_manager.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
 import 'package:joul_v2/presentation/view/app_widgets/app_menu.dart';
 import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
@@ -104,15 +103,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
         actions: [
           TextButton(
             onPressed: () async {
-              // Get providers before any async operations
               final authProvider =
                   Provider.of<AuthProvider>(context, listen: false);
-              final repositoryManager =
-                  Provider.of<RepositoryManager>(context, listen: false);
 
-              // Clear all cached data - same as logout flow
-              await authProvider.logout();
-              await repositoryManager.clearAll();
+              // Keep local data: changes waiting to upload are sent once
+              // the same account signs in again.
+              await authProvider.endExpiredSession();
 
               authProvider.acknowledgeSessionExpired();
               _hasShownSessionExpiredDialog = false;
