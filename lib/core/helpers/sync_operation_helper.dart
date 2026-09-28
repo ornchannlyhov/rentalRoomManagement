@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
+import 'package:joul_v2/core/sync/outbox.dart';
 
 /// Result of a sync operation
 class SyncResult<T> {
@@ -35,7 +35,11 @@ class SyncOperationHelper {
     File? file, 
     String? fileFieldName, 
   }) async {
-    if (await _apiHelper.hasNetwork()) {
+    // Records created offline may already have a server id.
+    endpoint = Outbox.instance.remapIds(endpoint) as String;
+    data = Outbox.instance.remapIds(data) as Map<String, dynamic>;
+
+    if (_canSendDirectly(endpoint, data) && await _apiHelper.hasNetwork()) {
       final token = await _apiHelper.storage.read(key: 'auth_token');
       if (token != null) {
         try {
@@ -117,7 +121,11 @@ class SyncOperationHelper {
   }) async {
     bool syncedOnline = false;
 
-    if (await _apiHelper.hasNetwork()) {
+    // Records created offline may already have a server id.
+    endpoint = Outbox.instance.remapIds(endpoint) as String;
+    data = Outbox.instance.remapIds(data) as Map<String, dynamic>;
+
+    if (_canSendDirectly(endpoint, data) && await _apiHelper.hasNetwork()) {
       final token = await _apiHelper.storage.read(key: 'auth_token');
       if (token != null) {
         try {
@@ -186,7 +194,10 @@ class SyncOperationHelper {
   }) async {
     bool syncedOnline = false;
 
-    if (await _apiHelper.hasNetwork()) {
+    // Records created offline may already have a server id.
+    endpoint = Outbox.instance.remapIds(endpoint) as String;
+
+    if (_canSendDirectly(endpoint, const {}) && await _apiHelper.hasNetwork()) {
       final token = await _apiHelper.storage.read(key: 'auth_token');
       if (token != null) {
         try {
@@ -264,131 +275,8 @@ class SyncOperationHelper {
     return SyncResult(success: false, wasOnline: true);
   }
 
-  /// Apply a pending change to the API (with file support)
-  Future<bool> applyPendingChange(Map<String, dynamic> change) async {
-    final token = await _apiHelper.storage.read(key: 'auth_token');
-    if (token == null) return false;
-
-    final type = change['type'];
-    // Hive returns nested maps as Map<dynamic, dynamic> after a restart.
-    final rawData = change['data'];
-    final data = rawData is Map
-        ? Map<String, dynamic>.from(rawData)
-        : <String, dynamic>{};
-    final endpoint = change['endpoint'];
-    final filePath = change['filePath'] as String?; 
-    final fileFieldName =
-        change['fileFieldName'] as String?;
-
-    if (endpoint == null) return false;
-
-    File? file;
-    if (filePath != null && fileFieldName != null) {
-      final fileExists = await File(filePath).exists();
-      if (fileExists) {
-        file = File(filePath);
-      } else {
-        if (kDebugMode) {
-          print('Warning: File not found at $filePath, syncing without file');
-        }
-      }
-    }
-
-    try {
-      Response? response;
-
-      switch (type) {
-        case 'create':
-          if (file != null && fileFieldName != null) {
-            response = await _apiHelper.uploadWithFile(
-              endpoint: endpoint,
-              data: data,
-              file: file,
-              fileFieldName: fileFieldName,
-              method: 'POST',
-            );
-          } else {
-            response = await _apiHelper.dio.post(
-              '${_apiHelper.baseUrl}$endpoint',
-              data: data,
-              options: Options(
-                headers: {'Authorization': 'Bearer $token'},
-                sendTimeout: const Duration(seconds: 10),
-                receiveTimeout: const Duration(seconds: 10),
-                validateStatus: (status) => status! < 500,
-              ),
-            );
-          }
-
-          // 201 = success, 409 = already exists (treat as success)
-          return response?.statusCode == 201 ||
-              response?.statusCode == 200 ||
-              response?.statusCode == 409;
-
-        // 'updateStatus' was used by older app versions for report status.
-        case 'update':
-        case 'updateStatus':
-          if (file != null && fileFieldName != null) {
-            response = await _apiHelper.uploadWithFile(
-              endpoint: endpoint,
-              data: data,
-              file: file,
-              fileFieldName: fileFieldName,
-              method: 'PUT',
-            );
-          } else {
-            response = await _apiHelper.dio.put(
-              '${_apiHelper.baseUrl}$endpoint',
-              data: data,
-              options: Options(
-                headers: {'Authorization': 'Bearer $token'},
-                sendTimeout: const Duration(seconds: 10),
-                receiveTimeout: const Duration(seconds: 10),
-                validateStatus: (status) => status! < 500,
-              ),
-            );
-          }
-
-          // A 404 here means the record wasn't found, so the edit did not
-          // land. Keep it queued instead of reporting success.
-          return response?.statusCode == 200;
-
-        case 'delete':
-          response = await _apiHelper.dio.delete(
-            '${_apiHelper.baseUrl}$endpoint',
-            options: Options(
-              headers: {'Authorization': 'Bearer $token'},
-              sendTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 10),
-              validateStatus: (status) => status! < 500,
-            ),
-          );
-
-          // 200 = success, 404 = already deleted (treat as success)
-          return response.statusCode == 200 || response.statusCode == 404;
-
-        default:
-          return false;
-      }
-    } on DioException catch (e) {
-      if (kDebugMode) {
-        print('Error applying pending change: ${e.message}');
-      }
-      // Only fail on network errors, not 4xx/5xx
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.sendTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.connectionError) {
-        return false;
-      }
-
-      // Server errors - consider the operation failed
-      return false;
-    } catch (e) {
-      if (kDebugMode) {
-        print('Unexpected error applying pending change: $e');
-      }
-      return false;
-    }
-  }
+  /// Sending right away is only safe when it can't overtake a change still
+  /// waiting in the outbox; otherwise the change is queued behind it.
+  bool _canSendDirectly(String endpoint, Map<String, dynamic> data) =>
+      Outbox.instance.canSendDirectly(endpoint, data);
 }

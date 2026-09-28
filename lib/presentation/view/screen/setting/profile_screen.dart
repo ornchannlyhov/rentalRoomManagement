@@ -7,13 +7,16 @@ import 'package:joul_v2/presentation/view/screen/setting/payment_config_screen.d
 import 'package:provider/provider.dart';
 import 'package:joul_v2/presentation/providers/theme_provider.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
-import 'package:joul_v2/core/helpers/repository_manager.dart';
+import 'package:joul_v2/core/di/service_locator.dart';
+import 'package:joul_v2/core/sync/outbox.dart';
+import 'package:joul_v2/core/sync/sync_engine.dart';
 import 'package:joul_v2/data/models/user.dart';
 import 'package:joul_v2/presentation/view/screen/setting/widgets/profile_header.dart';
 import 'package:joul_v2/presentation/view/screen/setting/widgets/settings_group.dart';
 import 'package:joul_v2/presentation/view/screen/setting/widgets/settings_item.dart';
 import 'package:joul_v2/presentation/view/screen/setting/widgets/logout_button.dart';
 import 'package:joul_v2/presentation/view/screen/setting/help_support_screen.dart';
+import 'package:joul_v2/presentation/view/screen/setting/sync_status_screen.dart';
 import 'package:joul_v2/presentation/view/screen/setting/about_app_screen.dart';
 import 'package:joul_v2/data/repositories/auth_repository.dart';
 import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
@@ -211,6 +214,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => const PaymentConfigScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  SettingsItem(
+                    icon: Icons.sync,
+                    title: localizations.syncTitle,
+                    subtitle: localizations.syncSubtitle,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SyncStatusScreen(),
                         ),
                       );
                     },
@@ -619,11 +635,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// are still waiting, because signing out clears them from this phone.
   Future<void> _signOutKeepingChanges(
       ColorScheme colorScheme, AuthProvider authProvider) async {
-    final repositoryManager =
-        Provider.of<RepositoryManager>(context, listen: false);
+    final syncEngine = locator<SyncEngine>();
     final localizations = AppLocalizations.of(context)!;
 
-    var pending = repositoryManager.pendingChangesCount;
+    var pending = Outbox.instance.totalCount;
     if (pending > 0) {
       showDialog(
         context: context,
@@ -643,7 +658,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       );
-      pending = await repositoryManager.uploadPendingChanges();
+      pending = await syncEngine.uploadBeforeSignOut();
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
     }

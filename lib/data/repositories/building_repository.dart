@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
-import 'package:joul_v2/core/helpers/pending_change_queue.dart';
+import 'package:joul_v2/core/sync/outbox.dart';
+import 'package:joul_v2/core/sync/pull_merge.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
 import 'package:joul_v2/data/models/building.dart';
 import 'package:joul_v2/data/dtos/building_dto.dart';
@@ -12,7 +13,6 @@ class BuildingRepository {
   final SyncOperationHelper _syncHelper = SyncOperationHelper();
 
   List<Building> _buildingCache = [];
-  List<Map<String, dynamic>> _pendingChanges = [];
 
   BuildingRepository(this._databaseService);
 
@@ -31,18 +31,9 @@ class BuildingRepository {
         return BuildingDto.fromJson(jsonMap).toBuilding();
       }).toList();
 
-      final pendingList = _databaseService.buildingsPendingBox.values.toList();
-      _pendingChanges = pendingList.map((e) {
-        if (e is Map<String, dynamic>) {
-          return e;
-        } else {
-          return Map<String, dynamic>.from(e);
-        }
-      }).toList();
-
       if (kDebugMode) {
         print(
-            'Loaded ${_buildingCache.length} buildings and ${_pendingChanges.length} pending changes');
+            'Loaded ${_buildingCache.length} buildings');
       }
     } catch (e) {
       if (kDebugMode) {
@@ -50,7 +41,6 @@ class BuildingRepository {
       }
       // Don't throw, initialize with empty data instead
       _buildingCache = [];
-      _pendingChanges = [];
     }
   }
 
@@ -60,16 +50,12 @@ class BuildingRepository {
         .map((e) =>
             BuildingDto.fromJson(Map<String, dynamic>.from(e)).toBuilding())
         .toList();
-
-    final pendingList = _databaseService.buildingsPendingBox.values.toList();
-    _pendingChanges =
-        pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
   Future<void> save() async {
     try {
       // Clear and save buildings
-      await _databaseService.buildingsBox.clear();
+      final records = <String, Map<String, dynamic>>{};
       for (var i = 0; i < _buildingCache.length; i++) {
         final dto = BuildingDto(
           id: _buildingCache[i].id,
@@ -90,21 +76,15 @@ class BuildingRepository {
         final Map<String, dynamic> mapData =
             Map<String, dynamic>.from(jsonData);
 
-        await _databaseService.buildingsBox.put(i, mapData);
+        records[_buildingCache[i].id] = Map<String, dynamic>.from(mapData);
       }
 
-      // Clear and save pending changes
-      await _databaseService.buildingsPendingBox.clear();
-      for (var i = 0; i < _pendingChanges.length; i++) {
-        // Ensure pending change is a proper Map<String, dynamic>
-        final Map<String, dynamic> changeData =
-            Map<String, dynamic>.from(_pendingChanges[i]);
-        await _databaseService.buildingsPendingBox.put(i, changeData);
-      }
+      await _databaseService.writeRecords(
+          _databaseService.buildingsBox, records);
 
       if (kDebugMode) {
         print(
-            'Saved ${_buildingCache.length} buildings and ${_pendingChanges.length} pending changes');
+            'Saved ${_buildingCache.length} buildings');
       }
     } catch (e) {
       if (kDebugMode) {
@@ -116,9 +96,7 @@ class BuildingRepository {
 
   Future<void> clear() async {
     await _databaseService.buildingsBox.clear();
-    await _databaseService.buildingsPendingBox.clear();
     _buildingCache.clear();
-    _pendingChanges.clear();
   }
 
   Future<void> syncFromApi({bool skipHydration = false}) async {
@@ -129,8 +107,6 @@ class BuildingRepository {
       return;
     }
 
-    await _syncPendingChanges();
-
     final result = await _syncHelper.fetch<Building>(
       endpoint: '/buildings',
       fromJsonList: (jsonList) => jsonList
@@ -139,68 +115,17 @@ class BuildingRepository {
     );
 
     if (result.success && result.data != null) {
-      _buildingCache = result.data!;
+      _buildingCache = mergePulled(
+        server: result.data!,
+        local: _buildingCache,
+        idOf: (item) => item.id,
+      );
       if (!skipHydration) {
         await save();
       }
       if (kDebugMode) {
         print('Synced ${_buildingCache.length} buildings from API');
       }
-    }
-  }
-
-  Future<void> _syncPendingChanges() async {
-    if (_pendingChanges.isEmpty) return;
-
-    if (kDebugMode) {
-      print('Syncing ${_pendingChanges.length} pending changes');
-    }
-
-    final successfulChanges = <int>[];
-    final failedChanges = <int>[];
-
-    for (int i = 0; i < _pendingChanges.length; i++) {
-      final change = _pendingChanges[i];
-      final retryCount = change['retryCount'] ?? 0;
-
-      // Max 5 retries for failed changes
-      if (retryCount >= 5) {
-        failedChanges.add(i);
-        if (kDebugMode) {
-          print(
-              'Pending change exceeded retry limit: ${change['type']} ${change['endpoint']}');
-        }
-        continue;
-      }
-
-      final success = await _syncHelper.applyPendingChange(change);
-
-      if (success) {
-        successfulChanges.add(i);
-        if (kDebugMode) {
-          print(
-              'Successfully synced pending change: ${change['type']} ${change['endpoint']}');
-        }
-      } else {
-        // Increment retry count
-        _pendingChanges[i]['retryCount'] = retryCount + 1;
-        if (kDebugMode) {
-          print(
-              'Failed to sync pending change (retry ${retryCount + 1}/5): ${change['type']} ${change['endpoint']}');
-        }
-      }
-    }
-
-    // Remove successful and permanently failed changes (reverse order to maintain indices)
-    final toRemove = [...successfulChanges, ...failedChanges]
-      ..sort((a, b) => b.compareTo(a));
-    for (final index in toRemove) {
-      _pendingChanges.removeAt(index);
-    }
-
-    // Save updated pending changes
-    if (successfulChanges.isNotEmpty || failedChanges.isNotEmpty) {
-      await save();
     }
   }
 
@@ -211,14 +136,13 @@ class BuildingRepository {
     String? filePath,
     String? fileFieldName,
   }) async {
-    PendingChangeQueue.add(
-      _pendingChanges,
+    await Outbox.instance.enqueue(
+      entity: 'building',
       type: type,
       endpoint: endpoint,
       data: data,
       filePath: filePath,
       fileFieldName: fileFieldName,
-      label: 'building pending change',
     );
   }
 
@@ -320,11 +244,4 @@ class BuildingRepository {
         .toList();
   }
 
-  bool hasPendingChanges() => _pendingChanges.isNotEmpty;
-  int getPendingChangesCount() => _pendingChanges.length;
-
-  /// Get list of pending changes for debugging/display
-  List<Map<String, dynamic>> getPendingChanges() {
-    return List.unmodifiable(_pendingChanges);
-  }
 }

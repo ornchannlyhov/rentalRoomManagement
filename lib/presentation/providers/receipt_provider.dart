@@ -1,3 +1,5 @@
+import 'package:joul_v2/core/di/service_locator.dart';
+import 'package:joul_v2/core/sync/sync_engine.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/receipt.dart';
@@ -143,12 +145,8 @@ class ReceiptProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      await _receiptRepository.syncFromApi(
-        roomId: roomId,
-        tenantId: tenantId,
-        buildingId: buildingId,
-        paymentStatus: paymentStatus,
-      );
+      // Upload waiting changes first, then download everything.
+      await locator<SyncEngine>().syncNow();
 
       // Hydrate relationships after sync
       if (_repositoryManager != null) {

@@ -1405,4 +1405,106 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get deleteReceiptSimpleConfirm => '您确定要删除此收据吗？';
+
+  @override
+  String get bannerOffline => '离线工作中';
+
+  @override
+  String get bannerServerDown => '无法连接服务器';
+
+  @override
+  String changesWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 项更改等待上传',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncTitle => '同步';
+
+  @override
+  String get syncSubtitle => '上传状态和未能发送的更改';
+
+  @override
+  String get syncNow => '立即同步';
+
+  @override
+  String get syncInProgress => '正在同步...';
+
+  @override
+  String syncLastSynced(String time) {
+    return '上次同步 $time';
+  }
+
+  @override
+  String get syncNeverSynced => '此手机尚未同步';
+
+  @override
+  String get syncAllUploaded => '所有更改均已上传';
+
+  @override
+  String get syncOfflineHint => '您当前处于离线状态。恢复网络后将自动上传更改。';
+
+  @override
+  String get syncSessionExpiredHint => '请重新登录以上传您的更改。';
+
+  @override
+  String get syncErrorHint => '部分数据无法下载，请稍后重试。';
+
+  @override
+  String get syncFailedTitle => '无法上传';
+
+  @override
+  String get syncFailedHelp => '服务器拒绝了这些更改。请在问题解决后重试，或放弃这些更改以保留服务器上的数据。';
+
+  @override
+  String get syncRetry => '重试';
+
+  @override
+  String get syncRetryAll => '全部重试';
+
+  @override
+  String get syncDiscard => '放弃';
+
+  @override
+  String get syncDiscardTitle => '放弃此更改？';
+
+  @override
+  String get syncDiscardMessage => '此更改将从手机中删除，且不会上传。';
+
+  @override
+  String get syncWaitingTitle => '等待上传';
+
+  @override
+  String get syncEntityBuilding => '楼房';
+
+  @override
+  String get syncEntityRoom => '房间';
+
+  @override
+  String get syncEntityTenant => '租户';
+
+  @override
+  String get syncEntityService => '服务';
+
+  @override
+  String get syncEntityReceipt => '收据';
+
+  @override
+  String get syncEntityReport => '报告';
+
+  @override
+  String get syncEntityPaymentConfig => '付款设置';
+
+  @override
+  String get syncTypeCreate => '新建';
+
+  @override
+  String get syncTypeUpdate => '已编辑';
+
+  @override
+  String get syncTypeDelete => '已删除';
 }

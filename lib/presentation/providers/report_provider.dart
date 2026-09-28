@@ -1,3 +1,5 @@
+import 'package:joul_v2/core/di/service_locator.dart';
+import 'package:joul_v2/core/sync/sync_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/report.dart';
 import 'package:joul_v2/data/models/enum/report_status.dart';
@@ -41,7 +43,8 @@ class ReportProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      await _reportRepository.syncFromApi();
+      // Upload waiting changes first, then download everything.
+      await locator<SyncEngine>().syncNow();
 
       // Hydrate relationships after sync
       if (_repositoryManager != null) {

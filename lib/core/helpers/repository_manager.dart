@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:joul_v2/core/helpers/data_hydration_helper.dart';
+import 'package:joul_v2/core/sync/outbox.dart';
 import 'package:joul_v2/data/repositories/building_repository.dart';
 import 'package:joul_v2/data/repositories/receipt_repository.dart';
 import 'package:joul_v2/data/repositories/report_repository.dart';
@@ -47,30 +48,8 @@ class RepositoryManager {
   DateTime? get lastSyncTime => _lastSyncTime;
   String? get lastSyncError => _lastSyncError;
 
-  /// Offline changes that haven't reached the server yet.
-  int get pendingChangesCount =>
-      buildingRepository.getPendingChangesCount() +
-      roomRepository.getPendingChangesCount() +
-      tenantRepository.getPendingChangesCount() +
-      receiptRepository.getPendingChangesCount() +
-      serviceRepository.getPendingChangesCount() +
-      reportRepository.getPendingChangesCount() +
-      paymentConfigRepository.getPendingChangesCount();
-
-  /// Tries once to upload every waiting change, including payment config,
-  /// which [syncAll] doesn't cover. Returns how many are still waiting.
-  Future<int> uploadPendingChanges() async {
-    if (pendingChangesCount == 0) return 0;
-    try {
-      await syncAll();
-      await paymentConfigRepository.syncFromApi();
-    } catch (e) {
-      if (kDebugMode) {
-        print('⚠️ Upload before sign-out failed: $e');
-      }
-    }
-    return pendingChangesCount;
-  }
+  /// Offline changes that haven't reached the server yet, failed or not.
+  int get pendingChangesCount => Outbox.instance.totalCount;
 
   Future<void> loadAll() async {
     try {
@@ -127,17 +106,15 @@ class RepositoryManager {
     }
   }
 
-  Future<bool> syncAll({bool force = false}) async {
-    if (_syncStatus == SyncStatus.syncing && !force) {
-      return false;
-    }
-
+  /// Downloads every data type and merges it with local changes that are
+  /// still waiting. Uploading is the sync engine's job. Returns false if
+  /// any download failed.
+  Future<bool> pullAll() async {
+    if (_syncStatus == SyncStatus.syncing) return false;
     _syncStatus = SyncStatus.syncing;
     final errors = <String>[];
 
     try {
-      // Sync ALL independently - don't let one failure stop others
-      // Use try-catch for each to isolate failures
       final results = await Future.wait<MapEntry<String, bool>>([
         _safeSyncRepo('buildings',
             () => buildingRepository.syncFromApi(skipHydration: true)),
@@ -151,49 +128,35 @@ class RepositoryManager {
             () => receiptRepository.syncFromApi(skipHydration: true)),
         _safeSyncRepo(
             'reports', () => reportRepository.syncFromApi(skipHydration: true)),
+        _safeSyncRepo('payment config',
+            () => paymentConfigRepository.syncFromApi()),
       ]);
 
-      // Collect any errors
       for (final result in results) {
-        if (!result.value) {
-          errors.add(result.key);
-        }
+        if (!result.value) errors.add(result.key);
       }
 
-      // Only hydrate and save if at least some syncs succeeded
       if (errors.length < results.length) {
-        // Rebuild object references after API sync
+        // Rebuild object references after the download, then store them.
         await hydrateAllRelationships();
-
-        // Save hydrated data back to storage
         await saveAll();
       }
 
       _lastSyncTime = DateTime.now();
-
       if (errors.isEmpty) {
         _syncStatus = SyncStatus.success;
         _lastSyncError = null;
-      } else if (errors.length == results.length) {
-        // All failed
-        _syncStatus = SyncStatus.error;
-        _lastSyncError = 'All repositories failed to sync';
       } else {
-        // Partial success
-        _syncStatus = SyncStatus.success;
-        _lastSyncError = 'Some repositories failed: ${errors.join(", ")}';
-        if (kDebugMode) {
-          print('⚠️ Partial sync: ${errors.join(", ")} failed');
-        }
+        _syncStatus =
+            errors.length == results.length ? SyncStatus.error : SyncStatus.success;
+        _lastSyncError = 'Failed to download: ${errors.join(", ")}';
+        if (kDebugMode) print('⚠️ $_lastSyncError');
       }
-
       return errors.isEmpty;
     } catch (e) {
       _syncStatus = SyncStatus.error;
       _lastSyncError = e.toString();
-      if (kDebugMode) {
-        print('❌ Sync error: $e');
-      }
+      if (kDebugMode) print('❌ Download error: $e');
       return false;
     }
   }
@@ -210,41 +173,6 @@ class RepositoryManager {
       }
       return MapEntry(name, false);
     }
-  }
-
-  /// Sync only pending changes without full sync
-  Future<bool> syncPendingChanges() async {
-    // Sync ALL independently - don't let one failure stop others
-    final results = await Future.wait<MapEntry<String, bool>>([
-      _safeSyncRepo('buildings',
-          () => buildingRepository.syncFromApi(skipHydration: true)),
-      _safeSyncRepo(
-          'services', () => serviceRepository.syncFromApi(skipHydration: true)),
-      _safeSyncRepo(
-          'rooms', () => roomRepository.syncFromApi(skipHydration: true)),
-      _safeSyncRepo(
-          'tenants', () => tenantRepository.syncFromApi(skipHydration: true)),
-      _safeSyncRepo(
-          'receipts', () => receiptRepository.syncFromApi(skipHydration: true)),
-      _safeSyncRepo(
-          'reports', () => reportRepository.syncFromApi(skipHydration: true)),
-    ]);
-
-    final successCount = results.where((r) => r.value).length;
-
-    // Only hydrate and save if at least some syncs succeeded
-    if (successCount > 0) {
-      try {
-        await hydrateAllRelationships();
-        await saveAll();
-      } catch (e) {
-        if (kDebugMode) {
-          print('⚠️ Error during hydration/save: $e');
-        }
-      }
-    }
-
-    return successCount == results.length;
   }
 
   Future<void> hydrateAllRelationships() async {
@@ -316,6 +244,7 @@ class RepositoryManager {
         reportRepository.clear(),
         notificationRepository.clear(),
         paymentConfigRepository.clear(),
+        Outbox.instance.clear(),
       ]);
 
       _syncStatus = SyncStatus.idle;

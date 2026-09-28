@@ -1,3 +1,5 @@
+import 'package:joul_v2/core/di/service_locator.dart';
+import 'package:joul_v2/core/sync/sync_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/service.dart';
 import 'package:joul_v2/data/repositories/service_repository.dart';
@@ -47,7 +49,8 @@ class ServiceProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      await _serviceRepository.syncFromApi();
+      // Upload waiting changes first, then download everything.
+      await locator<SyncEngine>().syncNow();
 
       // Hydrate relationships after sync
       if (_repositoryManager != null) {

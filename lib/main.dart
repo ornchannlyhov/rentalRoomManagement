@@ -15,7 +15,6 @@ import 'package:joul_v2/presentation/providers/notification_provider.dart';
 import 'package:joul_v2/presentation/providers/network_status_provider.dart';
 import 'package:joul_v2/data/repositories/receipt_repository.dart';
 import 'package:joul_v2/data/repositories/payment_config_repository.dart';
-import 'package:joul_v2/core/helpers/api_helper.dart';
 import 'package:joul_v2/core/helpers/repository_manager.dart';
 import 'package:joul_v2/data/repositories/notification_repository.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
@@ -33,6 +32,7 @@ import 'package:joul_v2/core/services/health_check_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'dart:async';
 import 'package:joul_v2/core/di/service_locator.dart';
+import 'package:joul_v2/core/sync/sync_engine.dart';
 import 'package:joul_v2/core/services/local_notification_service.dart';
 
 Future<void> main() async {
@@ -59,8 +59,12 @@ Future<void> main() async {
   // --- Initialize Local Notifications ---
   await LocalNotificationService.initialize();
 
-  // --- Health Check: Verify backend is running ---
-  final isBackendHealthy = await HealthCheckService.checkBackendHealth();
+  // --- Health Check ---
+  // Signed-in users work from local data straight away; the sync engine
+  // checks the server in the background. Only a first sign-in needs the
+  // server up front.
+  final isBackendHealthy = authProvider.isAuthenticated() ||
+      await HealthCheckService.checkBackendHealth();
 
   // Start the app (pass health status to determine if we should show maintenance)
   runApp(JoulApp(
@@ -105,8 +109,10 @@ class _JoulAppState extends State<JoulApp> {
     // --- Load Providers in Background ---
     unawaited(_loadProvidersInBackground());
 
-    // --- Sync data in background ---
-    unawaited(_syncDataInBackground());
+    // --- Sync: upload waiting changes, then download fresh data ---
+    final syncEngine = locator<SyncEngine>();
+    syncEngine.onDataChanged.listen((_) => _loadProvidersInBackground());
+    syncEngine.start();
 
     // Notification Provider
     _notificationProvider = NotificationProvider(
@@ -165,20 +171,6 @@ class _JoulAppState extends State<JoulApp> {
       navigatorKey: widget.navigatorKey,
       notificationProvider: _notificationProvider!,
     );
-  }
-}
-
-Future<void> _syncDataInBackground() async {
-  try {
-    final authProvider = locator<AuthProvider>();
-    if (authProvider.isAuthenticated()) {
-      if (await ApiHelper.instance.hasNetwork()) {
-        await locator<RepositoryManager>().syncAll();
-        await locator<PaymentConfigRepository>().syncFromApi();
-      }
-    }
-  } catch (_) {
-    // Fail silently, continue with cached data
   }
 }
 
@@ -277,10 +269,16 @@ class _MyAppState extends State<MyApp> {
                   // Offline banner positioned above bottom nav
                   Consumer<NetworkStatusProvider>(
                     builder: (context, networkStatus, _) {
-                      if (networkStatus.hasChecked && !networkStatus.isOnline) {
-                        return const OfflineBanner();
+                      if (!networkStatus.hasChecked || networkStatus.isOnline) {
+                        return const SizedBox.shrink();
                       }
-                      return const SizedBox.shrink();
+                      return ValueListenableBuilder<SyncState>(
+                        valueListenable: locator<SyncEngine>().state,
+                        builder: (context, sync, _) => OfflineBanner(
+                          serverDown: networkStatus.isServerDown,
+                          waitingCount: sync.pendingCount + sync.failedCount,
+                        ),
+                      );
                     },
                   ),
                 ],

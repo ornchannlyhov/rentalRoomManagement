@@ -5,11 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
 import 'package:joul_v2/core/helpers/repository_manager.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
-import 'package:joul_v2/presentation/providers/building_provider.dart';
-import 'package:joul_v2/presentation/providers/receipt_provider.dart';
-import 'package:joul_v2/presentation/providers/report_provider.dart';
-import 'package:joul_v2/presentation/providers/service_provider.dart';
-import 'package:joul_v2/presentation/providers/tenant_provider.dart';
 import 'package:joul_v2/presentation/view/app_widgets/app_menu.dart';
 import 'package:joul_v2/presentation/view/app_widgets/global_snackbar.dart';
 import 'package:joul_v2/presentation/view/screen/auth/onboard_screen.dart';
@@ -18,7 +13,6 @@ import 'package:joul_v2/presentation/view/screen/history/history_screen.dart';
 import 'package:joul_v2/presentation/view/screen/receipt/receipt_screen.dart';
 import 'package:joul_v2/presentation/view/screen/setting/profile_screen.dart';
 import 'package:joul_v2/presentation/view/screen/tenant/tenant_screen.dart';
-import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 
 class AuthWrapper extends StatefulWidget {
@@ -29,21 +23,20 @@ class AuthWrapper extends StatefulWidget {
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
-  final Logger _logger = Logger();
-  Timer? _syncTimer;
-  bool _isSyncing = false;
   bool _hasShownNetworkError = false;
+  final List<StreamSubscription<dynamic>> _subscriptions = [];
 
   @override
   void initState() {
     super.initState();
     _setupNetworkListeners();
-    _startPeriodicSync();
   }
 
   @override
   void dispose() {
-    _syncTimer?.cancel();
+    for (final sub in _subscriptions) {
+      sub.cancel();
+    }
     super.dispose();
   }
 
@@ -51,14 +44,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
     final apiHelper = ApiHelper.instance;
 
     // Listen for unauthenticated events
-    apiHelper.onUnauthenticated.listen((_) {
+    _subscriptions.add(apiHelper.onUnauthenticated.listen((_) {
       if (mounted) {
         _showSessionExpiredDialog();
       }
-    });
+    }));
 
     // Listen for network loss
-    apiHelper.onNoNetwork.listen((_) {
+    _subscriptions.add(apiHelper.onNoNetwork.listen((_) {
       if (mounted && !_hasShownNetworkError) {
         _hasShownNetworkError = true;
         GlobalSnackBar.show(
@@ -67,14 +60,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
           isError: true,
         );
       }
-    });
+    }));
 
     // Listen for network restoration
-    apiHelper.onNetworkStatusChanged.listen((hasNetwork) {
+    // The sync engine uploads and downloads when the network comes back.
+    _subscriptions.add(apiHelper.onNetworkStatusChanged.listen((hasNetwork) {
       if (mounted) {
         if (hasNetwork) {
           _hasShownNetworkError = false;
-          _syncDataWhenNetworkRestored();
         } else if (!_hasShownNetworkError) {
           _hasShownNetworkError = true;
           GlobalSnackBar.show(
@@ -84,7 +77,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
           );
         }
       }
-    });
+    }));
 
     // Check for existing session expiryz
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -93,93 +86,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
         _showSessionExpiredDialog();
       }
     });
-  }
-
-  void _startPeriodicSync() {
-    // Sync every 5 minutes if authenticated and online
-    _syncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
-      _performBackgroundSync();
-    });
-  }
-
-  Future<void> _performBackgroundSync() async {
-    if (_isSyncing) return;
-
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final repositoryManager =
-        Provider.of<RepositoryManager>(context, listen: false);
-
-    if (!authProvider.isAuthenticated()) return;
-    if (!await ApiHelper.instance.hasNetwork()) return;
-
-    _isSyncing = true;
-    try {
-      _logger.i('Performing background sync...');
-      await repositoryManager.syncAll();
-      _logger.i('Background sync completed');
-    } catch (e) {
-      _logger.e('Background sync failed: $e');
-    } finally {
-      _isSyncing = false;
-    }
-  }
-
-  Future<void> _syncDataWhenNetworkRestored() async {
-    if (_isSyncing) return;
-
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final repositoryManager =
-        Provider.of<RepositoryManager>(context, listen: false);
-
-    if (!authProvider.isAuthenticated()) return;
-
-    _isSyncing = true;
-    try {
-      _logger.i('Network restored, syncing all data...');
-
-      final success = await repositoryManager.syncAll();
-
-      if (success && mounted) {
-        // Refresh all providers
-        Provider.of<BuildingProvider>(context, listen: false).load();
-        Provider.of<ServiceProvider>(context, listen: false).load();
-        Provider.of<TenantProvider>(context, listen: false).load();
-        Provider.of<ReceiptProvider>(context, listen: false).load();
-        Provider.of<ReportProvider>(context, listen: false).load();
-
-        GlobalSnackBar.show(
-          context: context,
-          message: 'Connection restored. Data synced successfully.',
-        );
-
-        _logger.i('All data synced after network restoration');
-      } else if (mounted) {
-        GlobalSnackBar.show(
-          context: context,
-          message: 'Sync completed with some errors',
-          isError: true,
-          onRestore: () async {
-            // Retry sync
-            await _syncDataWhenNetworkRestored();
-          },
-        );
-      }
-    } catch (e) {
-      _logger.e('Failed to sync after network restore: $e');
-      if (mounted) {
-        GlobalSnackBar.show(
-          context: context,
-          message: 'Sync failed. Using cached data.',
-          isError: true,
-          onRestore: () async {
-            // Retry sync
-            await _syncDataWhenNetworkRestored();
-          },
-        );
-      }
-    } finally {
-      _isSyncing = false;
-    }
   }
 
   bool _hasShownSessionExpiredDialog = false;

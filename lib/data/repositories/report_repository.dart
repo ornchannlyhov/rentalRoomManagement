@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:joul_v2/data/models/enum/report_status.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
-import 'package:joul_v2/core/helpers/pending_change_queue.dart';
+import 'package:joul_v2/core/sync/outbox.dart';
+import 'package:joul_v2/core/sync/pull_merge.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
 import 'package:joul_v2/data/models/report.dart';
 import 'package:joul_v2/data/dtos/report_dto.dart';
@@ -13,7 +13,6 @@ class ReportRepository {
   final SyncOperationHelper _syncHelper = SyncOperationHelper();
 
   List<Report> _reportCache = [];
-  List<Map<String, dynamic>> _pendingChanges = [];
 
   ReportRepository(this._databaseService);
 
@@ -24,10 +23,6 @@ class ReportRepository {
           .map((e) =>
               ReportDto.fromJson(Map<String, dynamic>.from(e)).toReport())
           .toList();
-
-      final pendingList = _databaseService.reportsPendingBox.values.toList();
-      _pendingChanges =
-          pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
     } catch (e) {
       throw Exception('Failed to load report data: $e');
     }
@@ -38,15 +33,11 @@ class ReportRepository {
     _reportCache = reportsList
         .map((e) => ReportDto.fromJson(Map<String, dynamic>.from(e)).toReport())
         .toList();
-
-    final pendingList = _databaseService.reportsPendingBox.values.toList();
-    _pendingChanges =
-        pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
   Future<void> save() async {
     try {
-      await _databaseService.reportsBox.clear();
+      final records = <String, Map<String, dynamic>>{};
       for (var i = 0; i < _reportCache.length; i++) {
         final dto = ReportDto(
           id: _reportCache[i].id,
@@ -57,13 +48,11 @@ class ReportRepository {
           language: _reportCache[i].language.toApiString(),
           notes: _reportCache[i].notes,
         );
-        await _databaseService.reportsBox.put(i, dto.toJson());
+        records[_reportCache[i].id] = Map<String, dynamic>.from(dto.toJson());
       }
 
-      await _databaseService.reportsPendingBox.clear();
-      for (var i = 0; i < _pendingChanges.length; i++) {
-        await _databaseService.reportsPendingBox.put(i, _pendingChanges[i]);
-      }
+      await _databaseService.writeRecords(
+          _databaseService.reportsBox, records);
     } catch (e) {
       throw Exception('Failed to save report data: $e');
     }
@@ -71,17 +60,13 @@ class ReportRepository {
 
   Future<void> clear() async {
     await _databaseService.reportsBox.clear();
-    await _databaseService.reportsPendingBox.clear();
     _reportCache.clear();
-    _pendingChanges.clear();
   }
 
   Future<void> syncFromApi({bool skipHydration = false}) async {
     if (!await _apiHelper.hasNetwork()) {
       return;
     }
-
-    await _syncPendingChanges();
 
     final result = await _syncHelper.fetch<Report>(
       endpoint: '/reports',
@@ -90,60 +75,14 @@ class ReportRepository {
     );
 
     if (result.success && result.data != null) {
-      _reportCache = result.data!;
+      _reportCache = mergePulled(
+        server: result.data!,
+        local: _reportCache,
+        idOf: (item) => item.id,
+      );
       if (!skipHydration) {
         await save();
       }
-    }
-  }
-
-  Future<void> _syncPendingChanges() async {
-    if (_pendingChanges.isEmpty) return;
-
-    final successfulChanges = <int>[];
-    final failedChanges = <int>[];
-
-    for (int i = 0; i < _pendingChanges.length; i++) {
-      final change = _pendingChanges[i];
-      final retryCount = change['retryCount'] ?? 0;
-
-      // Max 5 retries for failed changes
-      if (retryCount >= 5) {
-        failedChanges.add(i);
-        if (kDebugMode) {
-          print(
-              'Report pending change exceeded retry limit: ${change['type']} ${change['endpoint']}');
-        }
-        continue;
-      }
-
-      final success = await _syncHelper.applyPendingChange(change);
-
-      if (success) {
-        successfulChanges.add(i);
-        if (kDebugMode) {
-          print(
-              'Successfully synced report pending change: ${change['type']} ${change['endpoint']}');
-        }
-      } else {
-        // Increment retry count
-        _pendingChanges[i]['retryCount'] = retryCount + 1;
-        if (kDebugMode) {
-          print(
-              'Failed to sync report pending change (retry ${retryCount + 1}/5): ${change['type']} ${change['endpoint']}');
-        }
-      }
-    }
-
-    // Remove successful and permanently failed changes (reverse order)
-    final toRemove = [...successfulChanges, ...failedChanges]
-      ..sort((a, b) => b.compareTo(a));
-    for (final index in toRemove) {
-      _pendingChanges.removeAt(index);
-    }
-
-    if (successfulChanges.isNotEmpty || failedChanges.isNotEmpty) {
-      await save();
     }
   }
 
@@ -152,12 +91,11 @@ class ReportRepository {
     Map<String, dynamic> data,
     String endpoint,
   ) async {
-    PendingChangeQueue.add(
-      _pendingChanges,
+    await Outbox.instance.enqueue(
+      entity: 'report',
       type: type,
       endpoint: endpoint,
       data: data,
-      label: 'report pending change',
     );
   }
 
@@ -219,6 +157,4 @@ class ReportRepository {
         .toList();
   }
 
-  bool hasPendingChanges() => _pendingChanges.isNotEmpty;
-  int getPendingChangesCount() => _pendingChanges.length;
 }

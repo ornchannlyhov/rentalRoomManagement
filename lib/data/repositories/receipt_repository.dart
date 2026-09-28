@@ -12,7 +12,8 @@ import 'package:joul_v2/data/models/receipt.dart';
 import 'package:joul_v2/data/dtos/receipt_dto.dart';
 import 'package:dio/dio.dart';
 import 'package:joul_v2/data/models/service.dart';
-import 'package:joul_v2/core/helpers/pending_change_queue.dart';
+import 'package:joul_v2/core/sync/outbox.dart';
+import 'package:joul_v2/core/sync/pull_merge.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
 import 'package:joul_v2/core/services/database_service.dart';
 
@@ -22,7 +23,6 @@ class ReceiptRepository {
   final SyncOperationHelper _syncHelper = SyncOperationHelper();
 
   List<Receipt> _receiptCache = [];
-  List<Map<String, dynamic>> _pendingChanges = [];
 
   final ServiceRepository _serviceRepository;
   final BuildingRepository _buildingRepository;
@@ -52,9 +52,6 @@ class ReceiptRepository {
             ReceiptDto.fromJson(Map<String, dynamic>.from(e)).toReceipt())
         .toList();
 
-    final pendingList = _databaseService.receiptsPendingBox.values.toList();
-    _pendingChanges =
-        pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
 
     if (kDebugMode) {
       print('📥 Loaded ${_receiptCache.length} receipts from Hive (without hydration)');
@@ -105,7 +102,7 @@ class ReceiptRepository {
   }
 
   Future<void> save() async {
-    await _databaseService.receiptsBox.clear();
+    final records = <String, Map<String, dynamic>>{};
     for (var i = 0; i < _receiptCache.length; i++) {
       final receipt = _receiptCache[i];
       final statusStr = receipt.paymentStatus.name.toLowerCase();
@@ -125,13 +122,11 @@ class ReceiptRepository {
         serviceIds: receipt.serviceIds.isNotEmpty ? receipt.serviceIds : null,
         // Don't store full nested objects - only IDs
       );
-      await _databaseService.receiptsBox.put(i, dto.toJson());
+      records[_receiptCache[i].id] = Map<String, dynamic>.from(dto.toJson());
     }
 
-    await _databaseService.receiptsPendingBox.clear();
-    for (var i = 0; i < _pendingChanges.length; i++) {
-      await _databaseService.receiptsPendingBox.put(i, _pendingChanges[i]);
-    }
+    await _databaseService.writeRecords(
+        _databaseService.receiptsBox, records);
 
     if (kDebugMode) {
       print('💾 Saved ${_receiptCache.length} receipts to Hive');
@@ -140,9 +135,7 @@ class ReceiptRepository {
 
   Future<void> clear() async {
     await _databaseService.receiptsBox.clear();
-    await _databaseService.receiptsPendingBox.clear();
     _receiptCache.clear();
-    _pendingChanges.clear();
   }
 
   Future<void> syncFromApi({
@@ -157,7 +150,6 @@ class ReceiptRepository {
     final token = await _apiHelper.storage.read(key: 'auth_token');
     if (token == null) return;
 
-    await _syncPendingChanges();
 
     final queryParams = <String, String>{};
     if (roomId != null) queryParams['roomId'] = roomId;
@@ -194,7 +186,7 @@ class ReceiptRepository {
 
     if (response.statusCode == 200 && response.data['success'] == true) {
       final List<dynamic> receiptsJson = response.data['data'];
-      _receiptCache = receiptsJson.map((json) {
+      final downloaded = receiptsJson.map((json) {
         final dto = ReceiptDto.fromJson(json);
         final receipt = dto.toReceipt();
         if (dto.room != null) {
@@ -205,6 +197,11 @@ class ReceiptRepository {
         }
         return receipt;
       }).toList();
+      _receiptCache = mergePulled(
+        server: downloaded,
+        local: _receiptCache,
+        idOf: (item) => item.id,
+      );
 
       await updateStatusToOverdue();
 
@@ -214,67 +211,17 @@ class ReceiptRepository {
     }
   }
 
-  Future<void> _syncPendingChanges() async {
-    if (_pendingChanges.isEmpty) return;
-
-    final successfulChanges = <int>[];
-    final failedChanges = <int>[];
-
-    for (int i = 0; i < _pendingChanges.length; i++) {
-      final change = _pendingChanges[i];
-      final retryCount = change['retryCount'] ?? 0;
-
-      // Max 5 retries for failed changes
-      if (retryCount >= 5) {
-        failedChanges.add(i);
-        if (kDebugMode) {
-          print(
-              'Receipt pending change exceeded retry limit: ${change['type']} ${change['endpoint']}');
-        }
-        continue;
-      }
-
-      final success = await _syncHelper.applyPendingChange(change);
-
-      if (success) {
-        successfulChanges.add(i);
-        if (kDebugMode) {
-          print(
-              'Successfully synced receipt pending change: ${change['type']} ${change['endpoint']}');
-        }
-      } else {
-        // Increment retry count
-        _pendingChanges[i]['retryCount'] = retryCount + 1;
-        if (kDebugMode) {
-          print(
-              'Failed to sync receipt pending change (retry ${retryCount + 1}/5): ${change['type']} ${change['endpoint']}');
-        }
-      }
-    }
-
-    // Remove successful and permanently failed changes (reverse order)
-    final toRemove = [...successfulChanges, ...failedChanges]
-      ..sort((a, b) => b.compareTo(a));
-    for (final index in toRemove) {
-      _pendingChanges.removeAt(index);
-    }
-
-    if (successfulChanges.isNotEmpty || failedChanges.isNotEmpty) {
-      await save();
-    }
-  }
 
   Future<void> _addPendingChange(
     String type,
     Map<String, dynamic> data,
     String endpoint,
   ) async {
-    PendingChangeQueue.add(
-      _pendingChanges,
+    await Outbox.instance.enqueue(
+      entity: 'receipt',
       type: type,
       endpoint: endpoint,
       data: data,
-      label: 'receipt pending change',
     );
   }
 
@@ -511,11 +458,4 @@ class ReceiptRepository {
         .toList();
   }
 
-  bool hasPendingChanges() => _pendingChanges.isNotEmpty;
-  int getPendingChangesCount() => _pendingChanges.length;
-
-  /// Get list of pending changes for debugging/display
-  List<Map<String, dynamic>> getPendingChanges() {
-    return List.unmodifiable(_pendingChanges);
-  }
 }

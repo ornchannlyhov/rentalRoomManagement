@@ -2688,6 +2688,192 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to delete this receipt?'**
   String get deleteReceiptSimpleConfirm;
+
+  /// No description provided for @bannerOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Working offline'**
+  String get bannerOffline;
+
+  /// No description provided for @bannerServerDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t reach the server'**
+  String get bannerServerDown;
+
+  /// No description provided for @changesWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 change waiting to upload} other{{count} changes waiting to upload}}'**
+  String changesWaiting(int count);
+
+  /// No description provided for @syncTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync'**
+  String get syncTitle;
+
+  /// No description provided for @syncSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploads and changes that couldn\'t be sent'**
+  String get syncSubtitle;
+
+  /// No description provided for @syncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get syncNow;
+
+  /// No description provided for @syncInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing...'**
+  String get syncInProgress;
+
+  /// No description provided for @syncLastSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Last synced {time}'**
+  String syncLastSynced(String time);
+
+  /// No description provided for @syncNeverSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Not synced yet on this phone'**
+  String get syncNeverSynced;
+
+  /// No description provided for @syncAllUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'All your changes are uploaded'**
+  String get syncAllUploaded;
+
+  /// No description provided for @syncOfflineHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Changes will upload when you\'re back online.'**
+  String get syncOfflineHint;
+
+  /// No description provided for @syncSessionExpiredHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again to upload your changes.'**
+  String get syncSessionExpiredHint;
+
+  /// No description provided for @syncErrorHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Some data couldn\'t be downloaded. Try again later.'**
+  String get syncErrorHint;
+
+  /// No description provided for @syncFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t upload'**
+  String get syncFailedTitle;
+
+  /// No description provided for @syncFailedHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The server rejected these changes. Retry once the problem is fixed, or discard them to keep what\'s on the server.'**
+  String get syncFailedHelp;
+
+  /// No description provided for @syncRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get syncRetry;
+
+  /// No description provided for @syncRetryAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry all'**
+  String get syncRetryAll;
+
+  /// No description provided for @syncDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get syncDiscard;
+
+  /// No description provided for @syncDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard this change?'**
+  String get syncDiscardTitle;
+
+  /// No description provided for @syncDiscardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'It will be removed from this phone and never uploaded.'**
+  String get syncDiscardMessage;
+
+  /// No description provided for @syncWaitingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting to upload'**
+  String get syncWaitingTitle;
+
+  /// No description provided for @syncEntityBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'Building'**
+  String get syncEntityBuilding;
+
+  /// No description provided for @syncEntityRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Room'**
+  String get syncEntityRoom;
+
+  /// No description provided for @syncEntityTenant.
+  ///
+  /// In en, this message translates to:
+  /// **'Tenant'**
+  String get syncEntityTenant;
+
+  /// No description provided for @syncEntityService.
+  ///
+  /// In en, this message translates to:
+  /// **'Service'**
+  String get syncEntityService;
+
+  /// No description provided for @syncEntityReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt'**
+  String get syncEntityReceipt;
+
+  /// No description provided for @syncEntityReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get syncEntityReport;
+
+  /// No description provided for @syncEntityPaymentConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment settings'**
+  String get syncEntityPaymentConfig;
+
+  /// No description provided for @syncTypeCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get syncTypeCreate;
+
+  /// No description provided for @syncTypeUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Edited'**
+  String get syncTypeUpdate;
+
+  /// No description provided for @syncTypeDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get syncTypeDelete;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -1407,4 +1407,107 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteReceiptSimpleConfirm => 'Are you sure you want to delete this receipt?';
+
+  @override
+  String get bannerOffline => 'Working offline';
+
+  @override
+  String get bannerServerDown => 'Can\'t reach the server';
+
+  @override
+  String changesWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count changes waiting to upload',
+      one: '1 change waiting to upload',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncTitle => 'Sync';
+
+  @override
+  String get syncSubtitle => 'Uploads and changes that couldn\'t be sent';
+
+  @override
+  String get syncNow => 'Sync now';
+
+  @override
+  String get syncInProgress => 'Syncing...';
+
+  @override
+  String syncLastSynced(String time) {
+    return 'Last synced $time';
+  }
+
+  @override
+  String get syncNeverSynced => 'Not synced yet on this phone';
+
+  @override
+  String get syncAllUploaded => 'All your changes are uploaded';
+
+  @override
+  String get syncOfflineHint => 'You\'re offline. Changes will upload when you\'re back online.';
+
+  @override
+  String get syncSessionExpiredHint => 'Sign in again to upload your changes.';
+
+  @override
+  String get syncErrorHint => 'Some data couldn\'t be downloaded. Try again later.';
+
+  @override
+  String get syncFailedTitle => 'Couldn\'t upload';
+
+  @override
+  String get syncFailedHelp => 'The server rejected these changes. Retry once the problem is fixed, or discard them to keep what\'s on the server.';
+
+  @override
+  String get syncRetry => 'Retry';
+
+  @override
+  String get syncRetryAll => 'Retry all';
+
+  @override
+  String get syncDiscard => 'Discard';
+
+  @override
+  String get syncDiscardTitle => 'Discard this change?';
+
+  @override
+  String get syncDiscardMessage => 'It will be removed from this phone and never uploaded.';
+
+  @override
+  String get syncWaitingTitle => 'Waiting to upload';
+
+  @override
+  String get syncEntityBuilding => 'Building';
+
+  @override
+  String get syncEntityRoom => 'Room';
+
+  @override
+  String get syncEntityTenant => 'Tenant';
+
+  @override
+  String get syncEntityService => 'Service';
+
+  @override
+  String get syncEntityReceipt => 'Receipt';
+
+  @override
+  String get syncEntityReport => 'Report';
+
+  @override
+  String get syncEntityPaymentConfig => 'Payment settings';
+
+  @override
+  String get syncTypeCreate => 'New';
+
+  @override
+  String get syncTypeUpdate => 'Edited';
+
+  @override
+  String get syncTypeDelete => 'Deleted';
 }

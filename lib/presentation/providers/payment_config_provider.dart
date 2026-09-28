@@ -1,3 +1,5 @@
+import 'package:joul_v2/core/di/service_locator.dart';
+import 'package:joul_v2/core/sync/sync_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:joul_v2/data/models/payment_config.dart';
 import 'package:joul_v2/data/repositories/payment_config_repository.dart';
@@ -41,7 +43,8 @@ class PaymentConfigProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      await _paymentConfigRepository.syncFromApi();
+      // Upload waiting changes first, then download everything.
+      await locator<SyncEngine>().syncNow();
 
       if (_repositoryManager != null) {
         await _repositoryManager.hydrateAllRelationships();

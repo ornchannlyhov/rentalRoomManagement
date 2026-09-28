@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
-import 'package:joul_v2/core/helpers/pending_change_queue.dart';
+import 'package:joul_v2/core/sync/outbox.dart';
+import 'package:joul_v2/core/sync/pull_merge.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
 import 'package:joul_v2/data/models/service.dart';
 import 'package:joul_v2/data/dtos/service_dto.dart';
@@ -12,7 +12,6 @@ class ServiceRepository {
   final SyncOperationHelper _syncHelper = SyncOperationHelper();
 
   List<Service> _serviceCache = [];
-  List<Map<String, dynamic>> _pendingChanges = [];
 
   ServiceRepository(this._databaseService);
 
@@ -23,10 +22,6 @@ class ServiceRepository {
           .map((e) =>
               ServiceDto.fromJson(Map<String, dynamic>.from(e)).toService())
           .toList();
-
-      final pendingList = _databaseService.servicesPendingBox.values.toList();
-      _pendingChanges =
-          pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
     } catch (e) {
       throw Exception('Failed to load service data: $e');
     }
@@ -38,15 +33,11 @@ class ServiceRepository {
         .map((e) =>
             ServiceDto.fromJson(Map<String, dynamic>.from(e)).toService())
         .toList();
-
-    final pendingList = _databaseService.servicesPendingBox.values.toList();
-    _pendingChanges =
-        pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
   Future<void> save() async {
     try {
-      await _databaseService.servicesBox.clear();
+      final records = <String, Map<String, dynamic>>{};
       for (var i = 0; i < _serviceCache.length; i++) {
         final dto = ServiceDto(
           id: _serviceCache[i].id,
@@ -54,13 +45,11 @@ class ServiceRepository {
           price: _serviceCache[i].price,
           buildingId: _serviceCache[i].buildingId,
         );
-        await _databaseService.servicesBox.put(i, dto.toJson());
+        records[_serviceCache[i].id] = Map<String, dynamic>.from(dto.toJson());
       }
 
-      await _databaseService.servicesPendingBox.clear();
-      for (var i = 0; i < _pendingChanges.length; i++) {
-        await _databaseService.servicesPendingBox.put(i, _pendingChanges[i]);
-      }
+      await _databaseService.writeRecords(
+          _databaseService.servicesBox, records);
     } catch (e) {
       throw Exception('Failed to save service data: $e');
     }
@@ -68,17 +57,13 @@ class ServiceRepository {
 
   Future<void> clear() async {
     await _databaseService.servicesBox.clear();
-    await _databaseService.servicesPendingBox.clear();
     _serviceCache.clear();
-    _pendingChanges.clear();
   }
 
   Future<void> syncFromApi({bool skipHydration = false}) async {
     if (!await _apiHelper.hasNetwork()) {
       return;
     }
-
-    await _syncPendingChanges();
 
     final result = await _syncHelper.fetch<Service>(
       endpoint: '/services',
@@ -88,60 +73,14 @@ class ServiceRepository {
     );
 
     if (result.success && result.data != null) {
-      _serviceCache = result.data!;
+      _serviceCache = mergePulled(
+        server: result.data!,
+        local: _serviceCache,
+        idOf: (item) => item.id,
+      );
       if (!skipHydration) {
         await save();
       }
-    }
-  }
-
-  Future<void> _syncPendingChanges() async {
-    if (_pendingChanges.isEmpty) return;
-
-    final successfulChanges = <int>[];
-    final failedChanges = <int>[];
-
-    for (int i = 0; i < _pendingChanges.length; i++) {
-      final change = _pendingChanges[i];
-      final retryCount = change['retryCount'] ?? 0;
-
-      // Max 5 retries for failed changes
-      if (retryCount >= 5) {
-        failedChanges.add(i);
-        if (kDebugMode) {
-          print(
-              'Service pending change exceeded retry limit: ${change['type']} ${change['endpoint']}');
-        }
-        continue;
-      }
-
-      final success = await _syncHelper.applyPendingChange(change);
-
-      if (success) {
-        successfulChanges.add(i);
-        if (kDebugMode) {
-          print(
-              'Successfully synced service pending change: ${change['type']} ${change['endpoint']}');
-        }
-      } else {
-        // Increment retry count
-        _pendingChanges[i]['retryCount'] = retryCount + 1;
-        if (kDebugMode) {
-          print(
-              'Failed to sync service pending change (retry ${retryCount + 1}/5): ${change['type']} ${change['endpoint']}');
-        }
-      }
-    }
-
-    // Remove successful and permanently failed changes (reverse order)
-    final toRemove = [...successfulChanges, ...failedChanges]
-      ..sort((a, b) => b.compareTo(a));
-    for (final index in toRemove) {
-      _pendingChanges.removeAt(index);
-    }
-
-    if (successfulChanges.isNotEmpty || failedChanges.isNotEmpty) {
-      await save();
     }
   }
 
@@ -150,12 +89,11 @@ class ServiceRepository {
     Map<String, dynamic> data,
     String endpoint,
   ) async {
-    PendingChangeQueue.add(
-      _pendingChanges,
+    await Outbox.instance.enqueue(
+      entity: 'service',
       type: type,
       endpoint: endpoint,
       data: data,
-      label: 'service pending change',
     );
   }
 
@@ -249,11 +187,4 @@ class ServiceRepository {
     return _serviceCache.where((s) => s.buildingId == buildingId).toList();
   }
 
-  bool hasPendingChanges() => _pendingChanges.isNotEmpty;
-  int getPendingChangesCount() => _pendingChanges.length;
-
-  /// Get list of pending changes for debugging/display
-  List<Map<String, dynamic>> getPendingChanges() {
-    return List.unmodifiable(_pendingChanges);
-  }
 }

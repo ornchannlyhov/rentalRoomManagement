@@ -31,12 +31,12 @@ class PendingChangeQueue {
 
     switch (type) {
       case 'create':
-        _addCreate(queue, endpoint, payload, filePath, fileFieldName,
-            singleton, label);
+        _addCreate(queue, endpoint, payload, filePath, fileFieldName, singleton,
+            label);
         break;
       case 'update':
-        _addUpdate(queue, endpoint, payload, filePath, fileFieldName,
-            singleton, label);
+        _addUpdate(queue, endpoint, payload, filePath, fileFieldName, singleton,
+            label);
         break;
       case 'delete':
         _addDelete(queue, endpoint, payload, singleton, label);
@@ -179,6 +179,10 @@ class PendingChangeQueue {
     }
     change['timestamp'] = DateTime.now().toIso8601String();
     change['retryCount'] = 0;
+    // A new edit gives a failed or backing-off change a fresh start.
+    change.remove('status');
+    change.remove('lastError');
+    change.remove('nextTryAt');
   }
 
   static void _append(
@@ -199,7 +203,8 @@ class PendingChangeQueue {
       if (filePath != null) 'filePath': filePath,
       if (fileFieldName != null) 'fileFieldName': fileFieldName,
     });
-    _log('Added $label: $type $endpoint${filePath != null ? ' with file' : ''}');
+    _log(
+        'Added $label: $type $endpoint${filePath != null ? ' with file' : ''}');
   }
 
   static void _log(String message) {

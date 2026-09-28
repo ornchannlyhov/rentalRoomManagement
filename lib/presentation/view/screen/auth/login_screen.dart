@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:joul_v2/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:joul_v2/core/helpers/api_helper.dart';
-import 'package:joul_v2/core/helpers/repository_manager.dart';
+import 'package:joul_v2/core/di/service_locator.dart';
+import 'package:joul_v2/core/sync/sync_engine.dart';
 import 'package:joul_v2/core/services/fcm_service.dart';
 import 'package:joul_v2/data/repositories/auth_repository.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
@@ -239,16 +239,11 @@ class _LoginScreenState extends State<LoginScreen> {
       await authProvider.login(request);
 
       if (mounted && authProvider.isAuthenticated()) {
-        final repositoryManager =
-            Provider.of<RepositoryManager>(context, listen: false);
-
         FCMService.initialize().catchError((e) {
           debugPrint('FCM token upload failed: $e');
         });
 
-        if (await ApiHelper.instance.hasNetwork()) {
-          await repositoryManager.syncAll();
-        }
+        await locator<SyncEngine>().syncNow();
 
         // Clear stack and go to home
         Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);

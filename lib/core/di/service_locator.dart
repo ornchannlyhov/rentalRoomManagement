@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:joul_v2/core/services/database_service.dart';
+import 'package:joul_v2/core/sync/outbox.dart';
+import 'package:joul_v2/core/sync/sync_engine.dart';
 import 'package:joul_v2/data/repositories/payment_config_repository.dart';
 import 'package:joul_v2/data/repositories/auth_repository.dart';
 import 'package:joul_v2/data/repositories/building_repository.dart';
@@ -25,6 +27,10 @@ Future<void> setupLocator() async {
   // Services
   locator.registerSingleton<DatabaseService>(DatabaseService());
   await locator<DatabaseService>().init();
+
+  final outbox = await Outbox.init();
+  await outbox.importLegacy(locator<DatabaseService>().legacyPendingBoxes);
+  locator.registerSingleton<Outbox>(outbox);
 
   // Repositories
   locator.registerLazySingleton(() => AuthRepository());
@@ -69,6 +75,11 @@ Future<void> setupLocator() async {
         reportRepository: locator<ReportRepository>(),
         notificationRepository: locator<NotificationRepository>(),
         paymentConfigRepository: locator<PaymentConfigRepository>(),
+      ));
+
+  locator.registerLazySingleton(() => SyncEngine(
+        outbox: locator<Outbox>(),
+        repositoryManager: locator<RepositoryManager>(),
       ));
 
   // Providers (as singletons so they maintain state)

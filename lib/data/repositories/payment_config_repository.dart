@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
-import 'package:joul_v2/core/helpers/pending_change_queue.dart';
+import 'package:joul_v2/core/sync/outbox.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
 import 'package:joul_v2/data/models/payment_config.dart';
 import 'package:joul_v2/data/dtos/payment_config_dto.dart';
@@ -15,7 +15,6 @@ class PaymentConfigRepository {
   final SyncOperationHelper _syncHelper = SyncOperationHelper();
 
   PaymentConfig? _configCache;
-  List<Map<String, dynamic>> _pendingChanges = [];
 
   PaymentConfigRepository(this._databaseService);
 
@@ -29,10 +28,6 @@ class PaymentConfigRepository {
       } else {
         _configCache = null;
       }
-
-      final pendingList = _databaseService.pendingChangesBox.values.toList();
-      _pendingChanges =
-          pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
     } catch (e) {
       throw Exception('Failed to load payment config data: $e');
     }
@@ -53,13 +48,8 @@ class PaymentConfigRepository {
         );
         await _databaseService.paymentConfigBox
             .put('config', configDto.toJson());
-      }
-
-      if (_pendingChanges.isNotEmpty) {
-        await _databaseService.pendingChangesBox.clear();
-        for (var i = 0; i < _pendingChanges.length; i++) {
-          await _databaseService.pendingChangesBox.put(i, _pendingChanges[i]);
-        }
+      } else {
+        await _databaseService.paymentConfigBox.delete('config');
       }
     } catch (e) {
       throw Exception('Failed to save payment config data: $e');
@@ -68,17 +58,13 @@ class PaymentConfigRepository {
 
   Future<void> clear() async {
     await _databaseService.paymentConfigBox.clear();
-    await _databaseService.pendingChangesBox.clear();
     _configCache = null;
-    _pendingChanges.clear();
   }
 
   Future<void> syncFromApi({bool skipHydration = false}) async {
     if (!await _apiHelper.hasNetwork()) {
       return;
     }
-
-    await _syncPendingChanges();
 
     // GET /api/landlord/payment-config returns single object, not array
     // Response format: { "success": true, "data": { ... } }
@@ -99,6 +85,11 @@ class PaymentConfigRepository {
       );
 
       if (response.statusCode == 200) {
+        // A change still waiting to upload is newer than the server copy.
+        if (Outbox.instance
+            .hasChangesForEndpoint('/landlord/payment-config')) {
+          return;
+        }
         final data = response.data['data'];
 
         // Handle case where data might be null (no config yet)
@@ -120,65 +111,17 @@ class PaymentConfigRepository {
     }
   }
 
-  Future<void> _syncPendingChanges() async {
-    if (_pendingChanges.isEmpty) return;
-
-    final successfulChanges = <int>[];
-    final failedChanges = <int>[];
-
-    for (int i = 0; i < _pendingChanges.length; i++) {
-      final change = _pendingChanges[i];
-      final retryCount = change['retryCount'] ?? 0;
-
-      if (retryCount >= 5) {
-        failedChanges.add(i);
-        if (kDebugMode) {
-          print(
-              'Payment config pending change exceeded retry limit: ${change['type']} ${change['endpoint']}');
-        }
-        continue;
-      }
-
-      final success = await _syncHelper.applyPendingChange(change);
-
-      if (success) {
-        successfulChanges.add(i);
-        if (kDebugMode) {
-          print(
-              'Successfully synced payment config pending change: ${change['type']} ${change['endpoint']}');
-        }
-      } else {
-        _pendingChanges[i]['retryCount'] = retryCount + 1;
-        if (kDebugMode) {
-          print(
-              'Failed to sync payment config pending change (retry ${retryCount + 1}/5): ${change['type']} ${change['endpoint']}');
-        }
-      }
-    }
-
-    final toRemove = [...successfulChanges, ...failedChanges]
-      ..sort((a, b) => b.compareTo(a));
-    for (final index in toRemove) {
-      _pendingChanges.removeAt(index);
-    }
-
-    if (successfulChanges.isNotEmpty || failedChanges.isNotEmpty) {
-      await save();
-    }
-  }
-
   Future<void> _addPendingChange(
     String type,
     String endpoint,
     Map<String, dynamic> data,
   ) async {
-    PendingChangeQueue.add(
-      _pendingChanges,
+    await Outbox.instance.enqueue(
+      entity: 'paymentConfig',
       type: type,
       endpoint: endpoint,
       data: data,
       singleton: true,
-      label: 'payment config pending change',
     );
   }
 
@@ -241,6 +184,4 @@ class PaymentConfigRepository {
   }
 
   bool hasPaymentConfig() => _configCache != null;
-  bool hasPendingChanges() => _pendingChanges.isNotEmpty;
-  int getPendingChangesCount() => _pendingChanges.length;
 }

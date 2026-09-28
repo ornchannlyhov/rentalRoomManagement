@@ -53,10 +53,6 @@ class DatabaseService {
 
       // await Hive.deleteFromDisk(); // REMOVED: This wipes data on every app start!
 
-      // TODO:
-      // Register Adapters
-      // Example: Hive.registerAdapter(PaymentConfigAdapter());
-
       // Open all boxes with dynamic type to avoid type casting issues
       await Future.wait([
         Hive.openBox<dynamic>(paymentConfigBoxName),
@@ -92,6 +88,31 @@ class DatabaseService {
 
   // Check if initialized
   bool get isInitialized => _isInitialized;
+
+  /// Queues from app versions before the shared outbox, by data type.
+  /// Their contents are moved into the outbox on first start.
+  Map<String, Box<dynamic>> get legacyPendingBoxes => {
+        'building': buildingsPendingBox,
+        'room': roomsPendingBox,
+        'tenant': tenantsPendingBox,
+        'service': servicesPendingBox,
+        'receipt': receiptsPendingBox,
+        'report': reportsPendingBox,
+        'paymentConfig': pendingChangesBox,
+      };
+
+  /// Stores [records] keyed by id and removes entries that are gone.
+  /// Writes first, then deletes, so an interrupted save never loses data
+  /// (older versions stored records under list positions; those keys are
+  /// cleaned up here too).
+  Future<void> writeRecords(
+    Box<dynamic> box,
+    Map<String, Map<String, dynamic>> records,
+  ) async {
+    await box.putAll(records);
+    final stale = box.keys.where((key) => !records.containsKey(key)).toList();
+    if (stale.isNotEmpty) await box.deleteAll(stale);
+  }
 
   // Payment Config getters
   Box<dynamic> get paymentConfigBox {

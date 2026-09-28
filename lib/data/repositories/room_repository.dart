@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
-import 'package:joul_v2/core/helpers/pending_change_queue.dart';
+import 'package:joul_v2/core/sync/outbox.dart';
+import 'package:joul_v2/core/sync/pull_merge.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
 import 'package:joul_v2/data/models/room.dart';
 import 'package:joul_v2/data/models/enum/room_status.dart';
@@ -15,7 +16,6 @@ class RoomRepository {
   final SyncOperationHelper _syncHelper = SyncOperationHelper();
 
   List<Room> _roomCache = [];
-  List<Map<String, dynamic>> _pendingChanges = [];
 
   final BuildingRepository _buildingRepository;
   final TenantRepository _tenantRepository;
@@ -41,10 +41,6 @@ class RoomRepository {
       final roomDto = RoomDto.fromJson(Map<String, dynamic>.from(e));
       return roomDto.toRoom();
     }).toList();
-
-    final pendingList = _databaseService.roomsPendingBox.values.toList();
-    _pendingChanges =
-        pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
 
     if (kDebugMode) {
       print(
@@ -116,7 +112,7 @@ class RoomRepository {
 
   Future<void> save() async {
     try {
-      await _databaseService.roomsBox.clear();
+      final records = <String, Map<String, dynamic>>{};
       for (var i = 0; i < _roomCache.length; i++) {
         final room = _roomCache[i];
         final dto = RoomDto(
@@ -131,13 +127,11 @@ class RoomRepository {
           building: null,
           tenant: null,
         );
-        await _databaseService.roomsBox.put(i, dto.toJson());
+        records[_roomCache[i].id] = Map<String, dynamic>.from(dto.toJson());
       }
 
-      await _databaseService.roomsPendingBox.clear();
-      for (var i = 0; i < _pendingChanges.length; i++) {
-        await _databaseService.roomsPendingBox.put(i, _pendingChanges[i]);
-      }
+      await _databaseService.writeRecords(
+          _databaseService.roomsBox, records);
 
       if (kDebugMode) {
         print('💾 Saved ${_roomCache.length} rooms to Hive');
@@ -149,17 +143,13 @@ class RoomRepository {
 
   Future<void> clear() async {
     await _databaseService.roomsBox.clear();
-    await _databaseService.roomsPendingBox.clear();
     _roomCache.clear();
-    _pendingChanges.clear();
   }
 
   Future<void> syncFromApi({bool skipHydration = false}) async {
     if (!await _apiHelper.hasNetwork()) {
       return;
     }
-
-    await _syncPendingChanges();
 
     final result = await _syncHelper.fetch<Room>(
       endpoint: '/rooms',
@@ -182,60 +172,14 @@ class RoomRepository {
     );
 
     if (result.success && result.data != null) {
-      _roomCache = result.data!;
+      _roomCache = mergePulled(
+        server: result.data!,
+        local: _roomCache,
+        idOf: (item) => item.id,
+      );
       if (!skipHydration) {
         await save();
       }
-    }
-  }
-
-  Future<void> _syncPendingChanges() async {
-    if (_pendingChanges.isEmpty) return;
-
-    final successfulChanges = <int>[];
-    final failedChanges = <int>[];
-
-    for (int i = 0; i < _pendingChanges.length; i++) {
-      final change = _pendingChanges[i];
-      final retryCount = change['retryCount'] ?? 0;
-
-      // Max 5 retries for failed changes
-      if (retryCount >= 5) {
-        failedChanges.add(i);
-        if (kDebugMode) {
-          print(
-              'Room pending change exceeded retry limit: ${change['type']} ${change['endpoint']}');
-        }
-        continue;
-      }
-
-      final success = await _syncHelper.applyPendingChange(change);
-
-      if (success) {
-        successfulChanges.add(i);
-        if (kDebugMode) {
-          print(
-              'Successfully synced room pending change: ${change['type']} ${change['endpoint']}');
-        }
-      } else {
-        // Increment retry count
-        _pendingChanges[i]['retryCount'] = retryCount + 1;
-        if (kDebugMode) {
-          print(
-              'Failed to sync room pending change (retry ${retryCount + 1}/5): ${change['type']} ${change['endpoint']}');
-        }
-      }
-    }
-
-    // Remove successful and permanently failed changes (reverse order)
-    final toRemove = [...successfulChanges, ...failedChanges]
-      ..sort((a, b) => b.compareTo(a));
-    for (final index in toRemove) {
-      _pendingChanges.removeAt(index);
-    }
-
-    if (successfulChanges.isNotEmpty || failedChanges.isNotEmpty) {
-      await save();
     }
   }
 
@@ -244,12 +188,11 @@ class RoomRepository {
     Map<String, dynamic> data,
     String endpoint,
   ) async {
-    PendingChangeQueue.add(
-      _pendingChanges,
+    await Outbox.instance.enqueue(
+      entity: 'room',
       type: type,
       endpoint: endpoint,
       data: data,
-      label: 'room pending change',
     );
   }
 
@@ -376,11 +319,4 @@ class RoomRepository {
     return _roomCache.where((room) => room.building?.id == buildingId).toList();
   }
 
-  bool hasPendingChanges() => _pendingChanges.isNotEmpty;
-  int getPendingChangesCount() => _pendingChanges.length;
-
-  /// Get list of pending changes for debugging/display
-  List<Map<String, dynamic>> getPendingChanges() {
-    return List.unmodifiable(_pendingChanges);
-  }
 }

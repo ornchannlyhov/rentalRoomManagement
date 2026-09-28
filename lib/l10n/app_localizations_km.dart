@@ -1405,4 +1405,106 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get deleteReceiptSimpleConfirm => 'តើអ្នកប្រាកដជាចង់លុបវិក្កយបត្រនេះមែនទេ?';
+
+  @override
+  String get bannerOffline => 'កំពុងធ្វើការក្រៅបណ្តាញ';
+
+  @override
+  String get bannerServerDown => 'មិនអាចភ្ជាប់ទៅម៉ាស៊ីនមេបានទេ';
+
+  @override
+  String changesWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ការផ្លាស់ប្តូរ $count កំពុងរង់ចាំផ្ទុកឡើង',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncTitle => 'ធ្វើសមកាលកម្ម';
+
+  @override
+  String get syncSubtitle => 'ការផ្ទុកឡើង និងការផ្លាស់ប្តូរដែលមិនអាចផ្ញើបាន';
+
+  @override
+  String get syncNow => 'ធ្វើសមកាលកម្មឥឡូវនេះ';
+
+  @override
+  String get syncInProgress => 'កំពុងធ្វើសមកាលកម្ម...';
+
+  @override
+  String syncLastSynced(String time) {
+    return 'ធ្វើសមកាលកម្មចុងក្រោយ $time';
+  }
+
+  @override
+  String get syncNeverSynced => 'មិនទាន់បានធ្វើសមកាលកម្មនៅលើទូរស័ព្ទនេះទេ';
+
+  @override
+  String get syncAllUploaded => 'ការផ្លាស់ប្តូររបស់អ្នកទាំងអស់ត្រូវបានផ្ទុកឡើង';
+
+  @override
+  String get syncOfflineHint => 'អ្នកកំពុងនៅក្រៅបណ្តាញ។ ការផ្លាស់ប្តូរនឹងផ្ទុកឡើងនៅពេលអ្នកមានអ៊ីនធឺណិតវិញ។';
+
+  @override
+  String get syncSessionExpiredHint => 'សូមចូលម្តងទៀតដើម្បីផ្ទុកឡើងការផ្លាស់ប្តូររបស់អ្នក។';
+
+  @override
+  String get syncErrorHint => 'ទិន្នន័យខ្លះមិនអាចទាញយកបានទេ។ សូមព្យាយាមម្តងទៀតពេលក្រោយ។';
+
+  @override
+  String get syncFailedTitle => 'មិនអាចផ្ទុកឡើងបានទេ';
+
+  @override
+  String get syncFailedHelp => 'ម៉ាស៊ីនមេបានបដិសេធការផ្លាស់ប្តូរទាំងនេះ។ សូមព្យាយាមម្តងទៀតបន្ទាប់ពីដោះស្រាយបញ្ហា ឬបោះបង់វាដើម្បីរក្សាទិន្នន័យនៅលើម៉ាស៊ីនមេ។';
+
+  @override
+  String get syncRetry => 'ព្យាយាមម្តងទៀត';
+
+  @override
+  String get syncRetryAll => 'ព្យាយាមទាំងអស់ម្តងទៀត';
+
+  @override
+  String get syncDiscard => 'បោះបង់';
+
+  @override
+  String get syncDiscardTitle => 'បោះបង់ការផ្លាស់ប្តូរនេះ?';
+
+  @override
+  String get syncDiscardMessage => 'វានឹងត្រូវបានលុបចេញពីទូរស័ព្ទនេះ ហើយនឹងមិនត្រូវបានផ្ទុកឡើងទេ។';
+
+  @override
+  String get syncWaitingTitle => 'កំពុងរង់ចាំផ្ទុកឡើង';
+
+  @override
+  String get syncEntityBuilding => 'អគារ';
+
+  @override
+  String get syncEntityRoom => 'បន្ទប់';
+
+  @override
+  String get syncEntityTenant => 'អ្នកជួល';
+
+  @override
+  String get syncEntityService => 'សេវាកម្ម';
+
+  @override
+  String get syncEntityReceipt => 'វិក្កយបត្រ';
+
+  @override
+  String get syncEntityReport => 'របាយការណ៍';
+
+  @override
+  String get syncEntityPaymentConfig => 'ការកំណត់ការទូទាត់';
+
+  @override
+  String get syncTypeCreate => 'ថ្មី';
+
+  @override
+  String get syncTypeUpdate => 'បានកែប្រែ';
+
+  @override
+  String get syncTypeDelete => 'បានលុប';
 }

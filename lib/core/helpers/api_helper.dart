@@ -249,9 +249,14 @@ class ApiHelper {
     ),
   );
   bool _isOnline = true;
+  bool _isServerDown = false;
   bool? _lastProbeResult;
   DateTime? _lastProbeAt;
   Future<bool>? _probeInFlight;
+
+  /// Whether the last check found a connection but no answer from our
+  /// server, as opposed to the phone being offline.
+  bool get isServerDown => _isServerDown;
 
   /// Whether the backend can be reached right now (Web-compatible).
   Future<bool> hasNetwork() async {
@@ -263,6 +268,7 @@ class ApiHelper {
       final results = await Connectivity().checkConnectivity();
       if (results.isEmpty ||
           results.every((r) => r == ConnectivityResult.none)) {
+        _isServerDown = false;
         _recordProbe(false);
         return false;
       }
@@ -289,6 +295,8 @@ class ApiHelper {
     } catch (_) {
       reachable = false;
     }
+    // The phone has a connection here, so a failed probe means our server.
+    _isServerDown = !reachable;
     _recordProbe(reachable);
     return reachable;
   }

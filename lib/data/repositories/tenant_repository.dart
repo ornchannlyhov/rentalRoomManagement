@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
-import 'package:joul_v2/core/helpers/pending_change_queue.dart';
+import 'package:joul_v2/core/sync/outbox.dart';
+import 'package:joul_v2/core/sync/pull_merge.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
 import 'package:joul_v2/data/models/tenant.dart';
 import 'package:joul_v2/data/models/enum/gender.dart';
@@ -13,7 +13,6 @@ class TenantRepository {
   final SyncOperationHelper _syncHelper = SyncOperationHelper();
 
   List<Tenant> _tenantCache = [];
-  List<Map<String, dynamic>> _pendingChanges = [];
 
   TenantRepository(this._databaseService);
 
@@ -34,10 +33,6 @@ class TenantRepository {
         }
         return tenant;
       }).toList();
-
-      final pendingList = _databaseService.tenantsPendingBox.values.toList();
-      _pendingChanges =
-          pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
     } catch (e) {
       throw Exception('Failed to load tenant data: $e');
     }
@@ -48,15 +43,11 @@ class TenantRepository {
     _tenantCache = tenantsList
         .map((e) => TenantDto.fromJson(Map<String, dynamic>.from(e)).toTenant())
         .toList();
-
-    final pendingList = _databaseService.tenantsPendingBox.values.toList();
-    _pendingChanges =
-        pendingList.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
   Future<void> save() async {
     try {
-      await _databaseService.tenantsBox.clear();
+      final records = <String, Map<String, dynamic>>{};
       for (var i = 0; i < _tenantCache.length; i++) {
         final tenant = _tenantCache[i];
         final dto = TenantDto(
@@ -72,13 +63,11 @@ class TenantRepository {
           // Do NOT save full objects
           room: null,
         );
-        await _databaseService.tenantsBox.put(i, dto.toJson());
+        records[_tenantCache[i].id] = Map<String, dynamic>.from(dto.toJson());
       }
 
-      await _databaseService.tenantsPendingBox.clear();
-      for (var i = 0; i < _pendingChanges.length; i++) {
-        await _databaseService.tenantsPendingBox.put(i, _pendingChanges[i]);
-      }
+      await _databaseService.writeRecords(
+          _databaseService.tenantsBox, records);
     } catch (e) {
       throw Exception('Failed to save tenant data: $e');
     }
@@ -86,9 +75,7 @@ class TenantRepository {
 
   Future<void> clear() async {
     await _databaseService.tenantsBox.clear();
-    await _databaseService.tenantsPendingBox.clear();
     _tenantCache.clear();
-    _pendingChanges.clear();
   }
 
   Future<void> syncFromApi({
@@ -99,8 +86,6 @@ class TenantRepository {
     if (!await _apiHelper.hasNetwork()) {
       return;
     }
-
-    await _syncPendingChanges();
 
     // Construct endpoint with query parameters
     String endpoint = '/tenants';
@@ -139,60 +124,14 @@ class TenantRepository {
     );
 
     if (result.success && result.data != null) {
-      _tenantCache = result.data!;
+      _tenantCache = mergePulled(
+        server: result.data!,
+        local: _tenantCache,
+        idOf: (item) => item.id,
+      );
       if (!skipHydration) {
         await save();
       }
-    }
-  }
-
-  Future<void> _syncPendingChanges() async {
-    if (_pendingChanges.isEmpty) return;
-
-    final successfulChanges = <int>[];
-    final failedChanges = <int>[];
-
-    for (int i = 0; i < _pendingChanges.length; i++) {
-      final change = _pendingChanges[i];
-      final retryCount = change['retryCount'] ?? 0;
-
-      // Max 5 retries for failed changes
-      if (retryCount >= 5) {
-        failedChanges.add(i);
-        if (kDebugMode) {
-          print(
-              'Tenant pending change exceeded retry limit: ${change['type']} ${change['endpoint']}');
-        }
-        continue;
-      }
-
-      final success = await _syncHelper.applyPendingChange(change);
-
-      if (success) {
-        successfulChanges.add(i);
-        if (kDebugMode) {
-          print(
-              'Successfully synced tenant pending change: ${change['type']} ${change['endpoint']}');
-        }
-      } else {
-        // Increment retry count
-        _pendingChanges[i]['retryCount'] = retryCount + 1;
-        if (kDebugMode) {
-          print(
-              'Failed to sync tenant pending change (retry ${retryCount + 1}/5): ${change['type']} ${change['endpoint']}');
-        }
-      }
-    }
-
-    // Remove successful and permanently failed changes (reverse order)
-    final toRemove = [...successfulChanges, ...failedChanges]
-      ..sort((a, b) => b.compareTo(a));
-    for (final index in toRemove) {
-      _pendingChanges.removeAt(index);
-    }
-
-    if (successfulChanges.isNotEmpty || failedChanges.isNotEmpty) {
-      await save();
     }
   }
 
@@ -203,14 +142,13 @@ class TenantRepository {
     String? filePath,
     String? fileFieldName,
   }) async {
-    PendingChangeQueue.add(
-      _pendingChanges,
+    await Outbox.instance.enqueue(
+      entity: 'tenant',
       type: type,
       endpoint: endpoint,
       data: data,
       filePath: filePath,
       fileFieldName: fileFieldName,
-      label: 'tenant pending change',
     );
   }
 
@@ -375,14 +313,6 @@ class TenantRepository {
             tenant.name.toLowerCase().contains(lowerQuery) ||
             tenant.phoneNumber.contains(query))
         .toList();
-  }
-
-  bool hasPendingChanges() => _pendingChanges.isNotEmpty;
-  int getPendingChangesCount() => _pendingChanges.length;
-
-  /// Get list of pending changes for debugging/display
-  List<Map<String, dynamic>> getPendingChanges() {
-    return List.unmodifiable(_pendingChanges);
   }
 
   String _genderToString(Gender gender) {
