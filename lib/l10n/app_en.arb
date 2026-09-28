@@ -438,6 +438,17 @@
   "signOut": "Sign Out",
   "signOutConfirm": "Are you sure you want to sign out?",
   "signOutConfirmation": "Are you sure you want to sign out?",
+  "unsyncedChangesTitle": "Changes not uploaded",
+  "unsyncedChangesMessage": "{count, plural, =1{1 change hasn't been uploaded yet. If you sign out now, it will be lost.} other{{count} changes haven't been uploaded yet. If you sign out now, they will be lost.}}",
+  "@unsyncedChangesMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "signOutAnyway": "Sign out anyway",
+  "uploadingChanges": "Uploading your changes...",
   "selectLanguage": "Select Language",
   "premiumMember": "Premium Member",
   "tenantsTitle": "Tenants",

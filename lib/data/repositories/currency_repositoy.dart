@@ -41,11 +41,6 @@ class CurrencyService {
         ),
       );
 
-      if (response.data['cancelled'] == true) {
-        debugPrint('Request cancelled, using default rates');
-        return _defaultRates;
-      }
-
       if (response.statusCode == 200) {
         final ratesData = response.data['rates'] as Map<String, dynamic>;
 
@@ -184,10 +179,6 @@ class CurrencyService {
           receiveTimeout: const Duration(seconds: 5),
         ),
       );
-
-      if (response.data['cancelled'] == true) {
-        return false;
-      }
 
       return response.statusCode == 200;
     } on DioException catch (_) {

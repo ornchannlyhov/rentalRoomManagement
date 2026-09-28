@@ -1,6 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
+import 'package:joul_v2/core/helpers/pending_change_queue.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
 import 'package:joul_v2/data/models/tenant.dart';
 import 'package:joul_v2/data/models/enum/gender.dart';
@@ -203,44 +203,15 @@ class TenantRepository {
     String? filePath,
     String? fileFieldName,
   }) async {
-    // Check for duplicate pending changes
-    final isDuplicate = _pendingChanges.any((change) {
-      if (change['type'] != type || change['endpoint'] != endpoint) {
-        return false;
-      }
-
-      if (type == 'create' && data['localId'] != null) {
-        return change['data']['localId'] == data['localId'];
-      }
-
-      if (data['id'] != null) {
-        return change['data']['id'] == data['id'];
-      }
-
-      return jsonEncode(change['data']) == jsonEncode(data);
-    });
-
-    if (isDuplicate) {
-      if (kDebugMode) {
-        print('Skipping duplicate pending change: $type $endpoint');
-      }
-      return;
-    }
-
-    _pendingChanges.add({
-      'type': type,
-      'data': data,
-      'endpoint': endpoint,
-      'timestamp': DateTime.now().toIso8601String(),
-      'retryCount': 0,
-      if (filePath != null) 'filePath': filePath,
-      if (fileFieldName != null) 'fileFieldName': fileFieldName,
-    });
-
-    if (kDebugMode) {
-      print(
-          'Added pending change: $type $endpoint${filePath != null ? ' with file' : ''}');
-    }
+    PendingChangeQueue.add(
+      _pendingChanges,
+      type: type,
+      endpoint: endpoint,
+      data: data,
+      filePath: filePath,
+      fileFieldName: fileFieldName,
+      label: 'tenant pending change',
+    );
   }
 
   Future<Tenant> createTenant(Tenant newTenant) async {

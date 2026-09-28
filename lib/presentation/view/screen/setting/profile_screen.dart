@@ -7,6 +7,7 @@ import 'package:joul_v2/presentation/view/screen/setting/payment_config_screen.d
 import 'package:provider/provider.dart';
 import 'package:joul_v2/presentation/providers/theme_provider.dart';
 import 'package:joul_v2/presentation/providers/auth_provider.dart';
+import 'package:joul_v2/core/helpers/repository_manager.dart';
 import 'package:joul_v2/data/models/user.dart';
 import 'package:joul_v2/presentation/view/screen/setting/widgets/profile_header.dart';
 import 'package:joul_v2/presentation/view/screen/setting/widgets/settings_group.dart';
@@ -614,6 +615,97 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  /// Signs out, but first tries to upload offline changes and warns if some
+  /// are still waiting, because signing out clears them from this phone.
+  Future<void> _signOutKeepingChanges(
+      ColorScheme colorScheme, AuthProvider authProvider) async {
+    final repositoryManager =
+        Provider.of<RepositoryManager>(context, listen: false);
+    final localizations = AppLocalizations.of(context)!;
+
+    var pending = repositoryManager.pendingChangesCount;
+    if (pending > 0) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => AlertDialog(
+          backgroundColor: colorScheme.surface,
+          content: Row(
+            children: [
+              const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2.5),
+              ),
+              const SizedBox(width: 16),
+              Expanded(child: Text(localizations.uploadingChanges)),
+            ],
+          ),
+        ),
+      );
+      pending = await repositoryManager.uploadPendingChanges();
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+
+    if (pending > 0) {
+      final signOutAnyway = await _confirmDiscardChanges(pending, colorScheme);
+      if (signOutAnyway != true || !mounted) return;
+    }
+
+    await authProvider.logout();
+  }
+
+  Future<bool?> _confirmDiscardChanges(int pending, ColorScheme colorScheme) {
+    final localizations = AppLocalizations.of(context)!;
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Text(
+          localizations.unsyncedChangesTitle,
+          style: TextStyle(
+            color: colorScheme.onSurface,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Text(
+          localizations.unsyncedChangesMessage(pending),
+          style: TextStyle(
+            color: colorScheme.onSurface.withOpacity(0.6),
+            fontSize: 16,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(
+              localizations.cancel,
+              style: TextStyle(
+                color: colorScheme.onSurface.withOpacity(0.6),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(
+              localizations.signOutAnyway,
+              style: const TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showLogoutDialog(BuildContext context, bool isDarkMode,
       ColorScheme colorScheme, AuthProvider authProvider) {
     final localizations = AppLocalizations.of(context)!;
@@ -654,7 +746,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextButton(
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
-                await authProvider.logout();
+                await _signOutKeepingChanges(colorScheme, authProvider);
               },
               child: Text(
                 localizations.signOut,

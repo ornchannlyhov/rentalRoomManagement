@@ -1,7 +1,7 @@
-import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
+import 'package:joul_v2/core/helpers/pending_change_queue.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
 import 'package:joul_v2/data/models/payment_config.dart';
 import 'package:joul_v2/data/dtos/payment_config_dto.dart';
@@ -98,10 +98,6 @@ class PaymentConfigRepository {
         cancelToken: _apiHelper.cancelToken,
       );
 
-      if (response.data['cancelled'] == true) {
-        return;
-      }
-
       if (response.statusCode == 200) {
         final data = response.data['data'];
 
@@ -176,31 +172,14 @@ class PaymentConfigRepository {
     String endpoint,
     Map<String, dynamic> data,
   ) async {
-    final isDuplicate = _pendingChanges.any((change) {
-      return change['type'] == type &&
-          change['endpoint'] == endpoint &&
-          jsonEncode(change['data']) == jsonEncode(data);
-    });
-
-    if (isDuplicate) {
-      if (kDebugMode) {
-        print(
-            'Skipping duplicate payment config pending change: $type $endpoint');
-      }
-      return;
-    }
-
-    _pendingChanges.add({
-      'type': type,
-      'data': data,
-      'endpoint': endpoint,
-      'timestamp': DateTime.now().toIso8601String(),
-      'retryCount': 0,
-    });
-
-    if (kDebugMode) {
-      print('Added payment config pending change: $type $endpoint');
-    }
+    PendingChangeQueue.add(
+      _pendingChanges,
+      type: type,
+      endpoint: endpoint,
+      data: data,
+      singleton: true,
+      label: 'payment config pending change',
+    );
   }
 
   Future<void> setupPaymentConfig(Map<String, dynamic> configData) async {

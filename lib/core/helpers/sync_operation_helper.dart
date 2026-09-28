@@ -63,10 +63,6 @@ class SyncOperationHelper {
             );
           }
 
-          if (response?.data['cancelled'] == true) {
-            throw Exception('Request cancelled');
-          }
-
           if (response?.statusCode == 201 || response?.statusCode == 200) {
             final createdItem = fromJson(response!.data['data']);
             await addToCache(createdItem);
@@ -149,10 +145,9 @@ class SyncOperationHelper {
             );
           }
 
-          if (response?.data['cancelled'] != true &&
-              response?.statusCode == 200) {
+          if (response?.statusCode == 200) {
             syncedOnline = true;
-          } else if (response?.statusCode != 200) {
+          } else {
             throw Exception('Unexpected status code: ${response?.statusCode}');
           }
         } on DioException catch (e) {
@@ -205,10 +200,9 @@ class SyncOperationHelper {
             cancelToken: _apiHelper.cancelToken,
           );
 
-          if (response.data['cancelled'] != true &&
-              response.statusCode == 200) {
+          if (response.statusCode == 200) {
             syncedOnline = true;
-          } else if (response.statusCode != 200) {
+          } else {
             throw Exception('Unexpected status code: ${response.statusCode}');
           }
         } on DioException catch (e) {
@@ -259,10 +253,6 @@ class SyncOperationHelper {
         cancelToken: _apiHelper.cancelToken,
       );
 
-      if (response.data['cancelled'] == true) {
-        return SyncResult(success: false, wasOnline: true);
-      }
-
       if (response.statusCode == 200) {
         final data = fromJsonList(response.data['data']);
         return SyncResult(success: true, data: data, wasOnline: true);
@@ -280,7 +270,11 @@ class SyncOperationHelper {
     if (token == null) return false;
 
     final type = change['type'];
-    final data = change['data'] as Map<String, dynamic>;
+    // Hive returns nested maps as Map<dynamic, dynamic> after a restart.
+    final rawData = change['data'];
+    final data = rawData is Map
+        ? Map<String, dynamic>.from(rawData)
+        : <String, dynamic>{};
     final endpoint = change['endpoint'];
     final filePath = change['filePath'] as String?; 
     final fileFieldName =
@@ -331,7 +325,9 @@ class SyncOperationHelper {
               response?.statusCode == 200 ||
               response?.statusCode == 409;
 
+        // 'updateStatus' was used by older app versions for report status.
         case 'update':
+        case 'updateStatus':
           if (file != null && fileFieldName != null) {
             response = await _apiHelper.uploadWithFile(
               endpoint: endpoint,
@@ -353,8 +349,9 @@ class SyncOperationHelper {
             );
           }
 
-          // 200 = success, 404 = already deleted (treat as success)
-          return response?.statusCode == 200 || response?.statusCode == 404;
+          // A 404 here means the record wasn't found, so the edit did not
+          // land. Keep it queued instead of reporting success.
+          return response?.statusCode == 200;
 
         case 'delete':
           response = await _apiHelper.dio.delete(

@@ -12,6 +12,7 @@ import 'package:joul_v2/data/models/receipt.dart';
 import 'package:joul_v2/data/dtos/receipt_dto.dart';
 import 'package:dio/dio.dart';
 import 'package:joul_v2/data/models/service.dart';
+import 'package:joul_v2/core/helpers/pending_change_queue.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
 import 'package:joul_v2/core/services/database_service.dart';
 
@@ -177,14 +178,19 @@ class ReceiptRepository {
       queryParams['paymentStatus'] = statusStr;
     }
 
-    final response = await _apiHelper.dio.get(
-      '${_apiHelper.baseUrl}/receipts',
-      queryParameters: queryParams,
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
-      cancelToken: _apiHelper.cancelToken,
-    );
-
-    if (response.data['cancelled'] == true) return;
+    final Response response;
+    try {
+      response = await _apiHelper.dio.get(
+        '${_apiHelper.baseUrl}/receipts',
+        queryParameters: queryParams,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+        cancelToken: _apiHelper.cancelToken,
+      );
+    } on DioException catch (e) {
+      // Connection lost mid-sync: keep the cached receipts.
+      if (e.type == DioExceptionType.badResponse) rethrow;
+      return;
+    }
 
     if (response.statusCode == 200 && response.data['success'] == true) {
       final List<dynamic> receiptsJson = response.data['data'];
@@ -263,50 +269,13 @@ class ReceiptRepository {
     Map<String, dynamic> data,
     String endpoint,
   ) async {
-    // Check for duplicate pending changes
-    final isDuplicate = _pendingChanges.any((change) {
-      if (change['type'] != type || change['endpoint'] != endpoint) {
-        return false;
-      }
-
-      // For creates with localId, check if localId matches
-      if (type == 'create' && data['localId'] != null) {
-        return change['data']['localId'] == data['localId'];
-      }
-
-      // For updates/deletes, check if id matches
-      if (data['id'] != null) {
-        return change['data']['id'] == data['id'];
-      }
-
-      // For receipts, also check by roomId and date combination
-      if (data['roomId'] != null && data['date'] != null) {
-        return change['data']['roomId'] == data['roomId'] &&
-            change['data']['date'] == data['date'];
-      }
-
-      // Fallback: compare full data
-      return jsonEncode(change['data']) == jsonEncode(data);
-    });
-
-    if (isDuplicate) {
-      if (kDebugMode) {
-        print('Skipping duplicate receipt pending change: $type $endpoint');
-      }
-      return;
-    }
-
-    _pendingChanges.add({
-      'type': type,
-      'data': data,
-      'endpoint': endpoint,
-      'timestamp': DateTime.now().toIso8601String(),
-      'retryCount': 0,
-    });
-
-    if (kDebugMode) {
-      print('Added receipt pending change: $type $endpoint');
-    }
+    PendingChangeQueue.add(
+      _pendingChanges,
+      type: type,
+      endpoint: endpoint,
+      data: data,
+      label: 'receipt pending change',
+    );
   }
 
 

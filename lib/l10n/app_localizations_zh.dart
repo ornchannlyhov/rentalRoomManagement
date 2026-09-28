@@ -742,6 +742,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get signOutConfirmation => '您确定要退出登录吗？';
 
   @override
+  String get unsyncedChangesTitle => '更改尚未上传';
+
+  @override
+  String unsyncedChangesMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '有 $count 项更改尚未上传。如果现在退出登录，这些更改将会丢失。',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get signOutAnyway => '仍然退出';
+
+  @override
+  String get uploadingChanges => '正在上传您的更改...';
+
+  @override
   String get selectLanguage => '选择语言';
 
   @override

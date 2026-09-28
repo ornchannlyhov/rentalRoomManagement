@@ -47,6 +47,31 @@ class RepositoryManager {
   DateTime? get lastSyncTime => _lastSyncTime;
   String? get lastSyncError => _lastSyncError;
 
+  /// Offline changes that haven't reached the server yet.
+  int get pendingChangesCount =>
+      buildingRepository.getPendingChangesCount() +
+      roomRepository.getPendingChangesCount() +
+      tenantRepository.getPendingChangesCount() +
+      receiptRepository.getPendingChangesCount() +
+      serviceRepository.getPendingChangesCount() +
+      reportRepository.getPendingChangesCount() +
+      paymentConfigRepository.getPendingChangesCount();
+
+  /// Tries once to upload every waiting change, including payment config,
+  /// which [syncAll] doesn't cover. Returns how many are still waiting.
+  Future<int> uploadPendingChanges() async {
+    if (pendingChangesCount == 0) return 0;
+    try {
+      await syncAll();
+      await paymentConfigRepository.syncFromApi();
+    } catch (e) {
+      if (kDebugMode) {
+        print('⚠️ Upload before sign-out failed: $e');
+      }
+    }
+    return pendingChangesCount;
+  }
+
   Future<void> loadAll() async {
     try {
       if (kDebugMode) {

@@ -1471,6 +1471,30 @@ abstract class AppLocalizations {
   /// **'Are you sure you want to sign out?'**
   String get signOutConfirmation;
 
+  /// No description provided for @unsyncedChangesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes not uploaded'**
+  String get unsyncedChangesTitle;
+
+  /// No description provided for @unsyncedChangesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 change hasn\'t been uploaded yet. If you sign out now, it will be lost.} other{{count} changes haven\'t been uploaded yet. If you sign out now, they will be lost.}}'**
+  String unsyncedChangesMessage(int count);
+
+  /// No description provided for @signOutAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out anyway'**
+  String get signOutAnyway;
+
+  /// No description provided for @uploadingChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading your changes...'**
+  String get uploadingChanges;
+
   /// No description provided for @selectLanguage.
   ///
   /// In en, this message translates to:
