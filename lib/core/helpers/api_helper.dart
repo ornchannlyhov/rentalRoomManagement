@@ -8,15 +8,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http_parser/http_parser.dart'; 
 
 class ApiHelper {
-  CancelToken _cancelToken = CancelToken();
+  final CancelToken _cancelToken = CancelToken();
 
   /// Public getter for cancel token
   CancelToken get cancelToken => _cancelToken;
-
-  void cancelRequests() {
-    _cancelToken.cancel('Network connection lost');
-    _cancelToken = CancelToken();
-  }
 
   // Singleton instance
   static final ApiHelper _instance = ApiHelper._privateConstructor();
@@ -54,18 +49,13 @@ class ApiHelper {
           return handler.next(response);
         },
         onError: (DioException e, handler) {
-          if (e.type == DioExceptionType.connectionError ||
-              e.type == DioExceptionType.sendTimeout ||
-              e.type == DioExceptionType.receiveTimeout) {
-            cancelRequests();
+          // Pass network errors on to the caller so it can queue the change.
+          // Only our own backend counts: a failing third-party call (exchange
+          // rates) must not mark the app offline.
+          if (_isNetworkError(e) &&
+              e.requestOptions.uri.toString().startsWith(baseUrl)) {
             _noNetworkController.add(null);
-            _networkStatusController.add(false);
-            return handler.resolve(
-              Response(
-                requestOptions: e.requestOptions,
-                data: {'cancelled': true},
-              ),
-            );
+            _recordProbe(false);
           }
 
           if (e.response?.statusCode == 401) {
@@ -77,11 +67,18 @@ class ApiHelper {
       ),
     );
 
-    Connectivity().onConnectivityChanged.listen((result) async {
-      final hasNet = await hasNetwork();
-      _networkStatusController.add(hasNet);
+    Connectivity().onConnectivityChanged.listen((_) async {
+      // The connection changed, so the last probe result no longer holds.
+      _lastProbeAt = null;
+      await hasNetwork();
     });
   }
+
+  static bool _isNetworkError(DioException e) =>
+      e.type == DioExceptionType.connectionError ||
+      e.type == DioExceptionType.connectionTimeout ||
+      e.type == DioExceptionType.sendTimeout ||
+      e.type == DioExceptionType.receiveTimeout;
 
   /// Upload file with multipart/form-data
   Future<Response?> uploadWithFile({
@@ -240,25 +237,70 @@ class ApiHelper {
     }
   }
 
-  /// Check for internet access (Web-compatible)
+  // Online means our backend answered, not just that the phone has a
+  // connection. The probe result is cached briefly because every create,
+  // update, delete and sync asks.
+  static const Duration _probeTtl = Duration(seconds: 10);
+  final Dio _probeDio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 5),
+      receiveTimeout: const Duration(seconds: 5),
+      validateStatus: (_) => true,
+    ),
+  );
+  bool _isOnline = true;
+  bool? _lastProbeResult;
+  DateTime? _lastProbeAt;
+  Future<bool>? _probeInFlight;
+
+  /// Whether the backend can be reached right now (Web-compatible).
   Future<bool> hasNetwork() async {
     if (kIsWeb) {
       return true;
     }
 
     try {
-      final connectivityResult = await Connectivity().checkConnectivity();
-      // ignore: unrelated_type_equality_checks
-      if (connectivityResult == ConnectivityResult.none) {
+      final results = await Connectivity().checkConnectivity();
+      if (results.isEmpty ||
+          results.every((r) => r == ConnectivityResult.none)) {
+        _recordProbe(false);
         return false;
       }
-
-      final result = await InternetAddress.lookup('google.com');
-      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
-    } on SocketException catch (_) {
-      return false;
     } catch (_) {
-      return false;
+      // Fall through to the backend probe.
+    }
+
+    final lastAt = _lastProbeAt;
+    if (lastAt != null &&
+        _lastProbeResult != null &&
+        DateTime.now().difference(lastAt) < _probeTtl) {
+      return _lastProbeResult!;
+    }
+
+    return _probeInFlight ??=
+        _probeBackend().whenComplete(() => _probeInFlight = null);
+  }
+
+  Future<bool> _probeBackend() async {
+    bool reachable;
+    try {
+      final response = await _probeDio.get('$baseUrl/health');
+      reachable = (response.statusCode ?? 500) < 500;
+    } catch (_) {
+      reachable = false;
+    }
+    _recordProbe(reachable);
+    return reachable;
+  }
+
+  /// Stores the latest reachability result and tells listeners when it
+  /// changes, so the app can sync as soon as the backend is back.
+  void _recordProbe(bool reachable) {
+    _lastProbeResult = reachable;
+    _lastProbeAt = DateTime.now();
+    if (reachable != _isOnline) {
+      _isOnline = reachable;
+      _networkStatusController.add(reachable);
     }
   }
 

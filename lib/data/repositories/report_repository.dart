@@ -1,7 +1,7 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:joul_v2/data/models/enum/report_status.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
+import 'package:joul_v2/core/helpers/pending_change_queue.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
 import 'package:joul_v2/data/models/report.dart';
 import 'package:joul_v2/data/dtos/report_dto.dart';
@@ -152,44 +152,13 @@ class ReportRepository {
     Map<String, dynamic> data,
     String endpoint,
   ) async {
-    // Check for duplicate pending changes
-    final isDuplicate = _pendingChanges.any((change) {
-      if (change['type'] != type || change['endpoint'] != endpoint) {
-        return false;
-      }
-
-      // For updates/deletes, check if id matches
-      if (data['id'] != null) {
-        return change['data']['id'] == data['id'];
-      }
-
-      // For status updates, check endpoint (already has id in it)
-      if (type == 'updateStatus') {
-        return true; // Endpoint already contains the id
-      }
-
-      // Fallback: compare full data
-      return jsonEncode(change['data']) == jsonEncode(data);
-    });
-
-    if (isDuplicate) {
-      if (kDebugMode) {
-        print('Skipping duplicate report pending change: $type $endpoint');
-      }
-      return;
-    }
-
-    _pendingChanges.add({
-      'type': type,
-      'data': data,
-      'endpoint': endpoint,
-      'timestamp': DateTime.now().toIso8601String(),
-      'retryCount': 0,
-    });
-
-    if (kDebugMode) {
-      print('Added report pending change: $type $endpoint');
-    }
+    PendingChangeQueue.add(
+      _pendingChanges,
+      type: type,
+      endpoint: endpoint,
+      data: data,
+      label: 'report pending change',
+    );
   }
 
   Future<void> updateReportStatus(String reportId, String status) async {
@@ -210,7 +179,7 @@ class ReportRepository {
         }
       },
       addPendingChange: (type, endpoint, data) => _addPendingChange(
-        'updateStatus',
+        type,
         data,
         endpoint,
       ),

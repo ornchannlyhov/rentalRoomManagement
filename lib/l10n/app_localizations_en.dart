@@ -742,6 +742,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signOutConfirmation => 'Are you sure you want to sign out?';
 
   @override
+  String get unsyncedChangesTitle => 'Changes not uploaded';
+
+  @override
+  String unsyncedChangesMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count changes haven\'t been uploaded yet. If you sign out now, they will be lost.',
+      one: '1 change hasn\'t been uploaded yet. If you sign out now, it will be lost.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get signOutAnyway => 'Sign out anyway';
+
+  @override
+  String get uploadingChanges => 'Uploading your changes...';
+
+  @override
   String get selectLanguage => 'Select Language';
 
   @override

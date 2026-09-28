@@ -1,6 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:joul_v2/core/helpers/api_helper.dart';
+import 'package:joul_v2/core/helpers/pending_change_queue.dart';
 import 'package:joul_v2/core/helpers/sync_operation_helper.dart';
 import 'package:joul_v2/data/models/room.dart';
 import 'package:joul_v2/data/models/enum/room_status.dart';
@@ -244,52 +244,13 @@ class RoomRepository {
     Map<String, dynamic> data,
     String endpoint,
   ) async {
-    // Check for duplicate pending changes
-    final isDuplicate = _pendingChanges.any((change) {
-      if (change['type'] != type || change['endpoint'] != endpoint) {
-        return false;
-      }
-
-      // For creates with localId, check if localId matches
-      if (type == 'create' && data['localId'] != null) {
-        return change['data']['localId'] == data['localId'];
-      }
-
-      // For updates/deletes, check if id matches
-      if (data['id'] != null) {
-        return change['data']['id'] == data['id'];
-      }
-
-      // For rooms, also check by buildingId + roomNumber combination
-      if (type == 'create' &&
-          data['buildingId'] != null &&
-          data['roomNumber'] != null) {
-        return change['data']['buildingId'] == data['buildingId'] &&
-            change['data']['roomNumber'] == data['roomNumber'];
-      }
-
-      // Fallback: compare full data
-      return jsonEncode(change['data']) == jsonEncode(data);
-    });
-
-    if (isDuplicate) {
-      if (kDebugMode) {
-        print('Skipping duplicate room pending change: $type $endpoint');
-      }
-      return;
-    }
-
-    _pendingChanges.add({
-      'type': type,
-      'data': data,
-      'endpoint': endpoint,
-      'timestamp': DateTime.now().toIso8601String(),
-      'retryCount': 0,
-    });
-
-    if (kDebugMode) {
-      print('Added room pending change: $type $endpoint');
-    }
+    PendingChangeQueue.add(
+      _pendingChanges,
+      type: type,
+      endpoint: endpoint,
+      data: data,
+      label: 'room pending change',
+    );
   }
 
   Future<Room> createRoom(Room newRoom) async {

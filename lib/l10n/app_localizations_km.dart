@@ -742,6 +742,25 @@ class AppLocalizationsKm extends AppLocalizations {
   String get signOutConfirmation => 'តើអ្នកប្រាកដថាចង់ចាកចេញទេ?';
 
   @override
+  String get unsyncedChangesTitle => 'ការផ្លាស់ប្តូរមិនទាន់បានផ្ទុកឡើង';
+
+  @override
+  String unsyncedChangesMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'មានការផ្លាស់ប្តូរ $count មិនទាន់បានផ្ទុកឡើងនៅឡើយ។ ប្រសិនបើអ្នកចាកចេញឥឡូវនេះ ការផ្លាស់ប្តូរទាំងនេះនឹងបាត់បង់។',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get signOutAnyway => 'ចាកចេញទោះយ៉ាងណាក៏ដោយ';
+
+  @override
+  String get uploadingChanges => 'កំពុងផ្ទុកឡើងការផ្លាស់ប្តូររបស់អ្នក...';
+
+  @override
   String get selectLanguage => 'ជ្រើសរើសភាសា';
 
   @override

@@ -106,10 +106,6 @@ class NotificationRepository {
         print('📬 Notification sync data: ${response.data}');
       }
 
-      if (response.data['cancelled'] == true) {
-        return;
-      }
-
       if (response.statusCode == 200 && response.data['success'] == true) {
         final List<dynamic> notificationsJson = response.data['data'] ?? [];
         _unreadCount = response.data['unreadCount'] ?? 0;
