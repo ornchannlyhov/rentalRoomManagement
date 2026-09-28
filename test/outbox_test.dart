@@ -13,7 +13,7 @@ void main() {
   setUp(() async {
     dir = await Directory.systemTemp.createTemp('outbox_test');
     Hive.init(dir.path);
-    outbox = await Outbox.init();
+    outbox = await Outbox.init(openBox: Hive.openBox<dynamic>);
   });
 
   tearDown(() async {
@@ -38,7 +38,7 @@ void main() {
           data: {'price': 2});
 
       await Hive.close();
-      final reopened = await Outbox.init();
+      final reopened = await Outbox.init(openBox: Hive.openBox<dynamic>);
 
       expect(reopened.ops.map((op) => op['endpoint']),
           ['/buildings', '/rooms', '/services/s1']);

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:joul_v2/core/helpers/pending_change_queue.dart';
+import 'package:joul_v2/core/services/encrypted_hive.dart';
 import 'package:joul_v2/core/sync/outbox_files.dart';
 import 'package:uuid/uuid.dart';
 
@@ -39,13 +40,14 @@ class Outbox {
     return outbox;
   }
 
-  static Future<Outbox> init() async {
-    final box = Hive.isBoxOpen(boxName)
-        ? Hive.box<dynamic>(boxName)
-        : await Hive.openBox<dynamic>(boxName);
-    final meta = Hive.isBoxOpen(metaBoxName)
-        ? Hive.box<dynamic>(metaBoxName)
-        : await Hive.openBox<dynamic>(metaBoxName);
+  /// Opens the outbox. [openBox] defaults to encrypted boxes; tests pass
+  /// a plain opener.
+  static Future<Outbox> init({
+    Future<Box<dynamic>> Function(String name)? openBox,
+  }) async {
+    final open = openBox ?? EncryptedHive.open;
+    final box = await open(boxName);
+    final meta = await open(metaBoxName);
     final outbox = Outbox(box, meta);
     outbox._load();
     _instance = outbox;
@@ -54,6 +56,9 @@ class Outbox {
 
   final Box<dynamic> _box;
   final Box<dynamic> _meta;
+
+  /// Small key-value store for sync settings (see StorageSettings).
+  Box<dynamic> get metaBox => _meta;
   final List<Map<String, dynamic>> _ops = [];
   final Map<String, String> _idMap = {};
   final StreamController<void> _changes = StreamController<void>.broadcast();

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:joul_v2/core/services/encrypted_hive.dart';
 
 class DatabaseService {
   // Payment Config boxes
@@ -39,8 +40,29 @@ class DatabaseService {
   DatabaseService._internal();
 
   bool _isInitialized = false;
+  final Map<String, Box<dynamic>> _boxes = {};
 
-  Future<void> init() async {
+  static const List<String> allBoxNames = [
+    paymentConfigBoxName,
+    pendingChangesBoxName,
+    buildingsBoxName,
+    buildingsPendingBoxName,
+    roomsBoxName,
+    roomsPendingBoxName,
+    tenantsBoxName,
+    tenantsPendingBoxName,
+    servicesBoxName,
+    servicesPendingBoxName,
+    receiptsBoxName,
+    receiptsPendingBoxName,
+    reportsBoxName,
+    reportsPendingBoxName,
+    notificationsBoxName,
+  ];
+
+  /// [extraBoxNames] are boxes opened elsewhere (the outbox) that share the
+  /// encryption key, so they are reset together if the key is lost.
+  Future<void> init({List<String> extraBoxNames = const []}) async {
     if (_isInitialized) {
       if (kDebugMode) {
         print('DatabaseService already initialized');
@@ -54,29 +76,16 @@ class DatabaseService {
       // await Hive.deleteFromDisk(); // REMOVED: This wipes data on every app start!
 
       // Open all boxes with dynamic type to avoid type casting issues
-      await Future.wait([
-        Hive.openBox<dynamic>(paymentConfigBoxName),
-        Hive.openBox<dynamic>(pendingChangesBoxName),
-        Hive.openBox<dynamic>(buildingsBoxName),
-        Hive.openBox<dynamic>(buildingsPendingBoxName),
-        Hive.openBox<dynamic>(roomsBoxName),
-        Hive.openBox<dynamic>(roomsPendingBoxName),
-        Hive.openBox<dynamic>(tenantsBoxName),
-        Hive.openBox<dynamic>(tenantsPendingBoxName),
-        Hive.openBox<dynamic>(servicesBoxName),
-        Hive.openBox<dynamic>(servicesPendingBoxName),
-        Hive.openBox<dynamic>(receiptsBoxName),
-        Hive.openBox<dynamic>(receiptsPendingBoxName),
-        Hive.openBox<dynamic>(reportsBoxName),
-        Hive.openBox<dynamic>(reportsPendingBoxName),
-        Hive.openBox<dynamic>(notificationsBoxName),
-      ]);
+      await EncryptedHive.init([...allBoxNames, ...extraBoxNames]);
+      for (final name in allBoxNames) {
+        _boxes[name] = await EncryptedHive.open(name);
+      }
 
       _isInitialized = true;
 
       if (kDebugMode) {
         print('DatabaseService initialized successfully');
-        print('Total boxes opened: ${Hive.box(buildingsBoxName).length}');
+        print('Total boxes opened: ${_boxes.length}');
       }
     } catch (e) {
       if (kDebugMode) {
@@ -116,115 +125,115 @@ class DatabaseService {
 
   // Payment Config getters
   Box<dynamic> get paymentConfigBox {
-    if (!Hive.isBoxOpen(paymentConfigBoxName)) {
+    if (!_boxes.containsKey(paymentConfigBoxName)) {
       throw Exception('Payment config box is not open. Call init() first.');
     }
-    return Hive.box<dynamic>(paymentConfigBoxName);
+    return _boxes[paymentConfigBoxName]!;
   }
 
   Box<dynamic> get pendingChangesBox {
-    if (!Hive.isBoxOpen(pendingChangesBoxName)) {
+    if (!_boxes.containsKey(pendingChangesBoxName)) {
       throw Exception('Pending changes box is not open. Call init() first.');
     }
-    return Hive.box<dynamic>(pendingChangesBoxName);
+    return _boxes[pendingChangesBoxName]!;
   }
 
   // Building getters
   Box<dynamic> get buildingsBox {
-    if (!Hive.isBoxOpen(buildingsBoxName)) {
+    if (!_boxes.containsKey(buildingsBoxName)) {
       throw Exception('Buildings box is not open. Call init() first.');
     }
-    return Hive.box<dynamic>(buildingsBoxName);
+    return _boxes[buildingsBoxName]!;
   }
 
   Box<dynamic> get buildingsPendingBox {
-    if (!Hive.isBoxOpen(buildingsPendingBoxName)) {
+    if (!_boxes.containsKey(buildingsPendingBoxName)) {
       throw Exception('Buildings pending box is not open. Call init() first.');
     }
-    return Hive.box<dynamic>(buildingsPendingBoxName);
+    return _boxes[buildingsPendingBoxName]!;
   }
 
   // Room getters
   Box<dynamic> get roomsBox {
-    if (!Hive.isBoxOpen(roomsBoxName)) {
+    if (!_boxes.containsKey(roomsBoxName)) {
       throw Exception('Rooms box is not open. Call init() first.');
     }
-    return Hive.box<dynamic>(roomsBoxName);
+    return _boxes[roomsBoxName]!;
   }
 
   Box<dynamic> get roomsPendingBox {
-    if (!Hive.isBoxOpen(roomsPendingBoxName)) {
+    if (!_boxes.containsKey(roomsPendingBoxName)) {
       throw Exception('Rooms pending box is not open. Call init() first.');
     }
-    return Hive.box<dynamic>(roomsPendingBoxName);
+    return _boxes[roomsPendingBoxName]!;
   }
 
   // Tenant getters
   Box<dynamic> get tenantsBox {
-    if (!Hive.isBoxOpen(tenantsBoxName)) {
+    if (!_boxes.containsKey(tenantsBoxName)) {
       throw Exception('Tenants box is not open. Call init() first.');
     }
-    return Hive.box<dynamic>(tenantsBoxName);
+    return _boxes[tenantsBoxName]!;
   }
 
   Box<dynamic> get tenantsPendingBox {
-    if (!Hive.isBoxOpen(tenantsPendingBoxName)) {
+    if (!_boxes.containsKey(tenantsPendingBoxName)) {
       throw Exception('Tenants pending box is not open. Call init() first.');
     }
-    return Hive.box<dynamic>(tenantsPendingBoxName);
+    return _boxes[tenantsPendingBoxName]!;
   }
 
   // Service getters
   Box<dynamic> get servicesBox {
-    if (!Hive.isBoxOpen(servicesBoxName)) {
+    if (!_boxes.containsKey(servicesBoxName)) {
       throw Exception('Services box is not open. Call init() first.');
     }
-    return Hive.box<dynamic>(servicesBoxName);
+    return _boxes[servicesBoxName]!;
   }
 
   Box<dynamic> get servicesPendingBox {
-    if (!Hive.isBoxOpen(servicesPendingBoxName)) {
+    if (!_boxes.containsKey(servicesPendingBoxName)) {
       throw Exception('Services pending box is not open. Call init() first.');
     }
-    return Hive.box<dynamic>(servicesPendingBoxName);
+    return _boxes[servicesPendingBoxName]!;
   }
 
   // Receipt getters
   Box<dynamic> get receiptsBox {
-    if (!Hive.isBoxOpen(receiptsBoxName)) {
+    if (!_boxes.containsKey(receiptsBoxName)) {
       throw Exception('Receipts box is not open. Call init() first.');
     }
-    return Hive.box<dynamic>(receiptsBoxName);
+    return _boxes[receiptsBoxName]!;
   }
 
   Box<dynamic> get receiptsPendingBox {
-    if (!Hive.isBoxOpen(receiptsPendingBoxName)) {
+    if (!_boxes.containsKey(receiptsPendingBoxName)) {
       throw Exception('Receipts pending box is not open. Call init() first.');
     }
-    return Hive.box<dynamic>(receiptsPendingBoxName);
+    return _boxes[receiptsPendingBoxName]!;
   }
 
   // Report getters
   Box<dynamic> get reportsBox {
-    if (!Hive.isBoxOpen(reportsBoxName)) {
+    if (!_boxes.containsKey(reportsBoxName)) {
       throw Exception('Reports box is not open. Call init() first.');
     }
-    return Hive.box<dynamic>(reportsBoxName);
+    return _boxes[reportsBoxName]!;
   }
 
   Box<dynamic> get reportsPendingBox {
-    if (!Hive.isBoxOpen(reportsPendingBoxName)) {
+    if (!_boxes.containsKey(reportsPendingBoxName)) {
       throw Exception('Reports pending box is not open. Call init() first.');
     }
-    return Hive.box<dynamic>(reportsPendingBoxName);
+    return _boxes[reportsPendingBoxName]!;
   }
 
   // Notification getter
   Box<dynamic> get notificationsBox {
-    if (!Hive.isBoxOpen(notificationsBoxName)) {
+    if (!_boxes.containsKey(notificationsBoxName)) {
       throw Exception('Notifications box is not open. Call init() first.');
     }
-    return Hive.box<dynamic>(notificationsBoxName);
+    return _boxes[notificationsBoxName]!;
   }
 
   // Clear all data from all boxes
@@ -362,6 +371,7 @@ class DatabaseService {
   Future<void> dispose() async {
     try {
       await Hive.close();
+      _boxes.clear();
       _isInitialized = false;
 
       if (kDebugMode) {
@@ -379,6 +389,7 @@ class DatabaseService {
     try {
       await clearAll();
       await Hive.deleteFromDisk();
+      _boxes.clear();
       _isInitialized = false;
 
       if (kDebugMode) {

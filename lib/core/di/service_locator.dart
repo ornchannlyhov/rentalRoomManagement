@@ -26,7 +26,9 @@ final locator = GetIt.instance;
 Future<void> setupLocator() async {
   // Services
   locator.registerSingleton<DatabaseService>(DatabaseService());
-  await locator<DatabaseService>().init();
+  await locator<DatabaseService>().init(
+    extraBoxNames: const [Outbox.boxName, Outbox.metaBoxName],
+  );
 
   final outbox = await Outbox.init();
   await outbox.importLegacy(locator<DatabaseService>().legacyPendingBoxes);

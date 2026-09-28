@@ -11,7 +11,7 @@ class StorageSettings {
   StorageSettings(this._box);
 
   factory StorageSettings.fromHive() =>
-      StorageSettings(Hive.box<dynamic>(Outbox.metaBoxName));
+      StorageSettings(Outbox.instance.metaBox);
 
   final Box<dynamic> _box;
 
